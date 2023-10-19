@@ -20,6 +20,7 @@
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Intrinsics.h>
 #include <llvm/IR/LegacyPassManager.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Type.h>
@@ -399,12 +400,36 @@ llvm::Function* CodeGenLLVM::GetOrCreateMethodStub(Method* method) {
   llvm::Type* returnType = method->classType->IsNative() ? ConvertTypeToNative(method->returnType)
                                                          : ConvertType(method->returnType);
   llvm::FunctionType* functionType = llvm::FunctionType::get(returnType, params, false);
-  llvm::Function*     function =
-      llvm::Function::Create(functionType, llvm::GlobalValue::ExternalLinkage,
-                             method->GetMangledName(), module_);
+  llvm::Function*     function = FindIntrinsic(method, functionType);
+  if (!function) {
+    function = llvm::Function::Create(functionType, llvm::GlobalValue::ExternalLinkage,
+                                      method->GetMangledName(), module_);
+  }
+
   function->setCallingConv(llvm::CallingConv::C);
   method->data = function;
   return function;
+}
+
+llvm::Function* CodeGenLLVM::FindIntrinsic(Method* method, llvm::FunctionType* functionType) {
+  constexpr struct {
+    const char*         className;
+    const char*         methodName;
+    llvm::Intrinsic::ID id;
+  } intrinsics[] = {
+      "Math", "sqrt",  llvm::Intrinsic::sqrt,
+      "Math", "sin",   llvm::Intrinsic::sin,
+      "Math", "cos",   llvm::Intrinsic::cos,
+      "Math", "abs",   llvm::Intrinsic::abs,
+  };
+
+  for (auto intrinsic : intrinsics) {
+    if (method->name == intrinsic.methodName &&
+        method->classType->GetName() == intrinsic.className) {
+      return llvm::Intrinsic::getDeclaration(module_, intrinsic.id, functionType->params());
+    }
+  }
+  return nullptr;
 }
 
 void CodeGenLLVM::GenCodeForMethod(Method* method) {

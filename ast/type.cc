@@ -298,6 +298,8 @@ std::string Method::GetMangledName() const {
           }
         } else if (arg->type->IsClass()) {
           result += static_cast<ClassType*>(arg->type)->GetName();
+        } else if (arg->type->IsVector()) {
+          result += "float" + std::to_string(static_cast<VectorType*>(arg->type)->GetLength());
         } else {
           result += arg->type->ToString();
         }
