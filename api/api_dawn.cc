@@ -559,7 +559,7 @@ wgpu::ShaderModule createShaderModule(Device* device, Method* m) {
 struct PipelineLayout {
   std::vector<wgpu::BindGroupLayout>    bindGroupLayouts;
   std::vector<wgpu::ColorTargetState>   colorTargets;
-  wgpu::DepthStencilState               depthStencilTarget;
+  wgpu::TextureFormat                   depthStencilFormat = wgpu::TextureFormat::Undefined;
   std::vector<wgpu::VertexAttribute>    vertexAttributes;
   std::vector<wgpu::VertexBufferLayout> vertexBufferLayouts;
   wgpu::IndexFormat                     indexFormat = wgpu::IndexFormat::Undefined;
@@ -597,7 +597,7 @@ static void ExtractPipelineLayout(ClassType*                             classTy
     } else if (classType->GetTemplate() == NativeClass::DepthStencilAttachment) {
       const auto& templateArgs = classType->GetTemplateArgs();
       assert(templateArgs.size() == 1);
-      out->depthStencilTarget.format = ToDawnTextureFormat(templateArgs[0]);
+      out->depthStencilFormat = ToDawnTextureFormat(templateArgs[0]);
     } else if (classType->GetTemplate() == NativeClass::Buffer) {
       const auto& templateArgs = classType->GetTemplateArgs();
       assert(templateArgs.size() == 1);
@@ -710,17 +710,6 @@ RenderPipeline* RenderPipeline_RenderPipeline(int               qualifiers,
   vertexState.bufferCount = pipelineLayout.vertexBufferLayouts.size();
   vertexState.buffers = pipelineLayout.vertexBufferLayouts.data();
   wgpu::RenderPipelineDescriptor rpDesc;
-  wgpu::DepthStencilState depthStencilState;
-  if (depthStencil->ptr) {
-    Type* type = depthStencil->controlBlock->type;
-    assert(type->IsClass());
-    ClassType*  classType = static_cast<ClassType*>(type);
-    const auto& templateArgs = classType->GetTemplateArgs();
-    assert(templateArgs.size() == 1);
-    depthStencilState.format = ToDawnTextureFormat(templateArgs[0]);
-    depthStencilState.depthWriteEnabled = true;
-    depthStencilState.depthCompare = wgpu::CompareFunction::Less;
-  }
   wgpu::FragmentState fragmentState;
   fragmentState.module = fragmentShader;
   fragmentState.entryPoint = "main";
@@ -738,7 +727,13 @@ RenderPipeline* RenderPipeline_RenderPipeline(int               qualifiers,
   if (primitiveTopology == LineStrip || primitiveTopology == TriangleStrip) {
     rpDesc.primitive.stripIndexFormat = pipelineLayout.indexFormat;
   }
-  if (depthStencil->ptr) { rpDesc.depthStencil = &depthStencilState; }
+  wgpu::DepthStencilState depthStencilState;
+  if (depthStencil->ptr && pipelineLayout.depthStencilFormat != wgpu::TextureFormat::Undefined) {
+    depthStencilState.format = pipelineLayout.depthStencilFormat;
+    depthStencilState.depthWriteEnabled = true;
+    depthStencilState.depthCompare = wgpu::CompareFunction::Less;
+    rpDesc.depthStencil = &depthStencilState;
+  }
   return new RenderPipeline(device->device.CreateRenderPipeline(&rpDesc));
 }
 
@@ -998,10 +993,6 @@ Sampler* Sampler_Sampler(Device*     device,
 
 void Sampler_Destroy(Sampler* This) { delete This; }
 
-void CommandEncoder_CopyBufferToBuffer(CommandEncoder* encoder, Buffer* source, Buffer* dest) {
-  encoder->encoder.CopyBufferToBuffer(source->buffer, 0, dest->buffer, 0, source->sizeInBytes);
-}
-
 #if TARGET_IS_WASM
 EM_ASYNC_JS(WGPUBufferMapAsyncStatus,
             JSMapSync,
@@ -1101,6 +1092,10 @@ void Buffer_SetData(Buffer* buffer, Object* object) {
   size_t      size = type->GetSizeInBytes(object->controlBlock->arrayLength);
   wgpu::Queue queue = buffer->device.GetQueue();
   queue.WriteBuffer(buffer->buffer, 0, object->ptr, size);
+}
+
+void Buffer_CopyToBuffer(Buffer* This, CommandEncoder* encoder, Buffer* dest) {
+  encoder->encoder.CopyBufferToBuffer(This->buffer, 0, dest->buffer, 0, This->sizeInBytes);
 }
 
 void Buffer_Destroy(Buffer* This) { delete This; }
@@ -1213,7 +1208,11 @@ void RenderPass_End(RenderPass* This) { This->encoder.End(); }
 
 void RenderPass_Destroy(RenderPass* This) { delete This; }
 
-ComputePass* ComputePass_ComputePass(int qualifiers, Type* type, CommandEncoder* encoder, Object* data) {
+ComputePass* ComputePass_ComputePass_ComputePass(int qualifiers, Type* type, ComputePass* parent) {
+  return new ComputePass(parent->encoder);
+}
+
+ComputePass* ComputePass_ComputePass_CommandEncoder_T(int qualifiers, Type* type, CommandEncoder* encoder, Object* data) {
   PipelineData pipelineData;
   if (data && data->controlBlock) {
     Type* objectType = data->controlBlock->type;

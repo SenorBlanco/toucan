@@ -440,7 +440,6 @@ bool ClassType::CanWidenTo(Type* type) const {
   for (const ClassType* t = this; t != nullptr; t = t->GetParent()) {
     if (t == type) { return true; }
   }
-  if (type->IsClassTemplate() && GetTemplate() == type) { return true; }
   return false;
 }
 

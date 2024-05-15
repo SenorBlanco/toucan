@@ -29,7 +29,7 @@ class Pipeline {
 }
 
 auto pipeline = new RenderPipeline<Pipeline>(device, null, TriangleList);
-ComputePipeline* computePipeline = new ComputePipeline<BumpCompute>(device);
+auto computePipeline = new ComputePipeline<BumpCompute>(device);
 
 ComputeBindings cb;
 cb.vertStorage = vb;

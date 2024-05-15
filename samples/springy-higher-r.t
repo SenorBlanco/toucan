@@ -274,19 +274,23 @@ while(System.IsRunning()) {
 
   int totalSteps = (int) ((System.GetCurrentTime() - startTime) * frequency);
   for (int i = 0; stepsDone < totalSteps && i < maxStepsPerFrame; i++) {
-    computePass.SetPipeline(computeForces);
-    computePass.Dispatch(springs.length, 1, 1);
+    auto computeForcesPass = new ComputePass<ComputeForces>(computePass);
+    computeForcesPass.SetPipeline(computeForces);
+    computeForcesPass.Dispatch(springs.length, 1, 1);
 
-    computePass.SetPipeline(applyForces);
-    computePass.Dispatch(bodies.length, 1, 1);
+    auto applyForcesPass = new ComputePass<ApplyForces>(computePass);
+    applyForcesPass.SetPipeline(applyForces);
+    applyForcesPass.Dispatch(bodies.length, 1, 1);
     stepsDone++;
   }
 
-  computePass.SetPipeline(updateBodyVerts);
-  computePass.Dispatch(bodies.length, 1, 1);
+  auto updateBodyPass = new ComputePass<UpdateBodyVerts>(computePass);
+  updateBodyPass.SetPipeline(updateBodyVerts);
+  updateBodyPass.Dispatch(bodies.length, 1, 1);
 
-  computePass.SetPipeline(updateSpringVerts);
-  computePass.Dispatch(springs.length, 1, 1);
+  auto updateSpringPass = new ComputePass<UpdateSpringVerts>(computePass);
+  updateSpringPass.SetPipeline(updateSpringVerts);
+  updateSpringPass.Dispatch(springs.length, 1, 1);
 
   computePass.End();
   auto framebuffer = swapChain.GetCurrentTexture();

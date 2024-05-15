@@ -151,7 +151,7 @@ class ReflectionPipeline : Pipeline {
     vertex Buffer<Vertex[]>* vert;
 };
 
-auto depthState = new DepthStencilState<Depth24Plus>();
+auto depthState = new DepthStencilState();
 
 auto cubePipeline = new RenderPipeline<SkyboxPipeline>(device, depthState, TriangleList);
 Bindings cubeBindings;
