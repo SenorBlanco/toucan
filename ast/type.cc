@@ -399,7 +399,7 @@ void ClassType::AddEnum(std::string name, EnumType* enumType) {
 }
 
 Type* ClassType::FindType(const std::string& id) {
-  if (Type* type = scope_->types[id]) { return type; }
+  if (Type* type = scope_ ? scope_->types[id] : nullptr) { return type; }
   return parent_ ? parent_->FindType(id) : nullptr;
 }
 

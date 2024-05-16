@@ -29,11 +29,14 @@ class NativeClass {
   static ClassType* ColorAttachment;
   static ClassType* CommandBuffer;
   static ClassType* CommandEncoder;
+  static ClassType* ComputeBuiltins;
   static ClassType* ComputePass;
   static ClassType* ComputePipeline;
   static ClassType* DepthStencilAttachment;
+  static ClassType* DepthStencilState;
   static ClassType* Device;
   static ClassType* Event;
+  static ClassType* FragmentBuiltins;
   static ClassType* ImageDecoder;
   static ClassType* Math;
   static ClassType* Queue;
@@ -52,7 +55,60 @@ class NativeClass {
   static ClassType* Texture2DArray;
   static ClassType* Texture3D;
   static ClassType* TextureCube;
+  static ClassType* VertexBuiltins;
   static ClassType* Window;
+
+  static ClassType* PixelFormat;
+
+  static ClassType* R8unorm;
+  static ClassType* R8snorm;
+  static ClassType* R8uint;
+  static ClassType* R8sint;
+
+  static ClassType* RG8unorm;
+  static ClassType* RG8snorm;
+  static ClassType* RG8uint;
+  static ClassType* RG8sint;
+
+  static ClassType* RGBA8unorm;
+  static ClassType* RGBA8unormSRGB;
+  static ClassType* RGBA8snorm;
+  static ClassType* RGBA8uint;
+  static ClassType* RGBA8sint;
+
+  static ClassType* BGRA8unorm;
+  static ClassType* BGRA8unormSRGB;
+
+  static ClassType* R16uint;
+  static ClassType* R16sint;
+//  static ClassType* R16float;
+
+  static ClassType* RG16uint;
+  static ClassType* RG16sint;
+//  static ClassType* RG16float;
+
+  static ClassType* RGBA16uint;
+  static ClassType* RGBA16sint;
+//  static ClassType* class RGBA16float;
+
+  static ClassType* R32uint;
+  static ClassType* R32sint;
+  static ClassType* R32float;
+
+  static ClassType* RG32uint;
+  static ClassType* RG32sint;
+  static ClassType* RG32float;
+
+  static ClassType* RGBA32uint;
+  static ClassType* RGBA32sint;
+  static ClassType* RGBA32float;
+
+  static ClassType* RGB10A2unorm;
+  static ClassType* RG11B10ufloat;
+
+  static ClassType* Depth24Plus;
+
+  static ClassType* PreferredSwapChainFormat;
 };
 
 };  // namespace Toucan

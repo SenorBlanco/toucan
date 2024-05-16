@@ -72,11 +72,20 @@ void CodeGenLLVM::Run(Stmts* stmts) {
   for (auto type : types_->GetTypes()) {
     if (type->IsClass()) {
       ClassType* classType = static_cast<ClassType*>(type);
-      if (!classType->IsFullySpecified()) { continue; }
+      if (classType->IsNative()) {
+        continue;
+      }
+//      if (!classType->IsFullySpecified()) {
+//        if (!classType->IsClassTemplate()) {
+//          printf("UH OH\n");
+//        }
+//        continue; }
       for (const auto& mit : classType->GetMethods()) {
         GenCodeForMethod(mit.get());
       }
-      FillVTable(classType);
+      if (!classType->IsNative()) {
+        FillVTable(classType);
+      }
     }
   }
   stmts->Accept(this);
@@ -195,8 +204,9 @@ llvm::GlobalVariable* CodeGenLLVM::GetOrCreateVTable(ClassType* classType) {
     return static_cast<llvm::GlobalVariable*>(classType->GetData());
   } else {
     llvm::ArrayType* arrayType = llvm::ArrayType::get(funcPtrType_, classType->GetVTableSize());
+    std::string name = classType->GetName() + "_vtable";
     llvm::GlobalVariable* vtable = new llvm::GlobalVariable(
-        *module_, arrayType, true, llvm::GlobalVariable::ExternalLinkage, nullptr, "vtable");
+        *module_, arrayType, true, llvm::GlobalVariable::ExternalLinkage, nullptr, name);
     classType->SetData(vtable);
     return vtable;
   }
@@ -229,7 +239,7 @@ llvm::Value* CodeGenLLVM::CreateControlBlock(Type* type) {
   builder_->CreateStore(Int(arrayLength), GetArrayLengthAddress(controlBlock));
   builder_->CreateStore(CreateTypePtr(type), GetClassTypeAddress(controlBlock));
   type = type->GetUnqualifiedType();
-  if (type->IsClass()) {
+  if (type->IsClass() && !static_cast<ClassType*>(type)->IsNative()) {
     llvm::GlobalVariable* vtable = GetOrCreateVTable(static_cast<ClassType*>(type));
     llvm::Value*          indices[] = {Int(0), Int(0)};
     llvm::Type*           type = vtable->getValueType();

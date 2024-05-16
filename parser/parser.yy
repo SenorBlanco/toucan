@@ -284,6 +284,7 @@ template_class_header:
 
 class_forward_decl:
     class_header ';'                        { $$ = nullptr; }
+  | template_class_header ';'               { $$ = nullptr; }
   ;
 
 class_decl:

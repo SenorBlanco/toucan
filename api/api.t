@@ -49,7 +49,7 @@ native class Buffer<T> {
   void CopyToBuffer(CommandEncoder^ encoder, Buffer<T>^ dest);
 }
 
-class DepthStencilState {
+native class DepthStencilState {
   bool depthWriteEnabled = false;
 //  CompareFunction depthCompare = CompareFunction::Always;
 //  StencilFaceState stencilFront;
@@ -266,14 +266,14 @@ native class System {
   static double GetCurrentTime();
 }
 
-class VertexBuiltins {
+native class VertexBuiltins {
   readonly int       vertexIndex;
   readonly int       instanceIndex;
   writeonly float<4> position;
   writeonly float    pointSize;
 }
 
-class FragmentBuiltins {
+native class FragmentBuiltins {
   readonly float<4>  fragCoord;
   readonly bool      frontFacing;
 //  readonly uint      sampleIndex;
@@ -282,7 +282,7 @@ class FragmentBuiltins {
 //  writeonly float    fragDepth;
 }
 
-class ComputeBuiltins {
+native class ComputeBuiltins {
   readonly uint<3>   localInvocationId;
   readonly uint      localInvocationIndex;
   readonly uint<3>   globalInvocationId;
@@ -290,54 +290,54 @@ class ComputeBuiltins {
 //  readonly uint<3>   numWorkgroups;
 }
 
-class PixelFormat<SampledType, MemoryType> {}
+native class PixelFormat<SampledType, MemoryType> {}
 
-class R8unorm : PixelFormat<float, ubyte> {}
-class R8snorm : PixelFormat<float, byte> {}
-class R8uint : PixelFormat<uint, ubyte> {}
-class R8sint : PixelFormat<int, byte> {}
+native class R8unorm : PixelFormat<float, ubyte> {}
+native class R8snorm : PixelFormat<float, byte> {}
+native class R8uint : PixelFormat<uint, ubyte> {}
+native class R8sint : PixelFormat<int, byte> {}
 
-class RG8unorm : PixelFormat<float, ubyte<2>> {}
-class RG8snorm : PixelFormat<float, byte<2>> {}
-class RG8uint : PixelFormat<uint, ubyte<2>> {}
-class RG8sint : PixelFormat<int, byte<2>> {}
+native class RG8unorm : PixelFormat<float, ubyte<2>> {}
+native class RG8snorm : PixelFormat<float, byte<2>> {}
+native class RG8uint : PixelFormat<uint, ubyte<2>> {}
+native class RG8sint : PixelFormat<int, byte<2>> {}
 
-class RGBA8unorm : PixelFormat<float, ubyte<4>> {}
-class RGBA8unormSRGB : PixelFormat<float, ubyte<4>> {}
-class RGBA8snorm : PixelFormat<float, byte<4>> {}
-class RGBA8uint : PixelFormat<uint, ubyte<4>> {}
-class RGBA8sint : PixelFormat<int, byte<4>> {}
+native class RGBA8unorm : PixelFormat<float, ubyte<4>> {}
+native class RGBA8unormSRGB : PixelFormat<float, ubyte<4>> {}
+native class RGBA8snorm : PixelFormat<float, byte<4>> {}
+native class RGBA8uint : PixelFormat<uint, ubyte<4>> {}
+native class RGBA8sint : PixelFormat<int, byte<4>> {}
 
-class BGRA8unorm : PixelFormat<float, ubyte<4>> {}
-class BGRA8unormSRGB : PixelFormat<float, ubyte<4>> {}
+native class BGRA8unorm : PixelFormat<float, ubyte<4>> {}
+native class BGRA8unormSRGB : PixelFormat<float, ubyte<4>> {}
 
-class R16uint : PixelFormat<uint, ushort> {}
-class R16sint : PixelFormat<int, short> {}
+native class R16uint : PixelFormat<uint, ushort> {}
+native class R16sint : PixelFormat<int, short> {}
 // class R16float : PixelFormat<float, half> {}
 
-class RG16uint : PixelFormat<uint, ushort<2>> {}
-class RG16sint : PixelFormat<int, short<2>> {}
+native class RG16uint : PixelFormat<uint, ushort<2>> {}
+native class RG16sint : PixelFormat<int, short<2>> {}
 // class RG16float : PixelFormat<float, half<2>> {}
 
-class RGBA16uint : PixelFormat<uint, ushort<4>> {}
-class RGBA16sint : PixelFormat<int, short<4>> {}
+native class RGBA16uint : PixelFormat<uint, ushort<4>> {}
+native class RGBA16sint : PixelFormat<int, short<4>> {}
 // class RGBA16float : PixelFormat<float, half<4>> {}
 
-class R32uint : PixelFormat<uint, uint> {}
-class R32sint : PixelFormat<int, int> {}
-class R32float : PixelFormat<float, float> {}
+native class R32uint : PixelFormat<uint, uint> {}
+native class R32sint : PixelFormat<int, int> {}
+native class R32float : PixelFormat<float, float> {}
 
-class RG32uint : PixelFormat<uint, uint<2>> {}
-class RG32sint : PixelFormat<int, int<2>> {}
-class RG32float : PixelFormat<float, float<2>> {}
+native class RG32uint : PixelFormat<uint, uint<2>> {}
+native class RG32sint : PixelFormat<int, int<2>> {}
+native class RG32float : PixelFormat<float, float<2>> {}
 
-class RGBA32uint : PixelFormat<uint, uint<4>> {}
-class RGBA32sint : PixelFormat<int, int<4>> {}
-class RGBA32float : PixelFormat<float, float<4>> {}
+native class RGBA32uint : PixelFormat<uint, uint<4>> {}
+native class RGBA32sint : PixelFormat<int, int<4>> {}
+native class RGBA32float : PixelFormat<float, float<4>> {}
 
-class RGB10A2unorm : PixelFormat<float, uint> {}
-class RG11B10ufloat : PixelFormat<float, uint> {}
+native class RGB10A2unorm : PixelFormat<float, uint> {}
+native class RG11B10ufloat : PixelFormat<float, uint> {}
 
-class Depth24Plus : PixelFormat<float, uint> {}
+native class Depth24Plus : PixelFormat<float, uint> {}
 
-class PreferredSwapChainFormat : PixelFormat<float, ubyte<4>> {}
+native class PreferredSwapChainFormat : PixelFormat<float, ubyte<4>> {}
