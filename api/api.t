@@ -230,6 +230,10 @@ native class Math {
   static float<2> sin(float<2> v);
   static float<3> sin(float<3> v);
   static float<4> sin(float<4> v);
+  static double    sin(double v);
+  static double<2> sin(double<2> v);
+  static double<3> sin(double<3> v);
+  static double<4> sin(double<4> v);
   static float    cos(float v);
   static float<2> cos(float<2> v);
   static float<3> cos(float<3> v);
