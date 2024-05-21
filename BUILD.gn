@@ -16,6 +16,7 @@ group("all") {
   deps = [
     "//samples:samples",
     "//test:tests",
+    "//bench:benches"
   ]
   if (!is_wasm) {
     deps += [

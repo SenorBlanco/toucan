@@ -68,7 +68,7 @@ class CodeGenLLVM : public Visitor {
   llvm::Value*    Pop();
   llvm::Value*    GenerateBinOp(BinOpNode* node, llvm::Value* lhs, llvm::Value* rhs, Type* type);
   llvm::Function* GetOrCreateMethodStub(Method* method);
-  llvm::Function* FindIntrinsic(Method* method, llvm::FunctionType* functionType);
+  std::optional<llvm::Intrinsic::ID> FindIntrinsic(Method* method);
   void            GenCodeForMethod(Method* method);
   llvm::Value*    GetStrongRefCountAddress(llvm::Value* controlBlock);
   llvm::Value*    GetWeakRefCountAddress(llvm::Value* controlBlock);

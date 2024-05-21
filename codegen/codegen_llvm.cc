@@ -376,8 +376,10 @@ llvm::Function* CodeGenLLVM::GetOrCreateMethodStub(Method* method) {
   if (method->data) { return static_cast<llvm::Function*>(method->data); }
   // TODO(senorblanco):  Make sure this Function is destroyed with the Module.
   std::vector<llvm::Type*> params;
+  std::optional<llvm::Intrinsic::ID> intrinsic;
   if (method->classType->IsNative()) {
     if (method->templateMethod) { return GetOrCreateMethodStub(method->templateMethod); }
+    intrinsic = FindIntrinsic(method);
     if (method->modifiers & Method::STATIC) {
       if (method->classType->IsClassTemplate()) {
         // First argument is the storage qualifier (as uint)
@@ -391,17 +393,19 @@ llvm::Function* CodeGenLLVM::GetOrCreateMethodStub(Method* method) {
   }
   for (const auto& it : method->formalArgList) {
     Var* var = it.get();
-    if (method->classType->IsNative()) {
+    if (method->classType->IsNative() && !intrinsic) {
       params.push_back(ConvertTypeToNative(var->type));
     } else {
       params.push_back(ConvertType(var->type));
     }
   }
-  llvm::Type* returnType = method->classType->IsNative() ? ConvertTypeToNative(method->returnType)
-                                                         : ConvertType(method->returnType);
+  llvm::Type* returnType = method->classType->IsNative() && !intrinsic ? ConvertTypeToNative(method->returnType)
+                                                                       : ConvertType(method->returnType);
   llvm::FunctionType* functionType = llvm::FunctionType::get(returnType, params, false);
-  llvm::Function*     function = FindIntrinsic(method, functionType);
-  if (!function) {
+  llvm::Function*     function;
+  if (intrinsic) {
+    function = llvm::Intrinsic::getDeclaration(module_, intrinsic.value(), functionType->params());
+  } else {
     function = llvm::Function::Create(functionType, llvm::GlobalValue::ExternalLinkage,
                                       method->GetMangledName(), module_);
   }
@@ -411,7 +415,7 @@ llvm::Function* CodeGenLLVM::GetOrCreateMethodStub(Method* method) {
   return function;
 }
 
-llvm::Function* CodeGenLLVM::FindIntrinsic(Method* method, llvm::FunctionType* functionType) {
+std::optional<llvm::Intrinsic::ID> CodeGenLLVM::FindIntrinsic(Method* method) {
   constexpr struct {
     const char*         className;
     const char*         methodName;
@@ -426,10 +430,10 @@ llvm::Function* CodeGenLLVM::FindIntrinsic(Method* method, llvm::FunctionType* f
   for (auto intrinsic : intrinsics) {
     if (method->name == intrinsic.methodName &&
         method->classType->GetName() == intrinsic.className) {
-      return llvm::Intrinsic::getDeclaration(module_, intrinsic.id, functionType->params());
+      return intrinsic.id;
     }
   }
-  return nullptr;
+  return std::nullopt;
 }
 
 void CodeGenLLVM::GenCodeForMethod(Method* method) {
@@ -1283,11 +1287,12 @@ llvm::Value* CodeGenLLVM::GenerateMethodCall(Method*   method,
       args.push_back(CreateTypePtr(type));
     }
   }
+  auto intrinsic = FindIntrinsic(method);
   for (auto arg : argList->Get()) {
     llvm::Value* v = GenerateLLVM(arg);
     Type*        type = arg->GetType(types_);
     AppendTemporary(v, type);
-    if (method->classType->IsNative()) { v = ConvertToNative(type, v); }
+    if (method->classType->IsNative() && !intrinsic) { v = ConvertToNative(type, v); }
     args.push_back(v);
   }
   llvm::Function* function = GetOrCreateMethodStub(method);
@@ -1307,7 +1312,7 @@ llvm::Value* CodeGenLLVM::GenerateMethodCall(Method*   method,
   } else {
     result = builder_->CreateCall(function, args);
   }
-  if (method->classType->IsNative()) { result = ConvertFromNative(returnType, result); }
+  if (method->classType->IsNative() && !intrinsic) { result = ConvertFromNative(returnType, result); }
   return result;
 }
 
