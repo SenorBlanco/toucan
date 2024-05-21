@@ -51,6 +51,7 @@ class Type {
   virtual bool  IsIntegerVector() const { return false; }
   virtual bool  IsFloatingPoint() const { return false; }
   virtual bool  IsFloatVector() const { return false; }
+  virtual bool  IsFloatingPointVector() const { return false; }
   virtual bool  IsMatrix() const { return false; }
   virtual bool  IsBool() const { return false; }
   virtual bool  IsInt() const { return false; }
@@ -108,6 +109,7 @@ class VectorType : public Type {
   bool         IsUnsigned() const override { return componentType_->IsUnsigned(); }
   bool         IsIntegerVector() const override { return componentType_->IsInteger(); }
   bool         IsFloatVector() const override { return componentType_->IsFloat(); }
+  bool         IsFloatingPointVector() const override { return componentType_->IsFloatingPoint(); }
   bool         IsPOD() const override { return true; }
   bool         CanWidenTo(Type* type) const override;
   bool         CanInitFrom(const ListType* type) const override;

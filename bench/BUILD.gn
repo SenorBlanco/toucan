@@ -17,6 +17,10 @@ import("../toucan_executable.gni")
 group("benches") {
 }
 
+toucan_executable("bench_add") {
+  sources = [ "bench_add.t" ]
+}
+
 toucan_executable("bench_sin") {
   sources = [ "bench_sin.t" ]
 }

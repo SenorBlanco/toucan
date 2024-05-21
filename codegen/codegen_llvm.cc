@@ -716,7 +716,7 @@ llvm::Value* CodeGenLLVM::GenerateBinOp(BinOpNode*   node,
     } else {
       return GenerateBinOpInt(builder_, node, lhs, rhs);
     }
-  } else if (type->IsFloatingPoint() || type->IsFloatVector()) {
+  } else if (type->IsFloatingPoint() || type->IsFloatingPointVector()) {
     return GenerateBinOpFloat(builder_, node, lhs, rhs);
   } else if (type->IsMatrix() && node->GetOp() == BinOpNode::MUL) {
     auto matrixType = static_cast<MatrixType*>(type);
@@ -1335,7 +1335,7 @@ Result CodeGenLLVM::Visit(UnaryOp* node) {
   if (node->GetOp() == UnaryOp::Op::Minus) {
     if (type->IsInteger() || type->IsIntegerVector()) {
       ret = builder_->CreateNeg(rhs, "neg");
-    } else if (type->IsFloatingPoint() || type->IsFloatVector()) {
+    } else if (type->IsFloatingPoint() || type->IsFloatingPointVector()) {
       ret = builder_->CreateFNeg(rhs, "fneg");
     } else {
       assert(false);
