@@ -163,7 +163,7 @@ int main(int argc, char** argv) {
 #if TARGET_IS_WASM
     auto features = "+simd128";
 #else
-    auto features = "+avx,+avx2,+avx512f,+avx512vl";
+    auto features = "+avx,+avx2,+avx512f";
 #endif
 
     llvm::TargetOptions opt;

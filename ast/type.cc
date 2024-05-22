@@ -685,7 +685,6 @@ FloatingPointType* TypeTable::GetDouble() { return GetFloatingPoint(64); }
 BoolType* TypeTable::GetBool() { return bool_; }
 
 VectorType* TypeTable::GetVector(Type* componentType, int size) {
-  if (size < 2) return nullptr;
   VectorType* type = vectorTypes_[TypeAndInt(componentType, size)];
   if (type == nullptr) {
     type = Make<VectorType>(componentType, size);
