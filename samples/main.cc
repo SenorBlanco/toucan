@@ -18,6 +18,26 @@
 #include <ast/ast.h>
 #include <ast/symbol.h>
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+double GetTimeUsec() {
+  FILETIME ft;
+  GetSystemTimeAsFileTime(&ft);
+  LARGE_INTEGER v;
+  v.LowPart = ft.dwLowDateTime;
+  v.HighPart = ft.dwHighDateTime;
+  return static_cast<double>(v.QuadPart) / 10.0;
+}
+#else
+#include <sys/time.h>
+double GetTimeUsec() {
+  struct timeval t;
+  gettimeofday(&t, nullptr);
+  return 1000000.0 * t.tv_sec + t.tv_usec;
+}
+#endif
+
 using namespace Toucan;
 
 extern "C" {
@@ -30,6 +50,9 @@ int main(int argc, char** argv) {
   TypeTable   types;
   _type_list = InitTypes(&types);
   types.ComputeFieldOffsets();
+  double start = GetTimeUsec();
   toucan_main();
+  double end = GetTimeUsec();
+  printf("LLVM time is %lf usec\n", end - start);
   return 0;
 }
