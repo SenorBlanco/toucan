@@ -293,6 +293,14 @@ class Math {
   static sin(v : float<2>)  : float<2>;
   static sin(v : float<3>)  : float<3>;
   static sin(v : float<4>)  : float<4>;
+  static sin(v : double)    : double;
+  static sin(v : double<2>) : double<2>;
+  static sin(v : double<3>) : double<3>;
+  static sin(v : double<4>) : double<4>;
+  static sin(v : double<5>) : double<5>;
+  static sin(v : double<6>) : double<6>;
+  static sin(v : double<7>) : double<7>;
+  static sin(v : double<8>) : double<8>;
   static cos(v : float)     : float;
   static cos(v : float<2>)  : float<2>;
   static cos(v : float<3>)  : float<3>;

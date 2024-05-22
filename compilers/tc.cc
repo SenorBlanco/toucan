@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
 #if TARGET_OS_IS_WASM
     auto features = "+simd128";
 #else
-    auto features = "";
+    auto features = "+avx,+avx2,+avx512f,+avx512vl";
 #endif
 
     llvm::TargetOptions opt;
