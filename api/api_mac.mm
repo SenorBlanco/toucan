@@ -275,11 +275,6 @@ double System_GetCurrentTime() {
   return static_cast<double>(now.tv_sec) + static_cast<double>(now.tv_usec) / 1000000.0;
 }
 
-void Window_SwapBuffers(Window* window) {
-  if (!window || !window->device) return;
-  //  [window->device->device flushBuffer]; // FIXME
-}
-
 };  // namespace Toucan
 
 @implementation ToucanWindowDelegate
