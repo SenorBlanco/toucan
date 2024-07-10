@@ -57,20 +57,40 @@ class BicubicPatch {
     result.position = uCubic.Evaluate(u);
     auto uTangent = uCubic.EvaluateTangent(u);
     auto vTangent = vCubic.EvaluateTangent(v);
-//    if (vTangent.x == 0.0 && vTangent.y == 0.0 && vTangent.z == 0.0) {
-//      if (result.position.z <= 0.0) {
-//        result.normal = { 0.0, 0.0, -1.0 };
-//      } else {
-//        result.normal = { 0.0, 0.0, 1.0 };
-//      }
-//    } else {
-//      result.normal = Utils.normalize(Utils.cross(vTangent, uTangent));
-//    }
-
-    result.normal = Utils.normalize(Utils.cross(vTangent, uTangent));
+    if (vTangent.x == 0.0 && vTangent.y == 0.0 && vTangent.z == 0.0) {
+      if (result.position.z <= 0.0) {
+        result.normal = { 0.0, 0.0, -1.0 };
+      } else {
+        result.normal = { 0.0, 0.0, 1.0 };
+      }
+    } else {
+      result.normal = Utils.normalize(Utils.cross(vTangent, uTangent));
+    }
     return result;
   }
   Cubic<float<3>>[4] uCubics, vCubics;
+}
+
+uint level = 8;
+uint patchWidth = level + 1;
+uint numPatches = teapotControlIndices.length / 16;
+auto teapotIndices = new uint[numPatches * level * level * 6];
+
+int vi = 0, ii = 0;
+for (int k = 0; k < numPatches; ++k) {
+  for (int i = 0; i <= level; ++i) {
+    for (int j = 0; j <= level; ++j) {
+      if (i < level && j < level) {
+        teapotIndices[ii++] = vi;
+        teapotIndices[ii++] = vi + 1;
+        teapotIndices[ii++] = vi + patchWidth + 1;
+        teapotIndices[ii++] = vi;
+        teapotIndices[ii++] = vi + patchWidth + 1;
+        teapotIndices[ii++] = vi + patchWidth;
+      }
+      ++vi;
+    }
+  }
 }
 
 class Uniforms {
@@ -100,12 +120,11 @@ class ComputeBindings {
   storage Buffer<float<3>[]>* controlPoints;
   storage Buffer<uint[]>* controlIndices;
   storage Buffer<Vertex[]>* vertices;
-  storage Buffer<uint[]>* indices;
   uniform Buffer<ComputeUniforms>* uniforms;
 }
 
 class BicubicComputePipeline {
-  void computeShader(ComputeBuiltins cb) compute(9, 9, 1) {
+  void computeShader(ComputeBuiltins cb) compute(8, 8, 1) {
     auto placeholder1 = Utils.dot(float<3>(1.0), float<3>(1.0));
     auto placeholder2 = Utils.length(float<3>(1.0));
     auto placeholder3 = Utils.normalize(float<3>(1.0));
@@ -117,17 +136,19 @@ class BicubicComputePipeline {
     auto controlPoints = bindings.Get().controlPoints.MapReadWriteStorage();
     auto controlIndices = bindings.Get().controlIndices.MapReadWriteStorage();
     auto vertices = bindings.Get().vertices.MapReadWriteStorage();
-    auto indices = bindings.Get().indices.MapReadWriteStorage();
     auto uniforms = bindings.Get().uniforms.MapReadUniform();
     float u = (float) cb.globalInvocationId.x * uniforms.scale;
     float v = (float) cb.globalInvocationId.y * uniforms.scale;
-    uint patchIndex = cb.globalInvocationId.z * 16u;
+    if (u > 1.0 || v > 1.0) {
+      return;
+    }
+    uint k = cb.globalInvocationId.z * 16u;
     BicubicPatch patch;
     for (int i = 0; i < 4; ++i) {
       float<3>[4] pu, pv;
       for (int j = 0; j < 4; ++j) {
-        pu[j] = controlPoints[controlIndices[patchIndex + i + j * 4]];
-        pv[j] = controlPoints[controlIndices[patchIndex + i * 4 + j]];
+        pu[j] = controlPoints[controlIndices[k + i + j * 4]];
+        pv[j] = controlPoints[controlIndices[k + i * 4 + j]];
       }
       // FIXME: these temporaries shouldn't be necessary
       Cubic<float<3>> tempu, tempv;
@@ -136,19 +157,10 @@ class BicubicComputePipeline {
       patch.uCubics[i] = tempu;
       patch.vCubics[i] = tempv;
     }
-    uint id = patchIndex + cb.globalInvocationId.y * uniforms.patchWidth + cb.globalInvocationId.x;
+    uint id = cb.globalInvocationId.z * uniforms.patchWidth * uniforms.patchWidth + cb.globalInvocationId.y * uniforms.patchWidth + cb.globalInvocationId.x;
     // FIXME: another temporary
     auto temp = patch.Evaluate(u, v);
     vertices[id] = temp;
-//    if (cb.globalInvocationId.x < uniforms.patchWidth - 1 && cb.globalInvocationId.y < uniforms.patchWidth - 1) {
-      uint ii = id * 6u;
-      indices[ii] = id;
-      indices[ii + 1u] = id + 1u;
-      indices[ii + 2u] = id + uniforms.patchWidth + 1u;
-      indices[ii + 3u] = id;
-      indices[ii + 4u] = id + uniforms.patchWidth + 1u;
-      indices[ii + 5u] = id + uniforms.patchWidth;
-//    }
   }
   BindGroup<ComputeBindings>* bindings;
 }
@@ -216,24 +228,20 @@ Bindings teapotBindings;
 teapotBindings.sampler = cubeBindings.sampler;
 teapotBindings.textureView = cubeBindings.textureView;
 teapotBindings.uniforms = new uniform Buffer<Uniforms>(device);
+uint numVerticesPerPatch = patchWidth * patchWidth;
 
-uint level = 8;
-uint patchWidth = level + 1;
-
-auto teapotVertices = new vertex storage Buffer<Vertex[]>(device, 10000); // FIXME
-auto teapotIndices = new index storage Buffer<uint[]>(device, 10000); // FIXME
+auto teapotVertices = new vertex storage Buffer<Vertex[]>(device, numPatches * numVerticesPerPatch);
 
 auto computeBindings = new BindGroup<ComputeBindings>(device, {
   controlPoints = new storage Buffer<float<3>[]>(device, &teapotControlPoints),
   controlIndices = new storage Buffer<uint[]>(device, &teapotControlIndices),
   vertices = teapotVertices,
-  indices = teapotIndices,
-  uniforms = new uniform Buffer<ComputeUniforms>(device, { patchWidth, 1.0 / (float) patchWidth } )
+  uniforms = new uniform Buffer<ComputeUniforms>(device, { patchWidth = patchWidth, scale = 1.0 / (float) level } )
 });
 
 ReflectionPipeline teapotData;
 teapotData.vert = teapotVertices;
-teapotData.indexBuffer = teapotIndices;
+teapotData.indexBuffer = new index Buffer<uint[]>(device, teapotIndices);
 teapotData.bindings = new BindGroup<Bindings>(device, &teapotBindings);
 
 EventHandler handler;
@@ -269,7 +277,7 @@ while (System.IsRunning()) {
 
   auto tessPass = new ComputePass<BicubicComputePipeline>(encoder, { bindings = computeBindings });
   tessPass.SetPipeline(tessPipeline);
-  tessPass.Dispatch(patchWidth, patchWidth, teapotControlIndices.length / 16);
+  tessPass.Dispatch((patchWidth + 7) / 8, (patchWidth + 7) / 8, numPatches);
   tessPass.End();
 
   auto fb = new ColorAttachment<PreferredSwapChainFormat>(swapChain.GetCurrentTexture(), Clear, Store);
@@ -284,7 +292,7 @@ while (System.IsRunning()) {
   auto teapotPass = new RenderPass<ReflectionPipeline>(renderPass);
   teapotPass.SetPipeline(teapotPipeline);
   teapotPass.Set(&teapotData);
-  teapotPass.DrawIndexed(10000, 1, 0, 0, 0); // FIXME
+  teapotPass.DrawIndexed(teapotIndices.length, 1, 0, 0, 0);
 
   renderPass.End();
   CommandBuffer* cb = encoder.Finish();
