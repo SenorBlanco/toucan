@@ -3,7 +3,7 @@ include "quaternion.t"
 include "transform.t"
 include "utils.t"
 
-using Vector = float<3>;
+using Vector = float<4>;
 
 int width =  20;
 int height = 20;
@@ -139,7 +139,7 @@ class DrawBindings {
 class DrawPipeline {
   void vertexShader(VertexBuiltins vb) vertex {
     auto matrix = bindings.Get().uniforms.MapReadUniform().matrix;
-    vb.position = matrix * Utils.makeFloat4(vertices.Get());
+    vb.position = matrix * vertices.Get();
   }
   void fragmentShader(FragmentBuiltins fb) fragment {
     fragColor.Set(bindings.Get().uniforms.MapReadUniform().color);

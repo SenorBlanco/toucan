@@ -17,17 +17,26 @@ class Utils {
   static float length(float<3> v) {
     return Math.sqrt(Utils.dot(v, v));
   }
+  static float length(float<4> v) {
+    return Math.sqrt(Utils.dot(v, v));
+  }
   static float<4> makeFloat4(float<2> v) {
     return float<4>(v.x, v.y, 0.0, 1.0);
   }
   static float<4> makeFloat4(float<3> v) {
     return float<4>(v.x, v.y, v.z, 1.0);
   }
+  static float<4> makeFloat4(float<4> v) {
+    return v;
+  }
   static float<2> makeVector(float x, float y, float z, float<2> placeholder) {
     return float<2>(x, y);
   }
   static float<3> makeVector(float x, float y, float z, float<3> placeholder) {
     return float<3>(x, y, z);
+  }
+  static float<4> makeVector(float x, float y, float z, float<4> placeholder) {
+    return float<4>(x, y, z, 1.0);
   }
   static float<3> cross(float<3> a, float<3> b) {
     return float<3>(a.y * b.z - a.z * b.y,
