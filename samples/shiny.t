@@ -74,19 +74,19 @@ auto teapotIndices = new uint[numPatches * level * level * 6];
 
 int vi = 0, ii = 0;
 for (int k = 0; k < numPatches; ++k) {
-  for (int i = 0; i <= level; ++i) {
-    for (int j = 0; j <= level; ++j) {
-      if (i < level && j < level) {
-        teapotIndices[ii++] = vi;
-        teapotIndices[ii++] = vi + 1;
-        teapotIndices[ii++] = vi + patchWidth + 1;
-        teapotIndices[ii++] = vi;
-        teapotIndices[ii++] = vi + patchWidth + 1;
-        teapotIndices[ii++] = vi + patchWidth;
-      }
+  for (int i = 0; i < level; ++i) {
+    for (int j = 0; j < level; ++j) {
+      teapotIndices[ii++] = vi;
+      teapotIndices[ii++] = vi + 1;
+      teapotIndices[ii++] = vi + patchWidth + 1;
+      teapotIndices[ii++] = vi;
+      teapotIndices[ii++] = vi + patchWidth + 1;
+      teapotIndices[ii++] = vi + patchWidth;
       ++vi;
     }
+    ++vi;           // skip the last column
   }
+  vi += patchWidth; // skip the last row
 }
 
 class Uniforms {
