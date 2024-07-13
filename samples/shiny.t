@@ -124,14 +124,6 @@ class ComputeBindings {
 
 class BicubicComputePipeline {
   void computeShader(ComputeBuiltins cb) compute(8, 8, 1) {
-    auto placeholder1 = Utils.dot(float<3>(1.0), float<3>(1.0));
-    auto placeholder2 = Utils.length(float<3>(1.0));
-    auto placeholder3 = Utils.normalize(float<3>(1.0));
-    auto placeholder4 = Utils.cross(float<3>(1.0), float<3>(1.0));
-    Cubic<float<3>> placeholderCubic;
-    placeholderCubic.Evaluate(0.0);
-    placeholderCubic.EvaluateTangent(0.0);
-    placeholderCubic.FromBezier(float<3>[4](float<3>(0.0), float<3>(0.0), float<3>(0.0), float<3>(0.0)));
     auto controlPoints = bindings.Get().controlPoints.MapReadWriteStorage();
     auto controlIndices = bindings.Get().controlIndices.MapReadWriteStorage();
     auto vertices = bindings.Get().vertices.MapReadWriteStorage();
