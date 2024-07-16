@@ -44,11 +44,8 @@ class BicubicPatch {
   Vertex Evaluate(float u, float v) {
     float<3>[4] pu, pv;
     for (int i = 0; i < 4; ++i) {
-      // FIXME: these temporaries shouldn't be necessary
-      auto tempv = vCubics[i];
-      auto tempu = uCubics[i];
-      pu[i] = tempv.Evaluate(v);
-      pv[i] = tempu.Evaluate(u);
+      pu[i] = vCubics[i].Evaluate(v);
+      pv[i] = uCubics[i].Evaluate(u);
     }
     Cubic<float<3>> uCubic, vCubic;
     uCubic.FromBezier(pu);
@@ -150,9 +147,7 @@ class BicubicComputePipeline {
       patch.vCubics[i] = tempv;
     }
     uint id = cb.globalInvocationId.z * uniforms.patchWidth * uniforms.patchWidth + cb.globalInvocationId.y * uniforms.patchWidth + cb.globalInvocationId.x;
-    // FIXME: another temporary
-    auto temp = patch.Evaluate(u, v);
-    vertices[id] = temp;
+    vertices[id] = patch.Evaluate(u, v);
   }
   BindGroup<ComputeBindings>* bindings;
 }
