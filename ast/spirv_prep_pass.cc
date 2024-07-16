@@ -47,18 +47,18 @@ Result SPIRVPrepPass::Visit(MethodCall* node) {
       auto var = std::make_shared<Var>("temp", baseType);
       enclosingStmts_->AppendVar(var);
       VarExpr* varExpr = Make<VarExpr>(var.get());
+      if (baseType->IsWriteable()) {
+        if (!writeStmts) writeStmts = Make<Stmts>();
+        Expr* load = Make<LoadExpr>(varExpr);
+        Stmt* store = Make<StoreStmt>(arg, load);
+        writeStmts->Append(store);
+      }
       if (baseType->IsReadable()) {
         Expr* load = Make<LoadExpr>(arg);
         Stmt* store = Make<StoreStmt>(varExpr, load);
         arg = Make<ExprWithStmt>(varExpr, store);
       } else {
         arg = varExpr;
-      }
-      if (baseType->IsWriteable()) {
-        if (!writeStmts) writeStmts = Make<Stmts>();
-        Expr* load = Make<LoadExpr>(varExpr);
-        Stmt* store = Make<StoreStmt>(arg, load);
-        writeStmts->Append(store);
       }
     }
     newArgs->Append(arg);
