@@ -64,6 +64,9 @@ Result CopyVisitor::Visit(Stmts* stmts) {
     Stmt* stmt = Resolve(it);
     if (stmt) newStmts->Append(Resolve(stmt));
   }
+  for (auto var : stmts->GetVars()) {
+    newStmts->AppendVar(var);
+  }
   return newStmts;
 }
 
@@ -202,6 +205,18 @@ Result CopyVisitor::Visit(UnresolvedStaticMethodCall* node) {
 
 Result CopyVisitor::Visit(UnresolvedIdentifier* node) {
   return Make<UnresolvedIdentifier>(node->GetID());
+}
+
+Result CopyVisitor::Visit(ZeroInitStmt* node) {
+  return Make<ZeroInitStmt>(Resolve(node->GetLHS()));
+}
+
+Result CopyVisitor::Visit(VarExpr* node) {
+  return Make<VarExpr>(node->GetVar());
+}
+
+Result CopyVisitor::Visit(FieldAccess* node) {
+  return Make<FieldAccess>(Resolve(node->GetExpr()), node->GetField());
 }
 
 Result CopyVisitor::Default(ASTNode* node) {
