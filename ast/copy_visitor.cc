@@ -34,6 +34,14 @@ Result CopyVisitor::Visit(CastExpr* node) {
   return Make<CastExpr>(type, expr);
 }
 
+Result CopyVisitor::Visit(ExprWithStmt* node) {
+  return Make<ExprWithStmt>(Resolve(node->GetExpr()), node->GetStmt());
+}
+
+Result CopyVisitor::Visit(ExtractElementExpr* node) {
+  return Make<ExtractElementExpr>(Resolve(node->GetExpr()), node->GetIndex());
+}
+
 Result CopyVisitor::Visit(Initializer* node) {
   Type*     type = ResolveType(node->GetType());
   ExprList* argList = Resolve(node->GetArgList());
