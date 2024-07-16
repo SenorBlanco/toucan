@@ -609,6 +609,7 @@ void CodeGenSPIRV::AppendEntryPoint(uint32_t    executionModel,
 }
 
 uint32_t CodeGenSPIRV::AppendCode(uint32_t opCode, uint32_t resultType, const Code& args) {
+//  printf("appending opcode %u, resultType %u, args...\n", opCode, resultType);
   return Append(opCode, resultType, args, &body_);
 }
 
@@ -781,6 +782,9 @@ void CodeGenSPIRV::GenCodeForMethod(Method* method, uint32_t resultId) {
   NodeVector nodes;
   SPIRVPrepPass prepPass(&nodes, types_);
   auto stmts = prepPass.Resolve(method->stmts);
+//  CopyVisitor copyVisitor(&nodes);
+//  auto stmts = copyVisitor.Resolve(method->stmts);
+//  auto stmts = method->stmts;
 
   uint32_t resultType = ConvertType(method->returnType);
   Code     argTypes{resultType};
