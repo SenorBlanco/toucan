@@ -139,12 +139,8 @@ class BicubicComputePipeline {
         pu[j] = controlPoints[controlIndices[k + i + j * 4]];
         pv[j] = controlPoints[controlIndices[k + i * 4 + j]];
       }
-      // FIXME: these temporaries shouldn't be necessary
-      Cubic<float<3>> tempu, tempv;
-      tempu.FromBezier(pu);
-      tempv.FromBezier(pv);
-      patch.uCubics[i] = tempu;
-      patch.vCubics[i] = tempv;
+      patch.uCubics[i].FromBezier(pu);
+      patch.vCubics[i].FromBezier(pv);
     }
     uint id = cb.globalInvocationId.z * uniforms.patchWidth * uniforms.patchWidth + cb.globalInvocationId.y * uniforms.patchWidth + cb.globalInvocationId.x;
     vertices[id] = patch.Evaluate(u, v);
