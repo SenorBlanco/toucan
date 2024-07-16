@@ -35,6 +35,8 @@ class CopyVisitor : public Visitor {
   Result        Visit(EnumConstant* node) override;
   Result        Visit(ExprList* node) override;
   Result        Visit(ExprStmt* exprStmt) override;
+  Result        Visit(ExprWithStmt* node) override;
+  Result        Visit(ExtractElementExpr* node) override;
   Result        Visit(FieldAccess* node) override;
   Result        Visit(FloatConstant* constant) override;
   Result        Visit(ForStatement* forStmt) override;
