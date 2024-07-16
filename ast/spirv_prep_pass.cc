@@ -22,8 +22,13 @@ SPIRVPrepPass::SPIRVPrepPass(NodeVector* nodes, TypeTable* types)
 Result SPIRVPrepPass::Visit(Stmts* stmts) {
   Stmts* temp = enclosingStmts_;
   Stmts* newStmts = enclosingStmts_ = Make<Stmts>();
+
   for (Stmt* const& it : stmts->GetStmts()) {
-    newStmts->Append(Resolve(it));
+    Stmt* stmt = Resolve(it);
+    if (stmt) newStmts->Append(stmt);
+  }
+  for (auto var : stmts->GetVars()) {
+    newStmts->AppendVar(var);
   }
   enclosingStmts_ = temp;
   return newStmts;
@@ -34,16 +39,13 @@ Result SPIRVPrepPass::Visit(MethodCall* node) {
   const std::vector<Expr*>& args = node->GetArgList()->Get();
   auto* newArgs = Make<ExprList>();
   for (auto& i : args) {
-    Expr* arg = i;
+    Expr* arg = Resolve(i);
     auto* type = arg->GetType(types_);
-    if (type->IsPtr()) {
-      // FIXME: skip if no FieldAccess or ArrayAccess in arg
-      arg = Make<SmartToRawPtr>(arg);
-      type = arg->GetType(types_);
-      auto var = std::make_shared<Var>("temp", type);
+    if (type->IsPtr() && arg->IsFieldAccess() || arg->IsArrayAccess()) {
+      auto* baseType = static_cast<PtrType*>(type)->GetBaseType();
+      auto var = std::make_shared<Var>("temp", baseType);
       enclosingStmts_->AppendVar(var);
       VarExpr* varExpr = Make<VarExpr>(var.get());
-      auto* baseType = static_cast<PtrType*>(type)->GetBaseType();
       if (baseType->IsReadable()) {
         Expr* load = Make<LoadExpr>(arg);
         Stmt* store = Make<StoreStmt>(varExpr, load);
@@ -60,8 +62,19 @@ Result SPIRVPrepPass::Visit(MethodCall* node) {
   return Make<MethodCall>(method, newArgs);
 }
 
+Result SPIRVPrepPass::Visit(RawToWeakPtr* node) {
+  // All pointers are raw pointers in SPIR-V.
+  return Resolve(node->GetExpr());
+}
+
+Result SPIRVPrepPass::Visit(ZeroInitStmt* node) {
+  // All variables are zero-initialized already
+  return nullptr;
+}
+
 Result SPIRVPrepPass::Default(ASTNode* node) {
-  return node;
+  assert(false);
+  return nullptr;
 }
 
 };  // namespace Toucan

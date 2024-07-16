@@ -25,8 +25,10 @@ class SPIRVPrepPass : public CopyVisitor {
  public:
   SPIRVPrepPass(NodeVector* nodes, TypeTable* types);
   Result Visit(MethodCall* node) override;
+  Result Visit(RawToWeakPtr* node) override;
   Result Visit(Stmts* node) override;
-  virtual Result Default(ASTNode* node);
+  Result Visit(ZeroInitStmt* node) override;
+  Result Default(ASTNode* node) override;
  private:
   TypeTable* types_;
   Stmts*     enclosingStmts_;
