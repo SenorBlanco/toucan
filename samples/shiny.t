@@ -149,9 +149,7 @@ class BicubicComputePipeline {
       patch.vCubics[i] = tempv;
     }
     uint id = cb.globalInvocationId.z * uniforms.patchWidth * uniforms.patchWidth + cb.globalInvocationId.y * uniforms.patchWidth + cb.globalInvocationId.x;
-    // FIXME: another temporary
-    auto temp = patch.Evaluate(u, v);
-    vertices[id] = temp;
+    vertices[id] = patch.Evaluate(u, v);
   }
   BindGroup<ComputeBindings>* bindings;
 }
