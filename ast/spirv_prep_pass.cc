@@ -38,6 +38,7 @@ Result SPIRVPrepPass::Visit(MethodCall* node) {
   Method*                   method = node->GetMethod();
   const std::vector<Expr*>& args = node->GetArgList()->Get();
   auto* newArgs = Make<ExprList>();
+  Stmts* writeStmts = nullptr;
   for (auto& i : args) {
     Expr* arg = Resolve(i);
     auto* type = arg->GetType(types_);
@@ -53,13 +54,18 @@ Result SPIRVPrepPass::Visit(MethodCall* node) {
       } else {
         arg = varExpr;
       }
-//      if (baseType->IsWriteable()) {
-//        temporaryArgs.push_back({resultArg, temporaryId, valueType});
-//      }
+      if (baseType->IsWriteable()) {
+        if (!writeStmts) writeStmts = Make<Stmts>();
+        Expr* load = Make<LoadExpr>(varExpr);
+        Stmt* store = Make<StoreStmt>(arg, load);
+        writeStmts->Append(store);
+      }
     }
     newArgs->Append(arg);
   }
-  return Make<MethodCall>(method, newArgs);
+  Expr* result = Make<MethodCall>(method, newArgs);
+  if (writeStmts) result = Make<ExprWithStmt>(result, writeStmts);
+  return result;
 }
 
 Result SPIRVPrepPass::Visit(RawToWeakPtr* node) {
