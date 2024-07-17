@@ -245,27 +245,36 @@ auto depthBuffer = new renderable Texture2D<Depth24Plus>(device, window.GetSize(
 Uniforms uniforms;
 auto prevWindowSize = uint<2>{0, 0};
 double startTime = System.GetCurrentTime();
-Cubic<float> animCurve;
-animCurve.FromBezier({0.5, 0.5, 1.5, 1.5});
+Cubic<float>[4] animCurves;
+animCurves[0].FromBezier({1.0, 1.0, 1.5, 1.5});
+animCurves[1].FromBezier({1.5, 1.5, 1.0, 1.0});
+animCurves[2].FromBezier({1.0, 1.0, 0.5, 0.5});
+animCurves[3].FromBezier({0.5, 0.5, 1.0, 1.0});
+float[4] keyTimes = { 0.0, 0.5, 1.5, 1.7 };
 float duration = 2.0;
-float animScale = 2.0 / duration;
 auto animTeapotControlPoints = new float<3>[teapotControlPoints.length];
 while (System.IsRunning()) {
   float animTime = (float) ((System.GetCurrentTime() - startTime) % duration);
-  float t;
-  if (animTime < duration * 0.5) {
-    t = animCurve.Evaluate(animTime * animScale);
-  } else {
-    t = animCurve.Evaluate((duration - animTime) * animScale);
+  int key = keyTimes.length - 1;
+  float keyEnd = duration;
+  for (int i = 0; i < keyTimes.length - 1; ++i) {
+    if (animTime >= keyTimes[i] && animTime < keyTimes[i + 1]) {
+      key = i;
+      keyEnd = keyTimes[i + 1];
+    }
   }
+  float keyStart = keyTimes[key];
+  float t = animCurves[key].Evaluate((animTime - keyStart) / (keyEnd - keyStart));
 
   for (int i = 0; i < teapotControlPoints.length; ++i) {
     animTeapotControlPoints[i] = teapotControlPoints[i];
   }
 
-  int[16] pointsToAnimate = { 49, 50, 52, 53, 60, 61, 63, 64, 69, 70, 72, 73, 78, 79, 80, 81 };
-  for (int i = 0; i < pointsToAnimate.length; ++i) {
-    animTeapotControlPoints[pointsToAnimate[i]] *= t;
+  for (int i = 0; i < teapotControlIndices.length; i += 16) {
+    animTeapotControlPoints[teapotControlIndices[i + 5]] *= t;
+    animTeapotControlPoints[teapotControlIndices[i + 6]] *= t;
+    animTeapotControlPoints[teapotControlIndices[i + 9]] *= t;
+    animTeapotControlPoints[teapotControlIndices[i + 10]] *= t;
   }
 
   tcp.SetData(animTeapotControlPoints);
