@@ -110,7 +110,7 @@ class BicubicTessellator {
   uint[]* indices;
 }
 
-auto tessTeapot = new BicubicTessellator(&teapotControlPoints, &teapotIndices, 8);
+auto tessTeapot = new BicubicTessellator(&teapotControlPoints, &teapotControlIndices, 8);
 
 class Uniforms {
   float<4,4>  model, view, projection;
