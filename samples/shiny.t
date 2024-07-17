@@ -141,7 +141,7 @@ class BicubicComputePipeline {
       patch.uCubics[i].FromBezier(pu);
       patch.vCubics[i].FromBezier(pv);
     }
-    uint id = cb.globalInvocationId.z * uniforms.patchWidth * uniforms.patchWidth + cb.globalInvocationId.y * uniforms.patchWidth + cb.globalInvocationId.x;
+    uint id = cb.globalInvocationId.x + uniforms.patchWidth * (cb.globalInvocationId.y + uniforms.patchWidth * cb.globalInvocationId.z);
     vertices[id] = patch.Evaluate(u, v);
   }
   BindGroup<ComputeBindings>* bindings;
@@ -208,18 +208,13 @@ Bindings teapotBindings;
 teapotBindings.sampler = cubeBindings.sampler;
 teapotBindings.textureView = cubeBindings.textureView;
 teapotBindings.uniforms = new uniform Buffer<Uniforms>(device);
-uint numVerticesPerPatch = patchWidth * patchWidth;
 
-<<<<<<< HEAD
-ReflectionPipeline teapotData;
-teapotData.vert = new vertex Buffer<Vertex[]>(device, tessTeapot.vertices);
-teapotData.indexBuffer = new index Buffer<uint[]>(device, tessTeapot.indices);
-=======
+uint numVerticesPerPatch = patchWidth * patchWidth;
 auto teapotVertices = new vertex storage Buffer<Vertex[]>(device, numPatches * numVerticesPerPatch);
 
-auto tcp = new storage Buffer<float<3>[]>(device, &teapotControlPoints);
+auto teapotControlPointsBuffer = new storage Buffer<float<3>[]>(device, teapotControlPoints.length);
 auto computeBindings = new BindGroup<ComputeBindings>(device, {
-  controlPoints = tcp,
+  controlPoints = teapotControlPointsBuffer,
   controlIndices = new storage Buffer<uint[]>(device, &teapotControlIndices),
   vertices = teapotVertices,
   uniforms = new uniform Buffer<ComputeUniforms>(device, { patchWidth = patchWidth, scale = 1.0 / (float) level } )
@@ -227,12 +222,7 @@ auto computeBindings = new BindGroup<ComputeBindings>(device, {
 
 ReflectionPipeline teapotData;
 teapotData.vert = teapotVertices;
-<<<<<<< HEAD
-teapotData.indexBuffer = new index Buffer<uint[]>(device, teapotIndices);
->>>>>>> Works!
-=======
 teapotData.indexBuffer = new index Buffer<uint[]>(device, tessTeapotIndices);
->>>>>>> Cleanup to match non-compute version.
 teapotData.bindings = new BindGroup<Bindings>(device, &teapotBindings);
 
 EventHandler handler;
@@ -277,7 +267,7 @@ while (System.IsRunning()) {
     animTeapotControlPoints[teapotControlIndices[i + 10]] *= t;
   }
 
-  tcp.SetData(animTeapotControlPoints);
+  teapotControlPointsBuffer.SetData(animTeapotControlPoints);
   Quaternion orientation = Quaternion(float<3>(0.0, 1.0, 0.0), handler.rotation.x);
   orientation = orientation.mul(Quaternion(float<3>(1.0, 0.0, 0.0), handler.rotation.y));
   orientation.normalize();
