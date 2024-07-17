@@ -95,7 +95,7 @@ template("toucan_executable") {
       ldflags = [
         "--shell-file", rebase_path("//emscripten/shell.html", root_build_dir),
         "-sUSE_WEBGPU=1",
-        "-sINITIAL_MEMORY=67108864",
+        "-sINITIAL_MEMORY=536870912",
         "-sSTACK_SIZE=4194304",
         "-sASYNCIFY=2",
         "-Wno-experimental",

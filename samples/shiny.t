@@ -110,7 +110,8 @@ class BicubicTessellator {
   uint[]* indices;
 }
 
-auto tessTeapot = new BicubicTessellator(&teapotControlPoints, &teapotIndices, 8);
+int level = 128;
+auto tessTeapot = new BicubicTessellator(&teapotControlPoints, &teapotIndices, level);
 
 class Uniforms {
   float<4,4>  model, view, projection;
@@ -230,7 +231,7 @@ while (System.IsRunning()) {
     animTeapotControlPoints[pointsToAnimate[i]] *= t;
   }
 
-  tessTeapot = new BicubicTessellator(animTeapotControlPoints, &teapotIndices, 8);
+  auto tessTeapot = new BicubicTessellator(animTeapotControlPoints, &teapotIndices, level);
   teapotData.vert.SetData(tessTeapot.vertices);
 
   Quaternion orientation = Quaternion(float<3>(0.0, 1.0, 0.0), handler.rotation.x);
