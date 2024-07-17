@@ -70,18 +70,18 @@ class BicubicPatch {
 uint level = 64;
 uint patchWidth = level + 1;
 uint numPatches = teapotControlIndices.length / 16;
-auto teapotIndices = new uint[numPatches * level * level * 6];
+auto tessTeapotIndices = new uint[numPatches * level * level * 6];
 
 int vi = 0, ii = 0;
 for (int k = 0; k < numPatches; ++k) {
   for (int i = 0; i < level; ++i) {
     for (int j = 0; j < level; ++j) {
-      teapotIndices[ii++] = vi;
-      teapotIndices[ii++] = vi + 1;
-      teapotIndices[ii++] = vi + patchWidth + 1;
-      teapotIndices[ii++] = vi;
-      teapotIndices[ii++] = vi + patchWidth + 1;
-      teapotIndices[ii++] = vi + patchWidth;
+      tessTeapotIndices[ii++] = vi;
+      tessTeapotIndices[ii++] = vi + 1;
+      tessTeapotIndices[ii++] = vi + patchWidth + 1;
+      tessTeapotIndices[ii++] = vi;
+      tessTeapotIndices[ii++] = vi + patchWidth + 1;
+      tessTeapotIndices[ii++] = vi + patchWidth;
       ++vi;
     }
     ++vi;           // skip the last column
@@ -107,9 +107,6 @@ class Pipeline {
   BindGroup<Bindings>* bindings;
 }
 
-<<<<<<< HEAD
-class SkyboxPipeline : Pipeline {
-=======
 class ComputeUniforms {
   uint  patchWidth;
   float scale;
@@ -151,7 +148,6 @@ class BicubicComputePipeline {
 }
 
 class SkyboxPipeline : DrawPipeline {
->>>>>>> Works!
     float<3> vertexShader(VertexBuiltins vb) vertex {
         auto v = position.Get();
         auto uniforms = bindings.Get().uniforms.MapReadUniform();
@@ -231,8 +227,12 @@ auto computeBindings = new BindGroup<ComputeBindings>(device, {
 
 ReflectionPipeline teapotData;
 teapotData.vert = teapotVertices;
+<<<<<<< HEAD
 teapotData.indexBuffer = new index Buffer<uint[]>(device, teapotIndices);
 >>>>>>> Works!
+=======
+teapotData.indexBuffer = new index Buffer<uint[]>(device, tessTeapotIndices);
+>>>>>>> Cleanup to match non-compute version.
 teapotData.bindings = new BindGroup<Bindings>(device, &teapotBindings);
 
 EventHandler handler;
@@ -320,10 +320,14 @@ while (System.IsRunning()) {
   teapotPass.SetPipeline(teapotPipeline);
   teapotPass.Set(&teapotData);
 <<<<<<< HEAD
+<<<<<<< HEAD
   teapotPass.DrawIndexed(tessTeapot.indices.length, 1, 0, 0, 0);
 =======
   teapotPass.DrawIndexed(teapotIndices.length, 1, 0, 0, 0);
 >>>>>>> Works!
+=======
+  teapotPass.DrawIndexed(tessTeapotIndices.length, 1, 0, 0, 0);
+>>>>>>> Cleanup to match non-compute version.
 
   renderPass.End();
   CommandBuffer* cb = encoder.Finish();
