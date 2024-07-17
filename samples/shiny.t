@@ -68,7 +68,7 @@ class BicubicPatch {
   Cubic<float<3>>[4] uCubics, vCubics;
 }
 
-uint level = 8;
+uint level = 32;
 uint patchWidth = level + 1;
 uint numPatches = teapotControlIndices.length / 16;
 auto teapotIndices = new uint[numPatches * level * level * 6];
@@ -215,8 +215,9 @@ uint numVerticesPerPatch = patchWidth * patchWidth;
 
 auto teapotVertices = new vertex storage Buffer<Vertex[]>(device, numPatches * numVerticesPerPatch);
 
+auto tcp = new storage Buffer<float<3>[]>(device, &teapotControlPoints);
 auto computeBindings = new BindGroup<ComputeBindings>(device, {
-  controlPoints = new storage Buffer<float<3>[]>(device, &teapotControlPoints),
+  controlPoints = tcp,
   controlIndices = new storage Buffer<uint[]>(device, &teapotControlIndices),
   vertices = teapotVertices,
   uniforms = new uniform Buffer<ComputeUniforms>(device, { patchWidth = patchWidth, scale = 1.0 / (float) level } )
@@ -236,7 +237,31 @@ auto teapotRotation = teapotQuat.toMatrix();
 auto depthBuffer = new renderable Texture2D<Depth24Plus>(device, window.GetSize());
 Uniforms uniforms;
 auto prevWindowSize = uint<2>{0, 0};
+double startTime = System.GetCurrentTime();
+Cubic<float> animCurve;
+animCurve.FromBezier({0.5, 0.5, 1.5, 1.5});
+float duration = 2.0;
+float animScale = 2.0 / duration;
+auto animTeapotControlPoints = new float<3>[teapotControlPoints.length];
 while (System.IsRunning()) {
+  float animTime = (float) ((System.GetCurrentTime() - startTime) % duration);
+  float t;
+  if (animTime < duration * 0.5) {
+    t = animCurve.Evaluate(animTime * animScale);
+  } else {
+    t = animCurve.Evaluate((duration - animTime) * animScale);
+  }
+
+  for (int i = 0; i < teapotControlPoints.length; ++i) {
+    animTeapotControlPoints[i] = teapotControlPoints[i];
+  }
+
+  int[16] pointsToAnimate = { 49, 50, 52, 53, 60, 61, 63, 64, 69, 70, 72, 73, 78, 79, 80, 81 };
+  for (int i = 0; i < pointsToAnimate.length; ++i) {
+    animTeapotControlPoints[pointsToAnimate[i]] *= t;
+  }
+
+  tcp.SetData(animTeapotControlPoints);
   Quaternion orientation = Quaternion(float<3>(0.0, 1.0, 0.0), handler.rotation.x);
   orientation = orientation.mul(Quaternion(float<3>(1.0, 0.0, 0.0), handler.rotation.y));
   orientation.normalize();
@@ -282,7 +307,7 @@ while (System.IsRunning()) {
   device.GetQueue().Submit(cb);
   swapChain.Present();
 
-  do {
+  while (System.HasPendingEvents()) {
     handler.Handle(System.GetNextEvent());
-  } while (System.HasPendingEvents());
+  }
 }
