@@ -67,7 +67,7 @@ class BicubicPatch {
   Cubic<float<3>>[4] uCubics, vCubics;
 }
 
-uint level = 32;
+uint level = 64;
 uint patchWidth = level + 1;
 uint numPatches = teapotControlIndices.length / 16;
 auto teapotIndices = new uint[numPatches * level * level * 6];
