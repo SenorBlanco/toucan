@@ -25,6 +25,10 @@ toucan_app("decode") {
   sources = [ "decode.t" ]
 }
 
+toucan_app("glassy") {
+  sources = [ "glassy.t" ]
+}
+
 toucan_app("skybox") {
   sources = [ "skybox.t" ]
 }
