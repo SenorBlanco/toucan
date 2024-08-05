@@ -20,7 +20,7 @@
 #include <spirv/unified1/spirv.hpp>
 
 #include <ast/native_class.h>
-#include <ast/spirv_prep_pass.h>
+#include <ast/shader_prep_pass.h>
 
 #define NOTIMPLEMENTED() assert(false)
 
@@ -779,8 +779,8 @@ uint32_t CodeGenSPIRV::GetFunctionType(const Code& signature) {
 
 void CodeGenSPIRV::GenCodeForMethod(Method* method, uint32_t resultId) {
   NodeVector nodes;
-  SPIRVPrepPass prepPass(&nodes, types_);
-  auto stmts = prepPass.Resolve(method->stmts);
+  ShaderPrepPass shaderPrepPass(&nodes, types_);
+  auto stmts = shaderPrepPass.Resolve(method->stmts);
 
   uint32_t resultType = ConvertType(method->returnType);
   Code     argTypes{resultType};

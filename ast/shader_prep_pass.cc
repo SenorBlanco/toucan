@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "spirv_prep_pass.h"
+#include "shader_prep_pass.h"
 
 namespace Toucan {
 
-SPIRVPrepPass::SPIRVPrepPass(NodeVector* nodes, TypeTable* types)
+ShaderPrepPass::ShaderPrepPass(NodeVector* nodes, TypeTable* types)
     : CopyVisitor(nodes), types_(types) {}
 
-Result SPIRVPrepPass::Visit(Stmts* stmts) {
+Result ShaderPrepPass::Visit(Stmts* stmts) {
   Stmts* temp = enclosingStmts_;
   Stmts* newStmts = enclosingStmts_ = Make<Stmts>();
 
@@ -34,7 +34,7 @@ Result SPIRVPrepPass::Visit(Stmts* stmts) {
   return newStmts;
 }
 
-Result SPIRVPrepPass::Visit(MethodCall* node) {
+Result ShaderPrepPass::Visit(MethodCall* node) {
   Method*                   method = node->GetMethod();
   const std::vector<Expr*>& args = node->GetArgList()->Get();
   auto* newArgs = Make<ExprList>();
@@ -68,17 +68,17 @@ Result SPIRVPrepPass::Visit(MethodCall* node) {
   return result;
 }
 
-Result SPIRVPrepPass::Visit(RawToWeakPtr* node) {
+Result ShaderPrepPass::Visit(RawToWeakPtr* node) {
   // All pointers are raw pointers in SPIR-V.
   return Resolve(node->GetExpr());
 }
 
-Result SPIRVPrepPass::Visit(ZeroInitStmt* node) {
+Result ShaderPrepPass::Visit(ZeroInitStmt* node) {
   // All variables are zero-initialized already
   return nullptr;
 }
 
-Result SPIRVPrepPass::Default(ASTNode* node) {
+Result ShaderPrepPass::Default(ASTNode* node) {
   assert(false);
   return nullptr;
 }

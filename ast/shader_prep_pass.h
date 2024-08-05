@@ -21,9 +21,9 @@ namespace Toucan {
 
 class SymbolTable;
 
-class SPIRVPrepPass : public CopyVisitor {
+class ShaderPrepPass : public CopyVisitor {
  public:
-  SPIRVPrepPass(NodeVector* nodes, TypeTable* types);
+  ShaderPrepPass(NodeVector* nodes, TypeTable* types);
   Result Visit(MethodCall* node) override;
   Result Visit(RawToWeakPtr* node) override;
   Result Visit(Stmts* node) override;
