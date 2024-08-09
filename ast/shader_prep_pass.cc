@@ -42,7 +42,7 @@ Result ShaderPrepPass::Visit(MethodCall* node) {
   for (auto& i : args) {
     Expr* arg = Resolve(i);
     auto* type = arg->GetType(types_);
-    if (type->IsPtr() && arg->IsFieldAccess() || arg->IsArrayAccess()) {
+    if (type->IsPtr() && (arg->IsFieldAccess() || arg->IsArrayAccess())) {
       auto* baseType = static_cast<PtrType*>(type)->GetBaseType();
       auto var = std::make_shared<Var>("temp", baseType);
       enclosingStmts_->AppendVar(var);
