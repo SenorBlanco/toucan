@@ -31,6 +31,12 @@ class Bindings {
   SampleableTexture2D<float>* textureView;
 }
 
+class C {
+  SampleableTexture2D<float>* tex;
+  Sampler* sampler;
+  float<2> coord;
+}
+
 class Pipeline {
     Varyings vertexShader(VertexBuiltins^ vb) vertex {
         Vertex v = vert.Get();
@@ -39,9 +45,13 @@ class Pipeline {
         varyings.texCoord = v.texCoord;
         return varyings;
     }
+    deviceonly static float<4> sample(C c) {
+      return c.tex.Sample(c.sampler, c.coord);
+    }
     void fragmentShader(FragmentBuiltins^ fb, Varyings varyings) fragment {
       auto b = bindings.Get();
-      fragColor.Set(b.textureView.Sample(b.sampler, varyings.texCoord));
+      C c = { tex = b.textureView, sampler = b.sampler, coord = varyings.texCoord };
+      fragColor.Set(this.sample(c));
     }
     vertex Buffer<Vertex[]>* vert;
     index Buffer<uint[]>*    indices;
