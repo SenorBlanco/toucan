@@ -92,7 +92,7 @@ class CodeGenLLVM : public Visitor {
   llvm::GlobalVariable* GetOrCreateVTable(ClassType* classType);
   void                  FillVTable(ClassType* classType);
   void                  InitializeObject(llvm::Value* objPtr, ClassType* classType);
-  void                  CreateEntryBlockAlloca(llvm::Function* function, Var* var);
+  llvm::AllocaInst*     CreateEntryBlockAlloca(llvm::Function* function, Var* var);
   llvm::Value*          CreatePointer(llvm::Value* obj, llvm::Value* controlBlock);
   llvm::Value*          CreateControlBlock(Type* type);
   llvm::Value*          CreateMalloc(llvm::Type* type, llvm::Value* arraySize);
@@ -185,6 +185,7 @@ class CodeGenLLVM : public Visitor {
   llvm::Type*                             typeListType_;
   llvm::GlobalValue*                      typeList_;
   std::unordered_map<Expr*, llvm::Value*> exprCache_;
+  std::unordered_map<Var*, llvm::AllocaInst*>  vars_;
 };
 
 };  // namespace Toucan

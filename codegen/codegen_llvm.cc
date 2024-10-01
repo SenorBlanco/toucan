@@ -34,11 +34,6 @@
 
 namespace Toucan {
 
-namespace {
-
-llvm::AllocaInst* GetAllocaInst(Var* var) { return static_cast<llvm::AllocaInst*>(var->data); }
-}  // namespace
-
 CodeGenLLVM::CodeGenLLVM(llvm::LLVMContext*                 context,
                          TypeTable*                         types,
                          llvm::Module*                      module,
@@ -336,10 +331,9 @@ void CodeGenLLVM::UnrefStrongPtr(llvm::Value* ptr, StrongPtrType* type) {
   UnrefWeakPtr(ptr);
 }
 
-void CodeGenLLVM::CreateEntryBlockAlloca(llvm::Function* function, Var* var) {
+llvm::AllocaInst* CodeGenLLVM::CreateEntryBlockAlloca(llvm::Function* function, Var* var) {
   LLVMBuilder builder(&function->getEntryBlock(), function->getEntryBlock().begin());
-  llvm::Type* type = ConvertType(var->type);
-  var->data = builder.CreateAlloca(type, 0, var->name.c_str());
+  return vars_[var] = builder.CreateAlloca(ConvertType(var->type), 0, var->name.c_str());
 }
 
 void CodeGenLLVM::RefWeakPtr(llvm::Value* ptr) {
@@ -511,8 +505,8 @@ void CodeGenLLVM::GenCodeForMethod(Method* method) {
        ai != function->arg_end() && it != method->formalArgList.end(); ai++, it++) {
     Var* var = it->get();
     ai->setName(var->name.c_str());
-    CreateEntryBlockAlloca(function, var);
-    builder_->CreateStore(&*ai, GetAllocaInst(var));
+    auto allocaInst = CreateEntryBlockAlloca(function, var);
+    builder_->CreateStore(&*ai, allocaInst);
   }
   if (method->stmts) { method->stmts->Accept(this); }
   verifyFunction(*function);
@@ -1028,7 +1022,7 @@ Result CodeGenLLVM::Visit(ForStatement* forStmt) {
 }
 
 void CodeGenLLVM::GenerateDestructor(Var* var) {
-  llvm::Value* value = static_cast<llvm::Value*>(var->data);
+  llvm::Value* value = vars_[var];
   if (var->type->IsStrongPtr()) {
     value = builder_->CreateLoad(ConvertType(var->type), value);
     UnrefStrongPtr(value, static_cast<StrongPtrType*>(var->type));
@@ -1063,10 +1057,7 @@ Result CodeGenLLVM::Visit(EnumConstant* node) {
 }
 
 Result CodeGenLLVM::Visit(VarExpr* expr) {
-  Var*              var = expr->GetVar();
-  llvm::AllocaInst* inst = GetAllocaInst(var);
-  assert(inst);
-  return inst;
+  return            vars_[expr->GetVar()];
 }
 
 Result CodeGenLLVM::Visit(TempVarExpr* node) {

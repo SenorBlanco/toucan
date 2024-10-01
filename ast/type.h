@@ -289,12 +289,11 @@ struct Field {
 typedef std::vector<std::unique_ptr<Field>> FieldVector;
 
 struct Var {
-  Var(const std::string& n, Type* t) : name(n), type(t), data(0) {}
+  Var(const std::string& n, Type* t) : name(n), type(t) {}
 
   std::string name;
   Type*       type;
   uint32_t    spirv = 0;
-  void*       data;
 };
 
 class VarVector : public std::vector<std::shared_ptr<Var>> {};
