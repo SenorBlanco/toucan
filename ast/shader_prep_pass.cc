@@ -103,7 +103,9 @@ Result ShaderPrepPass::Visit(LoadExpr* node) {
     auto expr = Resolve(node->GetExpr());
     assert(expr->IsVarExpr());
     auto var = static_cast<VarExpr*>(expr)->GetVar();
-    var = unfoldedPtrs_[var].get();
+    if (auto unfolded = unfoldedPtrs_[var].get()) {
+      var = unfolded;
+    }
     return Make<VarExpr>(var);
   }
   if (type->IsPtr()) {
