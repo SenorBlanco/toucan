@@ -124,6 +124,12 @@ enum StoreOp {
   Discard
 }
 
+native class VertexInput<T> {
+  VertexInput(buffer : &vertex Buffer<[]T>);
+  deviceonly Get() : T;
+ ~VertexInput();
+}
+
 native class ColorAttachment<PF> {
   deviceonly Set(value : PF:DeviceType<4>);
  ~ColorAttachment();
