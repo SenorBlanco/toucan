@@ -3,7 +3,7 @@ var device = new Device();
 var window = new Window({0, 0}, {640, 480});
 var swapChain = new SwapChain<PreferredSwapChainFormat>(device, window);
 var verts : [3]Vertex = { { 0.0, 1.0, 0.0, 1.0 }, {-1.0, -1.0, 0.0, 1.0 }, { 1.0, -1.0, 0.0, 1.0 } };
-var vb = new vertex Buffer<[]Vertex>(device, &verts);
+var vb = new VertexInput<Vertex>(new vertex Buffer<[]Vertex>(device, &verts));
 class Bindings {
   var color : *uniform Buffer<float<4>>;
 }
@@ -11,7 +11,7 @@ class Bindings {
 class Pipeline {
   vertex main(vb : &VertexBuiltins) { vb.position = vertices.Get(); }
   fragment main(fb : &FragmentBuiltins) { fragColor.Set(bindings.Get().color.Map():); }
-  var vertices :  *vertex Buffer<[]Vertex>;
+  var vertices :  *VertexInput<Vertex>;
   var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
   var bindings :  *BindGroup<Bindings>;
 }

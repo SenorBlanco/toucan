@@ -23,7 +23,7 @@ indices[2] = 2;
 indices[3] = 1;
 indices[4] = 2;
 indices[5] = 3;
-var vb = new vertex Buffer<[]Vertex>(device, verts);
+var vb = new VertexInput<Vertex>(new vertex Buffer<[]Vertex>(device, verts));
 var ib = new index Buffer<[]uint>(device, indices);
 class Pipeline {
   vertex main(vb : &VertexBuiltins) : Varyings {
@@ -32,7 +32,7 @@ class Pipeline {
     return v.color;
   }
   fragment main(fb : &FragmentBuiltins, v : Varyings) { fragColor.Set(v); }
-  var vertices : *vertex Buffer<[]Vertex>;
+  var vertices : *VertexInput<Vertex>;
   var indices : *index Buffer<[]uint>;
   var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
 }

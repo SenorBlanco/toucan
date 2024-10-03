@@ -6,7 +6,7 @@ var triVB = new vertex Buffer<[]float<4>>(device, &triVerts);
 class GreenPipeline {
     vertex main(vb : &VertexBuiltins) { vb.position = position.Get(); }
     fragment main(fb : &FragmentBuiltins) { renderTex.Set(float<4>(0.0, 1.0, 0.0, 1.0)); }
-    var position : *vertex Buffer<[]float<4>>;
+    var position : *VertexInput<float<4>>;
     var renderTex : *ColorAttachment<RGBA8unorm>;
 }
 
@@ -30,7 +30,7 @@ class TexPipeline {
       var b = bindings.Get();
       fragColor.Set(b.textureView.Sample(b.sampler, texCoord));
     }
-    var vertices : *vertex Buffer<[]QuadVertex>;
+    var vertices : *VertexInput<QuadVertex>;
     var indices : *index Buffer<[]uint>;
     var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
     var bindings : *BindGroup<Bindings>;
@@ -43,7 +43,7 @@ var quadVerts : [4]QuadVertex = {
   { position = {  1.0,  1.0, 0.0, 1.0 }, texCoord = { 1.0, 0.0 } }
 };
 var quadIndices : [6]uint = { 0, 1, 2, 1, 2, 3 };
-var quadVB = new vertex Buffer<[]QuadVertex>(device, &quadVerts);
+var quadVB = new VertexInput<QuadVertex>(new vertex Buffer<[]QuadVertex>(device, &quadVerts));
 var quadIB = new index Buffer<[]uint>(device, &quadIndices);
 var sampler = new Sampler(device);
 
@@ -51,7 +51,7 @@ var tex = new sampleable renderable Texture2D<RGBA8unorm>(device, window.GetSize
 var triPipeline = new RenderPipeline<GreenPipeline>(device);
 var encoder = new CommandEncoder(device);
 var gp : GreenPipeline;
-gp.position = triVB;
+gp.position = new VertexInput<float<4>>(triVB);
 gp.renderTex = tex.CreateColorAttachment(LoadOp.Clear);
 var renderPass = new RenderPass<GreenPipeline>(encoder, &gp);
 renderPass.SetPipeline(triPipeline);

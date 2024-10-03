@@ -6,7 +6,7 @@ var verts = [3] new Vertex;
 verts[0] = float<4>( 0.0,  1.0, 0.0, 1.0);
 verts[1] = float<4>(-1.0, -1.0, 0.0, 1.0);
 verts[2] = float<4>( 1.0, -1.0, 0.0, 1.0);
-var vb = new vertex Buffer<[]Vertex>(device, verts);
+var vb = new VertexInput<Vertex>(new vertex Buffer<[]Vertex>(device, verts));
 class RTTPipeline {
   vertex main(vb : &VertexBuiltins) { vb.position = vert.Get(); }
   fragment main(fb : &FragmentBuiltins) {
@@ -15,7 +15,7 @@ class RTTPipeline {
   }
   var red : *ColorAttachment<RGBA8unorm>;
   var green : *ColorAttachment<RGBA8unorm>;
-  var vert : *vertex Buffer<[]Vertex>;
+  var vert : *VertexInput<Vertex>;
 }
 
 class Bindings {
@@ -32,7 +32,7 @@ class Pipeline {
     fragColor.Set(b.red.Sample(b.sampler, onehalf) + b.green.Sample(b.sampler, onehalf));
   }
   var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
-  var vert : *vertex Buffer<[]Vertex>;
+  var vert : *VertexInput<Vertex>;
   var bindings : *BindGroup<Bindings>;
 }
 var encoder = new CommandEncoder(device);

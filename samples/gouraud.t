@@ -12,7 +12,6 @@ var verts : [3]Vertex = {
   { position = { 1.0, -1.0, 0.0, 1.0 }, color = { 0.0, 0.0, 1.0 } }
 };
 
-var vb = new vertex Buffer<[]Vertex>(device, &verts);
 class Pipeline {
   vertex main(vb : &VertexBuiltins) : float<3> {
     var v = vertices.Get();
@@ -23,10 +22,11 @@ class Pipeline {
     fragColor.Set(float<4>(varyings.r, varyings.g, varyings.b, 1.0));
   }
   var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
-  var vertices : *vertex Buffer<[]Vertex>;
+  var vertices : *VertexInput<Vertex>;
 }
 var pipeline = new RenderPipeline<Pipeline>(device);
 var encoder = new CommandEncoder(device);
+var vb = new VertexInput<Vertex>(new vertex Buffer<[]Vertex>(device, &verts));
 var fb = swapChain.GetCurrentTexture().CreateColorAttachment(LoadOp.Clear);
 var renderPass = new RenderPass<Pipeline>(encoder, { vertices = vb, fragColor = fb });
 renderPass.SetPipeline(pipeline);
