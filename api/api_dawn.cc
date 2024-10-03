@@ -513,6 +513,11 @@ struct BindGroupLayout {
   wgpu::BindGroupLayout bindGroupLayout;
 };
 
+struct VertexInput {
+  VertexInput(const wgpu::Buffer& b) : buffer(b) {}
+  wgpu::Buffer buffer;
+};
+
 struct ColorAttachment {
   ColorAttachment(const wgpu::RenderPassColorAttachment& a) : attachment(a) {}
   wgpu::RenderPassColorAttachment attachment;
@@ -599,7 +604,13 @@ static void ExtractPipelineLayout(ClassType* classType, Device* device, Pipeline
     assert(unqualifiedType->IsClass());
 
     ClassType* classType = static_cast<ClassType*>(unqualifiedType);
-    if (classType->GetTemplate() == NativeClass::ColorAttachment) {
+    if (classType->GetTemplate() == NativeClass::VertexInput) {
+      const auto& templateArgs = classType->GetTemplateArgs();
+      assert(templateArgs.size() == 1);
+      Type* elementType = templateArgs[0];
+      auto layout = toDawnVertexBufferLayout(elementType, &out->vertexAttributes);
+      out->vertexBufferLayouts.push_back(layout);
+    } else if (classType->GetTemplate() == NativeClass::ColorAttachment) {
       wgpu::ColorTargetState colorTargetState;
       const auto&            templateArgs = classType->GetTemplateArgs();
       assert(templateArgs.size() == 1);
@@ -614,7 +625,7 @@ static void ExtractPipelineLayout(ClassType* classType, Device* device, Pipeline
       assert(templateArgs.size() == 1);
       assert(templateArgs[0]->IsUnsizedArray());
       Type* elementType = static_cast<ArrayType*>(templateArgs[0])->GetElementType();
-      if (qualifiers == Type::Qualifier::Vertex) {
+      if (qualifiers == Type::Qualifier::Vertex) { // FIXME: remove this
         auto layout = toDawnVertexBufferLayout(elementType, &out->vertexAttributes);
         out->vertexBufferLayouts.push_back(layout);
       } else if (qualifiers == Type::Qualifier::Index) {
@@ -667,12 +678,15 @@ static void ExtractPipelineData(ClassType* classType, void* data, PipelineData* 
     Object object = *reinterpret_cast<Object*>((uint8_t*)data + field->offset);
     assert(fieldType->IsClass());
     auto classType = static_cast<ClassType*>(fieldType);
-    if (classType->GetTemplate() == NativeClass::ColorAttachment && object.ptr) {
+    if (classType->GetTemplate() == NativeClass::VertexInput) {
+      out->vertexBuffers.push_back(object.ptr ? static_cast<VertexInput*>(object.ptr)->buffer : nullptr);
+    } else if (classType->GetTemplate() == NativeClass::ColorAttachment && object.ptr) {
       out->colorAttachments.push_back(static_cast<ColorAttachment*>(object.ptr)->attachment);
     } else if (classType->GetTemplate() == NativeClass::DepthStencilAttachment && object.ptr) {
       out->depthStencilAttachment = static_cast<DepthStencilAttachment*>(object.ptr)->attachment;
     } else if (classType->GetTemplate() == NativeClass::Buffer &&
                qualifiers == Type::Qualifier::Vertex) {
+      // FIXME: remove this
       out->vertexBuffers.push_back(object.ptr ? static_cast<Buffer*>(object.ptr)->buffer : nullptr);
     } else if (classType->GetTemplate() == NativeClass::Buffer &&
                qualifiers == Type::Qualifier::Index) {
@@ -1117,6 +1131,14 @@ void CommandEncoder_Destroy(CommandEncoder* This) { delete This; }
 void Queue_Submit(Queue* queue, CommandBuffer* commandBuffer) {
   queue->queue.Submit(1, &commandBuffer->commandBuffer);
 }
+
+VertexInput* VertexInput_VertexInput(int     qualifiers,
+                                     Type*   type,
+                                     Buffer* buffer) {
+  return new VertexInput(buffer->buffer);
+}
+
+void VertexInput_Destroy(VertexInput* This) { delete This; }
 
 ColorAttachment* ColorAttachment_ColorAttachment(int          qualifiers,
                                                  Type*        type,

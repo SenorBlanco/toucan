@@ -177,6 +177,12 @@ enum StoreOp {
   Discard
 }
 
+native class VertexInput<T> {
+  VertexInput(vertex Buffer<T[]>* buffer);
+  deviceonly T Get();
+ ~VertexInput();
+}
+
 native class ColorAttachment<PF> {
   ColorAttachment(renderable Texture2D<PF>* texture, LoadOp loadOp, StoreOp storeOp, float<4> clearValue = float<4>(0.0, 0.0, 0.0, 0.0));
   deviceonly void Set(PF::SampledType<4> value);

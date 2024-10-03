@@ -7,13 +7,14 @@ auto vb = new vertex Buffer<Vertex[]>(device, &verts);
 class Pipeline {
   void vertexShader(VertexBuiltins^ vb) vertex { vb.position = vertices.Get(); }
   void fragmentShader(FragmentBuiltins^ fb) fragment { fragColor.Set( {0.0, 1.0, 0.0, 1.0} ); }
-  vertex Buffer<Vertex[]>*                   vertices;
+  VertexInput<Vertex>*                       vertices;
   ColorAttachment<PreferredSwapChainFormat>* fragColor;
 }
 auto pipeline = new RenderPipeline<Pipeline>(device, null, TriangleList);
 auto encoder = new CommandEncoder(device);
+auto vi = new VertexInput<Vertex>(vb);
 auto fb = new ColorAttachment<PreferredSwapChainFormat>(swapChain.GetCurrentTexture(), Clear, Store);
-auto renderPass = new RenderPass<Pipeline>(encoder, { vertices = vb, fragColor = fb });
+auto renderPass = new RenderPass<Pipeline>(encoder, { vertices = vi, fragColor = fb });
 renderPass.SetPipeline(pipeline);
 renderPass.Draw(3, 1, 0, 0);
 renderPass.End();
