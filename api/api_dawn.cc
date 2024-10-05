@@ -326,10 +326,10 @@ static wgpu::BufferUsage toDawnBufferUsage(int qualifiers) {
     result |= wgpu::BufferUsage::CopySrc | wgpu::BufferUsage::CopyDst;
     // F*XME: handle readonly, writeonly, readwrite storage
   } else {
-    if (qualifiers & (Type::Qualifier::ReadOnly | Type::Qualifier::ReadWrite)) {
+    if (!(qualifiers & (Type::Qualifier::WriteOnly))) {
       result |= wgpu::BufferUsage::MapRead | wgpu::BufferUsage::CopyDst;
     }
-    if (qualifiers & (Type::Qualifier::WriteOnly | Type::Qualifier::ReadWrite)) {
+    if (!(qualifiers & (Type::Qualifier::ReadOnly))) {
       result |= wgpu::BufferUsage::MapWrite | wgpu::BufferUsage::CopySrc;
     }
   }
@@ -1077,10 +1077,6 @@ Buffer* Buffer_Buffer_Device_T(int qualifiers, Type* type, Device* device, Objec
 Object* Buffer_MapRead(Buffer* buffer) { return MapSync(wgpu::MapMode::Read, buffer); }
 
 Object* Buffer_MapWrite(Buffer* buffer) { return MapSync(wgpu::MapMode::Write, buffer); }
-
-Object* Buffer_MapReadWrite(Buffer* buffer) {
-  return MapSync(wgpu::MapMode::Read | wgpu::MapMode::Write, buffer);
-}
 
 void Buffer_Unmap(Buffer* buffer) {
   buffer->buffer.Unmap();
