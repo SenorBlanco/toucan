@@ -458,6 +458,15 @@ uint32_t CodeGenSPIRV::ConvertType(Type* type) {
           Append(spv::OpMemberDecorate, {resultId, i, spv::DecorationMatrixStride, 16},
                  &annotations_);
           Append(spv::OpMemberDecorate, {resultId, i, spv::DecorationColMajor}, &annotations_);
+        } else if (field->type->IsArray()) {
+          auto arrayType = static_cast<ArrayType*>(field->type);
+          if (arrayType->GetElementType()->IsMatrix()) {
+            // FIXME: refactor this
+            auto matrixType = static_cast<MatrixType*>(arrayType->GetElementType());
+            Append(spv::OpMemberDecorate, {resultId, i, spv::DecorationMatrixStride, 16},
+                   &annotations_);
+            Append(spv::OpMemberDecorate, {resultId, i, spv::DecorationColMajor}, &annotations_);
+          }
         }
         ++i;
       }
