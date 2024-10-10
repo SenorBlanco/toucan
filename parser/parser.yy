@@ -82,7 +82,7 @@ static Expr* MakeNewExpr(Type* type, Expr* length, ArgList* arguments);
 static Expr* MakeNewArrayExpr(Type* type, Expr* length);
 static Expr* InlineFile(const char* filename);
 static Expr* StringLiteral(const char* str);
-static void MakeVarDeclList(Type* type, Stmts* stmts);
+static void MakeVarDeclList(Stmts* stmts);
 static void ErrorIfMethodModifiers(int methodModifiers);
 static Type* GetArrayType(Type* elementType, int numElements);
 static Type* GetScopedType(Type* type, const char* id);
@@ -238,7 +238,7 @@ do_statement:
     T_DO statement T_WHILE '(' expr ')' ';' { $$ = Make<DoStatement>($2, $5); }
   ;
 var_decl_statement:
-    type var_decl_list                      { MakeVarDeclList($1, $2); $$ = $2; }
+    T_VAR var_decl_list                     { MakeVarDeclList($2); $$ = $2; }
   ;
 
 simple_type:
@@ -263,7 +263,6 @@ type:
   | type '^'                                { $$ = types_->GetWeakPtrType($1); }
   | type '[' arith_expr ']'                 { $$ = GetArrayType($1, AsIntConstant($3)); }
   | type '[' ']'                            { $$ = GetArrayType($1, 0); }
-  | T_VAR                                   { $$ = types_->GetAuto(); }
   ;
 
 var_decl_list:
@@ -331,8 +330,8 @@ class_body_decl:
     '(' formal_arguments ')' opt_initializer method_body    { EndConstructor($7, $8); }
   | method_modifiers '~' T_TYPENAME '(' ')' { BeginDestructor($1, $3); }
     method_body                             { EndDestructor($7); }
-  | method_modifiers type var_decl_list ';' { ErrorIfMethodModifiers($1);
-                                              MakeVarDeclList($2, $3); }
+  | method_modifiers var_decl_list ';'      { ErrorIfMethodModifiers($1);
+                                              MakeVarDeclList($2); }
   | enum_decl ';'
   | using_decl
   ;
@@ -403,8 +402,9 @@ formal_argument:
   ;
 
 var_decl:
-    T_IDENTIFIER                            { $$ = Make<VarDeclaration>($1, nullptr, nullptr); }
-  | T_IDENTIFIER '=' expr_or_list           { $$ = Make<VarDeclaration>($1, nullptr, $3); }
+    T_IDENTIFIER ':' type                   { $$ = Make<VarDeclaration>($1, $3, nullptr); }
+  | T_IDENTIFIER '=' expr_or_list           { $$ = Make<VarDeclaration>($1, types_->GetAuto(), $3); }
+  | T_IDENTIFIER ':' type '=' expr_or_list  { $$ = Make<VarDeclaration>($1, $3, $5); }
   ;
 
 scalar_type:
@@ -847,11 +847,7 @@ static void AddFormalArgument(Type* type, const char* id, Expr* defaultValue) {
   method->AddFormalArg(id, type, defaultValue);
 }
 
-static void MakeVarDeclList(Type* type, Stmts* stmts) {
-  for (Stmt* const& it : stmts->GetStmts()) {
-    VarDeclaration* v = static_cast<VarDeclaration*>(it);
-    v->SetType(type);
-  }
+static void MakeVarDeclList(Stmts* stmts) {
   Scope* scope = symbols_->PeekScope();
   if (scope->classType) {
     ClassType* classType = scope->classType;

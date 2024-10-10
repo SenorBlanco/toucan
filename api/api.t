@@ -45,16 +45,13 @@ native class Buffer<T> {
   void Unmap();
 }
 
-class DepthStencilState<T> {
-  bool depthWriteEnabled = false;
-//  CompareFunction depthCompare = CompareFunction::Always;
-//  StencilFaceState stencilFront;
-//  StencilFaceState stencilBack;
-  uint stencilReadMask = 0xFFFFFFFF;
-  uint stencilWriteMask = 0xFFFFFFFF;
-  int depthBias = 0;
-  float depthBiasSlopeScale = 0.0;
-  float depthBiasClamp = 0.0;
+class DepthStencilState {
+  depthWriteEnabled = false;
+  stencilReadMask = 0xFFFFFFFF;
+  stencilWriteMask = 0xFFFFFFFF;
+  depthBias = 0;
+  depthBiasSlopeScale = 0.0;
+  depthBiasClamp = 0.0;
 }
 
 native class RenderPipeline<T> {
@@ -261,12 +258,12 @@ enum EventModifiers { Shift = 0x01, Control = 0x02, Alt = 0x04 }
 
 native class Event {
  ~Event();
-  EventType   type;
-  int<2>      position;
-  uint        button;
-  uint        modifiers;
-  int<2>[10]  touches;
-  int         numTouches;
+  type : EventType;
+  position : int<2>;
+  button : uint;
+  modifiers : uint;
+  touches : int<2>[10];
+  numTouches : int;
 }
 
 native class System {
@@ -285,26 +282,21 @@ native class System {
 }
 
 class VertexBuiltins {
-  readonly int       vertexIndex;
-  readonly int       instanceIndex;
-  writeonly float<4> position;
+  vertexIndex : readonly int;
+  instanceIndex : readonly int;
+  position : writeonly float<4>;
 }
 
 class FragmentBuiltins {
-  readonly float<4>  fragCoord;
-  readonly bool      frontFacing;
-//  readonly uint      sampleIndex;
-//  readonly uint      sampleMaskIn;
-//  writeonly uint     sampleMaskOut;
-//  writeonly float    fragDepth;
+  fragCoord : readonly float<4>;
+  frontFacing : readonly bool;
 }
 
 class ComputeBuiltins {
-  readonly uint<3>   localInvocationId;
-  readonly uint      localInvocationIndex;
-  readonly uint<3>   globalInvocationId;
-  readonly uint<3>   workgroupId;
-//  readonly uint<3>   numWorkgroups;
+  localInvocationId : readonly uint<3>;
+  localInvocationIndex : readonly uint;
+  globalInvocationId : readonly uint<3>;
+  workgroupId : readonly uint<3>;
 }
 
 class PixelFormat<SampledType, MemoryType> {}
