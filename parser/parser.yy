@@ -63,11 +63,11 @@ static void BeginEnum(const char *id);
 static void AppendEnum(const char* id);
 static void AppendEnum(const char* id, int value);
 static void EndEnum();
-static void BeginMethod(int modifiers, Type* returnType, std::string id);
+static void BeginMethod(int modifiers, std::string id);
 static void BeginConstructor(int modifiers, Type* type);
 static void BeginDestructor(int modifiers, Type* type);
 static void AddFormalArgument(Type* type, const char* id, Expr* defaultValue);
-static Method* EndMethod(ShaderType shaderType, ArgList* workgroupSize, Stmts* stmts, int index = -1);
+static Method* EndMethod(ShaderType shaderType, ArgList* workgroupSize, Type* returnType, Stmts* stmts, int index = -1);
 static Method* EndConstructor(Expr* initializer, Stmts* stmts);
 static Method* EndDestructor(Stmts* stmts);
 static void BeginBlock();
@@ -121,7 +121,7 @@ Type* FindType(const char* str) {
 };
 
 %type <type> scalar_type type class_header
-%type <type> simple_type qualified_type
+%type <type> simple_type qualified_type opt_return_type
 %type <classType> template_class_header
 %type <expr> expr opt_expr assignable arith_expr expr_or_list opt_initializer
 %type <arg> argument
@@ -321,10 +321,15 @@ using_decl:
     T_USING T_IDENTIFIER '=' type ';'       { DeclareUsing($2, $4); }
   ;
 
+opt_return_type:
+    ':' type                                { $$ = $2; }
+  | /* NOTHING */                           { $$ = types_->GetVoid(); }
+  ;
+
 class_body_decl:
-    method_modifiers type T_IDENTIFIER      { BeginMethod($1, $2, $3); }
-    '(' formal_arguments ')' opt_shader_type opt_workgroup_size method_body
-                                            { EndMethod($8, $9, $10); }
+    method_modifiers T_IDENTIFIER           { BeginMethod($1, $2); }
+    '(' formal_arguments ')' opt_shader_type opt_workgroup_size opt_return_type method_body
+                                            { EndMethod($7, $8, $9, $10); }
   | method_modifiers T_TYPENAME
                                             { BeginConstructor($1, $2); }
     '(' formal_arguments ')' opt_initializer method_body    { EndConstructor($7, $8); }
@@ -686,10 +691,6 @@ static Stmt* Store(Expr* lhs, Expr* rhs) {
 }
 
 static Stmt* MakeReturnStatement(Expr* expr) {
-  Method* method = symbols_->PeekScope()->method;
-  if (method && expr) {
-    expr = Make<CastExpr>(method->returnType, expr);
-  }
   return Make<ReturnStatement>(expr, symbols_->PeekScope());
 }
 
@@ -799,15 +800,13 @@ static void EndBlock(Stmts* stmts) {
   stmts->SetScope(symbols_->PopScope());
 }
 
-static void BeginMethod(int modifiers,
-                 Type* returnType,
-                 std::string id) {
+static void BeginMethod(int modifiers, std::string id) {
   Scope* classScope = symbols_->PeekScope();
   while (!classScope->classType) {
     classScope = classScope->parent;
   }
   ClassType* classType = classScope->classType;
-  Method* method = new Method(modifiers, returnType, id, classType);
+  Method* method = new Method(modifiers, nullptr, id, classType);
   if (!(modifiers & Method::STATIC)) {
     WeakPtrType* refType = types_->GetWeakPtrType(classType);
     method->AddFormalArg("this", refType, nullptr);
@@ -822,11 +821,10 @@ static void BeginConstructor(int modifiers, Type* type) {
     return;
   }
   ClassType* classType = static_cast<ClassType*>(type);
-  Type* returnType = types_->GetWeakPtrType(classType);
   if (classType->IsNative()) {
     modifiers |= Method::STATIC;
   }
-  BeginMethod(modifiers, returnType, classType->GetName());
+  BeginMethod(modifiers, classType->GetName());
 }
 
 static void BeginDestructor(int modifiers, Type* type) {
@@ -836,9 +834,8 @@ static void BeginDestructor(int modifiers, Type* type) {
   }
   ClassType* classType = static_cast<ClassType*>(type);
   modifiers |= Method::VIRTUAL;
-  Type* returnType = types_->GetVoid();
   std::string name(std::string("~") + classType->GetName());
-  BeginMethod(modifiers, returnType, name.c_str());
+  BeginMethod(modifiers, name.c_str());
 }
 
 static void AddFormalArgument(Type* type, const char* id, Expr* defaultValue) {
@@ -897,7 +894,9 @@ static Method* EndConstructor(Expr* initializer, Stmts* stmts) {
   if (stmts) {
     stmts->Append(Make<ReturnStatement>(Load(ThisExpr()), symbols_->PeekScope()));
   }
-  Method* method = EndMethod(ShaderType::None, nullptr, stmts);
+  // FIXME: passing a null return type then setting it.. kinda weird
+  Method* method = EndMethod(ShaderType::None, nullptr, nullptr, stmts);
+  method->returnType = types_->GetWeakPtrType(method->classType);
   if (method->stmts) {
     if (!initializer) {
       initializer = Make<UnresolvedListExpr>(Make<ArgList>());
@@ -909,14 +908,16 @@ static Method* EndConstructor(Expr* initializer, Stmts* stmts) {
 }
 
 static Method* EndDestructor(Stmts* stmts) {
-  Method* method = EndMethod(ShaderType::None, nullptr, stmts, 0);
+  Type* returnType = types_->GetVoid();
+  Method* method = EndMethod(ShaderType::None, nullptr, returnType, stmts, 0);
   method->index = 0;
   return method;
 }
 
-static Method* EndMethod(ShaderType shaderType, ArgList* workgroupSize, Stmts* stmts, int index) {
+static Method* EndMethod(ShaderType shaderType, ArgList* workgroupSize, Type* returnType, Stmts* stmts, int index) {
   Scope* methodScope = symbols_->PopScope();
   Method* method = methodScope->method;
+  method->returnType = returnType;
   method->stmts = stmts;
   method->shaderType = shaderType;
   if (workgroupSize) {

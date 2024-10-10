@@ -2,10 +2,10 @@ include "include/test.t"
 
 var a = 3.0;
 class Foo {
-  void^ Weak() { return new Foo(); }
-  void* Strong() { return new Foo(); }
-  void^ WeakNull() { return null; }
-  void* StrongNull() { return null; }
+  Weak() : void^ { return new Foo(); }
+  Strong() : void* { return new Foo(); }
+  WeakNull() : void^ { return null; }
+  StrongNull() : void* { return null; }
 }
 var f = new Foo();
 f.Weak();
