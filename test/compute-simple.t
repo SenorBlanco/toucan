@@ -1,7 +1,7 @@
 include "include/test.t"
 
 class ComputeBindings {
-  buffer : writeonly storage Buffer<int[]>*;
+  var buffer : writeonly storage Buffer<int[]>*;
 }
 
 class Compute {
@@ -9,7 +9,7 @@ class Compute {
     var buffer = bindings.Get().buffer.MapWriteStorage();
     buffer[0] = 42;
   }
-  bindings : BindGroup<ComputeBindings>*;
+  var bindings : BindGroup<ComputeBindings>*;
 }
 
 var device = new Device();

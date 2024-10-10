@@ -7,8 +7,8 @@ var vb = new vertex Buffer<Vertex[]>(device, &verts);
 class Pipeline {
   void vertexShader(VertexBuiltins^ vb) vertex { vb.position = vertices.Get(); }
   void fragmentShader(FragmentBuiltins^ fb) fragment { fragColor.Set( {0.0, 1.0, 0.0, 1.0} ); }
-  vertices : vertex Buffer<Vertex[]>*;
-  fragColor : ColorAttachment<PreferredSwapChainFormat>*;
+  var vertices : vertex Buffer<Vertex[]>*;
+  var fragColor : ColorAttachment<PreferredSwapChainFormat>*;
 }
 var pipeline = new RenderPipeline<Pipeline>(device, null, TriangleList);
 var encoder = new CommandEncoder(device);

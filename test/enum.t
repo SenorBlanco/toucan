@@ -5,14 +5,14 @@ class A {
   void init() {
     f = FOO;
   }
-  f : Enum1;
+  var f : Enum1;
 };
 var a = new A();
 a.init();
 Test.Expect(a.f == FOO);
 a.f = BAR;
 Test.Expect(a.f == BAR);
-float r = 0.0;
+var r = 0.0;
 if (a.f == BAR ) {
   r = 1.0;
 }

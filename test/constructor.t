@@ -4,7 +4,7 @@ class C {
   C(float v) {
     value = v;
   }
-  value : float;
+  var value : float;
 }
 
 var c = new C(3.14159);

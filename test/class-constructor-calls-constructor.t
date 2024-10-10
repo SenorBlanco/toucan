@@ -3,7 +3,7 @@ include "include/test.t"
 class C {
   C(float _x, float _y) : { x = _x + 5.0, y = _y + 2.0 } {}
   C(float _x) : C(_x, _x) {}
-  x : float, y : float;
+  var x : float, y : float;
 }
 
 var c = C(40.0);

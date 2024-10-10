@@ -45,13 +45,13 @@ native class Buffer<T> {
   void Unmap();
 }
 
-class DepthStencilState {
-  depthWriteEnabled = false;
-  stencilReadMask = 0xFFFFFFFF;
-  stencilWriteMask = 0xFFFFFFFF;
-  depthBias = 0;
-  depthBiasSlopeScale = 0.0;
-  depthBiasClamp = 0.0;
+class DepthStencilState<T> {
+  var depthWriteEnabled : bool = false;
+  var stencilReadMask : int = 0xFFFFFFFF;
+  var stencilWriteMask : int = 0xFFFFFFFF;
+  var depthBias : int = 0;
+  var depthBiasSlopeScale : float = 0.0;
+  var depthBiasClamp : float = 0.0;
 }
 
 native class RenderPipeline<T> {
@@ -258,12 +258,12 @@ enum EventModifiers { Shift = 0x01, Control = 0x02, Alt = 0x04 }
 
 native class Event {
  ~Event();
-  type : EventType;
-  position : int<2>;
-  button : uint;
-  modifiers : uint;
-  touches : int<2>[10];
-  numTouches : int;
+  var type : EventType;
+  var position : int<2>;
+  var button : uint;
+  var modifiers : uint;
+  var touches : int<2>[10];
+  var numTouches : int;
 }
 
 native class System {
@@ -282,21 +282,21 @@ native class System {
 }
 
 class VertexBuiltins {
-  vertexIndex : readonly int;
-  instanceIndex : readonly int;
-  position : writeonly float<4>;
+  var vertexIndex : readonly int;
+  var instanceIndex : readonly int;
+  var position : writeonly float<4>;
 }
 
 class FragmentBuiltins {
-  fragCoord : readonly float<4>;
-  frontFacing : readonly bool;
+  var fragCoord : readonly float<4>;
+  var frontFacing : readonly bool;
 }
 
 class ComputeBuiltins {
-  localInvocationId : readonly uint<3>;
-  localInvocationIndex : readonly uint;
-  globalInvocationId : readonly uint<3>;
-  workgroupId : readonly uint<3>;
+  var localInvocationId : readonly uint<3>;
+  var localInvocationIndex : readonly uint;
+  var globalInvocationId : readonly uint<3>;
+  var workgroupId : readonly uint<3>;
 }
 
 class PixelFormat<SampledType, MemoryType> {}

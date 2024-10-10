@@ -330,8 +330,7 @@ class_body_decl:
     '(' formal_arguments ')' opt_initializer method_body    { EndConstructor($7, $8); }
   | method_modifiers '~' T_TYPENAME '(' ')' { BeginDestructor($1, $3); }
     method_body                             { EndDestructor($7); }
-  | method_modifiers var_decl_list ';'      { ErrorIfMethodModifiers($1);
-                                              MakeVarDeclList($2); }
+  | var_decl_statement ';'
   | enum_decl ';'
   | using_decl
   ;

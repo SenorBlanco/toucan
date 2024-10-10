@@ -1,8 +1,8 @@
 include "include/test.t"
 
 class Foo {
-  x : int;
-  y : float;
+  var x : int;
+  var y : float;
 };
 
 var foo = new Foo[100];

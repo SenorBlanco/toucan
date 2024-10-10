@@ -2,8 +2,8 @@ include "include/test.t"
 
 class C {
   C(float _x, float _y) : { y = _x, x = _y } {}
-  x : float;
-  y : float;
+  var x : float;
+  var y : float;
 }
 
 var c = C(21.0, 42.0);

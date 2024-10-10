@@ -2,7 +2,7 @@ include "include/test.t"
 
 class C {
   C(float v1, float v2) : { value2 = v1, value1 = v2 } {}
-  value1 : float, value2 : float;
+  var value1 : float, value2 : float;
 }
 
 var c = C(1.0, 2.0);

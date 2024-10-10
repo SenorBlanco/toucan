@@ -1,11 +1,11 @@
 include "include/test.t"
 
 class ComputeBindings {
-  buffer : writeonly storage Buffer<int[]>*;
+  var buffer : writeonly storage Buffer<int[]>*;
 }
 
 class Struct {
-  a : int;
+  var a : int;
 }
 
 class Compute {
@@ -24,7 +24,7 @@ class Compute {
     buffer[1] = array[0];
     buffer[2] = struct.a;
   }
-  bindings : BindGroup<ComputeBindings>*;
+  var bindings : BindGroup<ComputeBindings>*;
 }
 
 var device = new Device();

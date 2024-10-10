@@ -1,8 +1,8 @@
 include "include/test.t"
 
 class C {
-  f : float;
-  array : int[];
+  var f : float;
+  var array : int[];
 };
 var c = new [5]C();
 c.array[2] = 42;

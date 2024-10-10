@@ -21,5 +21,5 @@ class String {
     return new String(b);
   }
   ubyte[]* Get() { return buffer; }
-  buffer : ubyte[]*;
+  var buffer : ubyte[]*;
 }

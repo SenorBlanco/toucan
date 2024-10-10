@@ -1,7 +1,7 @@
 include "include/test.t"
 
 class Foo {
-  value : float;
+  var value : float;
   Foo plusOne() {
     var f = Foo{};
     f.value = value + 1.0;
