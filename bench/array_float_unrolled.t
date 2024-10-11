@@ -1,10 +1,10 @@
-int outer_count = 1000000;
-float[1024] a;
-for (int i = 0; i < a.length; ++i) {
+var outer_count = 1000000;
+var a : float[1024];
+for (var i = 0; i < a.length; ++i) {
   a[i] = 2000000.0;
 }
-for (int j = 0; j < outer_count; ++j) {
-  for (int i = 0; i < a.length; i += 16) {
+for (var j = 0; j < outer_count; ++j) {
+  for (var i = 0; i < a.length; i += 16) {
     a[i] = a[i] * 1.00001 + 1.0;
     a[i+1] = a[i+1] * 1.00001 + 1.0;
     a[i+2] = a[i+2] * 1.00001 + 1.0;
@@ -23,4 +23,3 @@ for (int j = 0; j < outer_count; ++j) {
     a[i+15] = a[i+15] * 1.00001 + 1.0;
   }
 }
-return a[0];
