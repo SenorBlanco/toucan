@@ -657,6 +657,9 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
     }
     for (int i = 0; i < method->defaultArgs.size(); ++i) {
       method->defaultArgs[i] = Resolve(method->defaultArgs[i]);
+      if (method->formalArgList[i]->type->IsAuto()) {
+        method->formalArgList[i]->type = method->defaultArgs[i]->GetType(types_);
+      }
     }
   }
   Method* destructor = classType->GetVTable()[0];
