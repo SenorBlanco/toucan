@@ -82,7 +82,7 @@ static Expr* MakeNewExpr(Type* type, Expr* length, ArgList* arguments);
 static Expr* MakeNewArrayExpr(Type* type, Expr* length);
 static Expr* InlineFile(const char* filename);
 static Expr* StringLiteral(const char* str);
-static void MakeVarDeclList(Stmts* stmts);
+static void CreateFieldsFromVarDecls(Stmts* stmts);
 static void ErrorIfMethodModifiers(int methodModifiers);
 static Type* GetArrayType(Type* elementType, int numElements);
 static Type* GetScopedType(Type* type, const char* id);
@@ -128,9 +128,9 @@ Type* FindType(const char* str) {
 %type <stmt> statement expr_statement for_loop_stmt
 %type <stmt> assignment
 %type <stmt> if_statement for_statement while_statement do_statement
-%type <stmt> opt_else var_decl_statement var_decl class_decl
+%type <stmt> opt_else var_decl class_decl
 %type <stmt> class_forward_decl
-%type <stmts> statements var_decl_list method_body
+%type <stmts> statements var_decl_list var_decl_statement method_body
 %type <argList> arguments non_empty_arguments opt_workgroup_size
 %type <typeList> types
 %type <typeList> template_formal_arguments
@@ -184,7 +184,7 @@ statement:
   | do_statement
   | T_RETURN expr ';'                       { $$ = MakeReturnStatement($2); }
   | T_RETURN ';'                            { $$ = MakeReturnStatement(0); }
-  | var_decl_statement ';'
+  | var_decl_statement ';'                  { $$ = $1; }
   | class_decl
   | class_forward_decl
   | enum_decl                               { $$ = 0; }
@@ -228,7 +228,7 @@ opt_expr:
 for_loop_stmt:
     assignment
   | expr_statement
-  | var_decl_statement
+  | var_decl_statement                      { $$ = $1; }
   | /* nothing */                           { $$ = 0; }
   ;
 while_statement:
@@ -238,7 +238,7 @@ do_statement:
     T_DO statement T_WHILE '(' expr ')' ';' { $$ = Make<DoStatement>($2, $5); }
   ;
 var_decl_statement:
-    T_VAR var_decl_list                     { MakeVarDeclList($2); $$ = $2; }
+    T_VAR var_decl_list                     { $$ = $2; }
   ;
 
 simple_type:
@@ -334,7 +334,7 @@ class_body_decl:
     '(' formal_arguments ')' opt_initializer method_body    { EndConstructor($7, $8); }
   | method_modifiers '~' T_TYPENAME '(' ')' { BeginDestructor($1, $3); }
     method_body                             { EndDestructor($7); }
-  | var_decl_statement ';'
+  | var_decl_statement ';'                  { CreateFieldsFromVarDecls($1); }
   | enum_decl ';'
   | using_decl
   ;
@@ -842,14 +842,12 @@ static void AddFormalArgument(Type* type, const char* id, Expr* defaultValue) {
   method->AddFormalArg(id, type, defaultValue);
 }
 
-static void MakeVarDeclList(Stmts* stmts) {
-  Scope* scope = symbols_->PeekScope();
-  if (scope->classType) {
-    ClassType* classType = scope->classType;
-    for (Stmt* const& it : stmts->GetStmts()) {
-      VarDeclaration* v = static_cast<VarDeclaration*>(it);
-      classType->AddField(v->GetID(), v->GetType(), v->GetInitExpr());
-    }
+static void CreateFieldsFromVarDecls(Stmts* stmts) {
+  ClassType* classType = symbols_->PeekScope()->classType;
+  assert(classType);
+  for (Stmt* const& it : stmts->GetStmts()) {
+    VarDeclaration* v = static_cast<VarDeclaration*>(it);
+    classType->AddField(v->GetID(), v->GetType(), v->GetInitExpr());
   }
 }
 
@@ -893,7 +891,6 @@ static Method* EndConstructor(Expr* initializer, Stmts* stmts) {
   if (stmts) {
     stmts->Append(Make<ReturnStatement>(Load(ThisExpr()), symbols_->PeekScope()));
   }
-  // FIXME: passing a null return type then setting it.. kinda weird
   Method* method = EndMethod(ShaderType::None, nullptr, nullptr, stmts);
   method->returnType = types_->GetWeakPtrType(method->classType);
   if (method->stmts) {
