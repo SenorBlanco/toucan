@@ -83,7 +83,6 @@ static Expr* MakeNewArrayExpr(Type* type, Expr* length);
 static Expr* InlineFile(const char* filename);
 static Expr* StringLiteral(const char* str);
 static void CreateFieldsFromVarDecls(Stmts* stmts);
-static void ErrorIfMethodModifiers(int methodModifiers);
 static Type* GetArrayType(Type* elementType, int numElements);
 static Type* GetScopedType(Type* type, const char* id);
 static TypeList* AddIDToTypeList(const char* id, TypeList* list);
@@ -1024,12 +1023,6 @@ static int AsIntConstant(Expr* expr) {
     yyerrorf("array size is not an integer constant");
   }
   return static_cast<IntConstant*>(expr)->GetValue();
-}
-
-static void ErrorIfMethodModifiers(int methodModifiers) {
-  if (methodModifiers != 0) {
-    yyerror("method modifiers are not allowed on a field declaration");
-  }
 }
 
 static Type* GetArrayType(Type* elementType, int numElements) {
