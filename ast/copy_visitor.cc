@@ -183,7 +183,7 @@ Result CopyVisitor::Visit(NewArrayExpr* expr) {
 }
 
 Result CopyVisitor::Visit(UnresolvedClassDefinition* defn) {
-  return Make<UnresolvedClassDefinition>(defn->GetScope());
+  return Make<UnresolvedClassDefinition>(defn->GetScope(), defn->GetBody());
 }
 
 Result CopyVisitor::Visit(UnresolvedDot* node) {

@@ -58,7 +58,7 @@ static ClassType* DeclareClass(int native, const char* id);
 static void DeclareUsing(const char* id, Type* type);
 static void BeginClass(Type* type, ClassType* parent);
 static ClassType*  BeginClassTemplate(int native, TypeList* templateArgs, const char* id);
-static Stmt* EndClass();
+static Stmt* EndClass(Stmts* stmts);
 static void BeginEnum(const char *id);
 static void AppendEnum(const char* id);
 static void AppendEnum(const char* id, int value);
@@ -82,7 +82,6 @@ static Expr* MakeNewExpr(Type* type, Expr* length, ArgList* arguments);
 static Expr* MakeNewArrayExpr(Type* type, Expr* length);
 static Expr* InlineFile(const char* filename);
 static Expr* StringLiteral(const char* str);
-static void CreateFieldsFromVarDecls(Stmts* stmts);
 static Type* GetArrayType(Type* elementType, int numElements);
 static Type* GetScopedType(Type* type, const char* id);
 static TypeList* AddIDToTypeList(const char* id, TypeList* list);
@@ -128,8 +127,8 @@ Type* FindType(const char* str) {
 %type <stmt> assignment
 %type <stmt> if_statement for_statement while_statement do_statement
 %type <stmt> opt_else var_decl class_decl
-%type <stmt> class_forward_decl
-%type <stmts> statements var_decl_list var_decl_statement method_body
+%type <stmt> class_forward_decl class_body_decl
+%type <stmts> statements var_decl_list var_decl_statement method_body class_body
 %type <argList> arguments non_empty_arguments opt_workgroup_size
 %type <typeList> types
 %type <typeList> template_formal_arguments
@@ -288,9 +287,9 @@ class_forward_decl:
 
 class_decl:
     class_header opt_parent_class '{'       { BeginClass($1, AsClassType($2)); }
-    class_body '}'                          { $$ = EndClass(); }
+    class_body '}'                          { $$ = EndClass($5); }
   | template_class_header opt_parent_class  '{' { $1->SetParent(AsClassType($2)); }
-    class_body '}'                              { $$ = EndClass(); }
+    class_body '}'                              { $$ = EndClass($5); }
   ;
   ;
 
@@ -300,8 +299,8 @@ opt_parent_class:
   ;
 
 class_body:
-    class_body class_body_decl
-  | /* nothing */
+    class_body class_body_decl              { $1->Append($2); $$ = $1; }
+  | /* nothing */                           { $$ = Make<Stmts>(); }
   ;
 enum_decl:
     T_ENUM T_IDENTIFIER '{'                 { BeginEnum($2); }
@@ -327,15 +326,15 @@ opt_return_type:
 class_body_decl:
     method_modifiers T_IDENTIFIER           { BeginMethod($1, $2); }
     '(' formal_arguments ')' opt_shader_type opt_workgroup_size opt_return_type method_body
-                                            { EndMethod($7, $8, $9, $10); }
+                                            { EndMethod($7, $8, $9, $10); $$ = nullptr; }
   | method_modifiers T_TYPENAME
                                             { BeginConstructor($1, $2); }
-    '(' formal_arguments ')' opt_initializer method_body    { EndConstructor($7, $8); }
+    '(' formal_arguments ')' opt_initializer method_body    { EndConstructor($7, $8); $$ = nullptr; }
   | method_modifiers '~' T_TYPENAME '(' ')' { BeginDestructor($1, $3); }
-    method_body                             { EndDestructor($7); }
-  | var_decl_statement ';'                  { CreateFieldsFromVarDecls($1); }
-  | enum_decl ';'
-  | using_decl
+    method_body                             { EndDestructor($7); $$ = nullptr; }
+  | var_decl_statement ';'                  { $$ = $1; }
+  | enum_decl ';'                           { $$ = nullptr; }
+  | using_decl                              { $$ = nullptr; }
   ;
 
 method_body:
@@ -742,7 +741,7 @@ static ClassType* BeginClassTemplate(int native, TypeList* templateArgs, const c
   return t;
 }
 
-static Stmt* EndClass() {
+static Stmt* EndClass(Stmts* stmts) {
   Scope* scope = symbols_->PopScope();
   assert(scope->classType);
   ClassType* classType = scope->classType;
@@ -755,7 +754,7 @@ static Stmt* EndClass() {
   // Native classes always need semantic analysis, in order for default args
   // to be resolved before bindings generation. Non-native template classes don't.
   if (classType->IsNative() || !classType->IsClassTemplate()) {
-    return Make<UnresolvedClassDefinition>(scope);
+    return Make<UnresolvedClassDefinition>(scope, stmts);
   } else {
     return nullptr;
   }
@@ -841,15 +840,6 @@ static void AddFormalArgument(const char* id, Type* type, Expr* defaultValue) {
   if (!type) { type = types_->GetAuto(); }
   Method* method = symbols_->PeekScope()->method;
   method->AddFormalArg(id, type, defaultValue);
-}
-
-static void CreateFieldsFromVarDecls(Stmts* stmts) {
-  ClassType* classType = symbols_->PeekScope()->classType;
-  assert(classType);
-  for (Stmt* const& it : stmts->GetStmts()) {
-    VarDeclaration* v = static_cast<VarDeclaration*>(it);
-    classType->AddField(v->GetID(), v->GetType(), v->GetInitExpr());
-  }
 }
 
 static Type* GetScopedType(Type* type, const char* id) {
@@ -968,7 +958,8 @@ static void InstantiateClassTemplates() {
     TypeReplacementPass pass(nodes_, symbols_, types_, classTemplate->GetFormalTemplateArgs(), instance->GetTemplateArgs());
     pass.ResolveClassInstance(classTemplate, instance);
     numSyntaxErrors += pass.NumErrors();
-    (*rootStmts_)->Append(Make<UnresolvedClassDefinition>(scope));
+    // FIXME: eventually this should point at another UnresolvedClassDefinition
+    (*rootStmts_)->Append(Make<UnresolvedClassDefinition>(scope, nullptr));
     symbols_->PopScope();
   }
 }

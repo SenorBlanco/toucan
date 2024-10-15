@@ -296,7 +296,7 @@ NewExpr::NewExpr(Type* type, Expr* length, Method* constructor, ExprList* args)
 
 Type* NewExpr::GetType(TypeTable* types) { return types->GetStrongPtrType(type_); }
 
-UnresolvedClassDefinition::UnresolvedClassDefinition(Scope* scope) : scope_(scope) {}
+UnresolvedClassDefinition::UnresolvedClassDefinition(Scope* scope, Stmts* body) : scope_(scope), body_(body) {}
 
 NodeVector::NodeVector() {}
 

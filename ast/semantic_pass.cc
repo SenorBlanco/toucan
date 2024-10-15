@@ -192,6 +192,11 @@ Result SemanticPass::Visit(VarDeclaration* decl) {
     std::string errorMsg = std::string("cannot create storage of type ") + type->ToString();
     return Error(errorMsg.c_str());
   }
+  Scope* scope = symbols_->PeekScope();
+  if (scope && scope->classType) {
+    scope->classType->AddField(decl->GetID(), decl->GetType(), decl->GetInitExpr());
+    return nullptr;
+  }
   Var*  var = symbols_->DefineVar(id, type);
   Expr* varExpr = Make<VarExpr>(var);
   return InitializeVar(varExpr, type, initExpr);
@@ -641,6 +646,7 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   Scope*     scope = defn->GetScope();
   ClassType* classType = scope->classType;
   symbols_->PushScope(scope);
+  Resolve(defn->GetBody());
   for (const auto& mit : classType->GetMethods()) {
     Method* method = mit.get();
     if (method->stmts) {

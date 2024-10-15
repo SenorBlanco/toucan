@@ -69,6 +69,7 @@ class SemanticPass : public CopyVisitor {
   SymbolTable* symbols_;
   TypeTable*   types_;
   int          numErrors_;
+  Scope*       currentTopScope_ = nullptr;   // only class, currently
 };
 
 };  // namespace Toucan
