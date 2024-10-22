@@ -721,6 +721,24 @@ class UnresolvedClassDefinition : public Stmt {
   Scope* scope_;
 };
 
+class UnresolvedMethodDefinition : public Stmt {
+ public:
+  UnresolvedMethodDefinition(int modifiers, std::string id, ArgList* workgroupSize, Stmts* formalArguments,
+                             int thisQualifiers, Type* returnType, Method* method);
+  Result Accept(Visitor* visitor) override;
+  Method*     GetMethod() const { return method_; }
+
+ private:
+  int         modifiers_;
+  std::string id_;
+  ArgList*    workgroupSize_;
+  Stmts*      formalArguments_;
+  int         thisQualifiers_;
+  Type*       returnType_;
+  Stmts*      stmts_;
+  Method*     method_;          // FIXME: remove this once the parser is cleaner
+};
+
 class UnaryOp : public Expr {
  public:
   enum class Op { Minus, Negate };
@@ -789,6 +807,7 @@ class Visitor {
   virtual Result Visit(UnresolvedIdentifier* node) { return Default(node); }
   virtual Result Visit(UnresolvedListExpr* node) { return Default(node); }
   virtual Result Visit(UnresolvedClassDefinition* node) { return Default(node); }
+  virtual Result Visit(UnresolvedMethodDefinition* node) { return Default(node); }
   virtual Result Visit(UnresolvedNewExpr* node) { return Default(node); }
   virtual Result Visit(UnresolvedMethodCall* node) { return Default(node); }
   virtual Result Visit(UnresolvedStaticMethodCall* node) { return Default(node); }

@@ -298,6 +298,8 @@ Type* NewExpr::GetType(TypeTable* types) { return types->GetStrongPtrType(type_)
 
 UnresolvedClassDefinition::UnresolvedClassDefinition(Scope* scope) : scope_(scope) {}
 
+UnresolvedMethodDefinition::UnresolvedMethodDefinition(int modifiers, std::string id, ArgList* workgroupSize, Stmts* formalArguments, int thisQualifiers, Type* returnType, Method* method) : modifiers_(modifiers), id_(id), workgroupSize_(workgroupSize), formalArguments_(formalArguments), thisQualifiers_(thisQualifiers), returnType_(returnType), method_(method) {}
+
 NodeVector::NodeVector() {}
 
 Result Arg::Accept(Visitor* visitor) { return visitor->Visit(this); }
@@ -337,6 +339,7 @@ Result UnresolvedDot::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result UnresolvedIdentifier::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result UnresolvedListExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result UnresolvedClassDefinition::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result UnresolvedMethodDefinition::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result UnresolvedInitializer::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result UnresolvedMethodCall::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result UnresolvedNewExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
