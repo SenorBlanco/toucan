@@ -401,16 +401,7 @@ size_t ClassType::ComputeFieldOffsets() {
   return offset;
 }
 
-void ClassType::AddMethod(Method* method, int vtableIndex) {
-  if (method->modifiers & Method::Modifier::Virtual) {
-    if (vtableIndex >= 0) {
-      method->index = vtableIndex;
-      vtable_[vtableIndex] = method;
-    } else {
-      method->index = vtable_.size();
-      vtable_.push_back(method);
-    }
-  }
+void ClassType::AddMethod(Method* method) {
   methods_.push_back(std::unique_ptr<Method>(method));
 }
 
@@ -486,6 +477,17 @@ bool ClassType::IsNative() const {
 bool ClassType::HasUnsizedArray() const {
   if (fields_.size() == 0) { return false; }
   return (fields_.back()->type->IsUnsizedArray());
+}
+
+void ClassType::SetVTable(int index, Method* method) {
+  assert(index >= 0 && index < vtable_.size());
+  method->index = index;
+  vtable_[index] = method;
+}
+
+void ClassType::AppendToVTable(Method* method) {
+  method->index = vtable_.size();
+  vtable_.push_back(method);
 }
 
 static bool MatchTypes(const TypeList& types, Method* m) {

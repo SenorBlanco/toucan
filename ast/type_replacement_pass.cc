@@ -45,6 +45,7 @@ Method* TypeReplacementPass::ResolveMethod(Method* m) {
     result->stmts = Resolve(m->stmts);
     if (result->stmts->GetScope()) { result->stmts->GetScope()->method = result; }
   }
+  result->index = m->index;
   return result;
 }
 
@@ -56,8 +57,11 @@ void TypeReplacementPass::ResolveClassInstance(ClassTemplate* classTemplate, Cla
     instance->GetScope()->types[i.first] = ResolveType(i.second);
   }
   for (const auto& i : classTemplate->GetMethods()) {
-    Method* method = i.get();
-    instance->AddMethod(ResolveMethod(method), method->index);
+    Method* method = ResolveMethod(i.get());
+    instance->AddMethod(method);
+    if (method->index >= 0) {
+      instance->SetVTable(method->index, method);
+    }
   }
   for (const auto& i : classTemplate->GetFields()) {
     Field* field = i.get();

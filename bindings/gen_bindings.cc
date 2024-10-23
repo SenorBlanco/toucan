@@ -295,7 +295,11 @@ void GenBindings::GenBindingsForMethod(ClassType* classType, Method* method) {
     }
     fprintf(file_, ");\n");
   }
-  fprintf(file_, "  c->AddMethod(m, %d);\n", method->index);
+  fprintf(file_, "  c->AddMethod(m);\n");
+  if (method->modifiers & Method::Modifier::Virtual) {
+    assert(method->index == 0); // Destructors are the only supported virtual
+    fprintf(file_, "  c->SetVTable(0, m);\n");
+  }
   if (classType->IsNative()) {
     if (header_ && !(method->modifiers & Method::Modifier::DeviceOnly)) {
 #if TARGET_OS_IS_WIN

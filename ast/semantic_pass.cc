@@ -637,12 +637,51 @@ Result SemanticPass::Visit(NewArrayExpr* expr) {
   return Make<NewArrayExpr>(type, sizeExpr);
 }
 
+static Method* MatchMethod(ClassType* classType, Method* method) {
+  ClassType* parent = classType->GetParent();
+  if (!parent) {
+    return nullptr;
+  }
+  int numArgs = method->formalArgList.size();
+  TypeList args(numArgs);
+  for (int i = 0; i < numArgs; ++i) {
+    args[i] = method->formalArgList[i]->type;
+  }
+  return parent->FindMethod(method->name, args);
+}
+
 Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   Scope*     scope = defn->GetScope();
   ClassType* classType = scope->classType;
+  // Non-native template classes don't need semantic analysis, since
+  // their code won't be directly generated.
+  if (!classType->IsNative() && classType->IsClassTemplate()) {
+    return nullptr;
+  }
+
   symbols_->PushScope(scope);
   for (const auto& mit : classType->GetMethods()) {
     Method* method = mit.get();
+    if (method->index < 0) {
+      Method* match = MatchMethod(classType, method);
+      if (match) {
+        if (method->modifiers & Method::Modifier::Virtual) {
+          if (!(match->modifiers & Method::Modifier::Virtual)) {
+            return Error("attempt to override a non-virtual method");
+          }
+        } else if (match->modifiers & Method::Modifier::Virtual) {
+          return Error("override of virtual method must be virtual");
+        }
+      }
+      if (method->modifiers & Method::Modifier::Virtual) {
+        if (match) {
+          classType->SetVTable(match->index, method);
+        } else {
+          classType->AppendToVTable(method);
+        }
+      }
+    }
+
     if (method->stmts) {
       method->stmts = Resolve(method->stmts);
       // If last statement is not a return statement,
@@ -662,7 +701,17 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
       }
     }
   }
+  
   Method* destructor = classType->GetVTable()[0];
+
+  if (!destructor) {
+    std::string name(std::string("~") + classType->GetName());
+    destructor = new Method(Method::Modifier::Virtual, types_->GetVoid(), name, classType);
+    destructor->AddFormalArg("this", types_->GetWeakPtrType(classType), nullptr);
+    classType->AddMethod(destructor);
+    classType->SetVTable(0, destructor);
+  }
+
   if (!destructor->stmts) {
     Stmts* stmts = Make<Stmts>();
     stmts->Append(Make<ReturnStatement>(nullptr, nullptr));
