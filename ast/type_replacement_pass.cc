@@ -67,13 +67,7 @@ void TypeReplacementPass::ResolveClassInstance(ClassTemplate* classTemplate, Cla
 }
 
 Type* TypeReplacementPass::PushQualifiers(Type* type, int qualifiers) {
-  if (type->IsStrongPtr()) {
-    return types_->GetStrongPtrType(
-        PushQualifiers(static_cast<PtrType*>(type)->GetBaseType(), qualifiers));
-  } else if (type->IsWeakPtr()) {
-    return types_->GetWeakPtrType(
-        PushQualifiers(static_cast<PtrType*>(type)->GetBaseType(), qualifiers));
-  } else if (type->IsArray()) {
+  if (type->IsArray()) {
     auto arrayType = static_cast<ArrayType*>(type);
     return types_->GetArrayType(
         PushQualifiers(arrayType->GetElementType(), qualifiers),
