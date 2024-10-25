@@ -1121,7 +1121,7 @@ void Buffer_CopyFromBuffer(Buffer* This, CommandEncoder* encoder, Buffer* source
 }
 
 #if TARGET_OS_IS_WASM
-EM_ASYNC_JS(WGPUBufferMapAsyncStatus,
+EM_ASYNC_JS(wgpu::MapAsyncStatus,
             JSMapSync,
             (WGPUBuffer bufferID, WGPUMapMode mode, int offset, int size),
             {
@@ -1136,25 +1136,26 @@ EM_ASYNC_JS(WGPUBufferMapAsyncStatus,
 #endif
 
 static Object* MapSync(wgpu::MapMode mapMode, Buffer* buffer) {
-  WGPUBufferMapAsyncStatus status = WGPUBufferMapAsyncStatus_Unknown;
+  wgpu::MapAsyncStatus status = wgpu::MapAsyncStatus::Unknown;
   if (buffer->mappedObject.ptr != nullptr) {
     buffer->mappedObject.controlBlock->weakRefs++;
     return &buffer->mappedObject;
   }
-  auto callback = [](WGPUBufferMapAsyncStatus status, void* userData) {
-    *(WGPUBufferMapAsyncStatus*)userData = status;
-  };
+
 #if TARGET_OS_IS_WASM
   status =
       JSMapSync(buffer->buffer.Get(), static_cast<WGPUMapMode>(mapMode), 0, buffer->sizeInBytes);
 #else
-  buffer->buffer.MapAsync(mapMode, 0, buffer->sizeInBytes, callback, &status);
-  while (status == WGPUBufferMapAsyncStatus_Unknown) {
+  buffer->buffer.MapAsync(mapMode, 0, buffer->sizeInBytes, wgpu::CallbackMode::AllowSpontaneous, [&status](wgpu::MapAsyncStatus s, const char*) {
+    status = s;
+  }
+  );
+  while (status == wgpu::MapAsyncStatus::Unknown) {
     buffer->device.Tick();
   }
 #endif
   Object result;
-  if (status != WGPUBufferMapAsyncStatus_Success) { return &buffer->mappedObject; }
+  if (status != wgpu::MapAsyncStatus::Success) { return &buffer->mappedObject; }
   if (!(mapMode & wgpu::MapMode::Write)) {
     const void* ptr = buffer->buffer.GetConstMappedRange();
     buffer->mappedObject.ptr = const_cast<void*>(ptr);

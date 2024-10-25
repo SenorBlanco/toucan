@@ -182,7 +182,7 @@ void SwapChain_Destroy(SwapChain* This) {
 }
 
 Device* Device_Device() {
-  wgpu::Device device = CreateDawnDevice(wgpu::BackendType::Metal, PrintDeviceError);
+  wgpu::Device device = CreateDawnDevice(wgpu::BackendType::Metal, nullptr);
   if (!device) { return nullptr; }
   return new Device(device);
 }
