@@ -1,4 +1,4 @@
-var teapotControlPoints = float<3>[290](
+var teapotControlPoints = float<3>[298](
   float<3>(1.4, 0.0, 2.4),
   float<3>(1.4, -0.784, 2.4),
   float<3>(0.784, -1.4, 2.4),
