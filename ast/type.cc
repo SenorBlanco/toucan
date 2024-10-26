@@ -674,6 +674,9 @@ FormalTemplateArg* TypeTable::GetFormalTemplateArg(std::string name) {
 
 Type* TypeTable::GetQualifiedType(Type* type, int qualifiers) {
   if (qualifiers == 0) { return type; }
+  int currentQualifiers;
+  type = type->GetUnqualifiedType(&currentQualifiers);
+  qualifiers |= currentQualifiers;
   TypeAndInt key(type, qualifiers);
   if (auto result = qualifiedTypes_[key]) { return result; }
   QualifiedType* result = Make<QualifiedType>(type, qualifiers);

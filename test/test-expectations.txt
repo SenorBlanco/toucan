@@ -3,6 +3,8 @@ test/aggregate-return.t
 test/allocate-unsized-array.t
 allocate-unsized-array.t:1:  cannot allocate unsized array
 test/allocate-unsized-class.t
+allocate-unsized-class.t:8:  unknown array property "array"
+allocate-unsized-class.t:10:  unknown array property "array"
 test/array-assign.t
 test/array-class.t
 test/array-constant.t

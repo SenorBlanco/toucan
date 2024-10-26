@@ -1,1 +1,1 @@
-var a = new int[][3];
+var a = new [3][]int;
