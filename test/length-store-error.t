@@ -1,2 +1,2 @@
-var f = new float[5];
+var f = new [5]float;
 f.length = 0;
