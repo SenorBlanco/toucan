@@ -178,8 +178,9 @@ Result CopyVisitor::Visit(MethodCall* node) {
 
 Result CopyVisitor::Visit(NewArrayExpr* expr) {
   Type* type = ResolveType(expr->GetElementType());
-  Expr* sizeExpr = Resolve(expr->GetSizeExpr());
-  return Make<NewArrayExpr>(type, sizeExpr);
+  Expr* lengthExpr = Resolve(expr->GetLengthExpr());
+  ArgList* arglist = Resolve(expr->GetArgList());
+  return Make<NewArrayExpr>(type, lengthExpr, arglist);
 }
 
 Result CopyVisitor::Visit(UnresolvedClassDefinition* defn) {
@@ -201,9 +202,8 @@ Result CopyVisitor::Visit(UnresolvedMethodCall* node) {
 
 Result CopyVisitor::Visit(UnresolvedNewExpr* expr) {
   Type*    type = ResolveType(expr->GetType());
-  Expr*    length = Resolve(expr->GetLength());
   ArgList* arglist = Resolve(expr->GetArgList());
-  return Make<UnresolvedNewExpr>(type, length, arglist);
+  return Make<UnresolvedNewExpr>(type, arglist);
 }
 
 Result CopyVisitor::Visit(UnresolvedStaticMethodCall* node) {

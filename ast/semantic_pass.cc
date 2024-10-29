@@ -559,7 +559,6 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
   ExprList* args = nullptr;
   int       qualifiers;
   Type*     unqualifiedType = type->GetUnqualifiedType(&qualifiers);
-  Expr*     length = node->GetLength() ? Resolve(node->GetLength()) : nullptr;
   if (unqualifiedType->IsClass()) {
     auto* classType = static_cast<ClassType*>(unqualifiedType);
     if (classType->HasUnsizedArray()) {
@@ -627,14 +626,35 @@ Result SemanticPass::Visit(ForStatement* node) {
 }
 
 Result SemanticPass::Visit(NewArrayExpr* expr) {
-  Expr* sizeExpr = Resolve(expr->GetSizeExpr());
+  Expr* lengthExpr = Resolve(expr->GetLengthxpr());
   Type* type = expr->GetElementType();
   if (!type) return nullptr;
+  ArgList* arglist = Resolve(expr->GetArgList());
+  if (!arglist) return nullptr;
   if (type->IsArray()) {
     ArrayType* arrayType = static_cast<ArrayType*>(type);
     if (arrayType->GetNumElements() == 0) { return Error("cannot allocate unsized array"); }
+  } else if (type->IsClass()) {
+    auto* classType = static_cast<ClassType*>(unqualifiedType);
+    if (!classType->HasUnsizedArray()) {
+      if (!length) { return Error("class does not have unsized array"); }
+    }
+    std::vector<Expr*> exprList;
+    constructor = FindMethod(nullptr, classType, classType->GetName(), arglist, &exprList);
+    if (constructor) {
+      for (int i = 1; i < exprList.size(); ++i) {
+        if (!exprList[i]) {
+          return Error("formal parameter \"%s\" has no default value",
+                       constructor->formalArgList[i]->name.c_str());
+        }
+      }
+      WidenArgList(exprList, constructor->formalArgList);
+      args = Make<ExprList>(std::move(exprList));
+    } else if (classType->IsNative()) {
+      return Error("matching constructor not found");
+    }
   }
-  return Make<NewArrayExpr>(type, sizeExpr);
+  return Make<NewArrayExpr>(type, lengthExpr, arglist);
 }
 
 Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {

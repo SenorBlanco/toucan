@@ -77,8 +77,8 @@ static Stmt* Store(Expr* expr, Expr* value);
 static Expr* Identifier(const char* id);
 static Expr* Dot(Expr* lhs, const char* id);
 static Expr* MakeArrayAccess(Expr* lhs, Expr* expr);
-static Expr* MakeNewExpr(Type* type, Expr* length, ArgList* arguments);
-static Expr* MakeNewArrayExpr(Type* type, Expr* length);
+static Expr* MakeNewExpr(Type* type, ArgList* arguments);
+static Expr* MakeNewSizedExpr(Type* type, Expr* length, ArgList* arguments);
 static Expr* InlineFile(const char* filename);
 static Expr* StringLiteral(const char* str);
 static void CreateFieldsFromVarDecls(Stmts* stmts);
@@ -470,9 +470,9 @@ arith_expr:
 
 expr:
     arith_expr
-  | T_NEW type '(' arguments ')'            { $$ = MakeNewExpr($2, nullptr, $4); }
-  | T_NEW '[' arith_expr ']' type           { $$ = MakeNewArrayExpr($5, $3); }
-  | T_NEW '[' arith_expr ']' type '(' arguments ')' { $$ = MakeNewExpr($5, $3, $7); }
+  | T_NEW type '(' arguments ')'            { $$ = MakeNewExpr($2, $4); }
+  | T_NEW '[' arith_expr ']' type           { $$ = MakeNewSizedExpr($5, $3, nullptr); }
+  | T_NEW '[' arith_expr ']' type '(' arguments ')' { $$ = MakeNewSizedExpr($5, $3, $7); }
   | T_INLINE '(' T_STRING_LITERAL ')'       { $$ = InlineFile($3); }
   | T_STRING_LITERAL                        { $$ = StringLiteral($1); }
   ;
@@ -564,9 +564,9 @@ static Expr* Load(Expr* expr) {
   return Make<LoadExpr>(expr);
 }
 
-static Expr* MakeNewExpr(Type* type, Expr* length, ArgList* arguments) {
+static Expr* MakeNewExpr(Type* type, ArgList* arguments) {
   if (!type) return nullptr;
-  return Make<UnresolvedNewExpr>(type, length, arguments);
+  return Make<UnresolvedNewExpr>(type, arguments);
 }
 
 static Expr* MakeNewArrayExpr(Type* type, Expr* length) {

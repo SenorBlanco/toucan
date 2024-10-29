@@ -668,29 +668,29 @@ class ReturnStatement : public Stmt {
 
 class NewArrayExpr : public Expr {
  public:
-  NewArrayExpr(Type* type, Expr* sizeExpr);
-  Result Accept(Visitor* visitor) override;
-  Type*  GetType(TypeTable* types) override;
-  Type*  GetElementType() { return elementType_; }
-  Expr*  GetSizeExpr() { return sizeExpr_; }
+  NewArrayExpr(Type* type, Expr* lengthExpr, ArgList* arglist);
+  Result   Accept(Visitor* visitor) override;
+  Type*    GetType(TypeTable* types) override;
+  Type*    GetElementType() { return elementType_; }
+  Expr*    GetLengthExpr() { return lengthExpr_; }
+  ArgList* GetArgList() { return arglist_; }
 
  private:
-  Type* elementType_;
-  Expr* sizeExpr_;
+  Type*    elementType_;
+  Expr*    lengthExpr_;
+  ArgList* arglist_;
 };
 
 class UnresolvedNewExpr : public Expr {
  public:
-  UnresolvedNewExpr(Type* type, Expr* length, ArgList* arglist);
+  UnresolvedNewExpr(Type* type, ArgList* arglist);
   Result   Accept(Visitor* visitor) override;
   Type*    GetType(TypeTable* types) override;
   Type*    GetType() { return type_; }
-  Expr*    GetLength() { return length_; }
   ArgList* GetArgList() { return arglist_; }
 
  private:
   Type*    type_;
-  Expr*    length_;  // used for unsized arrays as last field
   ArgList* arglist_;
 };
 

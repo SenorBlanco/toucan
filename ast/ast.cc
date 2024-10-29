@@ -279,15 +279,15 @@ ForStatement::ForStatement(Stmt* initStmt, Expr* cond, Stmt* loopStmt, Stmt* bod
 
 ReturnStatement::ReturnStatement(Expr* expr, Scope* scope) : expr_(expr), scope_(scope) {}
 
-NewArrayExpr::NewArrayExpr(Type* elementType, Expr* sizeExpr)
-    : elementType_(elementType), sizeExpr_(sizeExpr) {}
+NewArrayExpr::NewArrayExpr(Type* elementType, Expr* lengthExpr, ArgList* arglist)
+    : elementType_(elementType), lengthExpr_(lengthExpr), arglist_(arglist) {}
 
 Type* NewArrayExpr::GetType(TypeTable* types) {
   return types->GetStrongPtrType(types->GetArrayType(elementType_, 0, MemoryLayout::Default));
 }
 
-UnresolvedNewExpr::UnresolvedNewExpr(Type* type, Expr* length, ArgList* arglist)
-    : type_(type), length_(length), arglist_(arglist) {}
+UnresolvedNewExpr::UnresolvedNewExpr(Type* type, ArgList* arglist)
+    : type_(type), arglist_(arglist) {}
 
 Type* UnresolvedNewExpr::GetType(TypeTable* types) { return types->GetStrongPtrType(type_); }
 
