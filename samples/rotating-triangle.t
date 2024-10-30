@@ -12,7 +12,7 @@ var device = new Device();
 var window = new Window({0, 0}, {640, 480});
 var swapChain = new SwapChain<PreferredSwapChainFormat>(device, window);
 
-var verts = new Vertex[3];
+var verts = 3 new Vertex;
 verts[0].position = float<2>( 0.0,  1.0);
 verts[1].position = float<2>(-1.0, -1.0);
 verts[2].position = float<2>( 1.0, -1.0);

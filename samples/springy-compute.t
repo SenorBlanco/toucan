@@ -147,8 +147,8 @@ class DrawPipeline {
   var bindings : *BindGroup<DrawBindings>;
 }
 
-var bodies = new [width * height * depth]Body;
-var springs = new [bodies.length * 3 - width * depth - height * depth - width * height]Spring;
+var bodies = (width * height * depth) new Body;
+var springs = (bodies.length * 3 - width * depth - height * depth - width * height) new Spring;
 var spring = 0;
 for (var i = 0; i < bodies.length; ++i) {
   bodies[i].springWeight[0] = 0.0;

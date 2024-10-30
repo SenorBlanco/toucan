@@ -17,8 +17,8 @@ class Body {
   var velocity : Vector;
   var force : Vector;
   var acceleration : Vector;
-  var spring : int[6];
-  var springWeight : float[6];
+  var spring : [6]int;
+  var springWeight : [6]float;
   var mass : float;
   var nailed : float;
 }
@@ -84,19 +84,19 @@ class Uniforms {
 }
 
 class ComputeBindings {
-  var bodyStorage : storage Buffer<Body[]>*;
-  var springStorage : storage Buffer<Spring[]>*;
-  var bodyVerts : storage Buffer<Vector[]>*;
-  var springVerts : storage Buffer<Vector[]>*;
-  var uniforms : uniform Buffer<Uniforms>*;
+  var bodyStorage : *storage Buffer<[]Body>;
+  var springStorage : *storage Buffer<[]Spring>;
+  var bodyVerts : *storage Buffer<[]Vector>;
+  var springVerts : *storage Buffer<[]Vector>;
+  var uniforms : *uniform Buffer<Uniforms>;
 }
 
 class ComputeBase {
-  var bindings : BindGroup<ComputeBindings>*;
+  var bindings : *BindGroup<ComputeBindings>;
 }
 
 class ComputeForces : ComputeBase {
-  compute(1, 1, 1) main(cb : ComputeBuiltins^) {
+  compute(1, 1, 1) main(cb : ^ComputeBuiltins) {
     var bodies = bindings.Get().bodyStorage.Map();
     var springs = bindings.Get().springStorage.Map();
     var u = bindings.Get().uniforms.Map();
@@ -109,7 +109,7 @@ class ComputeForces : ComputeBase {
 }
 
 class ApplyForces : ComputeBase {
-  compute(1, 1, 1) main(cb : ComputeBuiltins^) {
+  compute(1, 1, 1) main(cb : ^ComputeBuiltins) {
     var bodies = bindings.Get().bodyStorage.Map();
     var springs = bindings.Get().springStorage.Map();
     var u = bindings.Get().uniforms.Map();
@@ -124,7 +124,7 @@ class ApplyForces : ComputeBase {
 }
 
 class FinalizeBodies : ComputeBase {
-  compute(1, 1, 1) main(cb : ComputeBuiltins^) {
+  compute(1, 1, 1) main(cb : ^ComputeBuiltins) {
     var bodies = bindings.Get().bodyStorage.Map();
     var u = bindings.Get().uniforms.Map();
     var deltaT = u.deltaT;
@@ -143,7 +143,7 @@ class FinalizeBodies : ComputeBase {
 }
 
 class FinalizeSprings : ComputeBase {
-  compute(1, 1, 1) main(cb : ComputeBuiltins^) {
+  compute(1, 1, 1) main(cb : ^ComputeBuiltins) {
     var bodies = bindings.Get().bodyStorage.Map();
     var springs = bindings.Get().springStorage.Map();
     var sv = bindings.Get().springVerts.Map();
@@ -156,8 +156,8 @@ class FinalizeSprings : ComputeBase {
 var device = new Device();
 var window = new Window({0, 0}, {960, 960});
 var swapChain = new SwapChain<PreferredSwapChainFormat>(device, window);
-var bodies = new Body[width * height * depth];
-var springs = new Spring[bodies.length * 3 - width * depth - height * depth - width * height];
+var bodies = (width * height * depth) new Body;
+var springs = (bodies.length * 3 - width * depth - height * depth - width * height) new Spring;
 var count = Utils.makeVector((float) width, (float) height, (float) depth, Vector(0.0));
 var pSpacing = Vector(2.0) / count;
 var spring = 0;
@@ -233,9 +233,9 @@ for (var i = 0u; i < bodies.length; ++i) {
 
 
 var numBodyVerts = bodies.length * 3;
-var bodyVBO = new vertex storage Buffer<Vector[]>(device, numBodyVerts);
+var bodyVBO = new vertex storage Buffer<[]Vector>(device, numBodyVerts);
 var numSpringVerts = springs.length * 2;
-var springVBO = new vertex storage Buffer<Vector[]>(device, numSpringVerts);
+var springVBO = new vertex storage Buffer<[]Vector>(device, numSpringVerts);
 
 var computeUBO = new uniform Buffer<Uniforms>(device);
 
@@ -243,22 +243,22 @@ var computeBindGroup = new BindGroup<ComputeBindings>(device, {
   bodyVerts = bodyVBO,
   springVerts = springVBO,
   uniforms = computeUBO,
-  bodyStorage = new storage Buffer<Body[]>(device, bodies),
-  springStorage = new storage Buffer<Spring[]>(device, springs)
+  bodyStorage = new storage Buffer<[]Body>(device, bodies),
+  springStorage = new storage Buffer<[]Spring>(device, springs)
 });
 class Shaders {
-  var vert : vertex Buffer<Vector[]>*;
-  var fragColor : ColorAttachment<PreferredSwapChainFormat>*;
+  var vert : *vertex Buffer<[]Vector>;
+  var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
 }
 
 class BodyShaders : Shaders {
-  vertex main(vb : VertexBuiltins^) { vb.position = Utils.makeFloat4(vert.Get()); }
-  fragment main(fb : FragmentBuiltins^) { fragColor.Set(float<4>(0.0, 1.0, 0.0, 1.0)); }
+  vertex main(vb : ^VertexBuiltins) { vb.position = Utils.makeFloat4(vert.Get()); }
+  fragment main(fb : ^FragmentBuiltins) { fragColor.Set(float<4>(0.0, 1.0, 0.0, 1.0)); }
 }
 
 class SpringShaders : Shaders {
-  vertex main(vb : VertexBuiltins^) { vb.position = Utils.makeFloat4(vert.Get()); }
-  fragment main(fb : FragmentBuiltins^) { fragColor.Set(float<4>(1.0, 1.0, 1.0, 1.0)); }
+  vertex main(vb : ^VertexBuiltins) { vb.position = Utils.makeFloat4(vert.Get()); }
+  fragment main(fb : ^FragmentBuiltins) { fragColor.Set(float<4>(1.0, 1.0, 1.0, 1.0)); }
 }
 
 var bodyPipeline = new RenderPipeline<BodyShaders>(device, null, TriangleList);

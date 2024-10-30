@@ -470,9 +470,10 @@ arith_expr:
 
 expr:
     arith_expr
+  | T_NEW type                              { $$ = MakeNewExpr($2, nullptr, nullptr); }
   | T_NEW type '(' arguments ')'            { $$ = MakeNewExpr($2, nullptr, $4); }
-  | T_NEW '[' arith_expr ']' type           { $$ = MakeNewArrayExpr($5, $3); }
-  | T_NEW '[' arith_expr ']' type '(' arguments ')' { $$ = MakeNewExpr($5, $3, $7); }
+  | arith_expr T_NEW type                   { $$ = MakeNewArrayExpr($3, $1); }
+  | arith_expr T_NEW type '(' arguments ')' { $$ = MakeNewExpr($3, $1, $5); }
   | T_INLINE '(' T_STRING_LITERAL ')'       { $$ = InlineFile($3); }
   | T_STRING_LITERAL                        { $$ = StringLiteral($1); }
   ;

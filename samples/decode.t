@@ -19,7 +19,7 @@ device.GetQueue().Submit(copyEncoder.Finish());
 
 var window = new Window({0, 0}, imageSize);
 var swapChain = new SwapChain<PreferredSwapChainFormat>(device, window);
-var verts = new [4]Vertex;
+var verts = 4 new Vertex;
 verts[0].position = float<4>(-1.0,  1.0, 0.0, 1.0);
 verts[1].position = float<4>( 1.0,  1.0, 0.0, 1.0);
 verts[2].position = float<4>(-1.0, -1.0, 0.0, 1.0);
@@ -28,7 +28,7 @@ verts[0].texCoord = float<2>(0.0, 0.0);
 verts[1].texCoord = float<2>(1.0, 0.0);
 verts[2].texCoord = float<2>(0.0, 1.0);
 verts[3].texCoord = float<2>(1.0, 1.0);
-var indices = new [6]uint;
+var indices = 6 new uint;
 indices[0] = 0;
 indices[1] = 1;
 indices[2] = 2;
