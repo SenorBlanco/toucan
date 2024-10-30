@@ -16,7 +16,7 @@ array-new.t:4: array size is not an integer constant
 array-new.t:5: array size is not an integer constant
 test/arrays.t
 test/assert-failed.t
-/Users/senorblanco/src/toucan/test/assert-failed.t:4: assertion failed
+test/assert-failed.t:4: assertion failed
 test/binop-widen.t
 test/bitwise.t
 test/bool-constants.t
@@ -46,8 +46,6 @@ test/constructor.t
 test/control-flow.t
 test/decl-test.t
 test/dereference.t
-dereference.t:9:  cannot store a value of type "[3]float" to a location of type "float"
-dereference.t:15:  expression is not of indexable type
 test/destructor.t
 test/do-test.t
 test/double.t
@@ -90,7 +88,7 @@ test/error-wrong-named-param.t
 error-wrong-named-param.t:7:  class Bar has no method Foo(b = float, a = int)
 error-wrong-named-param.t:7:  Bar.Foo(int, float) : float
 test/expectation-failed.t
-/Users/senorblanco/src/toucan/test/expectation-failed.t:4: expectation failed
+test/expectation-failed.t:4: expectation failed
 test/fabs.t
 test/fail-allocate-class-with-unsized-array.t
 fail-allocate-class-with-unsized-array.t:5:  class with unsized array must be allocated with size
@@ -104,11 +102,11 @@ test/field-access.t
 test/field-default-value.t
 test/field-store.t
 test/file-location-default-arg.t
-/Users/senorblanco/src/toucan/test/file-location-default-arg.t:12
-/Users/senorblanco/src/toucan/test/file-location-default-arg.t:13
-/Users/senorblanco/src/toucan/test/file-location-default-arg.t:14
+test/file-location-default-arg.t:12
+test/file-location-default-arg.t:13
+test/file-location-default-arg.t:14
 test/file-location.t
-/Users/senorblanco/src/toucan/test/file-location.t:4
+test/file-location.t:4
 test/for-stmt.t
 test/forward-field.t
 test/forward-var-error.t

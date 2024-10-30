@@ -453,7 +453,7 @@ arith_expr:
   | '(' type ')' arith_expr %prec UNARYMINUS      { $$ = Make<CastExpr>($2, $4); }
   | simple_type '(' arguments ')'           { $$ = Make<UnresolvedInitializer>($1, $3, true); }
   | simple_type '{' arguments '}'           { $$ = Make<UnresolvedInitializer>($1, $3, false); }
-  | type '[' arith_expr ']' '(' arguments ')'     { $$ = Make<UnresolvedInitializer>(GetArrayType($1, AsIntConstant($3)), $6, true); }
+  | '[' arith_expr ']' type '(' arguments ')'     { $$ = Make<UnresolvedInitializer>(GetArrayType($4, AsIntConstant($2)), $6, true); }
   | T_INT_LITERAL                           { $$ = Make<IntConstant>($1, 32); }
   | T_UINT_LITERAL                          { $$ = Make<UIntConstant>($1, 32); }
   | T_BYTE_LITERAL                          { $$ = Make<IntConstant>($1, 8); }
