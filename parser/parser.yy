@@ -472,8 +472,9 @@ expr:
     arith_expr
   | T_NEW type                              { $$ = MakeNewExpr($2, nullptr, nullptr); }
   | T_NEW type '(' arguments ')'            { $$ = MakeNewExpr($2, nullptr, $4); }
-  | arith_expr T_NEW type                   { $$ = MakeNewArrayExpr($3, $1); }
-  | arith_expr T_NEW type '(' arguments ')' { $$ = MakeNewExpr($3, $1, $5); }
+  | '[' arith_expr ']' T_NEW type           { $$ = MakeNewArrayExpr($5, $2); }
+  | '[' arith_expr ']' T_NEW type '(' arguments ')'
+                                            { $$ = MakeNewExpr($5, $2, $7); }
   | T_INLINE '(' T_STRING_LITERAL ')'       { $$ = InlineFile($3); }
   | T_STRING_LITERAL                        { $$ = StringLiteral($1); }
   ;
