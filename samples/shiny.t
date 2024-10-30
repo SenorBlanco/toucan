@@ -74,8 +74,8 @@ class BicubicTessellator {
     var numPatches = controlIndices.length / 16;
     var patchWidth = level + 1;
     var verticesPerPatch = patchWidth * patchWidth;
-    vertices = (numPatches * verticesPerPatch) new Vertex;
-    indices = (numPatches * level * level * 6) new uint;
+    vertices = [numPatches * verticesPerPatch] new Vertex;
+    indices = [numPatches * level * level * 6] new uint;
     var vi = 0, ii = 0;
     var scale = 1.0 / (float) level;
     for (var k = 0; k < controlIndices.length; k += 16) {
