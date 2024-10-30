@@ -20,10 +20,10 @@ verts[0].color = float<3>(1.0, 0.0, 0.0);
 verts[1].color = float<3>(0.0, 1.0, 0.0);
 verts[2].color = float<3>(0.0, 0.0, 1.0);
 
-var vb = new vertex Buffer<Vertex[]>(device, verts);
+var vb = new vertex Buffer<[]Vertex>(device, verts);
 
 class Bindings {
-  var uniformBuffer : uniform Buffer<Uniforms>*;
+  var uniformBuffer : *uniform Buffer<Uniforms>;
 }
 
 class Pipeline {
@@ -37,7 +37,7 @@ class Pipeline {
   fragment main(fb : ^FragmentBuiltins, varyings : float<4>) {
     fragColor.Set(varyings * bindings.Get().uniformBuffer.Map().alpha);
   }
-  var vertices : *vertex Buffer<Vertex[]>;
+  var vertices : *vertex Buffer<[]Vertex>;
   var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
   var bindings : *BindGroup<Bindings>;
 }
