@@ -212,9 +212,9 @@ int ArrayType::GetSizeInBytes(int dynamicArrayLength) const {
 }
 
 std::string ArrayType::ToString() const {
-  std::string result = elementType_->ToString() + "[";
+  std::string result = "[";
   if (numElements_ > 0) { result += std::to_string(numElements_); }
-  result += "]";
+  result += "]" + elementType_->ToString();
   return result;
 }
 
