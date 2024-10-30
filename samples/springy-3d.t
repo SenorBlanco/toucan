@@ -101,8 +101,8 @@ class DrawPipeline {
   var bindings : *BindGroup<Bindings>;
 }
 
-var bodies = new [width * height * depth]Body;
-var springs = new [bodies.length * 3 - width * depth - height * depth - width * height]Spring;
+var bodies = (width * height * depth) new Body;
+var springs = (bodies.length * 3 - width * depth - height * depth - width * height) new Spring;
 var spring = 0;
 for (var i = 0; i < bodies.length; ++i) {
   var x = i % width;
@@ -139,10 +139,10 @@ var window = new Window({0, 0}, {960, 960});
 var swapChain = new SwapChain<PreferredSwapChainFormat>(device, window);
 var physicsSystem = new ParticleSystem(bodies, springs);
 
-var bodyVerts = new [bodies.length * 3]Vector;
+var bodyVerts = (bodies.length * 3) new Vector;
 var bodyVBO = new vertex Buffer<[]Vector>(device, bodyVerts.length);
 
-var springVerts = new [springs.length * 2]Vector;
+var springVerts = (springs.length * 2) new Vector;
 var springVBO = new vertex Buffer<[]Vector>(device, springVerts.length);
 
 var bodyPipeline = new RenderPipeline<DrawPipeline>(device, null, TriangleList);

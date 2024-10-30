@@ -72,7 +72,7 @@ class BicubicPatch {
 var level = 64;
 var patchWidth = level + 1;
 var numPatches = teapotControlIndices.length / 16;
-var tessTeapotIndices = new [numPatches * level * level * 6]uint;
+var tessTeapotIndices = (numPatches * level * level * 6) new uint;
 
 var vi = 0, ii = 0;
 for (var k = 0; k < numPatches; ++k) {
@@ -249,7 +249,7 @@ animCurves[2].FromBezier({1.0, 1.0, 0.5, 0.5});
 animCurves[3].FromBezier({0.5, 0.5, 1.0, 1.0});
 var keyTimes : [4]float = { 0.0, 0.5, 1.5, 1.7 };
 var duration = 2.0;
-var animTeapotControlPoints = new [teapotControlPoints.length]float<3>;
+var animTeapotControlPoints = (teapotControlPoints.length) new float<3>;
 while (System.IsRunning()) {
   var animTime = (float) ((System.GetCurrentTime() - startTime) % duration);
   var key = keyTimes.length - 1;

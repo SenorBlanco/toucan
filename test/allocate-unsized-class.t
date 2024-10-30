@@ -4,7 +4,7 @@ class C {
   var f : float;
   var array : []int;
 };
-var c = new [5]C();
+var c = 5 new C();
 c.array[2] = 42;
 
 Test.Expect(c.array[2] == 42);
