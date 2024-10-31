@@ -107,6 +107,7 @@ Type* FindType(const char* str) {
 static void DefineType(std::string id, Type* type) {
   scopeStack_.Top()->DefineType(id, type);
 }
+bool gInTemplateArguments;
 %}
 
 %union {
@@ -166,6 +167,7 @@ static void DefineType(std::string id, Type* type) {
 %left '&'
 %left T_EQ T_NE
 %left T_LT T_LE T_GE T_GT
+%left T_LEFT_SHIFT T_RIGHT_SHIFT
 %left '+' '-'
 %left '*' '/' '%'
 %left T_AS
@@ -259,7 +261,8 @@ const_decl_statement:
 simple_type:
     T_TYPENAME
   | scalar_type
-  | simple_type T_LT types T_GT             { $$ = GetClassTemplateInstance($1, *$3); }
+  | simple_type T_LT     { gInTemplateArguments = true; }
+    types T_GT           { $$ = GetClassTemplateInstance($1, *$4); gInTemplateArguments = false; }
   | simple_type T_LT T_INT_LITERAL T_GT     { $$ = types_->GetVector($1, $3); }
   | simple_type T_LT T_INT_LITERAL ',' T_INT_LITERAL T_GT 
     { $$ = types_->GetMatrix(types_->GetVector($1, $3), $5); }
