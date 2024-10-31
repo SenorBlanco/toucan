@@ -14,10 +14,11 @@
  */
 
 %{
+#include <deque>
 #include <stdlib.h>
 #include <string.h>
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 
 #include "parser/lexer.h"
 #include "ast/type.h"
@@ -27,6 +28,7 @@
 using namespace Toucan;
 
 extern Type* FindType(const char* str);
+extern bool gInTemplateArguments;
 
 std::unordered_map<std::string, std::string> identifiers_;
 
@@ -61,7 +63,12 @@ EXPONENT        ([Ee]("-"|"+")?[0-9]+)
 %x include
 
 %%
-
+  static std::deque<int> tokens;
+  if (!tokens.empty()) {
+    int token = tokens.front();
+    tokens.pop_front();
+    return token;
+  }
 ([0-9]+"."[0-9]*|[0-9]*"."[0-9]+){EXPONENT}? { yylval.f = std::strtof(yytext, nullptr); return T_FLOAT_LITERAL; }
 
 ([0-9]+"."[0-9]*|[0-9]*"."[0-9]+){EXPONENT}?d { yylval.d = std::strtod(yytext, nullptr); return T_DOUBLE_LITERAL; }
@@ -171,6 +178,9 @@ half    { return T_HALF; }
 
 \+\+            { return T_PLUSPLUS; }
 --              { return T_MINUSMINUS; }
+
+\<\<            { return T_LEFT_SHIFT; }
+>>              { if (gInTemplateArguments) { tokens.push_back(T_GT); return T_GT; } else return T_RIGHT_SHIFT; }
 
 ::              { return T_COLONCOLON; }
 
