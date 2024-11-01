@@ -143,7 +143,7 @@ UnresolvedListExpr::UnresolvedListExpr(ArgList* arglist) : arglist_(arglist) {}
 Type* UnresolvedListExpr::GetType(TypeTable* types) {
   VarVector vars;
   for (auto arg : arglist_->GetArgs()) {
-    vars.push_back(std::make_shared<Var>(arg->GetID(), arg->GetExpr()->GetType(types)));
+    vars.push_back(std::make_shared<Var>(arg->GetID(), arg->GetExpr()->GetType(types), nullptr));
   }
   return types->GetList(std::move(vars));
 }

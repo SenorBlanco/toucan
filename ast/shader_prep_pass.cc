@@ -122,7 +122,7 @@ void ShaderPrepPass::UnfoldClass(ClassType* classType, VarVector* vars, VarVecto
     UnfoldClass(classType->GetParent(), vars, localVars, globalVars);
   }
   for (const auto& field : classType->GetFields()) {
-    auto var = std::make_shared<Var>(field->name, field->type);
+    auto var = std::make_shared<Var>(field->name, field->type, field->defaultValue);
     vars->push_back(var);
     UnfoldVar(var, localVars, globalVars);
   }
@@ -133,7 +133,7 @@ void ShaderPrepPass::UnfoldVar(std::shared_ptr<Var> var, VarVector* localVars, V
     Type* type = var->type;
     if (type->IsPtr()) {
       auto baseType = static_cast<PtrType*>(type)->GetBaseType();
-      auto baseVar = std::make_shared<Var>(var->name, baseType);
+      auto baseVar = std::make_shared<Var>(var->name, baseType, nullptr);
       UnfoldVar(baseVar, localVars, globalVars);
       unfoldedPtrs_[var.get()] = baseVar;
     } else if (type->IsClass()) {
@@ -237,7 +237,7 @@ void ShaderPrepPass::ExtractPipelineVars(ClassType* classType, std::vector<Var*>
     ClassType* classType = static_cast<ClassType*>(unqualifiedType);
     if (classType->GetTemplate() == NativeClass::ColorAttachment) {
       if (methodModifiers_ & Method::Modifier::Fragment) {
-        auto output = std::make_shared<Var>(field->name, ConvertType(field->type));
+        auto output = std::make_shared<Var>(field->name, ConvertType(field->type), field->defaultValue);
         outputs_.push_back(output);
         globalVars->push_back(output.get());
       } else {
@@ -249,7 +249,7 @@ void ShaderPrepPass::ExtractPipelineVars(ClassType* classType, std::vector<Var*>
     } else if (classType->GetTemplate() == NativeClass::Buffer &&
                qualifiers & Type::Qualifier::Vertex) {
       if (methodModifiers_ & Method::Modifier::Vertex) {
-        auto input = std::make_shared<Var>(field->name, ConvertType(field->type));
+        auto input = std::make_shared<Var>(field->name, ConvertType(field->type), field->defaultValue);
         inputs_.push_back(input);
         globalVars->push_back(input.get());
       } else {
@@ -265,12 +265,12 @@ void ShaderPrepPass::ExtractPipelineVars(ClassType* classType, std::vector<Var*>
       if (argType->IsClass()) {
         auto* bindGroupClass = static_cast<ClassType*>(argType);
         for (auto& subField : bindGroupClass->GetFields()) {
-          auto  var = std::make_shared<Var>(subField->name, ConvertType(subField->type));
+          auto  var = std::make_shared<Var>(subField->name, ConvertType(subField->type), subField->defaultValue);
           bindGroup.push_back(var);
           globalVars->push_back(var.get());
         }
       } else {
-        auto  var = std::make_shared<Var>(field->name, ConvertType(argType));
+        auto  var = std::make_shared<Var>(field->name, ConvertType(argType), field->defaultValue);
         bindGroup.push_back(var);
         globalVars->push_back(var.get());
       }
@@ -286,11 +286,11 @@ Expr* ShaderPrepPass::ExtractBuiltInVars(Type* type, Stmts* stmts, Stmts* postSt
   type = static_cast<PtrType*>(type)->GetBaseType();
   assert(type->IsClass());
   auto classType = static_cast<ClassType*>(type);
-  auto localVar = std::make_shared<Var>("builtins", type);
+  auto localVar = std::make_shared<Var>("builtins", type, nullptr);
   stmts->AppendVar(localVar);
   auto localVarExpr = Make<VarExpr>(localVar.get());
   for (const auto& field : classType->GetFields()) {
-    auto var = std::make_shared<Var>(field->name, field->type);
+    auto var = std::make_shared<Var>(field->name, field->type, field->defaultValue);
     builtInVars_.push_back(var);
     auto fieldAccess = Make<FieldAccess>(localVarExpr, field.get());
     auto varExpr = Make<VarExpr>(var.get());
@@ -307,7 +307,7 @@ Expr* ShaderPrepPass::ExtractBuiltInVars(Type* type, Stmts* stmts, Stmts* postSt
 }
 
 Expr* ShaderPrepPass::CreateAndLoadInputVar(Type* type, std::string name) {
-  auto var = std::make_shared<Var>(name, type);
+  auto var = std::make_shared<Var>(name, type, nullptr);
   inputs_.push_back(var);
   return Make<LoadExpr>(Make<VarExpr>(var.get()));
 }
@@ -329,7 +329,7 @@ Expr* ShaderPrepPass::CreateAndLoadInputVars(Type* type) {
 }
 
 Stmt* ShaderPrepPass::CreateAndStoreOutputVar(Type* type, std::string name, Expr* value) {
-  auto var = std::make_shared<Var>(name, type);
+  auto var = std::make_shared<Var>(name, type, value);
   outputs_.push_back(var);
   return Make<StoreStmt>(Make<VarExpr>(var.get()), value);
 }
@@ -340,7 +340,7 @@ void ShaderPrepPass::CreateAndStoreOutputVars(Type* type, Expr* value, Stmts* st
   if (type->IsVoid()) {
     stmts->Append(Make<ExprStmt>(value));
   } else if (type->IsClass()) {
-    auto var = std::make_shared<Var>("temp", type);
+    auto var = std::make_shared<Var>("temp", type, value);
     stmts->AppendVar(var);
     auto varExpr = Make<VarExpr>(var.get());
     stmts->Append(Make<StoreStmt>(varExpr, value));
@@ -467,7 +467,7 @@ Result ShaderPrepPass::Visit(MethodCall* node) {
     auto* type = arg->GetType(types_);
     if (type->IsPtr() && arg->IsFieldAccess() || arg->IsArrayAccess()) {
       auto* baseType = static_cast<PtrType*>(type)->GetBaseType();
-      auto  var = std::make_shared<Var>("temp", baseType);
+      auto  var = std::make_shared<Var>("temp", baseType, nullptr);
       rootStmts_->AppendVar(var);
       VarExpr* varExpr = Make<VarExpr>(var.get());
       if (baseType->IsWriteable()) {

@@ -46,7 +46,7 @@ class SymbolTable {
   const EnumValue* FindEnumValue(const std::string& identifier) const;
   Field*           FindField(const std::string& identifier) const;
   Var*             FindVarInScope(const std::string& identifier) const;
-  Var*             DefineVar(std::string identifier, Type* type);
+  Var*             DefineVar(std::string identifier, Type* type, Expr* defaultValue);
   bool             DefineType(std::string identifier, Type* type);
   Scope*           PushNewScope();
   void             PushScope(Scope* scope);

@@ -282,7 +282,7 @@ void GenBindings::GenBindingsForMethod(ClassType* classType, Method* method) {
     // The DumpAsSourcePass is not fully implemented for all types, and
     // non-native default values are never used at runtime.
     // TODO: fix this through proper constant folding.
-    Expr* defaultValue = method->classType->IsNative() ? method->defaultArgs[i] : nullptr;
+    Expr* defaultValue = method->classType->IsNative() ? method->formalArgList[i]->defaultValue : nullptr;
     assert(!defaultValue || !defaultValue->GetType(types_)->IsList());
     int defaultValueId = defaultValue ? sourcePass_.Resolve(defaultValue) : 0;
     fprintf(file_, "  m->AddFormalArg(\"%s\", typeList[%d], ", var->name.c_str(),

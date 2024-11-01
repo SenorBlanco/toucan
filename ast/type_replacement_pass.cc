@@ -37,9 +37,8 @@ Method* TypeReplacementPass::ResolveMethod(Method* m) {
   Method* result = new Method(m->modifiers, ResolveType(m->returnType), m->name.c_str(),
                               static_cast<ClassType*>(ResolveType(m->classType)));
   result->templateMethod = m;
-  for (int i = 0; i < m->formalArgList.size(); ++i) {
-    Var* var = m->formalArgList[i].get();
-    result->AddFormalArg(var->name, ResolveType(var->type), m->defaultArgs[i]);
+  for (auto var : m->formalArgList) {
+    result->AddFormalArg(var->name, ResolveType(var->type), var->defaultValue);
   }
   if (m->stmts) {
     result->stmts = Resolve(m->stmts);

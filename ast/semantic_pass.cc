@@ -192,7 +192,7 @@ Result SemanticPass::Visit(VarDeclaration* decl) {
     std::string errorMsg = std::string("cannot create storage of type ") + type->ToString();
     return Error(errorMsg.c_str());
   }
-  Var*  var = symbols_->DefineVar(id, type);
+  Var*  var = symbols_->DefineVar(id, type, initExpr);
   Expr* varExpr = Make<VarExpr>(var);
   return InitializeVar(varExpr, type, initExpr);
 }
@@ -684,10 +684,10 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
         }
       }
     }
-    for (int i = 0; i < method->defaultArgs.size(); ++i) {
-      method->defaultArgs[i] = Resolve(method->defaultArgs[i]);
-      if (method->formalArgList[i]->type->IsAuto()) {
-        method->formalArgList[i]->type = method->defaultArgs[i]->GetType(types_);
+    for (auto arg : method->formalArgList) {
+      arg->defaultValue = Resolve(arg->defaultValue);
+      if (arg->type->IsAuto()) {
+        arg->type = arg->defaultValue->GetType(types_);
       }
     }
   }
@@ -764,10 +764,10 @@ bool SemanticPass::MatchArgs(Expr*               thisExpr,
   }
   for (int i = offset; i < result.size(); ++i) {
     if (!result[i]) {
-      if (!m->defaultArgs[i]) { return false; }
+      if (!m->formalArgList[i]->defaultValue) { return false; }
       copyFileLocation_ = false;
       // Override the file location by resolving the default args (again).
-      result[i] = Resolve(m->defaultArgs[i]);
+      result[i] = Resolve(m->formalArgList[i]->defaultValue);
       copyFileLocation_ = true;
     }
   }

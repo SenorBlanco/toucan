@@ -70,9 +70,9 @@ Var* SymbolTable::FindVarInScope(const std::string& identifier) const {
   return 0;
 }
 
-Var* SymbolTable::DefineVar(std::string identifier, Type* type) {
+Var* SymbolTable::DefineVar(std::string identifier, Type* type, Expr* defaultValue) {
   if (!currentScope_) return nullptr;
-  auto var = std::make_shared<Var>(identifier, type);
+  auto var = std::make_shared<Var>(identifier, type, defaultValue);
   currentScope_->vars[identifier] = var;
   return var.get();
 }

@@ -491,8 +491,7 @@ void ClassType::AppendToVTable(Method* method) {
 }
 
 void Method::AddFormalArg(std::string name, Type* type, Expr* defaultValue) {
-  formalArgList.push_back(std::make_shared<Var>(name, type));
-  defaultArgs.push_back(defaultValue);
+  formalArgList.push_back(std::make_shared<Var>(name, type, defaultValue));
 }
 
 std::string ClassType::ToString() const {

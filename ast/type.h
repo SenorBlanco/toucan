@@ -288,10 +288,11 @@ struct Field {
 typedef std::vector<std::unique_ptr<Field>> FieldVector;
 
 struct Var {
-  Var(const std::string& n, Type* t) : name(n), type(t) {}
+  Var(const std::string& n, Type* t, Expr* v) : name(n), type(t), defaultValue(v) {}
 
   std::string name;
   Type*       type;
+  Expr*       defaultValue;
 };
 
 class VarVector : public std::vector<std::shared_ptr<Var>> {};
@@ -310,7 +311,6 @@ struct Method {
   Method*                 templateMethod = nullptr;
   std::array<uint32_t, 3> workgroupSize = {1, 1, 1};
   VarVector               formalArgList;
-  std::vector<Expr*>      defaultArgs;
   Stmts*                  stmts = nullptr;
   std::vector<uint32_t>   spirv;
   std::string             wgsl;
