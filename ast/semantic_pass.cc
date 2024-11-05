@@ -153,6 +153,11 @@ Result SemanticPass::Visit(UnresolvedInitializer* node) {
 
 Stmt* SemanticPass::InitializeVar(Expr* varExpr, Type* type, Expr* initExpr) {
   if (initExpr) {
+    if (type->IsRawPtr()) {
+      if (initExpr->IsLoadExpr()) {
+        initExpr = static_cast<LoadExpr*>(initExpr)->GetExpr();
+      }
+    }
     Type* initExprType = initExpr->GetType(types_);
     if (!initExprType->CanWidenTo(type)) {
       Error("cannot store a value of type \"%s\" to a location of type \"%s\"",
@@ -368,7 +373,11 @@ Result SemanticPass::Visit(LoadExpr* node) {
 Result SemanticPass::Visit(UnresolvedIdentifier* node) {
   std::string id = node->GetID();
   if (Var* var = symbols_->FindVar(id)) {
-    return Make<VarExpr>(var);
+    Expr* result = Make<VarExpr>(var);
+    if (var->type->IsRawPtr()) {
+      result = Make<LoadExpr>(result);
+    }
+    return result;
   } else if (Field* field = symbols_->FindField(id)) {
     Var* thisPtr = symbols_->FindVar("this");
     if (!thisPtr) {
