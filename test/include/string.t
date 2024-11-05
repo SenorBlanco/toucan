@@ -14,10 +14,10 @@ class String {
     if (negative) len += 1;
     var b = [len] new ubyte;
     for (var j = len - 1; j >= 0; j--) {
-      b[j] = (ubyte) (value % 10) + 48ub;
+      b:[j] = (ubyte) (value % 10) + 48ub;
       value /= 10;
     }
-    if (negative) b[0] = 45ub;
+    if (negative) b:[0] = 45ub;
     return new String(b);
   }
   Get() : *[]ubyte { return buffer; }

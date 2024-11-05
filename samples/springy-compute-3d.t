@@ -83,10 +83,10 @@ class ComputeForces : ComputeBase {
     var springs = bindings.Get().springStorage.Map();
     var u = bindings.Get().uniforms.Map();
     var i = cb.globalInvocationId.x;
-    var spring = springs[i];
-    var body1 = bodies[spring.body1];
-    var body2 = bodies[spring.body2];
-    springs[i].force = spring.computeForce(body1, body2);
+    var spring = springs:[i];
+    var body1 = bodies:[spring.body1];
+    var body2 = bodies:[spring.body2];
+    springs:[i].force = spring.computeForce(body1, body2);
   }
 }
 
@@ -96,14 +96,14 @@ class ApplyForces : ComputeBase {
     var springs = bindings.Get().springStorage.Map();
     var u = bindings.Get().uniforms.Map();
     var i = cb.globalInvocationId.x;
-    var body = bodies[i];
+    var body = bodies:[i];
     body.force = u.gravity + u.wind;
     for (var i = 0; i < 6; ++i) {
-      body.force += springs[body.spring[i]].force * body.springWeight[i];
+      body.force += springs:[body.spring[i]].force * body.springWeight[i];
     }
     body.computeAcceleration();
     body.eulerStep(u.deltaT);
-    bodies[i] = body;
+    bodies:[i] = body;
   }
 }
 
@@ -111,11 +111,11 @@ class UpdateBodyVerts : ComputeBase {
   compute(1, 1, 1) main(cb : ^ComputeBuiltins) {
     var bodies = bindings.Get().bodyStorage.Map();
     var i = cb.globalInvocationId.x;
-    var p = bodies[i].position;
+    var p = bodies:[i].position;
     var bv = bindings.Get().bodyVerts.Map();
-    bv[i*3]   = p + Vector( 0.1,  0.0);
-    bv[i*3+1] = p + Vector(-0.1,  0.0);
-    bv[i*3+2] = p + Vector( 0.0, -0.2);
+    bv:[i*3]   = p + Vector( 0.1,  0.0);
+    bv:[i*3+1] = p + Vector(-0.1,  0.0);
+    bv:[i*3+2] = p + Vector( 0.0, -0.2);
   }
 }
 
@@ -125,8 +125,8 @@ class UpdateSpringVerts : ComputeBase {
     var springs = bindings.Get().springStorage.Map();
     var sv = bindings.Get().springVerts.Map();
     var i = cb.globalInvocationId.x;
-    sv[i*2] = bodies[springs[i].body1].position;
-    sv[i*2+1] = bodies[springs[i].body2].position;
+    sv:[i*2] = bodies:[springs:[i].body1].position;
+    sv:[i*2+1] = bodies:[springs:[i].body2].position;
   }
 }
 
@@ -151,12 +151,12 @@ var bodies = [width * height * depth] new Body;
 var springs = [bodies.length * 3 - width * depth - height * depth - width * height] new Spring;
 var spring = 0;
 for (var i = 0; i < bodies.length; ++i) {
-  bodies[i].springWeight[0] = 0.0;
-  bodies[i].springWeight[1] = 0.0;
-  bodies[i].springWeight[2] = 0.0;
-  bodies[i].springWeight[3] = 0.0;
-  bodies[i].springWeight[4] = 0.0;
-  bodies[i].springWeight[5] = 0.0;
+  bodies:[i].springWeight[0] = 0.0;
+  bodies:[i].springWeight[1] = 0.0;
+  bodies:[i].springWeight[2] = 0.0;
+  bodies:[i].springWeight[3] = 0.0;
+  bodies:[i].springWeight[4] = 0.0;
+  bodies:[i].springWeight[5] = 0.0;
 }
 
 for (var i = 0; i < bodies.length; ++i) {
@@ -166,44 +166,44 @@ for (var i = 0; i < bodies.length; ++i) {
   var pos = Utils.makeVector((float) (x - width / 2) + 0.5,
                              (float) (y - height / 2) + 0.5,
                              (float) (z - depth / 2) + 0.5, Vector(0.0));
-  bodies[i].position = pos;
-  bodies[i].mass = Math.rand() * 2.5 + 1.25;
-  bodies[i].velocity = Vector(0.0);
-  bodies[i].acceleration = Vector(0.0);
+  bodies:[i].position = pos;
+  bodies:[i].mass = Math.rand() * 2.5 + 1.25;
+  bodies:[i].velocity = Vector(0.0);
+  bodies:[i].acceleration = Vector(0.0);
   if (y == height - 1) {
-    bodies[i].movable = 0.0;
+    bodies:[i].movable = 0.0;
   } else {
-    bodies[i].movable = 1.0;
+    bodies:[i].movable = 1.0;
   }
 
   var body1 = i;
   if (x < width - 1) {
     var body2 = i + 1;
-    springs[spring] = Spring(body1, body2);
-    bodies[body1].spring[0] = spring;
-    bodies[body2].spring[3] = spring;
-    bodies[body1].springWeight[0] = 1.0;
-    bodies[body2].springWeight[3] = -1.0;
+    springs:[spring] = Spring(body1, body2);
+    bodies:[body1].spring[0] = spring;
+    bodies:[body2].spring[3] = spring;
+    bodies:[body1].springWeight[0] = 1.0;
+    bodies:[body2].springWeight[3] = -1.0;
     ++spring;
   }
 
   if (y < height - 1) {
     var body2 = i + width;
-    springs[spring] = Spring(body1, body2);
-    bodies[body1].spring[1] = spring;
-    bodies[body2].spring[4] = spring;
-    bodies[body1].springWeight[1] = 1.0;
-    bodies[body2].springWeight[4] = -1.0;
+    springs:[spring] = Spring(body1, body2);
+    bodies:[body1].spring[1] = spring;
+    bodies:[body2].spring[4] = spring;
+    bodies:[body1].springWeight[1] = 1.0;
+    bodies:[body2].springWeight[4] = -1.0;
     ++spring;
   }
 
   if (z < depth - 1) {
     var body2 = i + width * height;
-    springs[spring] = Spring(body1, body2);
-    bodies[body1].spring[2] = spring;
-    bodies[body2].spring[5] = spring;
-    bodies[body1].springWeight[2] = 1.0;
-    bodies[body2].springWeight[5] = -1.0;
+    springs:[spring] = Spring(body1, body2);
+    bodies:[body1].spring[2] = spring;
+    bodies:[body2].spring[5] = spring;
+    bodies:[body1].springWeight[2] = 1.0;
+    bodies:[body2].springWeight[5] = -1.0;
     ++spring;
   }
 }

@@ -20,9 +20,9 @@ class Compute {
     this.set(&i, 7);
     this.set(&array[0], 21);
     this.set(&struct.a, 42);
-    buffer[0] = i;
-    buffer[1] = array[0];
-    buffer[2] = struct.a;
+    buffer:[0] = i;
+    buffer:[1] = array[0];
+    buffer:[2] = struct.a;
   }
   var bindings : *BindGroup<ComputeBindings>;
 }
@@ -45,6 +45,6 @@ computePass.End();
 hostBuf.CopyFromBuffer(encoder, storageBuf);
 device.GetQueue().Submit(encoder.Finish());
 
-Test.Expect(hostBuf.Map()[0] == 7);
-Test.Expect(hostBuf.Map()[1] == 21);
-Test.Expect(hostBuf.Map()[2] == 42);
+Test.Expect(hostBuf.Map():[0] == 7);
+Test.Expect(hostBuf.Map():[1] == 21);
+Test.Expect(hostBuf.Map():[2] == 42);

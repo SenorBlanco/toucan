@@ -84,8 +84,8 @@ class BicubicTessellator {
         var pu : [4]float<3>;
         var pv : [4]float<3>;
         for (var j = 0; j < 4; ++j) {
-          pu[j] = controlPoints[controlIndices[k + i + j * 4]];
-          pv[j] = controlPoints[controlIndices[k + i * 4 + j]];
+          pu[j] = controlPoints:[controlIndices:[k + i + j * 4]];
+          pv[j] = controlPoints:[controlIndices:[k + i * 4 + j]];
         }
         patch.uCubics[i].FromBezier(pu);
         patch.vCubics[i].FromBezier(pv);
@@ -94,14 +94,14 @@ class BicubicTessellator {
         var v = (float) i * scale;
         for (var j = 0; j <= level; ++j) {
           var u = (float) j * scale;
-          vertices[vi] = patch.Evaluate(u, v);
+          vertices:[vi] = patch.Evaluate(u, v);
           if (i < level && j < level) {
-            indices[ii] = vi;
-            indices[ii + 1] = vi + 1;
-            indices[ii + 2] = vi + patchWidth + 1;
-            indices[ii + 3] = vi;
-            indices[ii + 4] = vi + patchWidth + 1;
-            indices[ii + 5] = vi + patchWidth;
+            indices:[ii] = vi;
+            indices:[ii + 1] = vi + 1;
+            indices:[ii + 2] = vi + patchWidth + 1;
+            indices:[ii + 3] = vi;
+            indices:[ii + 4] = vi + patchWidth + 1;
+            indices:[ii + 5] = vi + patchWidth;
             ii += 6;
           }
           ++vi;

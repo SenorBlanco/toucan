@@ -71,19 +71,19 @@ class BicubicPatch {
 
 var level = 64;
 var patchWidth = level + 1;
-var numPatches = teapotControlIndices.length / 16;
+var numPatches = teapotControlIndices.length / 16u;
 var tessTeapotIndices = [numPatches * level * level * 6] new uint;
 
 var vi = 0, ii = 0;
 for (var k = 0; k < numPatches; ++k) {
   for (var i = 0; i < level; ++i) {
     for (var j = 0; j < level; ++j) {
-      tessTeapotIndices[ii++] = vi;
-      tessTeapotIndices[ii++] = vi + 1;
-      tessTeapotIndices[ii++] = vi + patchWidth + 1;
-      tessTeapotIndices[ii++] = vi;
-      tessTeapotIndices[ii++] = vi + patchWidth + 1;
-      tessTeapotIndices[ii++] = vi + patchWidth;
+      tessTeapotIndices:[ii++] = vi;
+      tessTeapotIndices:[ii++] = vi + 1;
+      tessTeapotIndices:[ii++] = vi + patchWidth + 1;
+      tessTeapotIndices:[ii++] = vi;
+      tessTeapotIndices:[ii++] = vi + patchWidth + 1;
+      tessTeapotIndices:[ii++] = vi + patchWidth;
       ++vi;
     }
     ++vi;           // skip the last column
@@ -140,14 +140,14 @@ class BicubicComputePipeline {
       var pu : [4]float<3>;
       var pv : [4]float<3>;
       for (var j = 0; j < 4; ++j) {
-        pu[j] = controlPoints[controlIndices[k + i + j * 4]];
-        pv[j] = controlPoints[controlIndices[k + i * 4 + j]];
+        pu[j] = controlPoints:[controlIndices:[k + i + j * 4]];
+        pv[j] = controlPoints:[controlIndices:[k + i * 4 + j]];
       }
       patch.uCubics[i].FromBezier(pu);
       patch.vCubics[i].FromBezier(pv);
     }
     var id = cb.globalInvocationId.x + uniforms.patchWidth * (cb.globalInvocationId.y + uniforms.patchWidth * cb.globalInvocationId.z);
-    vertices[id] = patch.Evaluate(u, v);
+    vertices:[id] = patch.Evaluate(u, v);
   }
   var bindings : *BindGroup<ComputeBindings>;
 }
@@ -264,14 +264,14 @@ while (System.IsRunning()) {
   var t = animCurves[key].Evaluate((animTime - keyStart) / (keyEnd - keyStart));
 
   for (var i = 0; i < teapotControlPoints.length; ++i) {
-    animTeapotControlPoints[i] = teapotControlPoints[i];
+    animTeapotControlPoints:[i] = teapotControlPoints[i];
   }
 
   for (var i = 0; i < teapotControlIndices.length; i += 16) {
-    animTeapotControlPoints[teapotControlIndices[i + 5]] *= t;
-    animTeapotControlPoints[teapotControlIndices[i + 6]] *= t;
-    animTeapotControlPoints[teapotControlIndices[i + 9]] *= t;
-    animTeapotControlPoints[teapotControlIndices[i + 10]] *= t;
+    animTeapotControlPoints:[teapotControlIndices[i + 5]] *= t;
+    animTeapotControlPoints:[teapotControlIndices[i + 6]] *= t;
+    animTeapotControlPoints:[teapotControlIndices[i + 9]] *= t;
+    animTeapotControlPoints:[teapotControlIndices[i + 10]] *= t;
   }
 
   teapotControlPointsBuffer.SetData(animTeapotControlPoints);

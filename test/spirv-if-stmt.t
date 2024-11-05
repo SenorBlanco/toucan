@@ -9,7 +9,7 @@ class BumpCompute {
     var verts = bindings.Get().vertStorage.Map();
     var pos = cb.globalInvocationId.x;
     if (pos % 2 == 1) {
-      verts[pos] += float<4>( 1.0, 0.0, 0.0, 0.0);
+      verts:[pos] += float<4>( 1.0, 0.0, 0.0, 0.0);
     }
   }
   var bindings : *BindGroup<ComputeBindings>;

@@ -101,10 +101,10 @@ class ComputeForces : ComputeBase {
     var springs = bindings.Get().springStorage.Map();
     var u = bindings.Get().uniforms.Map();
     var i = cb.globalInvocationId.x;
-    var spring = springs[i];
-    var body1 = bodies[spring.body1];
-    var body2 = bodies[spring.body2];
-    springs[i].force = spring.computeForce(body1, body2);
+    var spring = springs:[i];
+    var body1 = bodies:[spring.body1];
+    var body2 = bodies:[spring.body2];
+    springs:[i].force = spring.computeForce(body1, body2);
   }
 }
 
@@ -114,12 +114,12 @@ class ApplyForces : ComputeBase {
     var springs = bindings.Get().springStorage.Map();
     var u = bindings.Get().uniforms.Map();
     var i = cb.globalInvocationId.x;
-    var body = bodies[i];
+    var body = bodies:[i];
     var force = u.gravity + u.wind;
     for (var i = 0; i < 6; ++i) {
-      force += springs[body.spring[i]].force * body.springWeight[i];
+      force += springs:[body.spring[i]].force * body.springWeight[i];
     }
-    bodies[i].force = force;
+    bodies:[i].force = force;
   }
 }
 
@@ -129,16 +129,16 @@ class FinalizeBodies : ComputeBase {
     var u = bindings.Get().uniforms.Map();
     var deltaT = u.deltaT;
     var i = cb.globalInvocationId.x;
-    var body = bodies[i];
+    var body = bodies:[i];
     body.computeAcceleration();
     body.position += body.velocity * deltaT * (1.0 - body.nailed);
     body.velocity += body.acceleration * deltaT * (1.0 - body.nailed);
-    var p = bodies[i].position;
+    var p = bodies:[i].position;
     var bv = bindings.Get().bodyVerts.Map();
-    bodies[i] = body;
-    bv[i*3]   = p + Vector( u.particleSize.x * 0.5,  0.0);
-    bv[i*3+1] = p + Vector(-u.particleSize.x * 0.5,  0.0);
-    bv[i*3+2] = p + Vector( 0.0,           -u.particleSize.y);
+    bodies:[i] = body;
+    bv:[i*3]   = p + Vector( u.particleSize.x * 0.5,  0.0);
+    bv:[i*3+1] = p + Vector(-u.particleSize.x * 0.5,  0.0);
+    bv:[i*3+2] = p + Vector( 0.0,       -u.particleSize.y);
   }
 }
 
@@ -148,27 +148,27 @@ class FinalizeSprings : ComputeBase {
     var springs = bindings.Get().springStorage.Map();
     var sv = bindings.Get().springVerts.Map();
     var i = cb.globalInvocationId.x;
-    sv[i*2] = bodies[springs[i].body1].position;
-    sv[i*2+1] = bodies[springs[i].body2].position;
+    sv:[i*2] = bodies:[springs:[i].body1].position;
+    sv:[i*2+1] = bodies:[springs:[i].body2].position;
   }
 }
 
 var device = new Device();
 var window = new Window({0, 0}, {960, 960});
 var swapChain = new SwapChain<PreferredSwapChainFormat>(device, window);
-var bodies = (width * height * depth) new Body;
-var springs = (bodies.length * 3 - width * depth - height * depth - width * height) new Spring;
+var bodies = [width * height * depth] new Body;
+var springs = [bodies.length * 3 - width * depth - height * depth - width * height] new Spring;
 var count = Utils.makeVector((float) width, (float) height, (float) depth, Vector(0.0));
 var pSpacing = Vector(2.0) / count;
 var spring = 0;
 
 for (var i = 0u; i < bodies.length; ++i) {
-  bodies[i].springWeight[0] = 0.0;
-  bodies[i].springWeight[1] = 0.0;
-  bodies[i].springWeight[2] = 0.0;
-  bodies[i].springWeight[3] = 0.0;
-  bodies[i].springWeight[4] = 0.0;
-  bodies[i].springWeight[5] = 0.0;
+  bodies:[i].springWeight[0] = 0.0;
+  bodies:[i].springWeight[1] = 0.0;
+  bodies:[i].springWeight[2] = 0.0;
+  bodies:[i].springWeight[3] = 0.0;
+  bodies:[i].springWeight[4] = 0.0;
+  bodies:[i].springWeight[5] = 0.0;
 }
 
 for (var i = 0u; i < bodies.length; ++i) {
@@ -176,57 +176,57 @@ for (var i = 0u; i < bodies.length; ++i) {
   var y = i % (width * height) / width;
   var z = i / (width * height);
   var pos = Utils.makeVector((float) x, (float) y, (float) z, Vector(0.0));
-  bodies[i].position = Vector(-1.0) + pSpacing * (pos + Vector(0.5));
-  bodies[i].mass = Math.rand() * 0.5 + 0.25;
-  bodies[i].velocity = Vector(0.0);
-  bodies[i].acceleration = Vector(0.0);
-  bodies[i].nailed = 0.0;
+  bodies:[i].position = Vector(-1.0) + pSpacing * (pos + Vector(0.5));
+  bodies:[i].mass = Math.rand() * 0.5 + 0.25;
+  bodies:[i].velocity = Vector(0.0);
+  bodies:[i].acceleration = Vector(0.0);
+  bodies:[i].nailed = 0.0;
 
   if (y == 0) {
     if (x == 0) {
-      bodies[i].nailed = 1.0;
+      bodies:[i].nailed = 1.0;
     }
     if (x == width - 1) {
-      bodies[i].nailed = 1.0;
+      bodies:[i].nailed = 1.0;
     }
   }
   if (y == width - 1) {
     if (x == 0) {
-      bodies[i].nailed = 1.0;
+      bodies:[i].nailed = 1.0;
     }
     if (x == width - 1) {
-      bodies[i].nailed = 1.0;
+      bodies:[i].nailed = 1.0;
     }
   }
 
   var body1 = i;
   var body2 = i + 1;
   if (x < width - 1) {
-    springs[spring] = Spring(body1, body2);
-    bodies[body1].spring[0] = spring;
-    bodies[body2].spring[3] = spring;
-    bodies[body1].springWeight[0] = 1.0;
-    bodies[body2].springWeight[3] = -1.0;
+    springs:[spring] = Spring(body1, body2);
+    bodies:[body1].spring[0] = spring;
+    bodies:[body2].spring[3] = spring;
+    bodies:[body1].springWeight[0] = 1.0;
+    bodies:[body2].springWeight[3] = -1.0;
     ++spring;
   }
 
   body2 = i + width;
   if (y < height - 1) {
-    springs[spring] = Spring(body1, body2);
-    bodies[body1].spring[1] = spring;
-    bodies[body2].spring[4] = spring;
-    bodies[body1].springWeight[1] = 1.0;
-    bodies[body2].springWeight[4] = -1.0;
+    springs:[spring] = Spring(body1, body2);
+    bodies:[body1].spring[1] = spring;
+    bodies:[body2].spring[4] = spring;
+    bodies:[body1].springWeight[1] = 1.0;
+    bodies:[body2].springWeight[4] = -1.0;
     ++spring;
   }
 
   body2 = i + width * height;
   if (z < depth - 1) {
-    springs[spring] = Spring(body1, body2);
-    bodies[body1].spring[2] = spring;
-    bodies[body2].spring[5] = spring;
-    bodies[body1].springWeight[2] = 1.0;
-    bodies[body2].springWeight[5] = -1.0;
+    springs:[spring] = Spring(body1, body2);
+    bodies:[body1].spring[2] = spring;
+    bodies:[body2].spring[5] = spring;
+    bodies:[body1].springWeight[2] = 1.0;
+    bodies:[body2].springWeight[5] = -1.0;
     ++spring;
   }
 }

@@ -6,5 +6,5 @@ class Foo {
 };
 
 var foo = [100] new Foo;
-foo[23].y = 5.0;
-Test.Expect(foo[23].y == 5.0);
+foo:[23].y = 5.0;
+Test.Expect(foo:[23].y == 5.0);
