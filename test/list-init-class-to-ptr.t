@@ -3,7 +3,7 @@ include "include/test.t"
 class C {
   clobber(c : ^C)
   {
-    f = c.f;
+    f = c:.f;
   }
   var f : float;
 }

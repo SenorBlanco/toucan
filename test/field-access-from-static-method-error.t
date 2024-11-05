@@ -6,4 +6,4 @@ class Foo {
 };
 
 var foo = new Foo();
-foo.baz = -321.0;
+foo:.baz = -321.0;

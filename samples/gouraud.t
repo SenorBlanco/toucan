@@ -16,7 +16,7 @@ var vb = new vertex Buffer<[]Vertex>(device, &verts);
 class Pipeline {
   vertex main(vb : ^VertexBuiltins) : float<3> {
     var v = vertices.Get();
-    vb.position = v.position;
+    vb:.position = v.position;
     return v.color;
   }
   fragment main(fb : ^FragmentBuiltins, varyings : float<3>) {

@@ -71,19 +71,19 @@ class BicubicPatch {
 
 var level = 64;
 var patchWidth = level + 1;
-var numPatches = teapotControlIndices.length / 16;
+var numPatches = teapotControlIndices.length / 16u;
 var tessTeapotIndices = [numPatches * level * level * 6] new uint;
 
 var vi = 0, ii = 0;
 for (var k = 0; k < numPatches; ++k) {
   for (var i = 0; i < level; ++i) {
     for (var j = 0; j < level; ++j) {
-      tessTeapotIndices[ii++] = vi;
-      tessTeapotIndices[ii++] = vi + 1;
-      tessTeapotIndices[ii++] = vi + patchWidth + 1;
-      tessTeapotIndices[ii++] = vi;
-      tessTeapotIndices[ii++] = vi + patchWidth + 1;
-      tessTeapotIndices[ii++] = vi + patchWidth;
+      tessTeapotIndices:[ii++] = vi;
+      tessTeapotIndices:[ii++] = vi + 1;
+      tessTeapotIndices:[ii++] = vi + patchWidth + 1;
+      tessTeapotIndices:[ii++] = vi;
+      tessTeapotIndices:[ii++] = vi + patchWidth + 1;
+      tessTeapotIndices:[ii++] = vi + patchWidth;
       ++vi;
     }
     ++vi;           // skip the last column
@@ -129,25 +129,25 @@ class BicubicComputePipeline {
     var controlIndices = bindings.Get().controlIndices.Map();
     var vertices = bindings.Get().vertices.Map();
     var uniforms = bindings.Get().uniforms.Map();
-    var u = (float) cb.globalInvocationId.x * uniforms.scale;
-    var v = (float) cb.globalInvocationId.y * uniforms.scale;
+    var u = (float) cb:.globalInvocationId.x * uniforms:.scale;
+    var v = (float) cb:.globalInvocationId.y * uniforms:.scale;
     if (u > 1.0 || v > 1.0) {
       return;
     }
-    var k = cb.globalInvocationId.z * 16u;
+    var k = cb:.globalInvocationId.z * 16u;
     var patch : BicubicPatch;
     for (var i = 0; i < 4; ++i) {
       var pu : [4]float<3>;
       var pv : [4]float<3>;
       for (var j = 0; j < 4; ++j) {
-        pu[j] = controlPoints[controlIndices[k + i + j * 4]];
-        pv[j] = controlPoints[controlIndices[k + i * 4 + j]];
+        pu[j] = controlPoints:[controlIndices:[k + i + j * 4]];
+        pv[j] = controlPoints:[controlIndices:[k + i * 4 + j]];
       }
       patch.uCubics[i].FromBezier(pu);
       patch.vCubics[i].FromBezier(pv);
     }
-    var id = cb.globalInvocationId.x + uniforms.patchWidth * (cb.globalInvocationId.y + uniforms.patchWidth * cb.globalInvocationId.z);
-    vertices[id] = patch.Evaluate(u, v);
+    var id = cb:.globalInvocationId.x + uniforms:.patchWidth * (cb:.globalInvocationId.y + uniforms:.patchWidth * cb:.globalInvocationId.z);
+    vertices:[id] = patch.Evaluate(u, v);
   }
   var bindings : *BindGroup<ComputeBindings>;
 }
@@ -157,7 +157,7 @@ class SkyboxPipeline : DrawPipeline {
         var v = position.Get();
         var uniforms = bindings.Get().uniforms.Map();
         var pos = float<4>(v.x, v.y, v.z, 1.0);
-        vb.position = uniforms.projection * uniforms.view * uniforms.model * pos;
+        vb:.position = uniforms:.projection * uniforms:.view * uniforms:.model * pos;
         return v;
     }
     fragment main(fb : ^FragmentBuiltins, position : float<3>) {
@@ -174,10 +174,10 @@ class ReflectionPipeline : DrawPipeline {
         var v = vert.Get();
         var n = Math.normalize(v.normal);
         var uniforms = bindings.Get().uniforms.Map();
-        var viewModel = uniforms.view * uniforms.model;
+        var viewModel = uniforms:.view * uniforms:.model;
         var pos = viewModel * float<4>(v.position.x, v.position.y, v.position.z, 1.0);
         var normal = viewModel * float<4>(n.x, n.y, n.z, 0.0);
-        vb.position = uniforms.projection * pos;
+        vb:.position = uniforms:.projection * pos;
         var varyings : Vertex;
         varyings.position = float<3>(pos.x, pos.y, pos.z);
         varyings.normal = float<3>(normal.x, normal.y, normal.z);
@@ -189,7 +189,7 @@ class ReflectionPipeline : DrawPipeline {
       var p = Math.normalize(varyings.position);
       var n = Math.normalize(varyings.normal);
       var r = Math.reflect(p, n);
-      var r4 = uniforms.viewInverse * float<4>(r.x, r.y, r.z, 0.0);
+      var r4 = uniforms:.viewInverse * float<4>(r.x, r.y, r.z, 0.0);
       fragColor.Set(b.textureView.Sample(b.sampler, float<3>(-r4.x, r4.y, r4.z)));
     }
     var vert : *vertex Buffer<[]Vertex>;
@@ -264,14 +264,14 @@ while (System.IsRunning()) {
   var t = animCurves[key].Evaluate((animTime - keyStart) / (keyEnd - keyStart));
 
   for (var i = 0; i < teapotControlPoints.length; ++i) {
-    animTeapotControlPoints[i] = teapotControlPoints[i];
+    animTeapotControlPoints:[i] = teapotControlPoints[i];
   }
 
   for (var i = 0; i < teapotControlIndices.length; i += 16) {
-    animTeapotControlPoints[teapotControlIndices[i + 5]] *= t;
-    animTeapotControlPoints[teapotControlIndices[i + 6]] *= t;
-    animTeapotControlPoints[teapotControlIndices[i + 9]] *= t;
-    animTeapotControlPoints[teapotControlIndices[i + 10]] *= t;
+    animTeapotControlPoints:[teapotControlIndices[i + 5]] *= t;
+    animTeapotControlPoints:[teapotControlIndices[i + 6]] *= t;
+    animTeapotControlPoints:[teapotControlIndices[i + 9]] *= t;
+    animTeapotControlPoints:[teapotControlIndices[i + 10]] *= t;
   }
 
   teapotControlPointsBuffer.SetData(animTeapotControlPoints);

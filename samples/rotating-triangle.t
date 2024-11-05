@@ -12,15 +12,12 @@ var device = new Device();
 var window = new Window({0, 0}, {640, 480});
 var swapChain = new SwapChain<PreferredSwapChainFormat>(device, window);
 
-var verts = [3] new Vertex;
-verts[0].position = float<2>( 0.0,  1.0);
-verts[1].position = float<2>(-1.0, -1.0);
-verts[2].position = float<2>( 1.0, -1.0);
-verts[0].color = float<3>(1.0, 0.0, 0.0);
-verts[1].color = float<3>(0.0, 1.0, 0.0);
-verts[2].color = float<3>(0.0, 0.0, 1.0);
+var verts : [3] Vertex;
+verts[0] = {{ 0.0,  1.0}, {1.0, 0.0, 0.0}};
+verts[1] = {{-1.0, -1.0}, {0.0, 1.0, 0.0}};
+verts[2] = {{ 1.0, -1.0}, {0.0, 0.0, 1.0}};
 
-var vb = new vertex Buffer<[]Vertex>(device, verts);
+var vb = new vertex Buffer<[]Vertex>(device, &verts);
 
 class Bindings {
   var uniformBuffer : *uniform Buffer<Uniforms>;

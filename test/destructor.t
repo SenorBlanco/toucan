@@ -8,17 +8,17 @@ class Bar {
     foo = f;
   }
  virtual ~Bar() {
-    foo.r = 1234.0;
+    foo:.r = 1234.0;
   }
   var foo : *Foo;
 };
 var r = -1.0;
 {
   var f = new Foo();
-  f.r = -1.0;
+  f:.r = -1.0;
   {
     var b = new Bar(f);
   }
-  r = f.r;
+  r = f:.r;
 }
 Test.Expect(r == 1234.0);

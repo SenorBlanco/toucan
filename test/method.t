@@ -9,8 +9,8 @@ class Foo {
 };
 
 var foo = new Foo();
-foo.x = 0.0;
-foo.inc();
-foo.inc();
-foo.inc();
-Test.Expect(foo.x == 3.0);
+foo:.x = 0.0;
+foo:.inc();
+foo:.inc();
+foo:.inc();
+Test.Expect(foo:.x == 3.0);

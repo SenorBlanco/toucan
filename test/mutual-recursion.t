@@ -14,6 +14,6 @@ class Foo {
 };
 
 var foo = new Foo();
-foo.y = 0.0;
-foo.foo(10);
-Test.Expect(foo.y == 10.0);
+foo:.y = 0.0;
+foo:.foo(10);
+Test.Expect(foo:.y == 10.0);

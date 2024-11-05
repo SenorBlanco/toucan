@@ -8,4 +8,4 @@ class C {
 }
 
 var c = new C();
-Test.Expect(c.value == 3.0);
+Test.Expect(c:.value == 3.0);

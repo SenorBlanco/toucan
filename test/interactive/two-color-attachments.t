@@ -2,11 +2,11 @@ using Vertex = float<4>;
 var device = new Device();
 var window = new Window({0, 0}, {640, 480});
 var swapChain = new SwapChain<PreferredSwapChainFormat>(device, window);
-var verts = [3] new Vertex;
-verts[0] = float<4>( 0.0,  1.0, 0.0, 1.0);
-verts[1] = float<4>(-1.0, -1.0, 0.0, 1.0);
-verts[2] = float<4>( 1.0, -1.0, 0.0, 1.0);
-var vb = new vertex Buffer<[]Vertex>(device, verts);
+var verts : [3] Vertex;
+verts[0] = { 0.0,  1.0, 0.0, 1.0};
+verts[1] = {-1.0, -1.0, 0.0, 1.0};
+verts[2] = { 1.0, -1.0, 0.0, 1.0};
+var vb = new vertex Buffer<[]Vertex>(device, &verts);
 class RTTPipeline {
   vertex main(vb : ^VertexBuiltins) { vb.position = vert.Get(); }
   fragment main(fb : ^FragmentBuiltins) {

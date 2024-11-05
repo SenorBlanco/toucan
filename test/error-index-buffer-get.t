@@ -1,7 +1,7 @@
 class Pipeline {
   vertex main(vb : ^VertexBuiltins) {
-    vb.position = vertices.Get();
-    var i = indices.Get();
+    vb:.position = vertices:.Get();
+    var i = indices:.Get();
   }
   fragment main(fb : ^FragmentBuiltins) {
     fragColor.Set( {0.0, 1.0, 0.0, 1.0} );

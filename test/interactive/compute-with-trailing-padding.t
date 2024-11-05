@@ -11,7 +11,7 @@ class BumpCompute {
   compute(1, 1, 1) main(cb : ^ComputeBuiltins) {
     var verts = bindings.Get().vertStorage.Map();
     var pos = cb.globalInvocationId.x;
-    verts[pos].position += float<4>( 0.005,  0.0, 0.0, 0.0);
+    verts:[pos].position += float<4>( 0.005,  0.0, 0.0, 0.0);
   }
   var bindings : *BindGroup<ComputeBindings>;
 }
@@ -19,11 +19,11 @@ class BumpCompute {
 var device = new Device();
 var window = new Window({0, 0}, {640, 480});
 var swapChain = new SwapChain<PreferredSwapChainFormat>(device, window);
-var verts = [3] new Vertex;
-verts[0].position = float<4>( 0.0,  1.0, 0.0, 1.0);
-verts[1].position = float<4>(-1.0, -1.0, 0.0, 1.0);
-verts[2].position = float<4>( 1.0, -1.0, 0.0, 1.0);
-var vb = new vertex storage Buffer<[]Vertex>(device, verts);
+var verts : [3] Vertex;
+verts[0].position = { 0.0,  1.0, 0.0, 1.0};
+verts[1].position = {-1.0, -1.0, 0.0, 1.0};
+verts[2].position = { 1.0, -1.0, 0.0, 1.0};
+var vb = new vertex storage Buffer<[]Vertex>(device, &verts);
 class Pipeline {
   vertex main(vb : ^VertexBuiltins) { var v = vert.Get(); vb.position = v.position; }
   fragment main(fb : ^FragmentBuiltins) { fragColor.Set(float<4>(0.0, 1.0, 0.0, 1.0)); }

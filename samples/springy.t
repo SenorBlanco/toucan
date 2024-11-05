@@ -63,18 +63,18 @@ class ParticleSystem {
     var gravity = Vector(0.0, -0.25);
     var wind = Vector(Math.rand() * 0.05, 0.0);
     for (var i = 0; i < bodies.length; ++i) {
-      bodies[i].force = gravity + wind;
+      bodies:[i].force = gravity + wind;
     }
     for (var i = 0; i < springs.length; ++i) {
-      var b1 = springs[i].body1;
-      var b2 = springs[i].body2;
-      var fk = springs[i].computeForce(bodies[b1], bodies[b2]);
-      bodies[b1].force += fk;
-      bodies[b2].force -= fk;
+      var b1 = springs:[i].body1;
+      var b2 = springs:[i].body2;
+      var fk = springs:[i].computeForce(bodies:[b1], bodies:[b2]);
+      bodies:[b1].force += fk;
+      bodies:[b2].force -= fk;
     }
     for (var i = 0; i < bodies.length; ++i) {
-      bodies[i].computeAcceleration();
-      bodies[i].eulerStep(deltaT);
+      bodies:[i].computeAcceleration();
+      bodies:[i].eulerStep(deltaT);
     }
   }
 }
@@ -90,11 +90,11 @@ class Bindings {
 
 class DrawPipeline {
   vertex main(vb : ^VertexBuiltins) {
-    var matrix = bindings.Get().uniforms.Map().matrix;
-    vb.position = matrix * Utils.makeFloat4(vertices.Get());
+    var matrix = bindings:.Get().uniforms:.Map():.matrix;
+    vb:.position = matrix * Utils.makeFloat4(vertices.Get());
   }
   fragment main(fb : ^FragmentBuiltins) {
-    fragColor.Set(bindings.Get().uniforms.Map().color);
+    fragColor.Set(bindings.Get().uniforms.Map():.color);
   }
   var vertices : *vertex Buffer<[]Vector>;
   var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
@@ -111,26 +111,26 @@ for (var i = 0; i < bodies.length; ++i) {
   var pos = Utils.makeVector((float) (x - width / 2) + 0.5,
                              (float) (y - height / 2) + 0.5,
                              (float) (z - depth / 2) + 0.5, Vector(0.0));
-  bodies[i].position = pos;
-  bodies[i].mass = Math.rand() * 2.5 + 1.25;
-  bodies[i].velocity = Vector(0.0);
-  bodies[i].acceleration = Vector(0.0);
+  bodies:[i].position = pos;
+  bodies:[i].mass = Math.rand() * 2.5 + 1.25;
+  bodies:[i].velocity = Vector(0.0);
+  bodies:[i].acceleration = Vector(0.0);
   if (y == height - 1) {
-    bodies[i].movable = 0.0;
+    bodies:[i].movable = 0.0;
   } else {
-    bodies[i].movable = 1.0;
+    bodies:[i].movable = 1.0;
   }
 
   if (x < width - 1) {
-    springs[spring++] = Spring(i, i + 1);
+    springs:[spring++] = Spring(i, i + 1);
   }
 
   if (y < height - 1) {
-    springs[spring++] = Spring(i, i + width);
+    springs:[spring++] = Spring(i, i + width);
   }
 
   if (z < depth - 1) {
-    springs[spring++] = Spring(i, i + width * height);
+    springs:[spring++] = Spring(i, i + width * height);
   }
 }
 
@@ -174,16 +174,16 @@ while(System.IsRunning()) {
   drawUniforms.color = float<4>(0.0, 1.0, 0.0, 1.0);
   bodyBindings.uniforms.SetData(&drawUniforms);
   for (var i = 0; i < bodies.length; ++i) {
-    var p = bodies[i].position;
-    bodyVerts[i*3  ] = p + Vector( 0.1,  0.0);
-    bodyVerts[i*3+1] = p + Vector(-0.1,  0.0);
-    bodyVerts[i*3+2] = p + Vector( 0.0, -0.2);
+    var p = bodies:[i].position;
+    bodyVerts:[i*3  ] = p + Vector( 0.1,  0.0);
+    bodyVerts:[i*3+1] = p + Vector(-0.1,  0.0);
+    bodyVerts:[i*3+2] = p + Vector( 0.0, -0.2);
   }
   bodyVBO.SetData(bodyVerts);
 
   for (var i = 0; i < springs.length; ++i) {
-    springVerts[i*2] = bodies[springs[i].body1].position;
-    springVerts[i*2+1] = bodies[springs[i].body2].position;
+    springVerts:[i*2] = bodies:[springs:[i].body1].position;
+    springVerts:[i*2+1] = bodies:[springs:[i].body2].position;
   }
   springVBO.SetData(springVerts);
 

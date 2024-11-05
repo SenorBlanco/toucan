@@ -8,7 +8,7 @@ class Foo {
 }
 
 var foo = new Foo();
-foo.self().a += 1;
+foo:.self():.a += 1;
 
-Test.Expect(foo.a == 1);
-Test.Expect(foo.count == 1);
+Test.Expect(foo:.a == 1);
+Test.Expect(foo:.count == 1);

@@ -5,6 +5,6 @@ class C {
   var array : []int;
 };
 var c = [5] new C();
-c.array[2] = 42;
+c:.array[2] = 42;
 
-Test.Expect(c.array[2] == 42);
+Test.Expect(c:.array[2] == 42);

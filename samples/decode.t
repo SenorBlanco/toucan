@@ -19,24 +19,14 @@ device.GetQueue().Submit(copyEncoder.Finish());
 
 var window = new Window({0, 0}, imageSize);
 var swapChain = new SwapChain<PreferredSwapChainFormat>(device, window);
-var verts = [4] new Vertex;
-verts[0].position = float<4>(-1.0,  1.0, 0.0, 1.0);
-verts[1].position = float<4>( 1.0,  1.0, 0.0, 1.0);
-verts[2].position = float<4>(-1.0, -1.0, 0.0, 1.0);
-verts[3].position = float<4>( 1.0, -1.0, 0.0, 1.0);
-verts[0].texCoord = float<2>(0.0, 0.0);
-verts[1].texCoord = float<2>(1.0, 0.0);
-verts[2].texCoord = float<2>(0.0, 1.0);
-verts[3].texCoord = float<2>(1.0, 1.0);
-var indices = [6] new uint;
-indices[0] = 0;
-indices[1] = 1;
-indices[2] = 2;
-indices[3] = 1;
-indices[4] = 2;
-indices[5] = 3;
-var vb = new vertex Buffer<[]Vertex>(device, verts);
-var ib = new index Buffer<[]uint>(device, indices);
+var verts : [4]Vertex;
+verts[0] = { {-1.0,  1.0, 0.0, 1.0}, {0.0, 0.0} };
+verts[1] = { { 1.0,  1.0, 0.0, 1.0}, {1.0, 0.0} };
+verts[2] = { {-1.0, -1.0, 0.0, 1.0}, {0.0, 1.0} };
+verts[3] = { { 1.0, -1.0, 0.0, 1.0}, {1.0, 1.0} };
+var indices : [6] uint = { 0, 1, 2, 1, 2, 3 };
+var vb = new vertex Buffer<[]Vertex>(device, &verts);
+var ib = new index Buffer<[]uint>(device, &indices);
 class Bindings {
   var sampler : *Sampler;
   var textureView : *SampleableTexture2D<float>;
@@ -45,7 +35,7 @@ class Bindings {
 class Pipeline {
     vertex main(vb : ^VertexBuiltins) : float<2> {
         var v = vert.Get();
-        vb.position = v.position;
+        vb:.position = v.position;
         return v.texCoord;
     }
     fragment main(fb : ^FragmentBuiltins, texCoord : float<2>) {

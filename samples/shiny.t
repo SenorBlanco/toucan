@@ -84,8 +84,8 @@ class BicubicTessellator {
         var pu : [4]float<3>;
         var pv : [4]float<3>;
         for (var j = 0; j < 4; ++j) {
-          pu[j] = controlPoints[controlIndices[k + i + j * 4]];
-          pv[j] = controlPoints[controlIndices[k + i * 4 + j]];
+          pu[j] = controlPoints:[controlIndices:[k + i + j * 4]];
+          pv[j] = controlPoints:[controlIndices:[k + i * 4 + j]];
         }
         patch.uCubics[i].FromBezier(pu);
         patch.vCubics[i].FromBezier(pv);
@@ -94,14 +94,14 @@ class BicubicTessellator {
         var v = (float) i * scale;
         for (var j = 0; j <= level; ++j) {
           var u = (float) j * scale;
-          vertices[vi] = patch.Evaluate(u, v);
+          vertices:[vi] = patch.Evaluate(u, v);
           if (i < level && j < level) {
-            indices[ii] = vi;
-            indices[ii + 1] = vi + 1;
-            indices[ii + 2] = vi + patchWidth + 1;
-            indices[ii + 3] = vi;
-            indices[ii + 4] = vi + patchWidth + 1;
-            indices[ii + 5] = vi + patchWidth;
+            indices:[ii] = vi;
+            indices:[ii + 1] = vi + 1;
+            indices:[ii + 2] = vi + patchWidth + 1;
+            indices:[ii + 3] = vi;
+            indices:[ii + 4] = vi + patchWidth + 1;
+            indices:[ii + 5] = vi + patchWidth;
             ii += 6;
           }
           ++vi;
@@ -140,7 +140,7 @@ class SkyboxPipeline : DrawPipeline {
         var v = position.Get();
         var uniforms = bindings.Get().uniforms.Map();
         var pos = float<4>(v.x, v.y, v.z, 1.0);
-        vb.position = uniforms.projection * uniforms.view * uniforms.model * pos;
+        vb:.position = uniforms:.projection * uniforms:.view * uniforms:.model * pos;
         return v;
     }
     fragment main(fb : ^FragmentBuiltins, position : float<3>) {
@@ -157,10 +157,10 @@ class ReflectionPipeline : DrawPipeline {
         var v = vert.Get();
         var n = Math.normalize(v.normal);
         var uniforms = bindings.Get().uniforms.Map();
-        var viewModel = uniforms.view * uniforms.model;
+        var viewModel = uniforms:.view * uniforms:.model;
         var pos = viewModel * float<4>(v.position.x, v.position.y, v.position.z, 1.0);
         var normal = viewModel * float<4>(n.x, n.y, n.z, 0.0);
-        vb.position = uniforms.projection * pos;
+        vb:.position = uniforms:.projection * pos;
         var varyings : Vertex;
         varyings.position = float<3>(pos.x, pos.y, pos.z);
         varyings.normal = float<3>(normal.x, normal.y, normal.z);
@@ -172,7 +172,7 @@ class ReflectionPipeline : DrawPipeline {
       var p = Math.normalize(varyings.position);
       var n = Math.normalize(varyings.normal);
       var r = Math.reflect(p, n);
-      var r4 = uniforms.viewInverse * float<4>(r.x, r.y, r.z, 0.0);
+      var r4 = uniforms:.viewInverse * float<4>(r.x, r.y, r.z, 0.0);
       fragColor.Set(b.textureView.Sample(b.sampler, float<3>(-r4.x, r4.y, r4.z)));
     }
     var vert : *vertex Buffer<[]Vertex>;
@@ -198,8 +198,8 @@ teapotBindings.textureView = cubeBindings.textureView;
 teapotBindings.uniforms = new uniform Buffer<Uniforms>(device);
 
 var teapotData : ReflectionPipeline;
-teapotData.vert = new vertex Buffer<[]Vertex>(device, tessTeapot.vertices);
-teapotData.indexBuffer = new index Buffer<[]uint>(device, tessTeapot.indices);
+teapotData.vert = new vertex Buffer<[]Vertex>(device, tessTeapot:.vertices);
+teapotData.indexBuffer = new index Buffer<[]uint>(device, tessTeapot:.indices);
 teapotData.bindings = new BindGroup<Bindings>(device, &teapotBindings);
 
 var handler : EventHandler;
@@ -244,7 +244,7 @@ while (System.IsRunning()) {
   var teapotPass = new RenderPass<ReflectionPipeline>(renderPass);
   teapotPass.SetPipeline(teapotPipeline);
   teapotPass.Set(&teapotData);
-  teapotPass.DrawIndexed(tessTeapot.indices.length, 1, 0, 0, 0);
+  teapotPass.DrawIndexed(tessTeapot:.indices.length, 1, 0, 0, 0);
 
   renderPass.End();
   var cb = encoder.Finish();

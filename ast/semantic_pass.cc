@@ -48,12 +48,11 @@ Result SemanticPass::Visit(ArrayAccess* node) {
   Expr* index = Resolve(node->GetIndex());
   if (!index) return nullptr;
   Type* exprType = expr->GetType(types_);
-  if (exprType->IsRawPtr()) { exprType = static_cast<RawPtrType*>(exprType)->GetBaseType(); }
-  if (exprType->IsStrongPtr() || exprType->IsWeakPtr()) {
-    exprType = static_cast<PtrType*>(exprType)->GetBaseType();
-    if (expr->GetType(types_)->IsRawPtr()) { expr = Make<LoadExpr>(expr); }
-    expr = Make<SmartToRawPtr>(expr);
+  if (!exprType->IsRawPtr()) {
+    return Error("array access on invalid type");
   }
+
+  exprType = static_cast<RawPtrType*>(exprType)->GetBaseType();
   exprType = exprType->GetUnqualifiedType();
   Type* indexType = index->GetType(types_);
   if (!indexType->IsInt() && !indexType->IsUInt()) {
@@ -389,11 +388,9 @@ Result SemanticPass::Visit(UnresolvedDot* node) {
   std::string id = node->GetID();
   if (type->IsPtr()) {
     type = static_cast<PtrType*>(type)->GetBaseType();
-    if (type->IsArray()) {
-      if (id == "length") { return Make<LengthExpr>(expr); }
-    }
-    if (expr->GetType(types_)->IsRawPtr()) { expr = Make<LoadExpr>(expr); }
-    expr = Make<SmartToRawPtr>(expr);
+    // TODO: remove this once raw pointrs to array contain length
+    if (type->IsArray() && id == "length") { return Make<LengthExpr>(expr); }
+    return Error("invalid indirection");
   }
   type = type->GetUnqualifiedType();
   if (type->IsArray()) {
