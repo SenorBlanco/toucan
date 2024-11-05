@@ -106,7 +106,7 @@ void GenBindings::GenType(Type* type) {
     }
   } else if (type->IsPtr()) {
     PtrType* ptrType = static_cast<PtrType*>(type);
-    fprintf(file_, "types->Get%sPtrType(", type->IsStrongPtr() ? "Strong" : "Weak");
+    fprintf(file_, "types->Get%sPtrType(", type->IsStrongPtr() ? "Strong" : type->IsWeakPtr() ? "Weak" : "Raw");
     if (ptrType->GetBaseType()) {
       fprintf(file_, "typeList[%d]", typeMap_[ptrType->GetBaseType()]);
     } else {
