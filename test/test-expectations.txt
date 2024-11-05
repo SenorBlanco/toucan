@@ -177,6 +177,7 @@ test/new.t
 test/overload.t
 test/override.t
 test/post-increment-with-side-effects.t
+test/raw-ptr.t
 test/really-simple.t
 test/scope-test.t
 test/short-vector.t
