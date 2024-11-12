@@ -153,11 +153,6 @@ Result SemanticPass::Visit(UnresolvedInitializer* node) {
 
 Stmt* SemanticPass::InitializeVar(Expr* varExpr, Type* type, Expr* initExpr) {
   if (initExpr) {
-    if (type->IsRawPtr()) {
-      if (initExpr->IsLoadExpr()) {
-        initExpr = static_cast<LoadExpr*>(initExpr)->GetExpr();
-      }
-    }
     Type* initExprType = initExpr->GetType(types_);
     if (!initExprType->CanWidenTo(type)) {
       Error("cannot store a value of type \"%s\" to a location of type \"%s\"",
