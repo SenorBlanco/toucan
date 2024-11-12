@@ -35,9 +35,9 @@ native class CommandEncoder;
 
 native class Buffer<T> {
   Buffer(device : *Device, size : uint = 1u);
-  Buffer(device : *Device, t : ^T);
+  Buffer(device : *Device, t : &T);
  ~Buffer();
-  SetData(data : ^T);
+  SetData(data : &T);
   CopyFromBuffer(encoder : ^CommandEncoder, source : ^Buffer<T>);
   deviceonly Get() vertex : T:ElementType;
   deviceonly Map() uniform : ^uniform T;
