@@ -93,7 +93,7 @@ class CodeGenLLVM : public Visitor {
   void                  FillVTable(ClassType* classType);
   void                  InitializeObject(llvm::Value* objPtr, ClassType* classType);
   llvm::AllocaInst*     CreateEntryBlockAlloca(llvm::Function* function, Var* var);
-  llvm::Value*          CreatePointer(llvm::Value* obj, llvm::Value* controlBlock);
+  llvm::Value*          CreatePointer(llvm::Value* obj, llvm::Value* controlBlockOrLength);
   llvm::Value*          CreateControlBlock(Type* type);
   llvm::Value*          CreateMalloc(llvm::Type* type, llvm::Value* arraySize);
   void                  GenerateFree(llvm::Value* value);
