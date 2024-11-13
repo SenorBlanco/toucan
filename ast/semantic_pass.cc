@@ -373,11 +373,7 @@ Result SemanticPass::Visit(LoadExpr* node) {
 Result SemanticPass::Visit(UnresolvedIdentifier* node) {
   std::string id = node->GetID();
   if (Var* var = symbols_->FindVar(id)) {
-    Expr* result = Make<VarExpr>(var);
-    if (var->type->IsRawPtr()) {
-      result = Make<LoadExpr>(result);
-    }
-    return result;
+    return Make<VarExpr>(var);
   } else if (Field* field = symbols_->FindField(id)) {
     Var* thisPtr = symbols_->FindVar("this");
     if (!thisPtr) {
