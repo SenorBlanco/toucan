@@ -391,15 +391,18 @@ Result SemanticPass::Visit(UnresolvedDot* node) {
   Expr* expr = Resolve(node->GetExpr());
   if (!expr) return nullptr;
   Type* type = expr->GetType(types_);
-  if (type->IsRawPtr()) { type = static_cast<RawPtrType*>(type)->GetBaseType(); }
+  if (type->IsRawPtr()) { type = static_cast<RawPtrType*>(type)->GetBaseType(); } else { assert(false); }
   std::string id = node->GetID();
-  if (type->IsPtr()) {
+  if (type->IsStrongPtr() || type->IsWeakPtr()) {
     type = static_cast<PtrType*>(type)->GetBaseType();
     if (type->IsArray()) {
       if (id == "length") { return Make<LengthExpr>(expr); }
     }
     if (expr->GetType(types_)->IsRawPtr()) { expr = Make<LoadExpr>(expr); }
     expr = Make<SmartToRawPtr>(expr);
+  } else if (type->IsRawPtr()) {
+    expr = Make<LoadExpr>(expr);
+    type = static_cast<RawPtrType*>(type)->GetBaseType();
   }
   type = type->GetUnqualifiedType();
   if (type->IsArray()) {
