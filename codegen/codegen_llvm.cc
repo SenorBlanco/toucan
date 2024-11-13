@@ -184,7 +184,7 @@ llvm::Type* CodeGenLLVM::ConvertTypeToNative(Type* type) {
       // All pointers to native classes become ptr-to-base (obj pointer)
       return llvm::PointerType::get(ConvertType(baseType), 0);
     } else {
-      // Pointers to anything else passed as Object*.
+      // Pointers to anything else passed as Array* or Object*.
       return voidPtrType_;
     }
   } else if (type->IsVector()) {
@@ -242,14 +242,14 @@ llvm::Value* CodeGenLLVM::CreateControlBlock(Type* type) {
   return controlBlock;
 }
 
-llvm::Value* CodeGenLLVM::CreatePointer(llvm::Value* obj, llvm::Value* controlBlock) {
+llvm::Value* CodeGenLLVM::CreatePointer(llvm::Value* obj, llvm::Value* controlBlockOrLength) {
   std::vector<llvm::Type*> types;
   types.push_back(obj->getType());
-  types.push_back(controlBlock->getType());
+  types.push_back(controlBlockOrLength->getType());
   llvm::Type*  type = llvm::StructType::get(*context_, types);
   llvm::Value* result = llvm::ConstantAggregateZero::get(type);
   result = builder_->CreateInsertValue(result, obj, 0);
-  result = builder_->CreateInsertValue(result, controlBlock, 1);
+  result = builder_->CreateInsertValue(result, controlBlockOrLength, 1);
   return result;
 }
 
@@ -572,8 +572,8 @@ llvm::Value* CodeGenLLVM::ConvertToNative(Type* type, llvm::Value* value) {
     if (baseType && baseType->IsClass() && static_cast<ClassType*>(baseType)->IsNative()) {
       value = builder_->CreateExtractValue(value, {0});
     } else {
-      // Allocate a stack var for Object, then pass a pointer to that (Object*).
-      llvm::Value* alloc = builder_->CreateAlloca(ConvertType(type), 0, "Object");
+      // Allocate a stack var for Array or Object, then pass a pointer to that (Object*).
+      llvm::Value* alloc = builder_->CreateAlloca(ConvertType(type), 0, "ArrayOrObject");
       builder_->CreateStore(value, alloc);
       value = alloc;
     }
@@ -861,7 +861,16 @@ llvm::Value* CodeGenLLVM::CreateCast(Type*        srcType,
     assert(srcType->CanWidenTo(dstType));
     return builder_->CreateBitCast(value, dstLLVMType);
   } else if (srcType->IsRawPtr() && dstType->IsRawPtr()) {
-    return value;
+    auto srcBase = static_cast<RawPtrType*>(srcType)->GetBaseType();
+    auto dstBase = static_cast<RawPtrType*>(dstType)->GetBaseType();
+    if (srcBase->IsArray() && dstBase->IsUnsizedArray()) {
+      auto srcArrayType = static_cast<ArrayType*>(srcBase);
+      llvm::Value* length = llvm::ConstantInt::get(intType_, srcArrayType->GetNumElements(), true);
+      return CreatePointer(value, length);
+    } else {
+      // FIXME: assert?
+      return value;
+    }
   } else if (srcType->IsPtr() && dstType->IsPtr()) {
     if (srcType->IsStrongPtr() && dstType->IsWeakPtr()) {
       RefWeakPtr(value);
