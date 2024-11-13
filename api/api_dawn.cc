@@ -1090,11 +1090,11 @@ Buffer* Buffer_Buffer_Device_uint(int      qualifiers,
   return new Buffer(device->device, b, dynamicArraySize, desc.size, type);
 }
 
-Buffer* Buffer_Buffer_Device_T(int qualifiers, Type* type, Device* device, Object* object) {
-  uint32_t size = 1;
-  if (type->IsUnsizedArray()) { size = object->controlBlock->arrayLength; }
-  Buffer* result = Buffer_Buffer_Device_uint(qualifiers, type, device, size);
-  Buffer_SetData(result, object);
+Buffer* Buffer_Buffer_Device_T(int qualifiers, Type* type, Device* device, void* data) {
+  uint32_t length = 1;
+  if (type->IsUnsizedArray()) { length = static_cast<Array*>(data)->length; }
+  Buffer* result = Buffer_Buffer_Device_uint(qualifiers, type, device, length);
+  Buffer_SetData(result, data);
   return result;
 }
 
@@ -1117,12 +1117,18 @@ void Buffer_Unmap(Buffer* buffer) {
   buffer->mappedObject.controlBlock = nullptr;
 }
 
-void Buffer_SetData(Buffer* buffer, Object* object) {
-  Type* type = object->controlBlock->type;
+void Buffer_SetData(Buffer* buffer, void* data) {
+  Type* type = buffer->type;
   assert(!type->IsPtr());
-  size_t      size = type->GetSizeInBytes(object->controlBlock->arrayLength);
+  uint32_t    length = 1;
+  if (type->IsUnsizedArray()) {
+    Array* array = static_cast<Array*>(data);
+    length = array->length;
+    data = array->ptr;
+  }
+  size_t      size = type->GetSizeInBytes(length);
   wgpu::Queue queue = buffer->device.GetQueue();
-  queue.WriteBuffer(buffer->buffer, 0, object->ptr, size);
+  queue.WriteBuffer(buffer->buffer, 0, data, size);
 }
 
 void Buffer_Destroy(Buffer* This) { delete This; }

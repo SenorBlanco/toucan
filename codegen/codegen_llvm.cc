@@ -118,7 +118,15 @@ llvm::Type* CodeGenLLVM::ConvertType(Type* type) {
   } else if (type->IsRawPtr()) {
     Type* baseType = static_cast<RawPtrType*>(type)->GetBaseType();
     baseType = baseType->GetUnqualifiedType();
-    return llvm::PointerType::get(ConvertType(baseType), 0);
+    if (baseType->IsUnsizedArray()) {
+      std::vector<llvm::Type*> types;
+      baseType = baseType->GetUnqualifiedType();
+      types.push_back(llvm::PointerType::get(ConvertType(baseType), 0));
+      types.push_back(llvm::PointerType::get(controlBlockType_, 0));
+      return llvm::StructType::get(*context_, types);
+    } else {
+      return llvm::PointerType::get(ConvertType(baseType), 0);
+    }
   } else if (type->IsArray()) {
     ArrayType* atype = static_cast<ArrayType*>(type);
     return llvm::ArrayType::get(ConvertArrayElementType(atype), atype->GetNumElements());
@@ -852,6 +860,8 @@ llvm::Value* CodeGenLLVM::CreateCast(Type*        srcType,
     // FIXME:  Implement narrowing casts, with dynamic type checking.
     assert(srcType->CanWidenTo(dstType));
     return builder_->CreateBitCast(value, dstLLVMType);
+  } else if (srcType->IsRawPtr() && dstType->IsRawPtr()) {
+    return value;
   } else if (srcType->IsPtr() && dstType->IsPtr()) {
     if (srcType->IsStrongPtr() && dstType->IsWeakPtr()) {
       RefWeakPtr(value);
