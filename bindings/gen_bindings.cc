@@ -181,6 +181,10 @@ void GenBindings::Run() {
     fprintf(header_, "  void*          ptr;\n");
     fprintf(header_, "  ControlBlock  *controlBlock;\n");
     fprintf(header_, "};\n\n");
+    fprintf(header_, "struct Array {\n");
+    fprintf(header_, "  void*          ptr;\n");
+    fprintf(header_, "  uint32_t       length;\n");
+    fprintf(header_, "};\n\n");
   }
   int id = 0;
   for (auto type : types) {

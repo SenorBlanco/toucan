@@ -3,10 +3,12 @@ var device = new Device();
 var window = new Window({0, 0}, System.GetScreenSize());
 var swapChain = new SwapChain<PreferredSwapChainFormat>(device, window);
 var verts : [3]Vertex = { { 0.0, 1.0, 0.0, 1.0 }, {-1.0, -1.0, 0.0, 1.0 }, { 1.0, -1.0, 0.0, 1.0 } };
-var vb = new vertex Buffer<[]Vertex>(device, &verts);
+var pv : &[]Vertex = &verts;
+var vb = new vertex Buffer<[]Vertex>(device, verts.length);
+vb.SetData(pv);
 class Pipeline {
-  vertex main(vb : &VertexBuiltins) { vb.position = vertices.Get(); }
-  fragment main(fb : &FragmentBuiltins) { fragColor.Set( {0.0, 1.0, 0.0, 1.0} ); }
+  vertex main(vb : ^VertexBuiltins) { vb.position = vertices.Get(); }
+  fragment main(fb : ^FragmentBuiltins) { fragColor.Set( {0.0, 1.0, 0.0, 1.0} ); }
   var vertices : *vertex Buffer<[]Vertex>;
   var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
 }
