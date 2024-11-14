@@ -28,7 +28,6 @@ cast-classes.t:19:  cannot store a value of type "*Derived" to a location of typ
 test/cast-int-to-float.t
 test/cast-int-vector-to-float-vector.t
 test/cast-static-array-to-dynamic.t
-cast-static-array-to-dynamic.t:5:  expression is not of indexable type
 test/cast-uint-to-float.t
 test/cast-uint-vector-to-float-vector.t
 test/chained-method-call.t
@@ -37,9 +36,7 @@ test/class-constructor.t
 test/class-initializer.t
 test/complex-method.t
 test/compute-pass-ptr-to-element.t
-compute-pass-ptr-to-element.t:13:  cannot store a value of type "int" to a location of type "&int"
 test/compute-simple.t
-Warning: Old MapAsync APIs are deprecated. If using C please pass a CallbackInfo struct that has two userdatas. Otherwise, if using C++, please use templated helpers.
 test/constructor-with-default-arg.t
 test/constructor-with-explicit-initializer.t
 test/constructor.t
@@ -64,7 +61,6 @@ test/error-dereference.t
 error-dereference.t:2:  attempt to dereference a non-pointer
 test/error-hex-literal-too-large.t
 test/error-index-buffer-get.t
-error-index-buffer-get.t:3:  Expression is not of class, reference or vector type
 error-index-buffer-get.t:4:  class Buffer<[]uint> has no method Get()
 error-index-buffer-get.t:4:  Buffer<[]uint>.Get() vertex : uint
 test/error-int-literal-too-large.t
@@ -149,7 +145,8 @@ test/later-class-field.t
 test/length-store-error.t
 length-store-error.t:2:  expression is not an assignable value
 test/list-init-aggregated-class.t
-test/list-init-class-to-ptr.t
+test/list-init-array.t
+LLVM main function is broken; abortingtest/list-init-class-to-ptr.t
 test/list-init-class.t
 test/list-init-inherited-field.t
 test/list-init-matrix.t
@@ -190,9 +187,6 @@ test/simple.t
 6
 test/spirv-call-graph.t
 test/spirv-if-stmt.t
-spirv-if-stmt.t:10:  Expression is not of class, reference or vector type
-spirv-if-stmt.t:11:  unknown symbol "pos"
-spirv-if-stmt.t:12:  unknown symbol "pos"
 test/stack-method-call.t
 test/static-method-with-args.t
 test/static-method.t
