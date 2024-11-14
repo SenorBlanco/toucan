@@ -512,6 +512,7 @@ class RawPtrType : public PtrType {
   std::string ToString() const override;
   bool        IsRawPtr() const override { return true; }
   bool        CanWidenTo(Type* type) const override;
+  bool        CanInitFrom(const ListType* type) const override { return GetBaseType()->CanInitFrom(type); }
   int         GetSizeInBytes() const override { return sizeof(void*); }
 };
 

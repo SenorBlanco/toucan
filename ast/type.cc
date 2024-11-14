@@ -569,9 +569,7 @@ bool RawPtrType::CanWidenTo(Type* type) const {
   if (type == this) return true;
   if (GetBaseType()->IsArray() && type->IsRawPtr()) {
     auto ptrType = static_cast<PtrType*>(type);
-    if (GetBaseType()->CanWidenTo(ptrType->GetBaseType())) {
-      return true;
-    }
+    return GetBaseType()->CanWidenTo(ptrType->GetBaseType());
   }
   return false;
 }
