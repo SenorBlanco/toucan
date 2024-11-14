@@ -257,9 +257,15 @@ Expr* SemanticPass::Widen(Expr* node, Type* dstType) {
 
 Expr* SemanticPass::ResolveListExpr(UnresolvedListExpr* node, Type* dstType) {
   if (dstType->IsPtr()) {
-    dstType = static_cast<PtrType*>(dstType)->GetBaseType();
-    auto* tempVar = Make<TempVarExpr>(dstType, ResolveListExpr(node, dstType));
-    return Make<RawToWeakPtr>(tempVar);
+    auto baseType = static_cast<PtrType*>(dstType)->GetBaseType();
+    if (baseType->IsUnsizedArray()) {
+      auto uaType = static_cast<ArrayType*>(dstType);
+      auto length = node->GetArgList()->GetArgs().size();
+      auto arrayType = types_->GetArrayType(uaType->GetElementType(), length, uaType->GetMemoryLayout());
+      auto* tempVar = Make<TempVarExpr>(arrayType, ResolveListExpr(node, arrayType));
+      return Make<CastExpr>(dstType, tempVar);
+    }
+    return Make<TempVarExpr>(baseType, ResolveListExpr(node, baseType));
   }
   Type*              type = dstType;
   auto               argList = node->GetArgList();
@@ -368,7 +374,11 @@ Result SemanticPass::Visit(LoadExpr* node) {
 Result SemanticPass::Visit(UnresolvedIdentifier* node) {
   std::string id = node->GetID();
   if (Var* var = symbols_->FindVar(id)) {
-    return Make<VarExpr>(var);
+    if (var->type->IsRawPtr()) {
+      return Make<LoadExpr>(Make<VarExpr>(var));
+    } else {
+      return Make<VarExpr>(var);
+    }
   } else if (Field* field = symbols_->FindField(id)) {
     Var* thisPtr = symbols_->FindVar("this");
     if (!thisPtr) {
@@ -391,7 +401,7 @@ Result SemanticPass::Visit(UnresolvedDot* node) {
   Expr* expr = Resolve(node->GetExpr());
   if (!expr) return nullptr;
   Type* type = expr->GetType(types_);
-  if (type->IsRawPtr()) { type = static_cast<RawPtrType*>(type)->GetBaseType(); } else { assert(false); }
+  if (type->IsRawPtr()) { type = static_cast<RawPtrType*>(type)->GetBaseType(); }
   std::string id = node->GetID();
   if (type->IsStrongPtr() || type->IsWeakPtr()) {
     type = static_cast<PtrType*>(type)->GetBaseType();
@@ -400,9 +410,6 @@ Result SemanticPass::Visit(UnresolvedDot* node) {
     }
     if (expr->GetType(types_)->IsRawPtr()) { expr = Make<LoadExpr>(expr); }
     expr = Make<SmartToRawPtr>(expr);
-  } else if (type->IsRawPtr()) {
-    expr = Make<LoadExpr>(expr);
-    type = static_cast<RawPtrType*>(type)->GetBaseType();
   }
   type = type->GetUnqualifiedType();
   if (type->IsArray()) {

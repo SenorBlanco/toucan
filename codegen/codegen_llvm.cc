@@ -122,7 +122,7 @@ llvm::Type* CodeGenLLVM::ConvertType(Type* type) {
       std::vector<llvm::Type*> types;
       baseType = baseType->GetUnqualifiedType();
       types.push_back(llvm::PointerType::get(ConvertType(baseType), 0));
-      types.push_back(llvm::PointerType::get(controlBlockType_, 0));
+      types.push_back(intType_);
       return llvm::StructType::get(*context_, types);
     } else {
       return llvm::PointerType::get(ConvertType(baseType), 0);
