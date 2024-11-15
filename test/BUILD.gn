@@ -28,3 +28,7 @@ toucan_executable("simple") {
 toucan_executable("hello") {
   sources = [ "hello.t" ]
 }
+
+toucan_executable("compute-simple") {
+  sources = [ "compute-simple.t" ]
+}
