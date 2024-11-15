@@ -868,7 +868,7 @@ llvm::Value* CodeGenLLVM::CreateCast(Type*        srcType,
       llvm::Value* length = llvm::ConstantInt::get(intType_, srcArrayType->GetNumElements(), true);
       return CreatePointer(value, length);
     } else {
-      // FIXME: assert?
+      assert(false);
       return value;
     }
   } else if (srcType->IsPtr() && dstType->IsPtr()) {
