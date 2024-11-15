@@ -1099,9 +1099,7 @@ Buffer* Buffer_Buffer_Device_uint(int      qualifiers,
 Buffer* Buffer_Buffer_Device_T(int qualifiers, Type* type, Device* device, void* data) {
   uint32_t length = 1;
   if (type->IsUnsizedArray()) {
-    auto array = static_cast<Array*>(data);
-    data = array->ptr;
-    length = array->length;
+    length = static_cast<Array*>(data)->length;
   }
   Buffer* result = Buffer_Buffer_Device_uint(qualifiers, type, device, length);
   Buffer_SetData(result, data);
