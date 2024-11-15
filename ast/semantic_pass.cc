@@ -256,8 +256,8 @@ Expr* SemanticPass::Widen(Expr* node, Type* dstType) {
 }
 
 Expr* SemanticPass::ResolveListExpr(UnresolvedListExpr* node, Type* dstType) {
-  if (dstType->IsPtr()) {
-    auto baseType = static_cast<PtrType*>(dstType)->GetBaseType();
+  if (dstType->IsRawPtr()) {
+    auto baseType = static_cast<RawPtrType*>(dstType)->GetBaseType();
     if (baseType->IsUnsizedArray()) {
       auto uaType = static_cast<ArrayType*>(dstType);
       auto length = node->GetArgList()->GetArgs().size();

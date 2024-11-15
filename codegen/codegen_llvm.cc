@@ -566,14 +566,19 @@ llvm::Value* CodeGenLLVM::GenerateLLVM(Expr* expr) {
 }
 
 llvm::Value* CodeGenLLVM::ConvertToNative(Type* type, llvm::Value* value) {
-  if (type->IsPtr()) {
+  if (type->IsRawPtr() && static_cast<RawPtrType*>(type)->GetBaseType()->IsUnsizedArray()) {
+    // Allocate a stack var for Array, then pass a pointer to that (Array*).
+    llvm::Value* alloc = builder_->CreateAlloca(ConvertType(type), 0, "Array");
+    builder_->CreateStore(value, alloc);
+    value = alloc;
+  } else if (type->IsStrongPtr() || type->IsWeakPtr()) {
     Type* baseType = static_cast<PtrType*>(type)->GetBaseType();
     baseType = baseType->GetUnqualifiedType();
     if (baseType && baseType->IsClass() && static_cast<ClassType*>(baseType)->IsNative()) {
       value = builder_->CreateExtractValue(value, {0});
     } else {
-      // Allocate a stack var for Array or Object, then pass a pointer to that (Object*).
-      llvm::Value* alloc = builder_->CreateAlloca(ConvertType(type), 0, "ArrayOrObject");
+      // Allocate a stack var for Object, then pass a pointer to that (Object*).
+      llvm::Value* alloc = builder_->CreateAlloca(ConvertType(type), 0, "Object");
       builder_->CreateStore(value, alloc);
       value = alloc;
     }
