@@ -79,6 +79,12 @@ error-non-virtual-override.t:10:  attempt to override a non-virtual method
 test/error-partial-template.t
 error-partial-template.t:10:  cannot store a value of type "*Foo<int, int>" to a location of type "*Foo<int>"
 error-partial-template.t:11:  cannot store a value of type "*Foo<int, int>" to a location of type "*Foo"
+test/error-raw-ptr-array-cast-to-smart.t
+error-raw-ptr-array-cast-to-smart.t:2:  cannot cast value of type &[3]int to ^[]int
+error-raw-ptr-array-cast-to-smart.t:3:  cannot cast value of type &[3]int to *[]int
+test/error-raw-ptr-cast-to-smart.t
+error-raw-ptr-cast-to-smart.t:2:  cannot cast value of type &int to ^int
+error-raw-ptr-cast-to-smart.t:3:  cannot cast value of type &int to *int
 test/error-texture-from-buffer-incorrect-format.t
 error-texture-from-buffer-incorrect-format.t:2:  matching constructor not found
 error-texture-from-buffer-incorrect-format.t:9:  class Texture1D<RGBA8unorm> has no method CopyFromBuffer(*CommandEncoder, *writeonly Buffer<[]float<4>>, int)
