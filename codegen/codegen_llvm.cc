@@ -876,6 +876,17 @@ llvm::Value* CodeGenLLVM::CreateCast(Type*        srcType,
       assert(false);
       return value;
     }
+  } else if (srcType->IsStrongPtr() && dstType->IsRawPtr()) {
+    AppendTemporary(value, srcType);
+    auto baseType = static_cast<RawPtrType*>(dstType)->GetBaseType();
+    auto ptr = builder_->CreateExtractValue(value, {0});
+    if (baseType->IsUnsizedArray()) {
+      llvm::Value* controlBlock = builder_->CreateExtractValue(value, {1});
+      auto length = builder_->CreateLoad(intType_, GetArrayLengthAddress(controlBlock));
+      return CreatePointer(ptr, length);
+    } else {
+      return ptr;
+    }
   } else if (srcType->IsPtr() && dstType->IsPtr()) {
     if (srcType->IsStrongPtr() && dstType->IsWeakPtr()) {
       RefWeakPtr(value);
