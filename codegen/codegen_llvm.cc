@@ -1253,11 +1253,15 @@ Result CodeGenLLVM::Visit(LengthExpr* expr) {
   Type*        type = expr->GetExpr()->GetType(types_);
   assert(type->IsRawPtr());
   type = static_cast<RawPtrType*>(type)->GetBaseType();
-  value = builder_->CreateLoad(ConvertType(type), value);
-  llvm::Value* controlBlock = builder_->CreateExtractValue(value, {1});
   // TODO:  check for null ptr here
-  llvm::Value* length = GetArrayLengthAddress(controlBlock);
-  return builder_->CreateLoad(intType_, length);
+  if (type->IsUnsizedArray()) {
+    return builder_->CreateExtractValue(value, {1});
+  } else {
+    value = builder_->CreateLoad(ConvertType(type), value);
+    llvm::Value* controlBlock = builder_->CreateExtractValue(value, {1});
+    llvm::Value* length = GetArrayLengthAddress(controlBlock);
+    return builder_->CreateLoad(intType_, length);
+  }
 }
 
 Result CodeGenLLVM::Visit(ExtractElementExpr* expr) {
