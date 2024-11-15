@@ -420,8 +420,11 @@ Result SemanticPass::Visit(UnresolvedDot* node) {
   if (type->IsArray()) {
     if (id == "length") {
       ArrayType* atype = static_cast<ArrayType*>(type);
-      assert(atype->GetNumElements() > 0);
-      return Make<IntConstant>(atype->GetNumElements(), 32);  // FIXME: uint?
+      if (atype->GetNumElements() > 0) {
+        return Make<IntConstant>(atype->GetNumElements(), 32);  // FIXME: uint?
+      } else {
+        return Make<LengthExpr>(expr);
+      }
     } else {
       return Error("unknown array property \"%s\"", id.c_str());
     }
