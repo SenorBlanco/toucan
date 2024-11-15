@@ -9,8 +9,6 @@ test/array-float.t
 test/array-float4.t
 test/array-length-dynamic.t
 test/array-length-static.t
-test/array-new-initializer.t
-array-new-initializer.t:2: syntax error
 test/array-new.t
 array-new.t:3: array size is not an integer constant
 array-new.t:4: array size is not an integer constant
@@ -36,7 +34,9 @@ test/class-constructor.t
 test/class-initializer.t
 test/complex-method.t
 test/compute-pass-ptr-to-element.t
+Error: Assertion failure at ../../third_party/dawn/src/dawn/common/RefCounted.cpp:142 (AddRef): !result
 test/compute-simple.t
+Error: Assertion failure at ../../third_party/dawn/src/dawn/common/RefCounted.cpp:142 (AddRef): !result
 test/constructor-with-default-arg.t
 test/constructor-with-explicit-initializer.t
 test/constructor.t
@@ -89,7 +89,7 @@ test/error-wrong-named-param.t
 error-wrong-named-param.t:7:  class Bar has no method Foo(b = float, a = int)
 error-wrong-named-param.t:7:  Bar.Foo(int, float) : float
 test/expectation-failed.t
-/Users/senorblanco/src/toucan/test/expectation-failed.t:4: expectation failed
+test/expectation-failed.t:4: expectation failed
 test/fabs.t
 test/fail-allocate-class-with-unsized-array.t
 fail-allocate-class-with-unsized-array.t:5:  class with unsized array must be allocated with size
@@ -103,11 +103,11 @@ test/field-access.t
 test/field-default-value.t
 test/field-store.t
 test/file-location-default-arg.t
-/Users/senorblanco/src/toucan/test/file-location-default-arg.t:12
-/Users/senorblanco/src/toucan/test/file-location-default-arg.t:13
-/Users/senorblanco/src/toucan/test/file-location-default-arg.t:14
+test/file-location-default-arg.t:12
+test/file-location-default-arg.t:13
+test/file-location-default-arg.t:14
 test/file-location.t
-/Users/senorblanco/src/toucan/test/file-location.t:4
+test/file-location.t:4
 test/for-stmt.t
 test/forward-field.t
 test/forward-var-error.t
@@ -144,8 +144,9 @@ test/later-class-field.t
 test/length-store-error.t
 length-store-error.t:2:  expression is not an assignable value
 test/list-init-aggregated-class.t
+test/list-init-array-arg.t
 test/list-init-array.t
-LLVM main function is broken; abortingtest/list-init-class-to-ptr.t
+test/list-init-class-arg.t
 test/list-init-class.t
 test/list-init-inherited-field.t
 test/list-init-matrix.t
@@ -178,6 +179,7 @@ test/new.t
 test/overload.t
 test/override.t
 test/post-increment-with-side-effects.t
+test/raw-ptr.t
 test/really-simple.t
 test/scope-test.t
 test/short-vector.t
