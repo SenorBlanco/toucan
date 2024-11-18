@@ -74,7 +74,6 @@ class Expr : public ASTNode {
   virtual bool  IsUnresolvedSwizzleExpr() const { return false; }
   virtual bool  IsUnresolvedListExpr() const { return false; }
   virtual bool  IsIntConstant() const { return false; }
-  virtual bool  IsLoadExpr() const { return false; }
   virtual bool  IsVarExpr() const { return false; }
 };
 
@@ -381,7 +380,6 @@ class LoadExpr : public Expr {
   Result Accept(Visitor* visitor) override;
   Type*  GetType(TypeTable* types) override;
   Expr*  GetExpr() const { return expr_; }
-  bool   IsLoadExpr() const override { return true; }
 
  private:
   Expr* expr_;
