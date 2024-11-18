@@ -523,15 +523,15 @@ struct DepthStencilAttachment {
 };
 
 struct RenderPass {
-  RenderPass(wgpu::RenderPassEncoder e, ClassType* t) : encoder(e), type(t) {}
+  RenderPass(wgpu::RenderPassEncoder e, Type* t) : encoder(e), type(t) {}
   wgpu::RenderPassEncoder encoder;
-  ClassType*              type;
+  Type*                   type;
 };
 
 struct ComputePass {
-  ComputePass(wgpu::ComputePassEncoder e, ClassType* t) : encoder(e), type(t) {}
+  ComputePass(wgpu::ComputePassEncoder e, Type* t) : encoder(e), type(t) {}
   wgpu::ComputePassEncoder encoder;
-  ClassType*               type;
+  Type*                    type;
 };
 
 struct CommandEncoder {
@@ -657,7 +657,9 @@ struct PipelineData {
   }
 };
 
-static void ExtractPipelineData(ClassType* classType, void* data, PipelineData* out) {
+static void ExtractPipelineData(Type* type, void* data, PipelineData* out) {
+  assert(type->IsClass());
+  auto classType = static_cast<ClassType*>(type);
   if (classType->GetParent()) { ExtractPipelineData(classType->GetParent(), data, out); }
   for (const auto& field : classType->GetFields()) {
     Type* fieldType = field->type;
@@ -789,22 +791,16 @@ BindGroup* BindGroup_BindGroup(int qualifiers, Type* type, Device* device, void*
   std::vector<wgpu::BindGroupEntry> entries;
   if (classType->IsNative()) {
     assert(false);
-    Object object;
-    object.ptr = data;
-    auto entry = CreateBindGroupEntry(type, 0, &object);
-    desc.entryCount = 1;
-    desc.entries = &entry;
-    desc.layout = GetOrCreateBindGroupLayout(device, type);
-  } else {
-    desc.entryCount = classType->GetFields().size();
-    for (int i = 0; i < desc.entryCount; i++) {
-      Field* field = classType->GetFields()[i].get();
-      Object object = *reinterpret_cast<Object*>((uint8_t*)data + field->offset);
-      entries.push_back(CreateBindGroupEntry(field->type, i, &object));
-    }
-    desc.entries = entries.data();
-    desc.layout = GetOrCreateBindGroupLayout(device, classType);
+    return nullptr;
   }
+  desc.entryCount = classType->GetFields().size();
+  for (int i = 0; i < desc.entryCount; i++) {
+    Field* field = classType->GetFields()[i].get();
+    Object object = *reinterpret_cast<Object*>((uint8_t*)data + field->offset);
+    entries.push_back(CreateBindGroupEntry(field->type, i, &object));
+  }
+  desc.entries = entries.data();
+  desc.layout = GetOrCreateBindGroupLayout(device, classType);
   return new BindGroup(device->device.CreateBindGroup(&desc));
 }
 
@@ -1097,9 +1093,7 @@ Buffer* Buffer_Buffer_Device_uint(int      qualifiers,
 
 Buffer* Buffer_Buffer_Device_T(int qualifiers, Type* type, Device* device, void* data) {
   uint32_t length = 1;
-  if (type->IsUnsizedArray()) {
-    length = static_cast<Array*>(data)->length;
-  }
+  if (type->IsUnsizedArray()) { length = static_cast<Array*>(data)->length; }
   Buffer* result = Buffer_Buffer_Device_uint(qualifiers, type, device, length);
   Buffer_SetData(result, data);
   return result;
@@ -1159,10 +1153,8 @@ RenderPass* RenderPass_RenderPass_CommandEncoder_T(int             qualifiers,
                                                    Type*           type,
                                                    CommandEncoder* encoder,
                                                    void*           data) {
-  assert(type->IsClass());
-  ClassType*   classType = static_cast<ClassType*>(type);
   PipelineData pipelineData;
-  ExtractPipelineData(classType, data, &pipelineData);
+  ExtractPipelineData(type, data, &pipelineData);
 
   wgpu::RenderPassDescriptor desc;
   desc.colorAttachmentCount = pipelineData.colorAttachments.size();
@@ -1172,12 +1164,11 @@ RenderPass* RenderPass_RenderPass_CommandEncoder_T(int             qualifiers,
   }
   auto result = encoder->encoder.BeginRenderPass(&desc);
   pipelineData.Set(result);
-  return new RenderPass(result, classType);
+  return new RenderPass(result, type);
 }
 
 RenderPass* RenderPass_RenderPass_RenderPass(int qualifiers, Type* type, RenderPass* parent) {
-  assert(type->IsClass());
-  return new RenderPass(parent->encoder, static_cast<ClassType*>(type));
+  return new RenderPass(parent->encoder, type);
 }
 
 void RenderPass_Set(RenderPass* This, void* data) {
@@ -1216,15 +1207,11 @@ ComputePass* ComputePass_ComputePass_CommandEncoder_T(int             qualifiers
                                                       CommandEncoder* encoder,
                                                       void*           data) {
   PipelineData pipelineData;
-  assert(type->IsClass());
-  ClassType* classType = static_cast<ClassType*>(type);
-  if (data) {
-    ExtractPipelineData(classType, data, &pipelineData);
-  }
+  ExtractPipelineData(type, data, &pipelineData);
   wgpu::ComputePassDescriptor desc;
   auto                        passEncoder = encoder->encoder.BeginComputePass(&desc);
   pipelineData.Set(passEncoder);
-  return new ComputePass(passEncoder, classType);
+  return new ComputePass(passEncoder, type);
 }
 
 ComputePass* ComputePass_ComputePass_ComputePass(int qualifiers, Type* type, ComputePass* parent) {
@@ -1238,9 +1225,7 @@ void ComputePass_SetPipeline(ComputePass* This, ComputePipeline* pipeline) {
 
 void ComputePass_Set(ComputePass* This, void* data) {
   PipelineData pipelineData;
-  assert(This->type->IsClass());
-  ClassType* classType = static_cast<ClassType*>(This->type);
-  ExtractPipelineData(classType, data, &pipelineData);
+  ExtractPipelineData(This->type, data, &pipelineData);
   pipelineData.Set(This->encoder);
 }
 

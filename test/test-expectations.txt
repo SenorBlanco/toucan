@@ -34,15 +34,7 @@ test/class-constructor.t
 test/class-initializer.t
 test/complex-method.t
 test/compute-pass-ptr-to-element.t
-LLVM main function is broken; abortingWarning: /usr/lib/i386-linux-gnu/libvulkan_lvp.so: wrong ELF class: ELFCLASS32
-Warning: /usr/lib/i386-linux-gnu/libvulkan_intel.so: wrong ELF class: ELFCLASS32
-Warning: /usr/lib/i386-linux-gnu/libvulkan_radeon.so: wrong ELF class: ELFCLASS32
-Warning: Old MapAsync APIs are deprecated. If using C please pass a CallbackInfo struct that has two userdatas. Otherwise, if using C++, please use templated helpers.
 test/compute-simple.t
-LLVM main function is broken; abortingWarning: /usr/lib/i386-linux-gnu/libvulkan_lvp.so: wrong ELF class: ELFCLASS32
-Warning: /usr/lib/i386-linux-gnu/libvulkan_intel.so: wrong ELF class: ELFCLASS32
-Warning: /usr/lib/i386-linux-gnu/libvulkan_radeon.so: wrong ELF class: ELFCLASS32
-Warning: Old MapAsync APIs are deprecated. If using C please pass a CallbackInfo struct that has two userdatas. Otherwise, if using C++, please use templated helpers.
 test/constructor-with-default-arg.t
 test/constructor-with-explicit-initializer.t
 test/constructor.t
@@ -189,15 +181,62 @@ test/named-param-default-value.t
 test/named-param.t
 test/new.t
 test/overload.t
-Traceback (most recent call last):
-  File "test/test.py", line 30, in <module>
-    subprocess.call([exe_path, file]);
-  File "/usr/lib/python3.8/subprocess.py", line 342, in call
-    return p.wait(timeout=timeout)
-  File "/usr/lib/python3.8/subprocess.py", line 1083, in wait
-    return self._wait(timeout=timeout)
-  File "/usr/lib/python3.8/subprocess.py", line 1806, in _wait
-    (pid, sts) = self._try_wait(0)
-  File "/usr/lib/python3.8/subprocess.py", line 1764, in _try_wait
-    (pid, sts) = os.waitpid(self.pid, wait_flags)
-KeyboardInterrupt
+test/override.t
+test/post-increment-with-side-effects.t
+test/raw-ptr.t
+test/really-simple.t
+test/scope-test.t
+test/short-vector.t
+test/short.t
+test/simple.t
+6
+test/spirv-call-graph.t
+test/spirv-if-stmt.t
+test/stack-method-call.t
+test/static-method-with-args.t
+test/static-method.t
+test/store-null.t
+test/string-conversions.t
+0
+1
+9
+-1
+12
+123456789
+test/swizzle-store.t
+test/templated-class-initializer.t
+test/templated-class-on-primitive-type.t
+test/templated-class.t
+test/templated-matrix.t
+test/templated-on-class-and-primitive-type.t
+test/templated-vector.t
+test/test.t
+test/ubyte-vector.t
+test/ubyte.t
+test/uint.t
+test/unary-minus.t
+test/unknown-param-type.t
+unknown-param-type.t:2: syntax error
+test/unknown-return-type.t
+unknown-return-type.t:2: syntax error
+test/unspecified-template-destructor.t
+test/ushort-vector.t
+test/ushort.t
+test/vector-array-access.t
+test/vector-constructors.t
+test/vector-constructors3.t
+test/vector-constructors4.t
+test/vector-initializer.t
+test/vector-scalar-mul-div.t
+test/vector-store-by-index.t
+test/virtual-function.t
+test/void-value-error.t
+void-value-error.t:4:  implicit void return, in method returning non-void.
+test/vtable.t
+test/workgroup-size.t
+workgroup-size.t:5: workgroup size must have 1, 2, or 3 dimensions
+workgroup-size.t:6: workgroup size must have 1, 2, or 3 dimensions
+workgroup-size.t:7: workgroup size is not an integer constant
+workgroup-size.t:8: non-compute shaders do not require a workgroup size
+workgroup-size.t:9: non-compute shaders do not require a workgroup size
+test/worst-cast-ever.t
