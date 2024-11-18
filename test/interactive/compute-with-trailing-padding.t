@@ -40,16 +40,12 @@ var storageBG = new BindGroup<ComputeBindings>(device, &cb);
 
 while (System.IsRunning()) {
   var encoder = new CommandEncoder(device);
-  var bc : BumpCompute;
-  bc.bindings = storageBG;
-  var computePass = new ComputePass<BumpCompute>(encoder, &bc);
+  var computePass = new ComputePass<BumpCompute>(encoder, {bindings = storageBG});
   computePass.SetPipeline(computePipeline);
   computePass.Dispatch(verts.length, 1, 1);
   computePass.End();
-  var p : Pipeline;
-  p.vert = vb;
-  p.fragColor = swapChain.GetCurrentTexture().CreateColorAttachment(Clear, Store);
-  var renderPass = new RenderPass<Pipeline>(encoder, &p);
+  var fb = swapChain.GetCurrentTexture().CreateColorAttachment(Clear, Store);
+  var renderPass = new RenderPass<Pipeline>(encoder, {vert = vb, fragColor = fb});
   renderPass.SetPipeline(pipeline);
   renderPass.Draw(3, 1, 0, 0);
   renderPass.End();

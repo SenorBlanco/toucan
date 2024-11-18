@@ -522,7 +522,7 @@ class NullType : public PtrType {
   bool        IsNull() const override { return true; }
   bool        IsPOD() const override { return false; }
   std::string ToString() const override { return "null"; }
-  bool        CanWidenTo(Type* type) const override { return type->IsPtr(); }
+  bool        CanWidenTo(Type* type) const override { return type->IsStrongPtr() | type->IsWeakPtr(); }
   int         GetSizeInBytes() const override {
     assert(false);
     return 0;

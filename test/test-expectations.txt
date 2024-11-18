@@ -34,7 +34,9 @@ test/class-constructor.t
 test/class-initializer.t
 test/complex-method.t
 test/compute-pass-ptr-to-element.t
+Warning: Old MapAsync APIs are deprecated. If using C please pass a CallbackInfo struct that has two userdatas. Otherwise, if using C++, please use templated helpers.
 test/compute-simple.t
+Warning: Old MapAsync APIs are deprecated. If using C please pass a CallbackInfo struct that has two userdatas. Otherwise, if using C++, please use templated helpers.
 test/constructor-with-default-arg.t
 test/constructor-with-explicit-initializer.t
 test/constructor.t
@@ -90,6 +92,8 @@ error-texture-from-buffer-incorrect-format.t:9:  Texture1D<RGBA8unorm>.CopyFromB
 test/error-uint-literal-too-large.t
 test/error-virtual-override.t
 error-virtual-override.t:8:  override of virtual method must be virtual
+test/error-widen-null-to-raw-ptr.t
+error-widen-null-to-raw-ptr.t:1:  cannot store a value of type "null" to a location of type "&int"
 test/error-wrong-named-param.t
 error-wrong-named-param.t:7:  class Bar has no method Foo(b = float, a = int)
 error-wrong-named-param.t:7:  Bar.Foo(int, float) : float
