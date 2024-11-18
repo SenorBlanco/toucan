@@ -259,7 +259,7 @@ Expr* SemanticPass::ResolveListExpr(UnresolvedListExpr* node, Type* dstType) {
   if (dstType->IsRawPtr()) {
     auto baseType = static_cast<RawPtrType*>(dstType)->GetBaseType();
     if (baseType->IsUnsizedArray()) {
-      auto uaType = static_cast<ArrayType*>(dstType);
+      auto uaType = static_cast<ArrayType*>(baseType);
       auto length = node->GetArgList()->GetArgs().size();
       auto arrayType = types_->GetArrayType(uaType->GetElementType(), length, uaType->GetMemoryLayout());
       auto* tempVar = Make<TempVarExpr>(arrayType, ResolveListExpr(node, arrayType));
