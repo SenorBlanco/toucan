@@ -1182,14 +1182,13 @@ Result CodeGenLLVM::Visit(ArrayAccess* node) {
   llvm::Value* expr = GenerateLLVM(node->GetExpr());
   llvm::Value* index = GenerateLLVM(node->GetIndex());
   Type*        type = node->GetExpr()->GetType(types_);
-  if (type->IsRawPtr()) {
-    type = static_cast<RawPtrType*>(type)->GetBaseType();
-  } else {
-    llvm::AllocaInst* allocaInst = builder_->CreateAlloca(ConvertType(type));
-    builder_->CreateStore(expr, allocaInst);
-    expr = allocaInst;
-  }
+  assert(type->IsRawPtr());
+  type = static_cast<RawPtrType*>(type)->GetBaseType();
   llvm::Type* llvmType = ConvertType(type);
+  if (type->IsUnsizedArray()) {
+    expr = builder_->CreateExtractValue(expr, {0});
+    // FIXME: do bounds checking here
+  }
   if (type->IsArray() && static_cast<ArrayType*>(type)->GetElementPadding() > 0) {
     return builder_->CreateGEP(llvmType, expr, {Int(0), index, Int(0)});
   } else {

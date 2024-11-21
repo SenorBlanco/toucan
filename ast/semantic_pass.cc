@@ -47,22 +47,13 @@ Result SemanticPass::Visit(ArrayAccess* node) {
   if (!expr) return nullptr;
   Expr* index = Resolve(node->GetIndex());
   if (!index) return nullptr;
-  Type* exprType = expr->GetType(types_);
-  if (exprType->IsRawPtr()) { exprType = static_cast<RawPtrType*>(exprType)->GetBaseType(); }
-  if (exprType->IsStrongPtr() || exprType->IsWeakPtr()) {
-    exprType = static_cast<PtrType*>(exprType)->GetBaseType();
-    if (expr->GetType(types_)->IsRawPtr()) { expr = Make<LoadExpr>(expr); }
-    expr = Make<SmartToRawPtr>(expr);
-  }
-  exprType = exprType->GetUnqualifiedType();
-  Type* indexType = index->GetType(types_);
-  if (!indexType->IsInt() && !indexType->IsUInt()) {
-    return Error("array index must be integer");
-  } else if (exprType->IsArray() || exprType->IsMatrix() || exprType->IsVector()) {
-    return Make<ArrayAccess>(expr, index);
-  } else {
+
+  expr = MakeIndexable(expr);
+  if (!expr) {
     return Error("expression is not of indexable type");
   }
+
+  return Make<ArrayAccess>(expr, index);
 }
 
 Result SemanticPass::Visit(CastExpr* node) {
@@ -257,6 +248,33 @@ Expr* SemanticPass::Widen(Expr* node, Type* dstType) {
     return ResolveListExpr(static_cast<UnresolvedListExpr*>(node), dstType);
   } else {
     return Make<CastExpr>(dstType, node);
+  }
+}
+
+Expr* SemanticPass::MakeIndexable(Expr* expr) {
+  Type* type = expr->GetType(types_);
+  if (type->IsRawPtr()) {
+    type = static_cast<RawPtrType*>(type)->GetBaseType();
+    if (type->IsUnsizedArray() || type->IsMatrix() || type->IsVector()) {
+      return expr;
+    } else if (type->IsArray()) {
+      auto arrayType = static_cast<ArrayType*>(type);
+      type = arrayType->GetElementType();
+      type = types_->GetRawPtrType(types_->GetArrayType(type, 0, arrayType->GetMemoryLayout()));
+      return Make<CastExpr>(type, expr);
+    } else {
+      return MakeIndexable(Make<LoadExpr>(expr));
+    }
+  } else if (type->IsVector() || type->IsMatrix()) {
+    return expr;
+  } else if (type->IsStrongPtr() || type->IsWeakPtr()) {
+    type = static_cast<PtrType*>(type)->GetBaseType();
+    type = types_->GetRawPtrType(type);
+    return Make<CastExpr>(type, expr);
+  } else if (type->IsArray()) {
+    return MakeIndexable(Make<TempVarExpr>(type, expr));
+  } else {
+    return nullptr;
   }
 }
 
