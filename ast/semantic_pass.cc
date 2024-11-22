@@ -255,16 +255,24 @@ Expr* SemanticPass::MakeIndexable(Expr* expr) {
   Type* type = expr->GetType(types_);
   if (type->IsRawPtr()) {
     type = static_cast<RawPtrType*>(type)->GetBaseType();
-    if (type->IsUnsizedArray() || type->IsMatrix() || type->IsVector()) {
+    if (type->IsUnsizedArray()) {
       return expr;
-    } else if (type->IsArray()) {
-      auto arrayType = static_cast<ArrayType*>(type);
-      type = arrayType->GetElementType();
-      type = types_->GetRawPtrType(types_->GetArrayType(type, 0, arrayType->GetMemoryLayout()));
-      return Make<CastExpr>(type, expr);
-    } else {
+    } else if (type->IsStrongPtr() || type->IsWeakPtr()) {
       return MakeIndexable(Make<LoadExpr>(expr));
     }
+    MemoryLayout memoryLayout = MemoryLayout::Default;
+    if (type->IsMatrix()) {
+      type = static_cast<MatrixType*>(type)->GetColumnType();
+    } else if (type->IsVector()) {
+      type = static_cast<VectorType*>(type)->GetComponentType();
+    } else if (type->IsArray()) {
+      type = static_cast<ArrayType*>(type)->GetElementType();
+      memoryLayout = static_cast<ArrayType*>(type)->GetMemoryLayout();
+    } else {
+      return nullptr;
+    }
+    type = types_->GetRawPtrType(types_->GetArrayType(type, 0, memoryLayout));
+    return Make<CastExpr>(type, expr);
   } else if (type->IsVector() || type->IsMatrix()) {
     return expr;
   } else if (type->IsStrongPtr() || type->IsWeakPtr()) {
