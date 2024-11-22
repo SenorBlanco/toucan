@@ -868,14 +868,21 @@ llvm::Value* CodeGenLLVM::CreateCast(Type*        srcType,
   } else if (srcType->IsRawPtr() && dstType->IsRawPtr()) {
     auto srcBase = static_cast<RawPtrType*>(srcType)->GetBaseType();
     auto dstBase = static_cast<RawPtrType*>(dstType)->GetBaseType();
+    llvm::Value* length;
     if (srcBase->IsArray() && dstBase->IsUnsizedArray()) {
       auto srcArrayType = static_cast<ArrayType*>(srcBase);
-      llvm::Value* length = llvm::ConstantInt::get(intType_, srcArrayType->GetNumElements(), true);
-      return CreatePointer(value, length);
+      length = llvm::ConstantInt::get(intType_, srcArrayType->GetNumElements(), true);
+    } else if (srcBase->IsMatrix() && dstBase->IsUnsizedArray()) {
+      auto matrixType = static_cast<MatrixType*>(srcBase);
+      length = llvm::ConstantInt::get(intType_, matrixType->GetNumColumns());
+    } else if (srcBase->IsVector() && dstBase->IsUnsizedArray()) {
+      auto vectorType = static_cast<VectorType*>(srcBase);
+      length = llvm::ConstantInt::get(intType_, vectorType->GetLength());
     } else {
-      assert(false);
+      assert(!"unsupported cast");
       return value;
     }
+    return CreatePointer(value, length);
   } else if (srcType->IsStrongPtr() && dstType->IsRawPtr()) {
     AppendTemporary(value, srcType);
     auto baseType = static_cast<RawPtrType*>(dstType)->GetBaseType();
@@ -1189,11 +1196,10 @@ Result CodeGenLLVM::Visit(ArrayAccess* node) {
   Type*        type = node->GetExpr()->GetType(types_);
   assert(type->IsRawPtr());
   type = static_cast<RawPtrType*>(type)->GetBaseType();
+  assert(type->IsUnsizedArray());
   llvm::Type* llvmType = ConvertType(type);
-  if (type->IsUnsizedArray()) {
-    expr = builder_->CreateExtractValue(expr, {0});
-    // FIXME: do bounds checking here
-  }
+  expr = builder_->CreateExtractValue(expr, {0});
+  // FIXME: do bounds checking here
   if (type->IsArray() && static_cast<ArrayType*>(type)->GetElementPadding() > 0) {
     return builder_->CreateGEP(llvmType, expr, {Int(0), index, Int(0)});
   } else {
