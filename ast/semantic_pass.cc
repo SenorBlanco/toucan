@@ -261,8 +261,8 @@ Expr* SemanticPass::MakeIndexable(Expr* expr) {
     } else if (type->IsVector()) {
       type = static_cast<VectorType*>(type)->GetComponentType();
     } else if (type->IsArray()) {
-      type = static_cast<ArrayType*>(type)->GetElementType();
       memoryLayout = static_cast<ArrayType*>(type)->GetMemoryLayout();
+      type = static_cast<ArrayType*>(type)->GetElementType();
     } else {
       return nullptr;
     }

@@ -22,6 +22,24 @@
 
 namespace Toucan {
 
+namespace {
+
+const char* MemoryLayoutToString(MemoryLayout layout) {
+  switch (layout) {
+    case MemoryLayout::Default:
+      return "Default";
+    case MemoryLayout::Storage:
+      return "Storage";
+    case MemoryLayout::Uniform:
+      return "Uniform";
+    default:
+      assert(!"unknown MemoryLayout");
+      return "";
+  }
+}
+
+}
+
 GenBindings::GenBindings(SymbolTable* symbols,
                          TypeTable*   types,
                          FILE*        file,
@@ -115,8 +133,8 @@ void GenBindings::GenType(Type* type) {
     fprintf(file_, ")");
   } else if (type->IsArray()) {
     ArrayType* arrayType = static_cast<ArrayType*>(type);
-    fprintf(file_, "types->GetArrayType((typeList[%d]), %d, MemoryLayout::Default)",
-            typeMap_[arrayType->GetElementType()], arrayType->GetNumElements());
+    fprintf(file_, "types->GetArrayType((typeList[%d]), %d, MemoryLayout::%s)",
+            typeMap_[arrayType->GetElementType()], arrayType->GetNumElements(), MemoryLayoutToString(arrayType->GetMemoryLayout()));
   } else if (type->IsFormalTemplateArg()) {
     FormalTemplateArg* formalTemplateArg = static_cast<FormalTemplateArg*>(type);
     fprintf(file_, "types->GetFormalTemplateArg(\"%s\")", formalTemplateArg->GetName().c_str());
