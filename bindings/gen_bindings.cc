@@ -22,6 +22,24 @@
 
 namespace Toucan {
 
+namespace {
+
+const char* MemoryLayoutToString(MemoryLayout layout) {
+  switch (layout) {
+    case MemoryLayout::Default:
+      return "Default";
+    case MemoryLayout::Storage:
+      return "Storage";
+    case MemoryLayout::Uniform:
+      return "Uniform";
+    default:
+      assert(!"unknown MemoryLayout");
+      return "";
+  }
+}
+
+}
+
 GenBindings::GenBindings(SymbolTable* symbols,
                          TypeTable*   types,
                          FILE*        file,
@@ -115,8 +133,8 @@ void GenBindings::GenType(Type* type) {
     fprintf(file_, ")");
   } else if (type->IsArray()) {
     ArrayType* arrayType = static_cast<ArrayType*>(type);
-    fprintf(file_, "types->GetArrayType((typeList[%d]), %d, MemoryLayout::Default)",
-            typeMap_[arrayType->GetElementType()], arrayType->GetNumElements());
+    fprintf(file_, "types->GetArrayType((typeList[%d]), %d, MemoryLayout::%s)",
+            typeMap_[arrayType->GetElementType()], arrayType->GetNumElements(), MemoryLayoutToString(arrayType->GetMemoryLayout()));
   } else if (type->IsFormalTemplateArg()) {
     FormalTemplateArg* formalTemplateArg = static_cast<FormalTemplateArg*>(type);
     fprintf(file_, "types->GetFormalTemplateArg(\"%s\")", formalTemplateArg->GetName().c_str());
@@ -349,9 +367,7 @@ void GenBindings::GenBindingsForClass(ClassType* classType) {
   fprintf(file_, "  c = static_cast<ClassType*>(typeList[%d]);\n", typeMap_[classType]);
   if (classType->IsNative()) {
     fprintf(file_, "  c->SetNative(true);\n");
-    if (classType->IsNative()) {
-      fprintf(file_, "  NativeClass::%s = c;\n;", classType->GetName().c_str());
-    }
+    fprintf(file_, "  NativeClass::%s = c;\n;", classType->GetName().c_str());
   }
   fprintf(file_, "  scope = symbols->PushNewScope();\n");
   fprintf(file_, "  scope->classType = c;\n");
@@ -385,6 +401,9 @@ void GenBindings::GenBindingsForClass(ClassType* classType) {
   if (!classType->GetTemplate()) {
     fprintf(file_, "  symbols->DefineType(\"%s\", c);\n\n", classType->GetName().c_str());
   }
+  fprintf(file_, "  c->SetMemoryLayout(MemoryLayout::%s);\n",
+          MemoryLayoutToString(classType->GetMemoryLayout()));
+  fprintf(file_, "  c->ComputeFieldOffsets();\n");
 }
 
 void GenBindings::GenBindingsForEnum(EnumType* enumType) {

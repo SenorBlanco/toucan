@@ -116,7 +116,6 @@ int main(int argc, char** argv) {
   SemanticPass semanticPass(&nodes, &symbols, &types);
   Stmts*       stmts = semanticPass.Resolve(rootStmts);
   if (semanticPass.GetNumErrors() > 0) { exit(2); }
-  types.Layout();
   double start, end;
   if (dumpSymbolTable) {
     symbols.Dump();
