@@ -26,19 +26,14 @@ namespace {
 
 const char* MemoryLayoutToString(MemoryLayout layout) {
   switch (layout) {
-    case MemoryLayout::Default:
-      return "Default";
-    case MemoryLayout::Storage:
-      return "Storage";
-    case MemoryLayout::Uniform:
-      return "Uniform";
-    default:
-      assert(!"unknown MemoryLayout");
-      return "";
+    case MemoryLayout::Default: return "Default";
+    case MemoryLayout::Storage: return "Storage";
+    case MemoryLayout::Uniform: return "Uniform";
+    default: assert(!"unknown MemoryLayout"); return "";
   }
 }
 
-}
+}  // namespace
 
 GenBindings::GenBindings(SymbolTable* symbols,
                          TypeTable*   types,
@@ -124,7 +119,10 @@ void GenBindings::GenType(Type* type) {
     }
   } else if (type->IsPtr()) {
     PtrType* ptrType = static_cast<PtrType*>(type);
-    fprintf(file_, "types->Get%sPtrType(", type->IsStrongPtr() ? "Strong" : type->IsWeakPtr() ? "Weak" : "Raw");
+    fprintf(file_, "types->Get%sPtrType(",
+            type->IsStrongPtr() ? "Strong"
+            : type->IsWeakPtr() ? "Weak"
+                                : "Raw");
     if (ptrType->GetBaseType()) {
       fprintf(file_, "typeList[%d]", typeMap_[ptrType->GetBaseType()]);
     } else {
@@ -134,7 +132,8 @@ void GenBindings::GenType(Type* type) {
   } else if (type->IsArray()) {
     ArrayType* arrayType = static_cast<ArrayType*>(type);
     fprintf(file_, "types->GetArrayType((typeList[%d]), %d, MemoryLayout::%s)",
-            typeMap_[arrayType->GetElementType()], arrayType->GetNumElements(), MemoryLayoutToString(arrayType->GetMemoryLayout()));
+            typeMap_[arrayType->GetElementType()], arrayType->GetNumElements(),
+            MemoryLayoutToString(arrayType->GetMemoryLayout()));
   } else if (type->IsFormalTemplateArg()) {
     FormalTemplateArg* formalTemplateArg = static_cast<FormalTemplateArg*>(type);
     fprintf(file_, "types->GetFormalTemplateArg(\"%s\")", formalTemplateArg->GetName().c_str());
@@ -373,10 +372,10 @@ void GenBindings::GenBindingsForClass(ClassType* classType) {
   fprintf(file_, "  c = static_cast<ClassType*>(typeList[%d]);\n", typeMap_[classType]);
   if (classType->IsNative()) {
     fprintf(file_, "  c->SetNative(true);\n");
-    if (classType->IsNative()) {
-      fprintf(file_, "  NativeClass::%s = c;\n;", classType->GetName().c_str());
-    }
+    fprintf(file_, "  NativeClass::%s = c;\n;", classType->GetName().c_str());
   }
+  fprintf(file_, "  c->SetMemoryLayout(MemoryLayout::%s);\n",
+          MemoryLayoutToString(classType->GetMemoryLayout()));
   fprintf(file_, "  scope = symbols->PushNewScope();\n");
   fprintf(file_, "  scope->classType = c;\n");
   fprintf(file_, "  c->SetScope(scope);\n");
