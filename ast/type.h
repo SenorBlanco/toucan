@@ -439,6 +439,8 @@ class ClassType : public Type {
   void                        SetVTable(const std::vector<Method*>& vtable) { vtable_ = vtable; }
   Type*                       FindType(const std::string& id);
   void                        SetMemoryLayout(MemoryLayout memoryLayout, TypeTable* types);
+  void                        SetMemoryLayout(MemoryLayout memoryLayout) { memoryLayout_ = memoryLayout; }
+  MemoryLayout                GetMemoryLayout() const { return memoryLayout_; }
   int                         GetPadding() const { return padding_; }
   bool                        IsFullySpecified() const override;
   bool                        NeedsDestruction() const override;
