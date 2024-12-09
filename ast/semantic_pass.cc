@@ -194,6 +194,9 @@ Result SemanticPass::Visit(VarDeclaration* decl) {
     std::string errorMsg = std::string("cannot create storage of type ") + type->ToString();
     return Error(errorMsg.c_str());
   }
+  if (type->IsRawPtr() && !initExpr) {
+    return Error("reference must be initialized");
+  }
   Var*  var = symbols_->DefineVar(id, type);
   Expr* varExpr = Make<VarExpr>(var);
   return InitializeVar(varExpr, type, initExpr);
