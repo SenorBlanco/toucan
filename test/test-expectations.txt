@@ -84,6 +84,8 @@ error-raw-ptr-array-cast-to-smart.t:3:  cannot cast value of type &[3]int to *[]
 test/error-raw-ptr-cast-to-smart.t
 error-raw-ptr-cast-to-smart.t:2:  cannot cast value of type &int to ^int
 error-raw-ptr-cast-to-smart.t:3:  cannot cast value of type &int to *int
+test/error-raw-ptr-must-be-initialized.t
+error-raw-ptr-must-be-initialized.t:1:  reference must be initialized
 test/error-texture-from-buffer-incorrect-format.t
 error-texture-from-buffer-incorrect-format.t:2:  matching constructor not found
 error-texture-from-buffer-incorrect-format.t:9:  class Texture1D<RGBA8unorm> has no method CopyFromBuffer(*CommandEncoder, *writeonly Buffer<[]float<4>>, int)
