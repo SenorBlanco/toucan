@@ -45,12 +45,14 @@ typedef llvm::IRBuilder<> LLVMBuilder;
 
 struct ValueTypePair {
   ValueTypePair(llvm::Value* v, Type* t) : value(v), type(t) {}
+  ValueTypePair() : value(nullptr), type(nullptr) {}
   llvm::Value* value;
   Type*        type;
 };
 
 using DataVars = std::unordered_map<const void*, llvm::GlobalValue*>;
 using DerefList = std::vector<ValueTypePair>;
+using RefPtrTemporaries = std::unordered_map<llvm::Value*, ValueTypePair>;
 using BuiltinCall = llvm::Value* (CodeGenLLVM::*)(const FileLocation& location);
 
 class CodeGenLLVM : public Visitor {
@@ -182,6 +184,7 @@ class CodeGenLLVM : public Visitor {
   llvm::Type*                                           vtableType_;
   bool                                                  debugOutput_;
   DerefList                                             temporaries_;
+  RefPtrTemporaries                                     scopedTemporaries_;
   llvm::Type*                                           typeListType_;
   llvm::GlobalValue*                                    typeList_;
   std::unordered_map<Expr*, llvm::Value*>               exprCache_;

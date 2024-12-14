@@ -982,7 +982,18 @@ Result CodeGenLLVM::Visit(DestroyStmt* node) {
   assert(type->IsRawPtr());
   type = static_cast<RawPtrType*>(type)->GetBaseType();
   auto value = GenerateLLVM(node->GetExpr());
-  if (type->IsStrongPtr()) {
+  if (type->IsRawPtr()) {
+    auto temporary = scopedTemporaries_.find(value);
+    if (temporary != scopedTemporaries_.end()) {
+      type = temporary->second.type;
+      value = temporary->second.value;
+      if (type->IsStrongPtr()) {
+        UnrefStrongPtr(value, static_cast<StrongPtrType*>(type));
+      } else if (type->IsWeakPtr()) {
+        UnrefWeakPtr(value);
+      }
+    }
+  } else if (type->IsStrongPtr()) {
     value = builder_->CreateLoad(ConvertType(type), value);
     UnrefStrongPtr(value, static_cast<StrongPtrType*>(type));
   } else if (type->IsWeakPtr()) {
@@ -1135,6 +1146,11 @@ Result CodeGenLLVM::Visit(ZeroInitStmt* node) {
 Result CodeGenLLVM::Visit(StoreStmt* stmt) {
   llvm::Value* rhs = GenerateLLVM(stmt->GetRHS());
   llvm::Value* lhs = GenerateLLVM(stmt->GetLHS());
+  if (stmt->GetRHS()->GetType(types_)->IsRawPtr() & !temporaries_.empty()) {
+    auto temporary = temporaries_.back();
+    temporaries_.pop_back();
+    scopedTemporaries_[lhs] = temporary;
+  }
   DestroyTemporaries();
   return builder_->CreateStore(rhs, lhs);
 }

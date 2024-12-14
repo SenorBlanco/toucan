@@ -484,6 +484,7 @@ class PtrType : public Type {
   bool  IsFullySpecified() const override { return baseType_->IsFullySpecified(); }
   bool  IsPOD() const override { return false; }
   int   GetSizeInBytes() const override { return 2 * sizeof(void*); }
+  bool  NeedsDestruction() const override { return true; }
 
  private:
   Type* baseType_;
@@ -495,7 +496,6 @@ class StrongPtrType : public PtrType {
   std::string ToString() const override;
   bool        IsStrongPtr() const override { return true; }
   bool        CanWidenTo(Type* type) const override;
-  bool        NeedsDestruction() const override { return true; }
 };
 
 class WeakPtrType : public PtrType {
@@ -504,7 +504,6 @@ class WeakPtrType : public PtrType {
   std::string ToString() const override;
   bool        IsWeakPtr() const override { return true; }
   bool        CanWidenTo(Type* type) const override;
-  bool        NeedsDestruction() const override { return true; }
   bool CanInitFrom(const ListType* type) const override { return GetBaseType()->CanInitFrom(type); }
 };
 
