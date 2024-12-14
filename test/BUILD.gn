@@ -32,3 +32,7 @@ toucan_executable("hello") {
 toucan_executable("compute-simple") {
   sources = [ "compute-simple.t" ]
 }
+
+toucan_executable("raw-ptr") {
+  sources = [ "raw-ptr.t" ]
+}
