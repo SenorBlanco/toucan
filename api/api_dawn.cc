@@ -474,7 +474,7 @@ static wgpu::BindGroupLayout GetOrCreateBindGroupLayout(Device* device, Type* ty
   return layout;
 }
 
-wgpu::BindGroupEntry CreateBindGroupEntry(Type* type, int binding, Object* object) {
+wgpu::BindGroupEntry CreateBindGroupEntry(Type* type, int binding, void* data) {
   wgpu::BindGroupEntry entry;
   entry.binding = binding;
   entry.buffer = nullptr;
@@ -489,13 +489,13 @@ wgpu::BindGroupEntry CreateBindGroupEntry(Type* type, int binding, Object* objec
   if (templ == NativeClass::SampleableTexture1D || templ == NativeClass::SampleableTexture2D ||
       templ == NativeClass::SampleableTexture3D || templ == NativeClass::SampleableTexture2DArray ||
       templ == NativeClass::SampleableTextureCube) {
-    TextureView* textureView = static_cast<TextureView*>(object->ptr);
+    TextureView* textureView = static_cast<TextureView*>(data);
     entry.textureView = textureView->view;
   } else if (c == NativeClass::Sampler) {
-    Sampler* sampler = static_cast<Sampler*>(object->ptr);
+    Sampler* sampler = static_cast<Sampler*>(data);
     entry.sampler = sampler->sampler;
   } else if (templ == NativeClass::Buffer) {
-    Buffer* buffer = static_cast<Buffer*>(object->ptr);
+    Buffer* buffer = static_cast<Buffer*>(data);
     entry.buffer = buffer->buffer;
     entry.size = buffer->sizeInBytes;
   }
@@ -667,25 +667,26 @@ static void ExtractPipelineData(Type* type, void* data, PipelineData* out) {
     fieldType = static_cast<PtrType*>(fieldType)->GetBaseType();
     int qualifiers;
     fieldType = fieldType->GetUnqualifiedType(&qualifiers);
-    Object object = *reinterpret_cast<Object*>((uint8_t*)data + field->offset);
+    Object* object = reinterpret_cast<Object*>((uint8_t*)data + field->offset);
+    void* ptr = object->ptr;
     assert(fieldType->IsClass());
     auto classType = static_cast<ClassType*>(fieldType);
-    if (classType->GetTemplate() == NativeClass::ColorAttachment && object.ptr) {
-      out->colorAttachments.push_back(static_cast<ColorAttachment*>(object.ptr)->attachment);
-    } else if (classType->GetTemplate() == NativeClass::DepthStencilAttachment && object.ptr) {
-      out->depthStencilAttachment = static_cast<DepthStencilAttachment*>(object.ptr)->attachment;
+    if (classType->GetTemplate() == NativeClass::ColorAttachment && ptr) {
+      out->colorAttachments.push_back(static_cast<ColorAttachment*>(ptr)->attachment);
+    } else if (classType->GetTemplate() == NativeClass::DepthStencilAttachment && ptr) {
+      out->depthStencilAttachment = static_cast<DepthStencilAttachment*>(ptr)->attachment;
     } else if (classType->GetTemplate() == NativeClass::Buffer &&
                qualifiers == Type::Qualifier::Vertex) {
-      out->vertexBuffers.push_back(object.ptr ? static_cast<Buffer*>(object.ptr)->buffer : nullptr);
+      out->vertexBuffers.push_back(ptr ? static_cast<Buffer*>(ptr)->buffer : nullptr);
     } else if (classType->GetTemplate() == NativeClass::Buffer &&
                qualifiers == Type::Qualifier::Index) {
-      if (auto buffer = static_cast<Buffer*>(object.ptr)) {
+      if (auto buffer = static_cast<Buffer*>(ptr)) {
         out->indexBuffer = buffer ? buffer->buffer : nullptr;
         out->indexFormat =
             toDawnIndexFormat(static_cast<ArrayType*>(buffer->type)->GetElementType());
       }
     } else if (classType->GetTemplate() == NativeClass::BindGroup) {
-      out->bindGroups.push_back(object.ptr ? static_cast<BindGroup*>(object.ptr)->bindGroup
+      out->bindGroups.push_back(ptr ? static_cast<BindGroup*>(ptr)->bindGroup
                                            : nullptr);
     }
   }
@@ -796,8 +797,8 @@ BindGroup* BindGroup_BindGroup(int qualifiers, Type* type, Device* device, void*
   desc.entryCount = classType->GetFields().size();
   for (int i = 0; i < desc.entryCount; i++) {
     Field* field = classType->GetFields()[i].get();
-    Object object = *reinterpret_cast<Object*>((uint8_t*)data + field->offset);
-    entries.push_back(CreateBindGroupEntry(field->type, i, &object));
+    Object* object = reinterpret_cast<Object*>((uint8_t*)data + field->offset);
+    entries.push_back(CreateBindGroupEntry(field->type, i, object->ptr));
   }
   desc.entries = entries.data();
   desc.layout = GetOrCreateBindGroupLayout(device, classType);
