@@ -14,6 +14,8 @@ array-new.t:3: array size is not an integer constant
 array-new.t:4: array size is not an integer constant
 array-new.t:5: array size is not an integer constant
 test/arrays.t
+test/assign-padded-array.t
+assign-padded-array.t:20:  expression is not of indexable type
 test/binop-widen.t
 test/bitwise.t
 test/bool-constants.t

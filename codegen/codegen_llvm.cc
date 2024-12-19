@@ -865,24 +865,6 @@ llvm::Value* CodeGenLLVM::CreateCast(Type*        srcType,
     // FIXME:  Implement narrowing casts, with dynamic type checking.
     assert(srcType->CanWidenTo(dstType));
     return builder_->CreateBitCast(value, dstLLVMType);
-  } else if (srcType->IsRawPtr() && dstType->IsRawPtr()) {
-    auto srcBase = static_cast<RawPtrType*>(srcType)->GetBaseType();
-    auto dstBase = static_cast<RawPtrType*>(dstType)->GetBaseType();
-    llvm::Value* length;
-    if (srcBase->IsArray() && dstBase->IsUnsizedArray()) {
-      auto srcArrayType = static_cast<ArrayType*>(srcBase);
-      length = llvm::ConstantInt::get(intType_, srcArrayType->GetNumElements(), true);
-    } else if (srcBase->IsMatrix() && dstBase->IsUnsizedArray()) {
-      auto matrixType = static_cast<MatrixType*>(srcBase);
-      length = llvm::ConstantInt::get(intType_, matrixType->GetNumColumns());
-    } else if (srcBase->IsVector() && dstBase->IsUnsizedArray()) {
-      auto vectorType = static_cast<VectorType*>(srcBase);
-      length = llvm::ConstantInt::get(intType_, vectorType->GetLength());
-    } else {
-      assert(!"unsupported cast");
-      return value;
-    }
-    return CreatePointer(value, length);
   } else if (srcType->IsStrongPtr() && dstType->IsRawPtr()) {
     AppendTemporary(value, srcType);
     auto baseType = static_cast<RawPtrType*>(dstType)->GetBaseType();
@@ -1229,6 +1211,12 @@ Result CodeGenLLVM::Visit(SmartToRawPtr* node) {
   llvm::Value* expr = GenerateLLVM(node->GetExpr());
   AppendTemporary(expr, node->GetExpr()->GetType(types_));
   return builder_->CreateExtractValue(expr, {0});
+}
+
+Result CodeGenLLVM::Visit(ToRawArray* node) {
+  llvm::Value* data = GenerateLLVM(node->GetData());
+  llvm::Value* length = GenerateLLVM(node->GetLength());
+  return CreatePointer(data, length);
 }
 
 Result CodeGenLLVM::Visit(FieldAccess* node) {

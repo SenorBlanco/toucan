@@ -111,6 +111,7 @@ class CodeGenLLVM : public Visitor {
   Result                Visit(CastExpr* expr) override;
   Result                Visit(Data* expr) override;
   Result                Visit(SmartToRawPtr* stmt) override;
+  Result                Visit(ToRawArray* node) override;
   Result                Visit(DestroyStmt* stmt) override;
   Result                Visit(DoStatement* stmt) override;
   Result                Visit(DoubleConstant* stmt) override;
