@@ -423,16 +423,18 @@ class SmartToRawPtr : public Expr {
 
 class ToRawArray : public Expr {
  public:
-  ToRawArray(Expr* data, Expr* length, Type* elementType);
+  ToRawArray(Expr* data, Expr* length, Type* elementType, MemoryLayout memoryLayout);
   Result Accept(Visitor* visitor) override;
   Expr*  GetData() const { return data_; }
   Expr*  GetLength() const { return length_; }
+  MemoryLayout GetMemoryLayout() const { return memoryLayout_; }
   Type*  GetType(TypeTable* types) override;
 
  private:
   Expr* data_;
   Expr* length_;
   Type* elementType_;
+  MemoryLayout memoryLayout_;
 };
 
 class RawToWeakPtr : public Expr {

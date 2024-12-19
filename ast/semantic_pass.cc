@@ -63,7 +63,7 @@ Expr* SemanticPass::CreateCast(Expr* expr, Type* srcType, Type* dstType) {
     if (srcBase->IsArray() && dstBase->IsUnsizedArray()) {
       auto srcArray = static_cast<ArrayType*>(srcBase);
       auto length = Make<IntConstant>(srcArray->GetNumElements(), 32);
-      return Make<ToRawArray>(expr, length, srcArray->GetElementType());
+      return Make<ToRawArray>(expr, length, srcArray->GetElementType(), srcArray->GetMemoryLayout());
     } else {
       assert(false);
       return nullptr;
@@ -280,22 +280,26 @@ Expr* SemanticPass::MakeIndexable(Expr* expr) {
     } else if (type->IsStrongPtr() || type->IsWeakPtr()) {
       return MakeIndexable(Make<LoadExpr>(expr));
     }
-    MemoryLayout memoryLayout = MemoryLayout::Default;
     int length;
     Type* elementType;
+    MemoryLayout memoryLayout = MemoryLayout::Default;
     if (type->IsMatrix()) {
-      length = static_cast<MatrixType*>(type)->GetNumColumns();
-      elementType = static_cast<MatrixType*>(type)->GetColumnType();
+      auto matrixType = static_cast<MatrixType*>(type);
+      length = matrixType->GetNumColumns();
+      elementType = matrixType->GetColumnType();
     } else if (type->IsVector()) {
-      length = static_cast<VectorType*>(type)->GetLength();
-      elementType = static_cast<VectorType*>(type)->GetComponentType();
+      auto vectorType = static_cast<VectorType*>(type);
+      length = vectorType->GetLength();
+      elementType = vectorType->GetComponentType();
     } else if (type->IsArray()) {
-      length = static_cast<ArrayType*>(type)->GetNumElements();
-      elementType = static_cast<ArrayType*>(type)->GetElementType();
+      auto arrayType = static_cast<ArrayType*>(type);
+      length = arrayType->GetNumElements();
+      elementType = arrayType->GetElementType();
+      memoryLayout = arrayType->GetMemoryLayout();
     } else {
       return nullptr;
     }
-    return Make<ToRawArray>(expr, Make<IntConstant>(length, 32), elementType);
+    return Make<ToRawArray>(expr, Make<IntConstant>(length, 32), elementType, memoryLayout);
   } else if (type->IsVector() || type->IsMatrix()) {
     return expr;
   } else if (type->IsStrongPtr() || type->IsWeakPtr()) {

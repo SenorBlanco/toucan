@@ -62,7 +62,7 @@ Type* SmartToRawPtr::GetType(TypeTable* types) {
 }
 
 Type* ToRawArray::GetType(TypeTable* types) {
-  auto type = types->GetArrayType(elementType_, 0, MemoryLayout::Default);
+  auto type = types->GetArrayType(elementType_, 0, memoryLayout_);
   return types->GetRawPtrType(type);
 }
 
@@ -189,7 +189,7 @@ RawToWeakPtr::RawToWeakPtr(Expr* expr) : expr_(expr) {}
 
 SmartToRawPtr::SmartToRawPtr(Expr* expr) : expr_(expr) {}
 
-ToRawArray::ToRawArray(Expr* data, Expr* length, Type* elementType) : data_(data), length_(length), elementType_(elementType) {}
+ToRawArray::ToRawArray(Expr* data, Expr* length, Type* elementType, MemoryLayout memoryLayout) : data_(data), length_(length), elementType_(elementType), memoryLayout_(memoryLayout) {}
 
 FieldAccess::FieldAccess(Expr* expr, Field* field) : expr_(expr), field_(field) {}
 
