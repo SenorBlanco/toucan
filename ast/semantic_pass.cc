@@ -56,6 +56,23 @@ Result SemanticPass::Visit(ArrayAccess* node) {
   return Make<ArrayAccess>(expr, index);
 }
 
+Expr* SemanticPass::CreateCast(Expr* expr, Type* srcType, Type* dstType) {
+  if (srcType->IsRawPtr() && dstType->IsRawPtr()) {
+    auto srcBase = static_cast<RawPtrType*>(srcType)->GetBaseType();
+    auto dstBase = static_cast<RawPtrType*>(dstType)->GetBaseType();
+    if (srcBase->IsArray() && dstBase->IsUnsizedArray()) {
+      auto srcArray = static_cast<ArrayType*>(srcBase);
+      auto length = Make<IntConstant>(srcArray->GetNumElements(), 32);
+      return Make<ToRawArray>(expr, length, srcArray->GetElementType());
+    } else {
+      assert(false);
+      return nullptr;
+    }
+  } else {
+    return Make<CastExpr>(dstType, expr);
+  }
+}
+
 Result SemanticPass::Visit(CastExpr* node) {
   Expr* expr = Resolve(node->GetExpr());
   if (!expr) { return nullptr; }
@@ -65,7 +82,7 @@ Result SemanticPass::Visit(CastExpr* node) {
   if (srcType == dstType) {
     return expr;
   } else if (srcType->CanWidenTo(dstType) || srcType->CanNarrowTo(dstType)) {
-    return Make<CastExpr>(dstType, expr);
+    return CreateCast(expr, srcType, dstType);
   } else {
     return Error("cannot cast value of type %s to %s", srcType->ToString().c_str(), dstType->ToString().c_str());
   }
@@ -250,7 +267,7 @@ Expr* SemanticPass::Widen(Expr* node, Type* dstType) {
   } else if (node->IsUnresolvedListExpr()) {
     return ResolveListExpr(static_cast<UnresolvedListExpr*>(node), dstType);
   } else {
-    return Make<CastExpr>(dstType, node);
+    return CreateCast(node, srcType, dstType);
   }
 }
 
@@ -264,18 +281,21 @@ Expr* SemanticPass::MakeIndexable(Expr* expr) {
       return MakeIndexable(Make<LoadExpr>(expr));
     }
     MemoryLayout memoryLayout = MemoryLayout::Default;
+    int length;
+    Type* elementType;
     if (type->IsMatrix()) {
-      type = static_cast<MatrixType*>(type)->GetColumnType();
+      length = static_cast<MatrixType*>(type)->GetNumColumns();
+      elementType = static_cast<MatrixType*>(type)->GetColumnType();
     } else if (type->IsVector()) {
-      type = static_cast<VectorType*>(type)->GetComponentType();
+      length = static_cast<VectorType*>(type)->GetLength();
+      elementType = static_cast<VectorType*>(type)->GetComponentType();
     } else if (type->IsArray()) {
-      memoryLayout = static_cast<ArrayType*>(type)->GetMemoryLayout();
-      type = static_cast<ArrayType*>(type)->GetElementType();
+      length = static_cast<ArrayType*>(type)->GetNumElements();
+      elementType = static_cast<ArrayType*>(type)->GetElementType();
     } else {
       return nullptr;
     }
-    type = types_->GetRawPtrType(types_->GetArrayType(type, 0, memoryLayout));
-    return Make<CastExpr>(type, expr);
+    return Make<ToRawArray>(expr, Make<IntConstant>(length, 32), elementType);
   } else if (type->IsVector() || type->IsMatrix()) {
     return expr;
   } else if (type->IsStrongPtr() || type->IsWeakPtr()) {

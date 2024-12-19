@@ -54,6 +54,7 @@ class SemanticPass : public CopyVisitor {
   int    GetNumErrors() const { return numErrors_; }
 
  private:
+  Expr*   CreateCast(Expr* expr, Type* srcType, Type* dstType);
   void    UnwindStack(Scope* scope, Stmts* stmts);
   Expr*   MakeConstantOne(Type* type);
   Result  ResolveMethodCall(Expr* expr, ClassType* classType, std::string id, ArgList* arglist);
