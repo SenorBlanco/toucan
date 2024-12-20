@@ -56,23 +56,6 @@ Result SemanticPass::Visit(ArrayAccess* node) {
   return Make<ArrayAccess>(expr, index);
 }
 
-Expr* SemanticPass::CreateCast(Expr* expr, Type* srcType, Type* dstType) {
-  if (srcType->IsRawPtr() && dstType->IsRawPtr()) {
-    auto srcBase = static_cast<RawPtrType*>(srcType)->GetBaseType();
-    auto dstBase = static_cast<RawPtrType*>(dstType)->GetBaseType();
-    if (srcBase->IsArray() && dstBase->IsUnsizedArray()) {
-      auto srcArray = static_cast<ArrayType*>(srcBase);
-      auto length = Make<IntConstant>(srcArray->GetNumElements(), 32);
-      return Make<ToRawArray>(expr, length, srcArray->GetElementType(), srcArray->GetMemoryLayout());
-    } else {
-      assert(false);
-      return nullptr;
-    }
-  } else {
-    return Make<CastExpr>(dstType, expr);
-  }
-}
-
 Result SemanticPass::Visit(CastExpr* node) {
   Expr* expr = Resolve(node->GetExpr());
   if (!expr) { return nullptr; }
@@ -82,7 +65,7 @@ Result SemanticPass::Visit(CastExpr* node) {
   if (srcType == dstType) {
     return expr;
   } else if (srcType->CanWidenTo(dstType) || srcType->CanNarrowTo(dstType)) {
-    return CreateCast(expr, srcType, dstType);
+    return Widen(expr, dstType);
   } else {
     return Error("cannot cast value of type %s to %s", srcType->ToString().c_str(), dstType->ToString().c_str());
   }
@@ -266,8 +249,10 @@ Expr* SemanticPass::Widen(Expr* node, Type* dstType) {
     return node;
   } else if (node->IsUnresolvedListExpr()) {
     return ResolveListExpr(static_cast<UnresolvedListExpr*>(node), dstType);
+  } else if ((srcType->IsStrongPtr() || srcType->IsWeakPtr()) && dstType->IsRawPtr()) {
+    return Make<SmartToRawPtr>(node);
   } else {
-    return CreateCast(node, srcType, dstType);
+    return Make<CastExpr>(dstType, node);
   }
 }
 
@@ -275,10 +260,11 @@ Expr* SemanticPass::MakeIndexable(Expr* expr) {
   Type* type = expr->GetType(types_);
   if (type->IsRawPtr()) {
     type = static_cast<RawPtrType*>(type)->GetBaseType();
+    // FIXME: can we just load and recurse here?
     if (type->IsUnsizedArray()) {
       return expr;
     } else if (type->IsStrongPtr() || type->IsWeakPtr()) {
-      return MakeIndexable(Make<LoadExpr>(expr));
+      return Make<SmartToRawPtr>(Make<LoadExpr>(expr));
     }
     int length;
     Type* elementType;
@@ -303,9 +289,7 @@ Expr* SemanticPass::MakeIndexable(Expr* expr) {
   } else if (type->IsVector() || type->IsMatrix()) {
     return expr;
   } else if (type->IsStrongPtr() || type->IsWeakPtr()) {
-    type = static_cast<PtrType*>(type)->GetBaseType();
-    type = types_->GetRawPtrType(type);
-    return Make<CastExpr>(type, expr);
+    return Make<SmartToRawPtr>(expr);
   } else if (type->IsArray()) {
     return MakeIndexable(Make<TempVarExpr>(type, expr));
   } else {

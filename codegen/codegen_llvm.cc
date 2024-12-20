@@ -1209,8 +1209,17 @@ Result CodeGenLLVM::Visit(RawToWeakPtr* node) {
 
 Result CodeGenLLVM::Visit(SmartToRawPtr* node) {
   llvm::Value* expr = GenerateLLVM(node->GetExpr());
-  AppendTemporary(expr, node->GetExpr()->GetType(types_));
-  return builder_->CreateExtractValue(expr, {0});
+  auto type = node->GetExpr()->GetType(types_);
+  AppendTemporary(expr, type);
+  auto value = builder_->CreateExtractValue(expr, {0});
+  assert(type->IsPtr());
+  if (static_cast<PtrType*>(type)->GetBaseType()->IsArray()) {
+    auto controlBlock = builder_->CreateExtractValue(expr, {1});
+    auto length = GetArrayLengthAddress(controlBlock);
+    length = builder_->CreateLoad(intType_, length);
+    return CreatePointer(value, length);
+  }
+  return value;
 }
 
 Result CodeGenLLVM::Visit(ToRawArray* node) {
