@@ -251,6 +251,8 @@ Expr* SemanticPass::Widen(Expr* node, Type* dstType) {
     return ResolveListExpr(static_cast<UnresolvedListExpr*>(node), dstType);
   } else if ((srcType->IsStrongPtr() || srcType->IsWeakPtr()) && dstType->IsRawPtr()) {
     return Make<SmartToRawPtr>(node);
+  } else if (dstType->IsRawPtr() && static_cast<RawPtrType*>(dstType)->GetBaseType()->IsArray()) {
+    return MakeIndexable(node);
   } else {
     return Make<CastExpr>(dstType, node);
   }
@@ -596,11 +598,9 @@ Result SemanticPass::Visit(BinOpNode* node) {
   }
   if (lhsType != rhsType) {
     if (lhsType->CanWidenTo(rhsType)) {
-      lhs = Make<CastExpr>(rhsType, lhs);
-      assert(lhs->GetType(types_) == rhs->GetType(types_));
+      lhs = Widen(lhs, rhsType);
     } else if (rhsType->CanWidenTo(lhsType)) {
-      rhs = Make<CastExpr>(lhsType, rhs);
-      assert(lhs->GetType(types_) == rhs->GetType(types_));
+      rhs = Widen(rhs, lhsType);
     }
   }
   return Make<BinOpNode>(node->GetOp(), lhs, rhs);

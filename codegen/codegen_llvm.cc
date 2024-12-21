@@ -861,33 +861,8 @@ llvm::Value* CodeGenLLVM::CreateCast(Type*        srcType,
     return CreateCast(static_cast<VectorType*>(srcType)->GetComponentType(),
                       static_cast<VectorType*>(dstType)->GetComponentType(), value,
                       ConvertType(dstType));
-  } else if (dstType->IsUnsizedArray() && srcType->IsUnsizedArray()) {
-    // FIXME:  Implement narrowing casts, with dynamic type checking.
-    assert(srcType->CanWidenTo(dstType));
-    return builder_->CreateBitCast(value, dstLLVMType);
-  } else if (srcType->IsStrongPtr() && dstType->IsRawPtr()) {
-    AppendTemporary(value, srcType);
-    auto baseType = static_cast<RawPtrType*>(dstType)->GetBaseType();
-    auto ptr = builder_->CreateExtractValue(value, {0});
-    if (baseType->IsUnsizedArray()) {
-      llvm::Value* controlBlock = builder_->CreateExtractValue(value, {1});
-      auto length = builder_->CreateLoad(intType_, GetArrayLengthAddress(controlBlock));
-      return CreatePointer(ptr, length);
-    } else {
-      return ptr;
-    }
   } else if (srcType->IsPtr() && dstType->IsPtr()) {
-    if (srcType->IsStrongPtr() && dstType->IsWeakPtr()) {
-      RefWeakPtr(value);
-      AppendTemporary(value, static_cast<StrongPtrType*>(srcType));
-    }
-    Type*        dstBase = static_cast<PtrType*>(dstType)->GetBaseType();
-    llvm::Value* ptr = builder_->CreateExtractValue(value, {0});
-    llvm::Value* controlBlock = builder_->CreateExtractValue(value, {1});
-    llvm::Type*  newPtrType =
-        dstBase->IsVoid() ? voidPtrType_ : llvm::PointerType::get(ConvertType(dstBase), 0);
-    llvm::Value* newPtr = builder_->CreateBitCast(ptr, newPtrType);
-    return CreatePointer(newPtr, controlBlock);
+    return value;
   }
   assert(!"unimplemented cast");
   return nullptr;
