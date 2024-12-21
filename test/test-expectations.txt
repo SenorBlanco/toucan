@@ -158,7 +158,7 @@ test/length-store-error.t
 length-store-error.t:2:  expression is not an assignable value
 test/list-init-aggregated-class.t
 test/list-init-array-arg.t
-LLVM main function is broken; abortingtest/list-init-array.t
+test/list-init-array.t
 test/list-init-class-arg.t
 test/list-init-class.t
 test/list-init-inherited-field.t

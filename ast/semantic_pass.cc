@@ -260,43 +260,37 @@ Expr* SemanticPass::Widen(Expr* node, Type* dstType) {
 
 Expr* SemanticPass::MakeIndexable(Expr* expr) {
   Type* type = expr->GetType(types_);
-  if (type->IsRawPtr()) {
-    type = static_cast<RawPtrType*>(type)->GetBaseType();
-    // FIXME: can we just load and recurse here?
-    if (type->IsUnsizedArray()) {
-      return expr;
-    } else if (type->IsStrongPtr() || type->IsWeakPtr()) {
-      return Make<SmartToRawPtr>(Make<LoadExpr>(expr));
-    }
-    int length;
-    Type* elementType;
-    MemoryLayout memoryLayout = MemoryLayout::Default;
-    if (type->IsMatrix()) {
-      auto matrixType = static_cast<MatrixType*>(type);
-      length = matrixType->GetNumColumns();
-      elementType = matrixType->GetColumnType();
-    } else if (type->IsVector()) {
-      auto vectorType = static_cast<VectorType*>(type);
-      length = vectorType->GetLength();
-      elementType = vectorType->GetComponentType();
-    } else if (type->IsArray()) {
-      auto arrayType = static_cast<ArrayType*>(type);
-      length = arrayType->GetNumElements();
-      elementType = arrayType->GetElementType();
-      memoryLayout = arrayType->GetMemoryLayout();
-    } else {
-      return nullptr;
-    }
-    return Make<ToRawArray>(expr, Make<IntConstant>(length, 32), elementType, memoryLayout);
-  } else if (type->IsVector() || type->IsMatrix()) {
+  if (type->IsStrongPtr() || type->IsWeakPtr()) {
+    return Make<SmartToRawPtr>(expr);
+  } else if (!type->IsRawPtr()) {
+    return MakeIndexable(Make<TempVarExpr>(type, expr));
+  }
+  type = static_cast<RawPtrType*>(type)->GetBaseType();
+  if (type->IsUnsizedArray()) {
     return expr;
   } else if (type->IsStrongPtr() || type->IsWeakPtr()) {
-    return Make<SmartToRawPtr>(expr);
+    return Make<SmartToRawPtr>(Make<LoadExpr>(expr));
+  }
+  int length;
+  Type* elementType;
+  MemoryLayout memoryLayout = MemoryLayout::Default;
+  if (type->IsMatrix()) {
+    auto matrixType = static_cast<MatrixType*>(type);
+    length = matrixType->GetNumColumns();
+    elementType = matrixType->GetColumnType();
+  } else if (type->IsVector()) {
+    auto vectorType = static_cast<VectorType*>(type);
+    length = vectorType->GetLength();
+    elementType = vectorType->GetComponentType();
   } else if (type->IsArray()) {
-    return MakeIndexable(Make<TempVarExpr>(type, expr));
+    auto arrayType = static_cast<ArrayType*>(type);
+    length = arrayType->GetNumElements();
+    elementType = arrayType->GetElementType();
+    memoryLayout = arrayType->GetMemoryLayout();
   } else {
     return nullptr;
   }
+  return Make<ToRawArray>(expr, Make<IntConstant>(length, 32), elementType, memoryLayout);
 }
 
 Expr* SemanticPass::ResolveListExpr(UnresolvedListExpr* node, Type* dstType) {
@@ -307,7 +301,7 @@ Expr* SemanticPass::ResolveListExpr(UnresolvedListExpr* node, Type* dstType) {
       auto length = node->GetArgList()->GetArgs().size();
       auto arrayType = types_->GetArrayType(uaType->GetElementType(), length, uaType->GetMemoryLayout());
       auto* tempVar = Make<TempVarExpr>(arrayType, ResolveListExpr(node, arrayType));
-      return Make<CastExpr>(dstType, tempVar);
+      return MakeIndexable(tempVar);
     }
     return Make<TempVarExpr>(baseType, ResolveListExpr(node, baseType));
   }
