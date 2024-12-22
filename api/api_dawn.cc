@@ -790,10 +790,7 @@ BindGroup* BindGroup_BindGroup(int qualifiers, Type* type, Device* device, void*
   ClassType*                        classType = static_cast<ClassType*>(type);
   wgpu::BindGroupDescriptor         desc;
   std::vector<wgpu::BindGroupEntry> entries;
-  if (classType->IsNative()) {
-    assert(false);
-    return nullptr;
-  }
+  assert(!classType->IsNative());
   desc.entryCount = classType->GetFields().size();
   for (int i = 0; i < desc.entryCount; i++) {
     Field* field = classType->GetFields()[i].get();
