@@ -1188,7 +1188,7 @@ Result CodeGenLLVM::Visit(SmartToRawPtr* node) {
   AppendTemporary(expr, type);
   auto value = builder_->CreateExtractValue(expr, {0});
   assert(type->IsPtr());
-  if (static_cast<PtrType*>(type)->GetBaseType()->IsArray()) {
+  if (static_cast<PtrType*>(type)->GetBaseType()->IsUnsizedArray()) {
     auto controlBlock = builder_->CreateExtractValue(expr, {1});
     auto length = GetArrayLengthAddress(controlBlock);
     length = builder_->CreateLoad(intType_, length);
