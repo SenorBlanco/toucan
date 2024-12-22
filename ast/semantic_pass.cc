@@ -297,11 +297,12 @@ Expr* SemanticPass::ResolveListExpr(UnresolvedListExpr* node, Type* dstType) {
   if (dstType->IsRawPtr()) {
     auto baseType = static_cast<RawPtrType*>(dstType)->GetBaseType();
     if (baseType->IsUnsizedArray()) {
-      auto uaType = static_cast<ArrayType*>(baseType);
+      // Resolve as &[N] of list length, then convert to &[]
+      auto arrayType = static_cast<ArrayType*>(baseType);
       auto length = node->GetArgList()->GetArgs().size();
-      auto arrayType = types_->GetArrayType(uaType->GetElementType(), length, uaType->GetMemoryLayout());
-      auto* tempVar = Make<TempVarExpr>(arrayType, ResolveListExpr(node, arrayType));
-      return MakeIndexable(tempVar);
+      dstType = types_->GetArrayType(arrayType->GetElementType(), length, arrayType->GetMemoryLayout());
+      dstType = types_->GetRawPtrType(dstType);
+      return MakeIndexable(ResolveListExpr(node, dstType));
     }
     return Make<TempVarExpr>(baseType, ResolveListExpr(node, baseType));
   }
