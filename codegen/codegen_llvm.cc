@@ -1140,12 +1140,9 @@ Result CodeGenLLVM::Visit(NewExpr* newExpr) {
                               newExpr->GetFileLocation());
   } else {
     expr = CreateMalloc(llvmType, length);
-    llvm::Value* controlBlock = CreateControlBlock(type);
-    expr = CreatePointer(expr, controlBlock);
     if (constructor) {
       std::vector<llvm::Value*> args;
       args.push_back(expr);
-      AppendTemporary(expr, types_->GetWeakPtrType(type));
       for (Expr* const& arg : newExpr->GetArgs()->Get()) {
         if (!arg) continue;
         llvm::Value* v = GenerateLLVM(arg);
@@ -1153,8 +1150,10 @@ Result CodeGenLLVM::Visit(NewExpr* newExpr) {
         AppendTemporary(v, arg->GetType(types_));
       }
       llvm::Function* function = GetOrCreateMethodStub(constructor);
-      expr = builder_->CreateCall(function, args);
+      /* expr = */ builder_->CreateCall(function, args);
     }
+    llvm::Value* controlBlock = CreateControlBlock(type);
+    expr = CreatePointer(expr, controlBlock);
   }
   return expr;
 }
