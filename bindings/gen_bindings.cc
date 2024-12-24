@@ -249,6 +249,7 @@ void PrintNativeType(FILE* file, Type* type) {
     fprintf(file, "%s", e->GetName().c_str());
   } else if (type->IsRawPtr()) {
     auto baseType = static_cast<RawPtrType*>(type)->GetBaseType();
+    baseType = baseType->GetUnqualifiedType();
     if (baseType->IsClass() && static_cast<ClassType*>(baseType)->IsNative()) {
       fprintf(file, "%s*", static_cast<ClassType*>(baseType)->GetName().c_str());
     } else {

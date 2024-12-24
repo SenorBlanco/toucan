@@ -323,11 +323,8 @@ void CodeGenLLVM::UnrefStrongPtr(llvm::Value* ptr, StrongPtrType* type) {
     llvm::Value*    func = builder_->CreateLoad(funcPtrType_, gep);
     llvm::Value*    typedFunc =
         builder_->CreateBitCast(func, llvm::PointerType::get(function->getFunctionType(), 0));
-    llvm::Value* arg = ptr;
-    if (classType->IsNative()) {
-      arg = builder_->CreateExtractValue(arg, {0});
-      isNativeClass = true;
-    }
+    llvm::Value* arg = builder_->CreateExtractValue(ptr, {0});
+    isNativeClass = classType->IsNative();
     builder_->CreateCall(function->getFunctionType(), typedFunc, {arg});
   }
   if (!isNativeClass) { GenerateFree(builder_->CreateExtractValue(ptr, {0})); }
