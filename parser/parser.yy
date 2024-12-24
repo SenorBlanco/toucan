@@ -787,7 +787,7 @@ static void BeginMethod(int modifiers, std::string id, ArgList* workgroupSize,
   Method* method = new Method(modifiers, returnType, id, classType);
   if (!(modifiers & Method::Modifier::Static)) {
     Type* thisType = types_->GetQualifiedType(classType, thisQualifiers);
-    thisType = types_->GetWeakPtrType(thisType);
+    thisType = types_->GetRawPtrType(thisType);
     method->AddFormalArg("this", thisType, nullptr);
   }
   if (formalArguments) {
@@ -829,7 +829,7 @@ static void BeginConstructor(int modifiers, Type* type, Stmts* formalArguments) 
   if (classType->IsNative()) {
     modifiers |= Method::Modifier::Static;
   }
-  auto returnType = types_->GetWeakPtrType(classType);
+  auto returnType = types_->GetRawPtrType(classType);
   BeginMethod(modifiers, classType->GetName(), nullptr, formalArguments, 0, returnType);
 }
 
@@ -872,15 +872,14 @@ static Type* GetScopedType(Type* type, const char* id) {
 
 static Method* EndConstructor(Expr* initializer, Stmts* stmts) {
   if (stmts) {
-    stmts->Append(Make<ReturnStatement>(Load(ThisExpr())));
+    stmts->Append(Make<ReturnStatement>(ThisExpr()));
   }
   Method* method = EndMethod(stmts);
   if (method->stmts) {
     if (!initializer) {
       initializer = Make<UnresolvedListExpr>(Make<ArgList>());
     }
-    Expr* rawPtrThis = Make<SmartToRawPtr>(Load(ThisExpr()));
-    method->stmts->Prepend(Make<StoreStmt>(rawPtrThis, initializer));
+    method->stmts->Prepend(Make<StoreStmt>(ThisExpr(), initializer));
   }
   return method;
 }

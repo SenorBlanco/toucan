@@ -1113,6 +1113,8 @@ Result CodeGenLLVM::Visit(ZeroInitStmt* node) {
 Result CodeGenLLVM::Visit(StoreStmt* stmt) {
   llvm::Value* rhs = GenerateLLVM(stmt->GetRHS());
   llvm::Value* lhs = GenerateLLVM(stmt->GetLHS());
+  assert(stmt->GetLHS()->GetType(types_)->IsRawPtr());
+  assert(static_cast<RawPtrType*>(stmt->GetLHS()->GetType(types_))->GetBaseType() == stmt->GetRHS()->GetType(types_));
   if (stmt->GetRHS()->GetType(types_)->IsRawPtr() & !temporaries_.empty()) {
     auto temporary = temporaries_.back();
     temporaries_.pop_back();

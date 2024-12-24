@@ -248,7 +248,12 @@ void PrintNativeType(FILE* file, Type* type) {
     EnumType* e = static_cast<EnumType*>(type);
     fprintf(file, "%s", e->GetName().c_str());
   } else if (type->IsRawPtr()) {
-    fprintf(file, "void*");
+    auto baseType = static_cast<RawPtrType*>(type)->GetBaseType();
+    if (baseType->IsClass() && static_cast<ClassType*>(baseType)->IsNative()) {
+      fprintf(file, "%s*", static_cast<ClassType*>(baseType)->GetName().c_str());
+    } else {
+      fprintf(file, "void*");
+    }
   } else if (type->IsPtr()) {
     Type* baseType = static_cast<PtrType*>(type)->GetBaseType();
     if (baseType->IsQualified()) {
