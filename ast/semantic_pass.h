@@ -57,6 +57,7 @@ class SemanticPass : public CopyVisitor {
   void    UnwindStack(Scope* scope, Stmts* stmts);
   Expr*   MakeConstantOne(Type* type);
   Result  ResolveMethodCall(Expr* expr, ClassType* classType, std::string id, ArgList* arglist);
+  std::vector<Expr*> ResolveClassInitializerArgs(ClassType* classType, ArgList* argList);
   Expr*   ResolveListExpr(UnresolvedListExpr* node, Type* dstType);
   void    WidenArgList(std::vector<Expr*>& argList, const VarVector& formalArgList);
   Expr*   Widen(Expr* expr, Type* dstType);

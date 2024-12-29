@@ -136,6 +136,8 @@ Result SemanticPass::Visit(UnresolvedInitializer* node) {
     for (int i = 0; i < length; ++i) {
       exprs.push_back(args[0]->GetExpr());
     }
+  } else if (type->IsClass()) {
+    exprs = ResolveClassInitializerArgs(static_cast<ClassType*>(type), argList);
   } else {
     for (auto arg : args) {
       exprs.push_back(arg->GetExpr());
@@ -291,6 +293,31 @@ Expr* SemanticPass::MakeIndexable(Expr* expr) {
   return Make<ToRawArray>(expr, Make<IntConstant>(length, 32), elementType, memoryLayout);
 }
 
+std::vector<Expr*> SemanticPass::ResolveClassInitializerArgs(ClassType* classType, ArgList* argList) {
+  std::vector<Expr*> exprs;
+  auto& fields = classType->GetFields();
+  if (argList->IsNamed() || argList->GetArgs().empty()) {
+    exprs.resize(classType->GetTotalFields(), nullptr);
+    for (auto arg : argList->GetArgs()) {
+      Field* field = classType->FindField(arg->GetID());
+      exprs[field->index] = Widen(arg->GetExpr(), field->type);
+    }
+    for (ClassType* c = classType; c != nullptr; c = c->GetParent()) {
+      for (auto& field : c->GetFields()) {
+        if (exprs[field->index] == nullptr) {
+          exprs[field->index] = Resolve(field->defaultValue);
+        }
+      }
+    }
+  } else {
+    int i = 0;
+    for (auto arg : argList->GetArgs()) {
+      exprs.push_back(Widen(arg->GetExpr(), fields[i++]->type));
+    }
+  }
+  return std::move(exprs);
+}
+
 Expr* SemanticPass::ResolveListExpr(UnresolvedListExpr* node, Type* dstType) {
   if (dstType->IsRawPtr()) {
     auto baseType = static_cast<RawPtrType*>(dstType)->GetBaseType();
@@ -309,26 +336,7 @@ Expr* SemanticPass::ResolveListExpr(UnresolvedListExpr* node, Type* dstType) {
   std::vector<Expr*> exprs;
   if (dstType->IsClass()) {
     auto  classType = static_cast<ClassType*>(dstType);
-    auto& fields = classType->GetFields();
-    if (argList->IsNamed()) {
-      exprs.resize(classType->GetTotalFields(), nullptr);
-      for (auto arg : argList->GetArgs()) {
-        Field* field = classType->FindField(arg->GetID());
-        exprs[field->index] = Widen(arg->GetExpr(), field->type);
-      }
-      for (ClassType* c = classType; c != nullptr; c = c->GetParent()) {
-        for (auto& field : c->GetFields()) {
-          if (exprs[field->index] == nullptr) {
-            exprs[field->index] = Resolve(field->defaultValue);
-          }
-        }
-      }
-    } else {
-      int i = 0;
-      for (auto arg : argList->GetArgs()) {
-        exprs.push_back(Widen(arg->GetExpr(), fields[i++]->type));
-      }
-    }
+    exprs = ResolveClassInitializerArgs(classType, argList);
   } else {
     if (argList->IsNamed()) {
       Error("named list expression are unsupported for %s", dstType->ToString().c_str());
