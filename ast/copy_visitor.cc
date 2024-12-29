@@ -110,6 +110,10 @@ Result CopyVisitor::Visit(VarDeclaration* decl) {
 
 Result CopyVisitor::Visit(LoadExpr* node) { return Make<LoadExpr>(Resolve(node->GetExpr())); }
 
+Result CopyVisitor::Visit(RawToSmartPtr* node) {
+  return Make<RawToSmartPtr>(Resolve(node->GetExpr()));
+}
+
 Result CopyVisitor::Visit(SmartToRawPtr* node) {
   return Make<SmartToRawPtr>(Resolve(node->GetExpr()));
 }

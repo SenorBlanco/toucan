@@ -633,6 +633,10 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
       }
       WidenArgList(exprList, constructor->formalArgList);
       args = Make<ExprList>(std::move(exprList));
+      if (classType->IsNative()) {
+        Expr* expr = Make<RawToSmartPtr>(Make<MethodCall>(constructor, args));
+        return Widen(expr, types_->GetStrongPtrType(type));
+      }
     } else if (arglist->GetArgs().size() > 0) {
       return Error("matching constructor not found");
     }

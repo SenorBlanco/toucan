@@ -27,6 +27,12 @@ ASTNode::ASTNode() {}
 
 Expr::Expr() {}
 
+HeapAllocation::HeapAllocation(Type* type, int length) : type_(type), length_(length) {}
+
+Type* HeapAllocation::GetType(TypeTable* types) {
+  return types->GetRawPtrType(type_);
+}
+
 Type* LoadExpr::GetType(TypeTable* types) {
   Type* type = expr_->GetType(types);
   assert(type->IsRawPtr());
@@ -53,6 +59,12 @@ Type* SmartToRawPtr::GetType(TypeTable* types) {
   Type* type = expr_->GetType(types);
   assert(type->IsStrongPtr() || type->IsWeakPtr());
   return types->GetRawPtrType(static_cast<PtrType*>(type)->GetBaseType());
+}
+
+Type* RawToSmartPtr::GetType(TypeTable* types) {
+  Type* type = expr_->GetType(types);
+  assert(type->IsRawPtr());
+  return types->GetStrongPtrType(static_cast<PtrType*>(type)->GetBaseType());
 }
 
 Type* ToRawArray::GetType(TypeTable* types) {
@@ -180,6 +192,8 @@ ZeroInitStmt::ZeroInitStmt(Expr* lhs) : lhs_(lhs) {}
 UnresolvedDot::UnresolvedDot(Expr* expr, std::string id) : expr_(expr), id_(id) {}
 
 SmartToRawPtr::SmartToRawPtr(Expr* expr) : expr_(expr) {}
+
+RawToSmartPtr::RawToSmartPtr(Expr* expr) : expr_(expr) {}
 
 ToRawArray::ToRawArray(Expr* data, Expr* length, Type* elementType, MemoryLayout memoryLayout) : data_(data), length_(length), elementType_(elementType), memoryLayout_(memoryLayout) {}
 
@@ -312,6 +326,7 @@ Result EnumConstant::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ExprList::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ExprWithStmt::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result SmartToRawPtr::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result RawToSmartPtr::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ToRawArray::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result DoStatement::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result DoubleConstant::Accept(Visitor* visitor) { return visitor->Visit(this); }

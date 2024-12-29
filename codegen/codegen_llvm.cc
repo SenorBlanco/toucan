@@ -1196,6 +1196,13 @@ Result CodeGenLLVM::Visit(SmartToRawPtr* node) {
   return value;
 }
 
+Result CodeGenLLVM::Visit(RawToSmartPtr* node) {
+  llvm::Value* expr = GenerateLLVM(node->GetExpr());
+  auto type = node->GetExpr()->GetType(types_);
+  auto controlBlock = CreateControlBlock(type);
+  return CreatePointer(expr, controlBlock);
+}
+
 Result CodeGenLLVM::Visit(ToRawArray* node) {
   llvm::Value* data = GenerateLLVM(node->GetData());
   llvm::Value* length = GenerateLLVM(node->GetLength());
