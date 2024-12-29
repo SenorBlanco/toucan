@@ -77,6 +77,15 @@ class Expr : public ASTNode {
   virtual bool  IsVarExpr() const { return false; }
 };
 
+class HeapAllocation : public ASTNode {
+ public:
+  HeapAllocation(Type* type, int length = 1);
+  virtual Type* GetType(TypeTable* types) = 0;
+ private:
+  Type* type_;
+  int   length_;
+};
+
 class Data : public Expr {
  public:
   Data(Type* type, std::unique_ptr<uint8_t[]> data, size_t size);
@@ -374,6 +383,19 @@ class MethodCall : public Expr {
   ExprList* arglist_;
 };
 
+class NativeMethodCall : public Expr {
+ public:
+  NativeMethodCall(Method* method, ExprList* arglist, int qualifiers, std::vector<Type*> types);
+  Result    Accept(Visitor* visitor) override;
+  Type*     GetType(TypeTable* types) override { return method_->returnType; }
+  Method*   GetMethod() { return method_; }
+  ExprList* GetArgList() { return arglist_; }
+
+ private:
+  Method*   method_;
+  ExprList* arglist_;
+};
+
 class LoadExpr : public Expr {
  public:
   LoadExpr(Expr* expr);
@@ -413,6 +435,17 @@ class TempVarExpr : public Expr {
 class SmartToRawPtr : public Expr {
  public:
   SmartToRawPtr(Expr* expr);
+  Result Accept(Visitor* visitor) override;
+  Type*  GetType(TypeTable* types) override;
+  Expr*  GetExpr() { return expr_; }
+
+ private:
+  Expr* expr_;
+};
+
+class RawToSmartPtr : public Expr {
+ public:
+  RawToSmartPtr(Expr* expr);
   Result Accept(Visitor* visitor) override;
   Type*  GetType(TypeTable* types) override;
   Expr*  GetExpr() { return expr_; }
@@ -773,6 +806,7 @@ class Visitor {
   virtual Result Visit(Data* node) { return Default(node); }
   virtual Result Visit(EnumConstant* node) { return Default(node); }
   virtual Result Visit(SmartToRawPtr* node) { return Default(node); }
+  virtual Result Visit(RawToSmartPtr* node) { return Default(node); }
   virtual Result Visit(DoStatement* node) { return Default(node); }
   virtual Result Visit(DoubleConstant* node) { return Default(node); }
   virtual Result Visit(ExprList* node) { return Default(node); }
