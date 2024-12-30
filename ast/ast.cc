@@ -301,8 +301,8 @@ Type* NewArrayExpr::GetType(TypeTable* types) {
   return types->GetStrongPtrType(types->GetArrayType(elementType_, 0, MemoryLayout::Default));
 }
 
-UnresolvedNewExpr::UnresolvedNewExpr(Type* type, Expr* length, ArgList* arglist)
-    : type_(type), length_(length), arglist_(arglist) {}
+UnresolvedNewExpr::UnresolvedNewExpr(Type* type, Expr* length, ArgList* arglist, bool constructor)
+    : type_(type), length_(length), arglist_(arglist), constructor_(constructor) {}
 
 Type* UnresolvedNewExpr::GetType(TypeTable* types) { return types->GetStrongPtrType(type_); }
 
