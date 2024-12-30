@@ -727,17 +727,19 @@ class NewArrayExpr : public Expr {
 
 class UnresolvedNewExpr : public Expr {
  public:
-  UnresolvedNewExpr(Type* type, Expr* length, ArgList* arglist);
+  UnresolvedNewExpr(Type* type, Expr* length, ArgList* arglist, bool constructor);
   Result   Accept(Visitor* visitor) override;
   Type*    GetType(TypeTable* types) override;
   Type*    GetType() { return type_; }
   Expr*    GetLength() { return length_; }
   ArgList* GetArgList() { return arglist_; }
+  bool     IsConstructor() const { return constructor_; }
 
  private:
   Type*    type_;
   Expr*    length_;  // used for unsized arrays as last field
   ArgList* arglist_;
+  bool     constructor_;
 };
 
 class NewExpr : public Expr {

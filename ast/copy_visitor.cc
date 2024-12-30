@@ -207,7 +207,8 @@ Result CopyVisitor::Visit(UnresolvedNewExpr* expr) {
   Type*    type = ResolveType(expr->GetType());
   Expr*    length = Resolve(expr->GetLength());
   ArgList* arglist = Resolve(expr->GetArgList());
-  return Make<UnresolvedNewExpr>(type, length, arglist);
+  bool     constructor = expr->IsConstructor();
+  return Make<UnresolvedNewExpr>(type, length, arglist, constructor);
 }
 
 Result CopyVisitor::Visit(UnresolvedStaticMethodCall* node) {

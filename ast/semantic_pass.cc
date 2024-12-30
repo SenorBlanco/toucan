@@ -623,22 +623,27 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
                    classType->ToString().c_str());
     }
     std::vector<Expr*> exprList;
-    constructor = FindMethod(nullptr, classType, classType->GetName(), arglist, &exprList);
-    if (constructor) {
-      for (int i = 1; i < exprList.size(); ++i) {
-        if (!exprList[i]) {
-          return Error("formal parameter \"%s\" has no default value",
-                       constructor->formalArgList[i]->name.c_str());
+    if (expr->IsConstructor()) {
+      constructor = FindMethod(nullptr, classType, classType->GetName(), arglist, &exprList);
+      if (constructor) {
+        for (int i = 1; i < exprList.size(); ++i) {
+          if (!exprList[i]) {
+            return Error("formal parameter \"%s\" has no default value",
+                         constructor->formalArgList[i]->name.c_str());
+          }
         }
+        WidenArgList(exprList, constructor->formalArgList);
+        args = Make<ExprList>(std::move(exprList));
+        if (classType->IsNative()) {
+          return Make<NewExpr>(type, length, constructor, args);
+        }
+      } else {
+        return Error("matching constructor not found");
       }
-      WidenArgList(exprList, constructor->formalArgList);
-      args = Make<ExprList>(std::move(exprList));
-      if (classType->IsNative()) {
-        Expr* expr = Make<RawToSmartPtr>(Make<MethodCall>(constructor, args));
-        return Widen(expr, types_->GetStrongPtrType(type));
-      }
-    } else if (arglist->GetArgs().size() > 0) {
-      return Error("matching constructor not found");
+    } else {
+      auto allocation = Make<HeapAllocate>(type, length);
+      // FIXME: actually initialize it
+      return allocation;
     }
   }
   return Make<NewExpr>(type, length, constructor, args);
