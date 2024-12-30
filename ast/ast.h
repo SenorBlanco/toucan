@@ -77,13 +77,14 @@ class Expr : public ASTNode {
   virtual bool  IsVarExpr() const { return false; }
 };
 
-class HeapAllocation : public ASTNode {
+class HeapAllocation : public Expr {
  public:
-  HeapAllocation(Type* type, int length = 1);
-  virtual Type* GetType(TypeTable* types) = 0;
+  HeapAllocation(Type* type, Expr* length = nullptr);
+  Type* GetType(TypeTable* types) override;
+  Result Accept(Visitor* visitor) override;
  private:
   Type* type_;
-  int   length_;
+  Expr* length_;
 };
 
 class Data : public Expr {
@@ -818,6 +819,7 @@ class Visitor {
   virtual Result Visit(FieldAccess* node) { return Default(node); }
   virtual Result Visit(FloatConstant* node) { return Default(node); }
   virtual Result Visit(ForStatement* node) { return Default(node); }
+  virtual Result Visit(HeapAllocation* node) { return Default(node); }
   virtual Result Visit(IfStatement* node) { return Default(node); }
   virtual Result Visit(Initializer* node) { return Default(node); }
   virtual Result Visit(InsertElementExpr* node) { return Default(node); }

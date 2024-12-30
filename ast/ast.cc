@@ -27,7 +27,7 @@ ASTNode::ASTNode() {}
 
 Expr::Expr() {}
 
-HeapAllocation::HeapAllocation(Type* type, int length) : type_(type), length_(length) {}
+HeapAllocation::HeapAllocation(Type* type, Expr* length) : type_(type), length_(length) {}
 
 Type* HeapAllocation::GetType(TypeTable* types) {
   return types->GetRawPtrType(type_);
@@ -335,6 +335,7 @@ Result ExtractElementExpr::Accept(Visitor* visitor) { return visitor->Visit(this
 Result FieldAccess::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result FloatConstant::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ForStatement::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result HeapAllocation::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result IfStatement::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result Initializer::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result InsertElementExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }

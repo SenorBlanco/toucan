@@ -623,7 +623,7 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
                    classType->ToString().c_str());
     }
     std::vector<Expr*> exprList;
-    if (expr->IsConstructor()) {
+    if (node->IsConstructor()) {
       constructor = FindMethod(nullptr, classType, classType->GetName(), arglist, &exprList);
       if (constructor) {
         for (int i = 1; i < exprList.size(); ++i) {
@@ -641,9 +641,10 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
         return Error("matching constructor not found");
       }
     } else {
-      auto allocation = Make<HeapAllocate>(type, length);
-      // FIXME: actually initialize it
-      return allocation;
+      auto allocation = Make<HeapAllocation>(type, length);
+      auto args = Make<ExprList>(std::move(exprList));
+      auto store = Make<StoreStmt>(allocation, Make<Initializer>(type, args));
+      return Make<ExprWithStmt>(allocation, store);
     }
   }
   return Make<NewExpr>(type, length, constructor, args);
