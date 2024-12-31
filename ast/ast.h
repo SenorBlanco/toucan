@@ -81,6 +81,8 @@ class HeapAllocation : public Expr {
  public:
   HeapAllocation(Type* type, Expr* length = nullptr);
   Type* GetType(TypeTable* types) override;
+  Type* GetType() { return type_; }
+  Expr* GetLength() const { return length_; }
   Result Accept(Visitor* visitor) override;
  private:
   Type* type_;

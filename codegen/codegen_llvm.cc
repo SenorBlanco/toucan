@@ -1045,6 +1045,16 @@ Result CodeGenLLVM::Visit(ForStatement* forStmt) {
   return nullptr;
 }
 
+Result CodeGenLLVM::Visit(HeapAllocation* node) {
+  Type*   type = node->GetType();
+  int     qualifiers = 0;
+  type = type->GetUnqualifiedType(&qualifiers);
+  llvm::Type*  llvmType = ConvertType(type);
+  llvm::Value* expr = nullptr;
+  llvm::Value* length = node->GetLength() ? GenerateLLVM(node->GetLength()) : nullptr;
+  return CreateMalloc(llvmType, length);
+}
+
 Result CodeGenLLVM::Visit(BoolConstant* node) {
   return llvm::ConstantInt::get(boolType_, node->GetValue() ? 1 : 0, true);
 }

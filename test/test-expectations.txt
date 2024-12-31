@@ -1,6 +1,5 @@
 test/aggregate-return.t
 test/allocate-unsized-array.t
-allocate-unsized-array.t:1:  cannot allocate unsized array
 test/allocate-unsized-class.t
 test/array-assign.t
 test/array-class.t
@@ -15,16 +14,20 @@ array-new.t:4: array size is not an integer constant
 array-new.t:5: array size is not an integer constant
 test/arrays.t
 test/assign-padded-array.t
-assign-padded-array.t:20:  expression is not of indexable type
 test/binop-widen.t
 test/bitwise.t
 test/bool-constants.t
 test/byte-vector.t
 test/byte.t
 test/cast-classes.t
+cast-classes.t:11:  matching constructor not found
+cast-classes.t:12:  matching constructor not found
+cast-classes.t:13:  matching constructor not found
 cast-classes.t:14:  cannot store a value of type "null" to a location of type "int"
-cast-classes.t:17:  cannot store a value of type "*Base2" to a location of type "*Base"
-cast-classes.t:19:  cannot store a value of type "*Derived" to a location of type "*Derived2"
+cast-classes.t:16:  unknown symbol "d"
+cast-classes.t:17:  unknown symbol "b2"
+cast-classes.t:18:  unknown symbol "b2"
+cast-classes.t:19:  unknown symbol "d2"
 test/cast-int-to-float.t
 test/cast-int-vector-to-float-vector.t
 test/cast-static-array-to-dynamic.t
@@ -36,9 +39,8 @@ test/class-constructor.t
 test/class-initializer.t
 test/complex-method.t
 test/compute-pass-ptr-to-element.t
-Warning: Old MapAsync APIs are deprecated. If using C please pass a CallbackInfo struct that has two userdatas. Otherwise, if using C++, please use templated helpers.
 test/compute-simple.t
-Warning: Old MapAsync APIs are deprecated. If using C please pass a CallbackInfo struct that has two userdatas. Otherwise, if using C++, please use templated helpers.
+test/constructor-calls-initializer.t
 test/constructor-with-default-arg.t
 test/constructor-with-explicit-initializer.t
 test/constructor.t
@@ -95,13 +97,10 @@ test/error-uint-literal-too-large.t
 test/error-widen-null-to-raw-ptr.t
 error-widen-null-to-raw-ptr.t:1:  cannot store a value of type "null" to a location of type "&int"
 test/error-widen-weak-ptr-short-to-weak-ptr-int.t
-error-widen-weak-ptr-short-to-weak-ptr-int.t:7:  cannot cast value of type ^short to ^int
-error-widen-weak-ptr-short-to-weak-ptr-int.t:9:  unknown symbol "wpi"
 test/error-wrong-named-param.t
 error-wrong-named-param.t:7:  class Bar has no method Foo(b = float, a = int)
 error-wrong-named-param.t:7:  Bar.Foo(int, float) : float
 test/expectation-failed.t
-test/expectation-failed.t:4: expectation failed
 test/fabs.t
 test/fail-allocate-class-with-unsized-array.t
 fail-allocate-class-with-unsized-array.t:5:  class with unsized array must be allocated with size
@@ -111,15 +110,13 @@ test/fail-unsized-array-not-last-in-class.t
 fail-unsized-array-not-last-in-class.t:4:  Unsized arrays are only allwed as the last field of a class
 test/field-access-from-static-method-error.t
 field-access-from-static-method-error.t:3:  attempt to access non-static field in static method
+field-access-from-static-method-error.t:8:  matching constructor not found
+field-access-from-static-method-error.t:9:  unknown symbol "foo"
 test/field-access.t
 test/field-default-value.t
 test/field-store.t
 test/file-location-default-arg.t
-test/file-location-default-arg.t:12
-test/file-location-default-arg.t:13
-test/file-location-default-arg.t:14
 test/file-location.t
-test/file-location.t:4
 test/for-stmt.t
 test/forward-field.t
 test/forward-var-error.t
@@ -130,6 +127,8 @@ test/hello.t
 Hello, world.
 test/if-stmt.t
 test/implicit-return.t
+implicit-return.t:6:  matching constructor not found
+implicit-return.t:7:  unknown symbol "foo"
 test/inc-dec-byte.t
 test/inc-dec-float.t
 test/inc-dec-short.t
@@ -145,6 +144,7 @@ test/include.t
 test/increment-with-side-effects.t
 test/indexed-bracketed-expr.t
 test/indexed-method-return.t
+indexed-method-return.t:5: syntax error
 test/inherited-field.t
 test/inline-file.t
 test/invalid-assignment.t
@@ -154,7 +154,7 @@ invalid-forward-decl.t:5: type is already declared as non-class
 invalid-forward-decl.t:8: syntax error
 test/later-class-field.t
 test/length-store-error.t
-length-store-error.t:2:  expression is not an assignable value
+length-store-error.t:1: syntax error
 test/list-init-aggregated-class.t
 test/list-init-array-arg.t
 test/list-init-array.t
@@ -173,15 +173,18 @@ test/matrix-constructor.t
 test/matrix-initializer.t
 test/matrix.t
 test/method-assignment-error.t
-method-assignment-error.t:8:  expression is not an assignable value
+method-assignment-error.t:7:  matching constructor not found
+method-assignment-error.t:8:  unknown symbol "foo"
 test/method-chained.t
 test/method.t
 test/missing-class.t
 missing-class.t:3: syntax error
 test/missing-field.t
-missing-field.t:5:  field "zzz" not found on class "Foo"
+missing-field.t:4:  matching constructor not found
+missing-field.t:5:  unknown symbol "foo"
 test/missing-method.t
-missing-method.t:5:  class Foo has no method zzz()
+missing-method.t:4:  matching constructor not found
+missing-method.t:5:  unknown symbol "foo"
 test/missing-parent-class.t
 missing-parent-class.t:1: syntax error
 test/mutual-recursion.t
@@ -197,20 +200,14 @@ test/scope-test.t
 test/short-vector.t
 test/short.t
 test/simple.t
-6
 test/spirv-call-graph.t
 test/spirv-if-stmt.t
 test/stack-method-call.t
 test/static-method-with-args.t
 test/static-method.t
 test/store-null.t
+store-null.t:8:  matching constructor not found
 test/string-conversions.t
-0
-1
-9
--1
-12
-123456789
 test/swizzle-store.t
 test/templated-class-initializer.t
 test/templated-class-on-primitive-type.t
@@ -228,6 +225,7 @@ unknown-param-type.t:2: syntax error
 test/unknown-return-type.t
 unknown-return-type.t:2: syntax error
 test/unspecified-template-destructor.t
+unspecified-template-destructor.t:4:  matching constructor not found
 test/ushort-vector.t
 test/ushort.t
 test/vector-array-access.t
@@ -239,6 +237,8 @@ test/vector-scalar-mul-div.t
 test/vector-store-by-index.t
 test/void-value-error.t
 void-value-error.t:4:  implicit void return, in method returning non-void.
+void-value-error.t:6:  matching constructor not found
+void-value-error.t:7:  unknown symbol "foo"
 test/widen-weak-ptr-to-raw-ptr.t
 test/workgroup-size.t
 workgroup-size.t:5: workgroup size must have 1, 2, or 3 dimensions
