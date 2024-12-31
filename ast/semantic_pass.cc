@@ -634,9 +634,6 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
         }
         WidenArgList(exprList, constructor->formalArgList);
         args = Make<ExprList>(std::move(exprList));
-        if (classType->IsNative()) {
-          return Make<NewExpr>(type, length, constructor, args);
-        }
       } else {
         return Error("matching constructor not found");
       }

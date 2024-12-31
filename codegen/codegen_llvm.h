@@ -123,6 +123,7 @@ class CodeGenLLVM : public Visitor {
   Result                Visit(FieldAccess* loadExpr) override;
   Result                Visit(FloatConstant* node) override;
   Result                Visit(ForStatement* forStmt) override;
+  Result                Visit(HeapAllocation* node) override;
   Result                Visit(IfStatement* stmt) override;
   Result                Visit(Initializer* node) override;
   Result                Visit(InsertElementExpr* expr) override;

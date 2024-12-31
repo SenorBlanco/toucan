@@ -78,7 +78,6 @@ static Expr* Identifier(const char* id);
 static Expr* Dot(Expr* lhs, const char* id);
 static Expr* MakeArrayAccess(Expr* lhs, Expr* expr);
 static Expr* MakeNewExpr(Type* type, Expr* length, ArgList* arguments, bool constructor);
-static Expr* MakeNewArrayExpr(Type* type, Expr* length);
 static Expr* InlineFile(const char* filename);
 static Expr* StringLiteral(const char* str);
 static void CreateFieldsFromVarDecls(Stmts* stmts);
@@ -469,9 +468,12 @@ arith_expr:
 
 expr:
     arith_expr
+  | T_NEW type                              { $$ = MakeNewExpr($2, nullptr, nullptr, false); }
   | T_NEW type '{' arguments '}'            { $$ = MakeNewExpr($2, nullptr, $4, false); }
   | T_NEW type '(' arguments ')'            { $$ = MakeNewExpr($2, nullptr, $4, true); }
-  | '[' arith_expr ']' T_NEW type           { $$ = MakeNewArrayExpr($5, $2); }
+  | '[' arith_expr ']' T_NEW type           { $$ = MakeNewExpr($5, $2, nullptr, false); }
+  | '[' arith_expr ']' T_NEW type '{' arguments '}'
+                                            { $$ = MakeNewExpr($5, $2, $7, false); }
   | '[' arith_expr ']' T_NEW type '(' arguments ')'
                                             { $$ = MakeNewExpr($5, $2, $7, true); }
   | T_INLINE '(' T_STRING_LITERAL ')'       { $$ = InlineFile($3); }
@@ -484,7 +486,7 @@ expr_or_list:
   ;
 
 opt_initializer:
-    ':' expr_or_list                        { $$ = $2; }
+    '=' expr_or_list '='                    { $$ = $2; }
   | /* nothing */                           { $$ = nullptr; }
   ;
 
@@ -567,11 +569,6 @@ static Expr* Load(Expr* expr) {
 static Expr* MakeNewExpr(Type* type, Expr* length, ArgList* arguments, bool constructor) {
   if (!type) return nullptr;
   return Make<UnresolvedNewExpr>(type, length, arguments, constructor);
-}
-
-static Expr* MakeNewArrayExpr(Type* type, Expr* length) {
-  if (!type || !length) return nullptr;
-  return Make<NewArrayExpr>(type, length);
 }
 
 static Expr* TryInlineFile(std::string dir, const char* filename) {
