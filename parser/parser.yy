@@ -486,7 +486,7 @@ expr_or_list:
   ;
 
 opt_initializer:
-    '=' expr_or_list '='                    { $$ = $2; }
+    ':' '{' arguments '}'                   { $$ = Make<UnresolvedListExpr>($3); }
   | /* nothing */                           { $$ = nullptr; }
   ;
 
