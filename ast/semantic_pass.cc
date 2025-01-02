@@ -609,7 +609,6 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
   ArgList* arglist = Resolve(node->GetArgList());
   if (!arglist) return nullptr;
   Method*   constructor = nullptr;
-  ExprList* args = nullptr;
   int       qualifiers;
   Type*     unqualifiedType = type->GetUnqualifiedType(&qualifiers);
   Expr*     length = node->GetLength() ? Resolve(node->GetLength()) : nullptr;
@@ -625,26 +624,31 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
     std::vector<Expr*> exprList;
     if (node->IsConstructor()) {
       constructor = FindMethod(nullptr, classType, classType->GetName(), arglist, &exprList);
-      if (constructor) {
-        for (int i = 1; i < exprList.size(); ++i) {
-          if (!exprList[i]) {
-            return Error("formal parameter \"%s\" has no default value",
-                         constructor->formalArgList[i]->name.c_str());
-          }
-        }
-        WidenArgList(exprList, constructor->formalArgList);
-        args = Make<ExprList>(std::move(exprList));
-      } else {
+      if (!constructor) {
         return Error("matching constructor not found");
       }
-    } else {
-      auto allocation = Make<HeapAllocation>(type, length);
+      for (int i = 1; i < exprList.size(); ++i) {
+        if (!exprList[i]) {
+          return Error("formal parameter \"%s\" has no default value",
+                       constructor->formalArgList[i]->name.c_str());
+        }
+      }
+      WidenArgList(exprList, constructor->formalArgList);
       auto args = Make<ExprList>(std::move(exprList));
-      auto store = Make<StoreStmt>(allocation, Make<Initializer>(type, args));
-      return Make<ExprWithStmt>(allocation, store);
+      return Make<NewExpr>(type, length, constructor, args);
     }
   }
-  return Make<NewExpr>(type, length, constructor, args);
+  // FIXME: refactor this with UnresolvedInitializer visit and ResolveListExpr
+  std::vector<Expr*> exprs;
+  for (auto arg : arglist->GetArgs()) {
+    exprs.push_back(arg->GetExpr());
+  }
+  auto args = Make<ExprList>(std::move(exprs));
+  auto allocation = Make<HeapAllocation>(type, length);
+  if (length) { type = types_->GetArrayType(type, 0, MemoryLayout::Default); }
+  auto initializer = Make<Initializer>(type, args);
+  auto store = Make<StoreStmt>(allocation, initializer);
+  return Make<RawToSmartPtr>(Make<ExprWithStmt>(allocation, store));
 }
 
 Result SemanticPass::Visit(IfStatement* s) {
