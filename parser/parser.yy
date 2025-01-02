@@ -468,10 +468,10 @@ arith_expr:
 
 expr:
     arith_expr
-  | T_NEW type                              { $$ = MakeNewExpr($2, nullptr, nullptr, false); }
+  | T_NEW type                              { $$ = MakeNewExpr($2, nullptr, Make<ArgList>(), false); }
   | T_NEW type '{' arguments '}'            { $$ = MakeNewExpr($2, nullptr, $4, false); }
   | T_NEW type '(' arguments ')'            { $$ = MakeNewExpr($2, nullptr, $4, true); }
-  | '[' arith_expr ']' T_NEW type           { $$ = MakeNewExpr($5, $2, nullptr, false); }
+  | '[' arith_expr ']' T_NEW type           { $$ = MakeNewExpr($5, $2, Make<ArgList>(), false); }
   | '[' arith_expr ']' T_NEW type '{' arguments '}'
                                             { $$ = MakeNewExpr($5, $2, $7, false); }
   | '[' arith_expr ']' T_NEW type '(' arguments ')'

@@ -30,7 +30,9 @@ Expr::Expr() {}
 HeapAllocation::HeapAllocation(Type* type, Expr* length) : type_(type), length_(length) {}
 
 Type* HeapAllocation::GetType(TypeTable* types) {
-  return types->GetRawPtrType(length_ ? types->GetArrayType(type_, 0, MemoryLayout::Default) : type_);
+  Type* type = type_;
+  if (length_ != nullptr) { type = types->GetArrayType(type_, 0, MemoryLayout::Default); }
+  return types->GetRawPtrType(type);
 }
 
 Type* LoadExpr::GetType(TypeTable* types) {

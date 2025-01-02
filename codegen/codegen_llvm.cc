@@ -1050,9 +1050,10 @@ Result CodeGenLLVM::Visit(HeapAllocation* node) {
   int     qualifiers = 0;
   type = type->GetUnqualifiedType(&qualifiers);
   llvm::Type*  llvmType = ConvertType(type);
-  llvm::Value* expr = nullptr;
   llvm::Value* length = node->GetLength() ? GenerateLLVM(node->GetLength()) : nullptr;
-  return CreateMalloc(llvmType, length);
+  llvm::Value* value = CreateMalloc(llvmType, length);
+  if (length) { value = CreatePointer(value, length); }
+  return value;
 }
 
 Result CodeGenLLVM::Visit(BoolConstant* node) {
@@ -1209,7 +1210,14 @@ Result CodeGenLLVM::Visit(SmartToRawPtr* node) {
 Result CodeGenLLVM::Visit(RawToSmartPtr* node) {
   llvm::Value* expr = GenerateLLVM(node->GetExpr());
   auto type = node->GetExpr()->GetType(types_);
+  assert(type->IsRawPtr());
+  type = static_cast<RawPtrType*>(type)->GetBaseType();
   auto controlBlock = CreateControlBlock(type);
+  if (type->IsUnsizedArray()) {
+    auto length = builder_->CreateExtractValue(expr, {1});
+    expr = builder_->CreateExtractValue(expr, {0});
+    builder_->CreateStore(length, GetArrayLengthAddress(controlBlock));
+  }
   return CreatePointer(expr, controlBlock);
 }
 

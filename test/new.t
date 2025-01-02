@@ -6,8 +6,8 @@ class Foo {
 };
 var r : float;
 {
-  var f = new Foo{};
+  var f = new Foo;
   f.a = -1234.0;
   r = f.a;
 }
-//Test.Expect(r == -1234.0);
+Test.Expect(r == -1234.0);
