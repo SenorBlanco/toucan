@@ -643,12 +643,36 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
   for (auto arg : arglist->GetArgs()) {
     exprs.push_back(arg->GetExpr());
   }
-  auto args = Make<ExprList>(std::move(exprs));
   auto allocation = Make<HeapAllocation>(type, length);
-  if (length) { type = types_->GetArrayType(type, 0, MemoryLayout::Default); }
+  int numArgs = arglist->GetArgs().size();
+  if (length) { type = types_->GetArrayType(type, numArgs, MemoryLayout::Default); }
+  auto args = Make<ExprList>(std::move(exprs));
   auto initializer = Make<Initializer>(type, args);
-  auto store = Make<StoreStmt>(allocation, initializer);
-  return Make<RawToSmartPtr>(Make<ExprWithStmt>(allocation, store));
+  Stmt* stmt;
+  if (length) {
+    auto stmts = Make<Stmts>();
+    Expr* rhs;
+    Type* type = types_->GetInt();
+    auto indexVar = std::make_shared<Var>("", type);
+    stmts->AppendVar(indexVar);
+    auto index = Make<VarExpr>(indexVar.get());
+    auto lhs = Make<ArrayAccess>(MakeIndexable(allocation), index);
+    auto initStmt = Make<ZeroInitStmt>(index);
+    auto cond = Make<BinOpNode>(BinOpNode::Op::LE, Make<LoadExpr>(index), length);
+    auto indexPlusOne = Make<BinOpNode>(BinOpNode::Op::ADD, Make<LoadExpr>(index), MakeConstantOne(type));
+    auto loopStmt = Make<StoreStmt>(index, indexPlusOne);
+    auto indexModNumArgs = Make<BinOpNode>(BinOpNode::Op::MOD, Make<LoadExpr>(index), Make<IntConstant>(numArgs, 32));
+    if (numArgs == 0) {
+      rhs = Make<Initializer>(type, args);
+    } else {
+      rhs = Make<ArrayAccess>(MakeIndexable(initializer), indexModNumArgs);
+    }
+    stmts->Append(Make<StoreStmt>(lhs, rhs));
+    stmt = Make<ForStatement>(initStmt, cond, loopStmt, stmts);
+  } else {
+    stmt = Make<StoreStmt>(allocation, initializer);
+  }
+  return Make<RawToSmartPtr>(Make<ExprWithStmt>(allocation, stmt));
 }
 
 Result SemanticPass::Visit(IfStatement* s) {
