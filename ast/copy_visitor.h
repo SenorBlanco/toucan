@@ -44,7 +44,6 @@ class CopyVisitor : public Visitor {
   Result        Visit(Initializer* node) override;
   Result        Visit(IntConstant* constant) override;
   Result        Visit(MethodCall* node) override;
-  Result        Visit(NewArrayExpr* expr) override;
   Result        Visit(NewExpr* node) override;
   Result        Visit(UnresolvedNewExpr* node) override;
   Result        Visit(NullConstant* constant) override;

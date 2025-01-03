@@ -180,12 +180,6 @@ Result CopyVisitor::Visit(MethodCall* node) {
   return Make<MethodCall>(node->GetMethod(), Resolve(node->GetArgList()));
 }
 
-Result CopyVisitor::Visit(NewArrayExpr* expr) {
-  Type* type = ResolveType(expr->GetElementType());
-  Expr* sizeExpr = Resolve(expr->GetSizeExpr());
-  return Make<NewArrayExpr>(type, sizeExpr);
-}
-
 Result CopyVisitor::Visit(UnresolvedClassDefinition* defn) {
   return Make<UnresolvedClassDefinition>(defn->GetScope());
 }

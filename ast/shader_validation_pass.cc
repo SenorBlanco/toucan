@@ -139,11 +139,6 @@ Result ShaderValidationPass::Visit(ForStatement* node) {
   return {};
 }
 
-Result ShaderValidationPass::Visit(NewArrayExpr* expr) {
-  Error(expr, "allocation is prohibited in shader methods");
-  return {};
-}
-
 Result ShaderValidationPass::Visit(FieldAccess* fieldAccess) {
   Resolve(fieldAccess->GetExpr());
   return {};
