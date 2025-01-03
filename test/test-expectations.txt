@@ -23,14 +23,9 @@ test/bool-constants.t
 test/byte-vector.t
 test/byte.t
 test/cast-classes.t
-cast-classes.t:11:  matching constructor not found
-cast-classes.t:12:  matching constructor not found
-cast-classes.t:13:  matching constructor not found
 cast-classes.t:14:  cannot store a value of type "null" to a location of type "int"
-cast-classes.t:16:  unknown symbol "d"
-cast-classes.t:17:  unknown symbol "b2"
-cast-classes.t:18:  unknown symbol "b2"
-cast-classes.t:19:  unknown symbol "d2"
+cast-classes.t:17:  cannot store a value of type "*Base2" to a location of type "*Base"
+cast-classes.t:19:  cannot store a value of type "*Derived" to a location of type "*Derived2"
 test/cast-int-to-float.t
 test/cast-int-vector-to-float-vector.t
 test/cast-static-array-to-dynamic.t
@@ -42,16 +37,13 @@ class-constructor-calls-constructor.t:5: syntax error
 test/class-constructor.t
 test/class-initializer.t
 test/complex-method.t
-complex-method.t:10:  matching constructor not found
-complex-method.t:11:  unknown symbol "foo"
-complex-method.t:12:  unknown symbol "result"
 test/compute-pass-ptr-to-element.t
 Warning: Old MapAsync APIs are deprecated. If using C please pass a CallbackInfo struct that has two userdatas. Otherwise, if using C++, please use templated helpers.
 test/compute-simple.t
 Warning: Old MapAsync APIs are deprecated. If using C please pass a CallbackInfo struct that has two userdatas. Otherwise, if using C++, please use templated helpers.
 test/constructor-calls-initializer.t
-constructor-calls-initializer.t:12:  matching constructor not found
-constructor-calls-initializer.t:13:  unknown symbol "c2"
+test/constructor-calls-initializer.t:13: expectation failed
+test/constructor-calls-initializer.t:14: expectation failed
 test/constructor-with-default-arg.t
 test/constructor-with-explicit-initializer.t
 test/constructor.t
@@ -59,15 +51,7 @@ test/control-flow.t
 test/decl-test.t
 test/dereference.t
 test/destructor-set-null.t
-destructor-set-null.t:20:  matching constructor not found
-destructor-set-null.t:21:  unknown symbol "bar"
-destructor-set-null.t:22:  unknown symbol "bar"
 test/destructor.t
-destructor.t:17:  matching constructor not found
-destructor.t:18:  unknown symbol "f"
-destructor.t:20:  unknown symbol "f"
-destructor.t:20:  matching constructor not found
-destructor.t:22:  unknown symbol "f"
 test/do-test.t
 test/double.t
 test/duplicate-method.t
@@ -76,9 +60,6 @@ test/early-return-bool.t
 test/early-return-int.t
 test/empty.t
 test/enum.t
-enum.t:10:  matching constructor not found
-enum.t:11:  unknown symbol "a"
-enum.t:12:  unknown symbol "a"
 test/error-cast-weak-ptr-to-strong.t
 error-cast-weak-ptr-to-strong.t:3:  cannot cast value of type ^int to *int
 test/error-constructor-not-found.t
@@ -135,12 +116,7 @@ test/fail-unsized-array-not-last-in-class.t
 fail-unsized-array-not-last-in-class.t:4:  Unsized arrays are only allwed as the last field of a class
 test/field-access-from-static-method-error.t
 field-access-from-static-method-error.t:3:  attempt to access non-static field in static method
-field-access-from-static-method-error.t:8:  matching constructor not found
-field-access-from-static-method-error.t:9:  unknown symbol "foo"
 test/field-access.t
-field-access.t:8:  matching constructor not found
-field-access.t:9:  unknown symbol "foo"
-field-access.t:10:  unknown symbol "foo"
 test/field-default-value.t
 test/field-store.t
 test/file-location-default-arg.t
@@ -151,9 +127,6 @@ test/file-location.t
 test/file-location.t:4
 test/for-stmt.t
 test/forward-field.t
-forward-field.t:10:  matching constructor not found
-forward-field.t:11:  unknown symbol "foo"
-forward-field.t:12:  unknown symbol "foo"
 test/forward-var-error.t
 forward-var-error.t:1:  unknown symbol "a"
 test/hello-split.t
@@ -162,8 +135,6 @@ test/hello.t
 Hello, world.
 test/if-stmt.t
 test/implicit-return.t
-implicit-return.t:6:  matching constructor not found
-implicit-return.t:7:  unknown symbol "foo"
 test/inc-dec-byte.t
 test/inc-dec-float.t
 test/inc-dec-short.t
@@ -180,10 +151,6 @@ test/increment-with-side-effects.t
 test/indexed-bracketed-expr.t
 test/indexed-method-return.t
 test/inherited-field.t
-inherited-field.t:12:  matching constructor not found
-inherited-field.t:13:  unknown symbol "b"
-inherited-field.t:14:  unknown symbol "b"
-inherited-field.t:15:  unknown symbol "b"
 test/inline-file.t
 test/invalid-assignment.t
 invalid-assignment.t:1: syntax error
@@ -191,9 +158,6 @@ test/invalid-forward-decl.t
 invalid-forward-decl.t:5: type is already declared as non-class
 invalid-forward-decl.t:8: syntax error
 test/later-class-field.t
-later-class-field.t:5:  matching constructor not found
-later-class-field.t:6:  unknown symbol "b"
-later-class-field.t:7:  unknown symbol "b"
 test/length-store-error.t
 length-store-error.t:2:  expression is not an assignable value
 test/list-init-aggregated-class.t
@@ -214,8 +178,7 @@ test/matrix-constructor.t
 test/matrix-initializer.t
 test/matrix.t
 test/method-assignment-error.t
-method-assignment-error.t:7:  matching constructor not found
-method-assignment-error.t:8:  unknown symbol "foo"
+method-assignment-error.t:8:  expression is not an assignable value
 test/method-chained.t
 method-chained.t:21:  matching constructor not found
 method-chained.t:22:  unknown symbol "foo"
