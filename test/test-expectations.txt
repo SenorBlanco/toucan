@@ -1,6 +1,8 @@
 test/aggregate-return.t
 test/allocate-unsized-array.t
 test/allocate-unsized-class.t
+allocate-unsized-class.t:8:  unknown array property "array"
+allocate-unsized-class.t:10:  unknown array property "array"
 test/array-assign.t
 test/array-class.t
 test/array-constant.t
@@ -14,6 +16,7 @@ array-new.t:4: array size is not an integer constant
 array-new.t:5: array size is not an integer constant
 test/arrays.t
 test/assign-padded-array.t
+assign-padded-array.t:20:  expression is not of indexable type
 test/binop-widen.t
 test/bitwise.t
 test/bool-constants.t
@@ -35,12 +38,20 @@ test/cast-uint-to-float.t
 test/cast-uint-vector-to-float-vector.t
 test/chained-method-call.t
 test/class-constructor-calls-constructor.t
+class-constructor-calls-constructor.t:5: syntax error
 test/class-constructor.t
 test/class-initializer.t
 test/complex-method.t
+complex-method.t:10:  matching constructor not found
+complex-method.t:11:  unknown symbol "foo"
+complex-method.t:12:  unknown symbol "result"
 test/compute-pass-ptr-to-element.t
+Warning: Old MapAsync APIs are deprecated. If using C please pass a CallbackInfo struct that has two userdatas. Otherwise, if using C++, please use templated helpers.
 test/compute-simple.t
+Warning: Old MapAsync APIs are deprecated. If using C please pass a CallbackInfo struct that has two userdatas. Otherwise, if using C++, please use templated helpers.
 test/constructor-calls-initializer.t
+constructor-calls-initializer.t:12:  matching constructor not found
+constructor-calls-initializer.t:13:  unknown symbol "c2"
 test/constructor-with-default-arg.t
 test/constructor-with-explicit-initializer.t
 test/constructor.t
@@ -48,7 +59,15 @@ test/control-flow.t
 test/decl-test.t
 test/dereference.t
 test/destructor-set-null.t
+destructor-set-null.t:20:  matching constructor not found
+destructor-set-null.t:21:  unknown symbol "bar"
+destructor-set-null.t:22:  unknown symbol "bar"
 test/destructor.t
+destructor.t:17:  matching constructor not found
+destructor.t:18:  unknown symbol "f"
+destructor.t:20:  unknown symbol "f"
+destructor.t:20:  matching constructor not found
+destructor.t:22:  unknown symbol "f"
 test/do-test.t
 test/double.t
 test/duplicate-method.t
@@ -57,6 +76,9 @@ test/early-return-bool.t
 test/early-return-int.t
 test/empty.t
 test/enum.t
+enum.t:10:  matching constructor not found
+enum.t:11:  unknown symbol "a"
+enum.t:12:  unknown symbol "a"
 test/error-cast-weak-ptr-to-strong.t
 error-cast-weak-ptr-to-strong.t:3:  cannot cast value of type ^int to *int
 test/error-constructor-not-found.t
@@ -97,10 +119,13 @@ test/error-uint-literal-too-large.t
 test/error-widen-null-to-raw-ptr.t
 error-widen-null-to-raw-ptr.t:1:  cannot store a value of type "null" to a location of type "&int"
 test/error-widen-weak-ptr-short-to-weak-ptr-int.t
+error-widen-weak-ptr-short-to-weak-ptr-int.t:7:  cannot cast value of type ^short to ^int
+error-widen-weak-ptr-short-to-weak-ptr-int.t:9:  unknown symbol "wpi"
 test/error-wrong-named-param.t
 error-wrong-named-param.t:7:  class Bar has no method Foo(b = float, a = int)
 error-wrong-named-param.t:7:  Bar.Foo(int, float) : float
 test/expectation-failed.t
+test/expectation-failed.t:4: expectation failed
 test/fabs.t
 test/fail-allocate-class-with-unsized-array.t
 fail-allocate-class-with-unsized-array.t:5:  class with unsized array must be allocated with size
@@ -113,12 +138,22 @@ field-access-from-static-method-error.t:3:  attempt to access non-static field i
 field-access-from-static-method-error.t:8:  matching constructor not found
 field-access-from-static-method-error.t:9:  unknown symbol "foo"
 test/field-access.t
+field-access.t:8:  matching constructor not found
+field-access.t:9:  unknown symbol "foo"
+field-access.t:10:  unknown symbol "foo"
 test/field-default-value.t
 test/field-store.t
 test/file-location-default-arg.t
+test/file-location-default-arg.t:12
+test/file-location-default-arg.t:13
+test/file-location-default-arg.t:14
 test/file-location.t
+test/file-location.t:4
 test/for-stmt.t
 test/forward-field.t
+forward-field.t:10:  matching constructor not found
+forward-field.t:11:  unknown symbol "foo"
+forward-field.t:12:  unknown symbol "foo"
 test/forward-var-error.t
 forward-var-error.t:1:  unknown symbol "a"
 test/hello-split.t
@@ -144,8 +179,11 @@ test/include.t
 test/increment-with-side-effects.t
 test/indexed-bracketed-expr.t
 test/indexed-method-return.t
-indexed-method-return.t:5: syntax error
 test/inherited-field.t
+inherited-field.t:12:  matching constructor not found
+inherited-field.t:13:  unknown symbol "b"
+inherited-field.t:14:  unknown symbol "b"
+inherited-field.t:15:  unknown symbol "b"
 test/inline-file.t
 test/invalid-assignment.t
 invalid-assignment.t:1: syntax error
@@ -153,8 +191,11 @@ test/invalid-forward-decl.t
 invalid-forward-decl.t:5: type is already declared as non-class
 invalid-forward-decl.t:8: syntax error
 test/later-class-field.t
+later-class-field.t:5:  matching constructor not found
+later-class-field.t:6:  unknown symbol "b"
+later-class-field.t:7:  unknown symbol "b"
 test/length-store-error.t
-length-store-error.t:1: syntax error
+length-store-error.t:2:  expression is not an assignable value
 test/list-init-aggregated-class.t
 test/list-init-array-arg.t
 test/list-init-array.t
@@ -176,7 +217,15 @@ test/method-assignment-error.t
 method-assignment-error.t:7:  matching constructor not found
 method-assignment-error.t:8:  unknown symbol "foo"
 test/method-chained.t
+method-chained.t:21:  matching constructor not found
+method-chained.t:22:  unknown symbol "foo"
 test/method.t
+method.t:11:  matching constructor not found
+method.t:12:  unknown symbol "foo"
+method.t:13:  unknown symbol "foo"
+method.t:14:  unknown symbol "foo"
+method.t:15:  unknown symbol "foo"
+method.t:16:  unknown symbol "foo"
 test/missing-class.t
 missing-class.t:3: syntax error
 test/missing-field.t
@@ -188,11 +237,19 @@ missing-method.t:5:  unknown symbol "foo"
 test/missing-parent-class.t
 missing-parent-class.t:1: syntax error
 test/mutual-recursion.t
+mutual-recursion.t:16:  matching constructor not found
+mutual-recursion.t:17:  unknown symbol "foo"
+mutual-recursion.t:18:  unknown symbol "foo"
+mutual-recursion.t:19:  unknown symbol "foo"
 test/named-param-default-value.t
 test/named-param.t
 test/new.t
 test/overload.t
+overload.t:16:  matching constructor not found
+overload.t:17:  unknown symbol "f"
 test/override.t
+override.t:15:  matching constructor not found
+override.t:16:  unknown symbol "b"
 test/post-increment-with-side-effects.t
 test/raw-ptr.t
 test/really-simple.t
@@ -200,6 +257,7 @@ test/scope-test.t
 test/short-vector.t
 test/short.t
 test/simple.t
+6
 test/spirv-call-graph.t
 test/spirv-if-stmt.t
 test/stack-method-call.t
@@ -208,10 +266,22 @@ test/static-method.t
 test/store-null.t
 store-null.t:8:  matching constructor not found
 test/string-conversions.t
+0
+1
+9
+-1
+12
+123456789
 test/swizzle-store.t
 test/templated-class-initializer.t
 test/templated-class-on-primitive-type.t
+templated-class-on-primitive-type.t:9:  matching constructor not found
+templated-class-on-primitive-type.t:10:  unknown symbol "t"
+templated-class-on-primitive-type.t:11:  unknown symbol "t"
 test/templated-class.t
+templated-class.t:15:  matching constructor not found
+templated-class.t:16:  unknown symbol "templateBar"
+templated-class.t:17:  unknown symbol "templateBar"
 test/templated-matrix.t
 test/templated-on-class-and-primitive-type.t
 test/templated-vector.t
@@ -247,3 +317,5 @@ workgroup-size.t:7: workgroup size is not an integer constant
 workgroup-size.t:8: non-compute shaders do not require a workgroup size
 workgroup-size.t:9: non-compute shaders do not require a workgroup size
 test/worst-cast-ever.t
+worst-cast-ever.t:14:  matching constructor not found
+worst-cast-ever.t:15:  unknown symbol "foo"

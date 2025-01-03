@@ -18,7 +18,7 @@ import subprocess;
 import sys;
 files = glob.glob(os.path.join(os.path.dirname(__file__), '*.t'));
 files = sorted(files)
-debug_or_release = 'Release'
+debug_or_release = 'Debug'
 if sys.platform == 'win32':
   exe_path = os.path.join('out', debug_or_release, 'tj.exe');
 else:
