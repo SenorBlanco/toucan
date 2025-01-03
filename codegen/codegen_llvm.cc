@@ -1142,7 +1142,7 @@ Result CodeGenLLVM::Visit(NewExpr* newExpr) {
     // Note that the return type is the type of the "new" expression, including
     // template type and qualifiers, not the return type of the method, which is native and
     // untemplated.
-    expr = GenerateMethodCall(constructor, newExpr->GetArgs(), qualifiers, newExpr->GetType(types_),
+    expr = GenerateMethodCall(constructor, newExpr->GetArgs(), newExpr->GetType(types_),
                               newExpr->GetFileLocation());
   } else {
     expr = CreateMalloc(llvmType, length);
@@ -1312,17 +1312,12 @@ Result CodeGenLLVM::Visit(IfStatement* ifStmt) {
 
 llvm::Value* CodeGenLLVM::GenerateMethodCall(Method*             method,
                                              ExprList*           argList,
-                                             int                 qualifiers,
                                              Type*               returnType,
                                              const FileLocation& location) {
   std::vector<llvm::Value*> args;
   llvm::Function*           function = GetOrCreateMethodStub(method);
   if (auto builtin = FindBuiltin(method)) { return std::invoke(builtin, this, location); }
   if (method->classType->IsNative() && (method->modifiers & Method::Modifier::Static)) {
-    if (method->classType->GetTemplate()) {
-      // Prefix the args with the qualifiers
-      args.push_back(llvm::ConstantInt::get(intType_, qualifiers));
-    }
     for (Type* const& type : method->classType->GetTemplateArgs()) {
       args.push_back(CreateTypePtr(type));
     }
@@ -1362,7 +1357,7 @@ llvm::Value* CodeGenLLVM::GenerateMethodCall(Method*             method,
 }
 
 Result CodeGenLLVM::Visit(MethodCall* node) {
-  return GenerateMethodCall(node->GetMethod(), node->GetArgList(), 0, node->GetMethod()->returnType,
+  return GenerateMethodCall(node->GetMethod(), node->GetArgList(), node->GetMethod()->returnType,
                             node->GetFileLocation());
 }
 

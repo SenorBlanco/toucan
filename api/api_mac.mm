@@ -149,7 +149,7 @@ wgpu::TextureFormat GetPreferredSwapChainFormat() {
   return wgpu::TextureFormat::BGRA8Unorm;
 }
 
-SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Window* window) {
+SwapChain* SwapChain_SwapChain(Type* format, int qualifiers, Device* device, Window* window) {
   wgpu::SurfaceConfiguration config;
   config.device = device->device;
   config.format = ToDawnTextureFormat(format);

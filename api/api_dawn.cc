@@ -692,8 +692,8 @@ static void ExtractPipelineData(Type* type, void* data, PipelineData* out) {
   }
 }
 
-RenderPipeline* RenderPipeline_RenderPipeline(int               qualifiers,
-                                              Type*             type,
+RenderPipeline* RenderPipeline_RenderPipeline(Type*             type,
+                                              int               qualifiers,
                                               Device*           device,
                                               Object*           depthStencil,
                                               PrimitiveTopology primitiveTopology) {
@@ -754,8 +754,8 @@ RenderPipeline* RenderPipeline_RenderPipeline(int               qualifiers,
 
 void RenderPipeline_Destroy(RenderPipeline* This) { delete This; }
 
-ComputePipeline* ComputePipeline_ComputePipeline(int     qualifiers,
-                                                 Type*   computeLayout,
+ComputePipeline* ComputePipeline_ComputePipeline(Type*   computeLayout,
+                                                 int     qualifiers,
                                                  Device* device) {
   if (!computeLayout->IsClass()) { return nullptr; }
   ClassType*         classType = static_cast<ClassType*>(computeLayout);
@@ -785,7 +785,7 @@ ComputePipeline* ComputePipeline_ComputePipeline(int     qualifiers,
 
 void ComputePipeline_Destroy(ComputePipeline* This) { delete This; }
 
-BindGroup* BindGroup_BindGroup(int qualifiers, Type* type, Device* device, void* data) {
+BindGroup* BindGroup_BindGroup(Type* type, int qualifiers, Device* device, void* data) {
   assert(type->IsClass() && "bind group argument must be a class type");
   ClassType*                        classType = static_cast<ClassType*>(type);
   wgpu::BindGroupDescriptor         desc;
@@ -814,7 +814,7 @@ void SampleableTexture3D_Destroy(SampleableTexture3D* This) { delete This; }
 
 void SampleableTextureCube_Destroy(SampleableTextureCube* This) { delete This; }
 
-Texture1D* Texture1D_Texture1D(int qualifiers, Type* format, Device* device, uint32_t width) {
+Texture1D* Texture1D_Texture1D(Type* format, int qualifiers, Device* device, uint32_t width) {
   return new Texture1D(qualifiers, format, device->device, wgpu::TextureDimension::e1D,
                        {width, 1, 1});
 }
@@ -837,7 +837,7 @@ void Texture1D_CopyFromBuffer(Texture1D*      dest,
   dest->CopyFromBuffer(encoder->encoder, source->buffer, {width, 1, 1}, {origin, 0, 0});
 }
 
-Texture2D* Texture2D_Texture2D(int qualifiers, Type* format, Device* device, const uint32_t* size) {
+Texture2D* Texture2D_Texture2D(Type* format, int qualifiers, Device* device, const uint32_t* size) {
   return new Texture2D(qualifiers, format, device->device, wgpu::TextureDimension::e2D,
                        {size[0], size[1], 1});
 }
@@ -897,8 +897,8 @@ void Texture2D_CopyFromBuffer(Texture2D*      dest,
                        {origin[0], origin[1], 0});
 }
 
-Texture2DArray* Texture2DArray_Texture2DArray(int             qualifiers,
-                                              Type*           format,
+Texture2DArray* Texture2DArray_Texture2DArray(Type*           format,
+                                              int             qualifiers,
                                               Device*         device,
                                               const uint32_t* size) {
   return new Texture2DArray(qualifiers, format, device->device, wgpu::TextureDimension::e2D,
@@ -936,7 +936,7 @@ void Texture2DArray_CopyFromBuffer(Texture2DArray* dest,
                        {origin[0], origin[1], origin[2]});
 }
 
-Texture3D* Texture3D_Texture3D(int qualifiers, Type* format, Device* device, const uint32_t* size) {
+Texture3D* Texture3D_Texture3D(Type* format, int qualifiers, Device* device, const uint32_t* size) {
   return new Texture3D(qualifiers, format, device->device, wgpu::TextureDimension::e3D,
                        {size[0], size[1], size[2]});
 }
@@ -966,8 +966,8 @@ void Texture3D_CopyFromBuffer(Texture3D*      dest,
                        {origin[0], origin[1], origin[2]});
 }
 
-TextureCube* TextureCube_TextureCube(int             qualifiers,
-                                     Type*           format,
+TextureCube* TextureCube_TextureCube(Type*           format,
+                                     int             qualifiers,
                                      Device*         device,
                                      const uint32_t* size) {
   return new TextureCube(qualifiers, format, device->device, wgpu::TextureDimension::e2D,
@@ -1082,8 +1082,8 @@ static Object* MapSync(wgpu::MapMode mapMode, Buffer* buffer) {
   return &buffer->mappedObject;
 }
 
-Buffer* Buffer_Buffer_Device_uint(int      qualifiers,
-                                  Type*    type,
+Buffer* Buffer_Buffer_Device_uint(Type*    type,
+                                  int      qualifiers,
                                   Device*  device,
                                   uint32_t dynamicArraySize) {
   wgpu::BufferDescriptor desc;
@@ -1093,10 +1093,10 @@ Buffer* Buffer_Buffer_Device_uint(int      qualifiers,
   return new Buffer(device->device, b, dynamicArraySize, desc.size, type);
 }
 
-Buffer* Buffer_Buffer_Device_T(int qualifiers, Type* type, Device* device, void* data) {
+Buffer* Buffer_Buffer_Device_T(Type* type, int qualifiers, Device* device, void* data) {
   uint32_t length = 1;
   if (type->IsUnsizedArray()) { length = static_cast<Array*>(data)->length; }
-  Buffer* result = Buffer_Buffer_Device_uint(qualifiers, type, device, length);
+  Buffer* result = Buffer_Buffer_Device_uint(type, qualifiers, device, length);
   Buffer_SetData(result, data);
   return result;
 }
@@ -1150,8 +1150,8 @@ void ColorAttachment_Destroy(ColorAttachment* This) { delete This; }
 
 void DepthStencilAttachment_Destroy(DepthStencilAttachment* This) { delete This; }
 
-RenderPass* RenderPass_RenderPass_CommandEncoder_T(int             qualifiers,
-                                                   Type*           type,
+RenderPass* RenderPass_RenderPass_CommandEncoder_T(Type*           type,
+                                                   int             qualifiers,
                                                    CommandEncoder* encoder,
                                                    void*           data) {
   PipelineData pipelineData;
@@ -1168,7 +1168,7 @@ RenderPass* RenderPass_RenderPass_CommandEncoder_T(int             qualifiers,
   return new RenderPass(result, type);
 }
 
-RenderPass* RenderPass_RenderPass_RenderPass(int qualifiers, Type* type, RenderPass* parent) {
+RenderPass* RenderPass_RenderPass_RenderPass(Type* type, int qualifiers, RenderPass* parent) {
   return new RenderPass(parent->encoder, type);
 }
 
@@ -1203,8 +1203,8 @@ void RenderPass_End(RenderPass* This) { This->encoder.End(); }
 
 void RenderPass_Destroy(RenderPass* This) { delete This; }
 
-ComputePass* ComputePass_ComputePass_CommandEncoder_T(int             qualifiers,
-                                                      Type*           type,
+ComputePass* ComputePass_ComputePass_CommandEncoder_T(Type*           type,
+                                                      int             qualifiers,
                                                       CommandEncoder* encoder,
                                                       void*           data) {
   PipelineData pipelineData;
@@ -1215,7 +1215,7 @@ ComputePass* ComputePass_ComputePass_CommandEncoder_T(int             qualifiers
   return new ComputePass(passEncoder, type);
 }
 
-ComputePass* ComputePass_ComputePass_ComputePass(int qualifiers, Type* type, ComputePass* parent) {
+ComputePass* ComputePass_ComputePass_ComputePass(Type* type, int qualifiers, ComputePass* parent) {
   assert(type->IsClass());
   return new ComputePass(parent->encoder, static_cast<ClassType*>(type));
 }

@@ -44,7 +44,7 @@ void AssertSupportedPixelFormat(Type* pixelFormat) {
 }
 }  // namespace
 
-ImageDecoder* ImageDecoder_ImageDecoder(int qualifiers, Type* pixelFormat, Object* encodedImage) {
+ImageDecoder* ImageDecoder_ImageDecoder(Type* pixelFormat, int qualifiers, Object* encodedImage) {
   uint32_t length = encodedImage->controlBlock->arrayLength;
   auto     result = new ImageDecoder();
   result->pixelFormat = pixelFormat;

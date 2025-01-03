@@ -337,7 +337,6 @@ void GenBindings::GenBindingsForMethod(ClassType* classType, Method* method) {
       PrintNativeType(header_, method->returnType);
       fprintf(header_, " %s(", method->GetMangledName().c_str());
       if (classType->IsClassTemplate() && method->modifiers & Method::Modifier::Static) {
-        fprintf(header_, "int qualifiers, ");
         ClassTemplate* classTemplate = static_cast<ClassTemplate*>(classType);
         for (Type* arg : classTemplate->GetFormalTemplateArgs()) {
           FormalTemplateArg* formalTemplateArg = static_cast<FormalTemplateArg*>(arg);
@@ -346,6 +345,7 @@ void GenBindings::GenBindingsForMethod(ClassType* classType, Method* method) {
             fprintf(header_, ", ");
           }
         }
+        fprintf(header_, "int qualifiers, ");
       }
       for (const std::shared_ptr<Var>& var : argList) {
         PrintNativeType(header_, var->type);
