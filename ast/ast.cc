@@ -296,13 +296,6 @@ ForStatement::ForStatement(Stmt* initStmt, Expr* cond, Stmt* loopStmt, Stmt* bod
 
 ReturnStatement::ReturnStatement(Expr* expr) : expr_(expr) {}
 
-NewArrayExpr::NewArrayExpr(Type* elementType, Expr* sizeExpr)
-    : elementType_(elementType), sizeExpr_(sizeExpr) {}
-
-Type* NewArrayExpr::GetType(TypeTable* types) {
-  return types->GetStrongPtrType(types->GetArrayType(elementType_, 0, MemoryLayout::Default));
-}
-
 UnresolvedNewExpr::UnresolvedNewExpr(Type* type, Expr* length, ArgList* arglist, bool constructor)
     : type_(type), length_(length), arglist_(arglist), constructor_(constructor) {}
 
@@ -343,7 +336,6 @@ Result Initializer::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result InsertElementExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result IntConstant::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result LengthExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
-Result NewArrayExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result NewExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result NullConstant::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ReturnStatement::Accept(Visitor* visitor) { return visitor->Visit(this); }

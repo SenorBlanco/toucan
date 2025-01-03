@@ -713,17 +713,6 @@ Result SemanticPass::Visit(ForStatement* node) {
   return Make<ForStatement>(initStmt, cond, loopStmt, body);
 }
 
-Result SemanticPass::Visit(NewArrayExpr* expr) {
-  Expr* sizeExpr = Resolve(expr->GetSizeExpr());
-  Type* type = expr->GetElementType();
-  if (!type) return nullptr;
-  if (type->IsArray()) {
-    ArrayType* arrayType = static_cast<ArrayType*>(type);
-    if (arrayType->GetNumElements() == 0) { return Error("cannot allocate unsized array"); }
-  }
-  return Make<NewArrayExpr>(type, sizeExpr);
-}
-
 Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   Scope*     scope = defn->GetScope();
   ClassType* classType = scope->classType;

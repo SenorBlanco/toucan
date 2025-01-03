@@ -210,11 +210,6 @@ Result DumpAsSourcePass::Visit(ForStatement* node) {
   return {};
 }
 
-Result DumpAsSourcePass::Visit(NewArrayExpr* expr) {
-  NOTIMPLEMENTED();
-  return {};
-}
-
 Result DumpAsSourcePass::Default(ASTNode* node) {
   NOTIMPLEMENTED();
   return {};

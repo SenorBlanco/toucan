@@ -715,19 +715,6 @@ class ReturnStatement : public Stmt {
   Expr*  expr_;
 };
 
-class NewArrayExpr : public Expr {
- public:
-  NewArrayExpr(Type* type, Expr* sizeExpr);
-  Result Accept(Visitor* visitor) override;
-  Type*  GetType(TypeTable* types) override;
-  Type*  GetElementType() { return elementType_; }
-  Expr*  GetSizeExpr() { return sizeExpr_; }
-
- private:
-  Type* elementType_;
-  Expr* sizeExpr_;
-};
-
 class UnresolvedNewExpr : public Expr {
  public:
   UnresolvedNewExpr(Type* type, Expr* length, ArgList* arglist, bool constructor);
@@ -828,7 +815,6 @@ class Visitor {
   virtual Result Visit(IntConstant* node) { return Default(node); }
   virtual Result Visit(UIntConstant* node) { return Default(node); }
   virtual Result Visit(LengthExpr* node) { return Default(node); }
-  virtual Result Visit(NewArrayExpr* node) { return Default(node); }
   virtual Result Visit(NewExpr* node) { return Default(node); }
   virtual Result Visit(NullConstant* node) { return Default(node); }
   virtual Result Visit(ReturnStatement* node) { return Default(node); }

@@ -34,7 +34,6 @@ class SemanticPass : public CopyVisitor {
   Result Visit(ExprWithStmt* node) override;
   Result Visit(ForStatement* forStmt) override;
   Result Visit(IfStatement* stmt) override;
-  Result Visit(NewArrayExpr* expr) override;
   Result Visit(LoadExpr* node) override;
   Result Visit(ReturnStatement* node) override;
   Result Visit(SmartToRawPtr* expr) override;

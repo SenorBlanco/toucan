@@ -1164,17 +1164,6 @@ Result CodeGenLLVM::Visit(NewExpr* newExpr) {
   return expr;
 }
 
-Result CodeGenLLVM::Visit(NewArrayExpr* expr) {
-  llvm::Value* length = GenerateLLVM(expr->GetSizeExpr());
-  Type*        elementType = expr->GetElementType();
-  Type*        arrayType = types_->GetArrayType(elementType, 0, MemoryLayout::Default);
-  llvm::Value* controlBlock = CreateControlBlock(arrayType);
-  llvm::Value* storage = CreateMalloc(ConvertType(elementType), length);
-  storage = builder_->CreateBitCast(storage, llvm::PointerType::get(ConvertType(arrayType), 0));
-  builder_->CreateStore(length, GetArrayLengthAddress(controlBlock));
-  return CreatePointer(storage, controlBlock);
-}
-
 Result CodeGenLLVM::Visit(ArrayAccess* node) {
   llvm::Value* expr = GenerateLLVM(node->GetExpr());
   llvm::Value* index = GenerateLLVM(node->GetIndex());
