@@ -656,7 +656,7 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
     stmts->AppendVar(indexVar);
     auto index = Make<VarExpr>(indexVar.get());
     auto lhs = Make<ArrayAccess>(MakeIndexable(allocation), Make<LoadExpr>(index));
-    auto initStmt = Make<ZeroInitStmt>(index);
+    auto initStmt = Make<StoreStmt>(index, Make<IntConstant>(0, 32));
     auto cond = Make<BinOpNode>(BinOpNode::Op::LE, Make<LoadExpr>(index), length);
     auto indexPlusOne = Make<BinOpNode>(BinOpNode::Op::ADD, Make<LoadExpr>(index), MakeConstantOne(types_->GetInt()));
     auto loopStmt = Make<StoreStmt>(index, indexPlusOne);
