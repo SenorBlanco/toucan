@@ -652,23 +652,22 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
   if (length) {
     auto stmts = Make<Stmts>();
     Expr* rhs;
-    Type* type = types_->GetInt();
-    auto indexVar = std::make_shared<Var>("", type);
+    auto indexVar = std::make_shared<Var>("", types_->GetInt());
     stmts->AppendVar(indexVar);
     auto index = Make<VarExpr>(indexVar.get());
-    auto lhs = Make<ArrayAccess>(MakeIndexable(allocation), index);
+    auto lhs = Make<ArrayAccess>(MakeIndexable(allocation), Make<LoadExpr>(index));
     auto initStmt = Make<ZeroInitStmt>(index);
     auto cond = Make<BinOpNode>(BinOpNode::Op::LE, Make<LoadExpr>(index), length);
-    auto indexPlusOne = Make<BinOpNode>(BinOpNode::Op::ADD, Make<LoadExpr>(index), MakeConstantOne(type));
+    auto indexPlusOne = Make<BinOpNode>(BinOpNode::Op::ADD, Make<LoadExpr>(index), MakeConstantOne(types_->GetInt()));
     auto loopStmt = Make<StoreStmt>(index, indexPlusOne);
-    auto indexModNumArgs = Make<BinOpNode>(BinOpNode::Op::MOD, Make<LoadExpr>(index), Make<IntConstant>(numArgs, 32));
-    if (numArgs == 0) {
-      rhs = Make<Initializer>(type, args);
+    if (numArgs == 0 || numArgs == 1) {
+      rhs = initializer;
     } else {
-      rhs = Make<ArrayAccess>(MakeIndexable(initializer), indexModNumArgs);
+      rhs = Make<ArrayAccess>(MakeIndexable(initializer), Make<LoadExpr>(index));
     }
-    stmts->Append(Make<StoreStmt>(lhs, rhs));
-    stmt = Make<ForStatement>(initStmt, cond, loopStmt, stmts);
+    auto body = Make<StoreStmt>(lhs, rhs);
+    stmts->Append(Make<ForStatement>(initStmt, cond, loopStmt, body));
+    stmt = stmts;
   } else {
     stmt = Make<StoreStmt>(allocation, initializer);
   }
