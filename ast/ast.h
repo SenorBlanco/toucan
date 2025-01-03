@@ -386,19 +386,6 @@ class MethodCall : public Expr {
   ExprList* arglist_;
 };
 
-class NativeMethodCall : public Expr {
- public:
-  NativeMethodCall(Method* method, ExprList* arglist, int qualifiers, std::vector<Type*> types);
-  Result    Accept(Visitor* visitor) override;
-  Type*     GetType(TypeTable* types) override { return method_->returnType; }
-  Method*   GetMethod() { return method_; }
-  ExprList* GetArgList() { return arglist_; }
-
- private:
-  Method*   method_;
-  ExprList* arglist_;
-};
-
 class LoadExpr : public Expr {
  public:
   LoadExpr(Expr* expr);
