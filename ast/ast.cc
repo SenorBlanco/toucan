@@ -301,11 +301,6 @@ UnresolvedNewExpr::UnresolvedNewExpr(Type* type, Expr* length, ArgList* arglist,
 
 Type* UnresolvedNewExpr::GetType(TypeTable* types) { return types->GetStrongPtrType(type_); }
 
-NewExpr::NewExpr(Type* type, Expr* length, Method* constructor, ExprList* args)
-    : type_(type), length_(length), constructor_(constructor), args_(args) {}
-
-Type* NewExpr::GetType(TypeTable* types) { return types->GetStrongPtrType(type_); }
-
 UnresolvedClassDefinition::UnresolvedClassDefinition(Scope* scope) : scope_(scope) {}
 
 NodeVector::NodeVector() {}
@@ -336,7 +331,6 @@ Result Initializer::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result InsertElementExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result IntConstant::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result LengthExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
-Result NewExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result NullConstant::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ReturnStatement::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result MethodCall::Accept(Visitor* visitor) { return visitor->Visit(this); }

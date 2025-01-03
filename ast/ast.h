@@ -719,23 +719,6 @@ class UnresolvedNewExpr : public Expr {
   bool     constructor_;
 };
 
-class NewExpr : public Expr {
- public:
-  NewExpr(Type* type, Expr* length, Method* constructor, ExprList* args);
-  Result    Accept(Visitor* visitor) override;
-  Type*     GetType(TypeTable* types) override;
-  Type*     GetType() { return type_; }
-  Expr*     GetLength() { return length_; }
-  Method*   GetConstructor() { return constructor_; }
-  ExprList* GetArgs() { return args_; }
-
- private:
-  Type*     type_;
-  Expr*     length_;  // used for unsized arrays as last field
-  Method*   constructor_;
-  ExprList* args_;
-};
-
 class UnresolvedClassDefinition : public Stmt {
  public:
   UnresolvedClassDefinition(Scope* scope);
@@ -802,7 +785,6 @@ class Visitor {
   virtual Result Visit(IntConstant* node) { return Default(node); }
   virtual Result Visit(UIntConstant* node) { return Default(node); }
   virtual Result Visit(LengthExpr* node) { return Default(node); }
-  virtual Result Visit(NewExpr* node) { return Default(node); }
   virtual Result Visit(NullConstant* node) { return Default(node); }
   virtual Result Visit(ReturnStatement* node) { return Default(node); }
   virtual Result Visit(MethodCall* node) { return Default(node); }

@@ -1130,40 +1130,6 @@ Result CodeGenLLVM::Visit(StoreStmt* stmt) {
   return builder_->CreateStore(rhs, lhs);
 }
 
-Result CodeGenLLVM::Visit(NewExpr* newExpr) {
-  Type*   type = newExpr->GetType();
-  Method* constructor = newExpr->GetConstructor();
-  int     qualifiers = 0;
-  type = type->GetUnqualifiedType(&qualifiers);
-  llvm::Type*  llvmType = ConvertType(type);
-  llvm::Value* expr = nullptr;
-  llvm::Value* length = newExpr->GetLength() ? GenerateLLVM(newExpr->GetLength()) : nullptr;
-  if (constructor && constructor->classType->IsNative()) {
-    // Note that the return type is the type of the "new" expression, including
-    // template type and qualifiers, not the return type of the method, which is native and
-    // untemplated.
-    expr = GenerateMethodCall(constructor, newExpr->GetArgs(), newExpr->GetType(types_),
-                              newExpr->GetFileLocation());
-  } else {
-    expr = CreateMalloc(llvmType, length);
-    if (constructor) {
-      std::vector<llvm::Value*> args;
-      args.push_back(expr);
-      for (Expr* const& arg : newExpr->GetArgs()->Get()) {
-        if (!arg) continue;
-        llvm::Value* v = GenerateLLVM(arg);
-        args.push_back(v);
-        AppendTemporary(v, arg->GetType(types_));
-      }
-      llvm::Function* function = GetOrCreateMethodStub(constructor);
-      expr = builder_->CreateCall(function, args);
-    }
-    llvm::Value* controlBlock = CreateControlBlock(type);
-    expr = CreatePointer(expr, controlBlock);
-  }
-  return expr;
-}
-
 Result CodeGenLLVM::Visit(ArrayAccess* node) {
   llvm::Value* expr = GenerateLLVM(node->GetExpr());
   llvm::Value* index = GenerateLLVM(node->GetIndex());

@@ -107,11 +107,6 @@ Result ShaderValidationPass::Visit(ReturnStatement* stmt) {
   return {};
 }
 
-Result ShaderValidationPass::Visit(NewExpr* expr) {
-  Error(expr, "allocation is prohibited in shader methods");
-  return {};
-}
-
 Result ShaderValidationPass::Visit(IfStatement* s) {
   Resolve(s->GetExpr());
   Resolve(s->GetStmt());

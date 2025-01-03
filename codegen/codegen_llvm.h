@@ -130,7 +130,6 @@ class CodeGenLLVM : public Visitor {
   Result                Visit(IntConstant* node) override;
   Result                Visit(LengthExpr* expr) override;
   Result                Visit(LoadExpr* expr) override;
-  Result                Visit(NewExpr* newExpr) override;
   Result                Visit(NullConstant* node) override;
   Result                Visit(ReturnStatement* stmt) override;
   Result                Visit(MethodCall* node) override;

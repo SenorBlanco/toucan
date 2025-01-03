@@ -142,13 +142,6 @@ Result CopyVisitor::Visit(ReturnStatement* stmt) {
   return Make<ReturnStatement>(Resolve(stmt->GetExpr()));
 }
 
-Result CopyVisitor::Visit(NewExpr* expr) {
-  Type*     type = ResolveType(expr->GetType());
-  Expr*     length = Resolve(expr->GetLength());
-  ExprList* args = Resolve(expr->GetArgs());
-  return Make<NewExpr>(type, length, expr->GetConstructor(), args);
-}
-
 Result CopyVisitor::Visit(IfStatement* s) {
   Expr* expr = Resolve(s->GetExpr());
   Stmt* stmt = Resolve(s->GetStmt());
