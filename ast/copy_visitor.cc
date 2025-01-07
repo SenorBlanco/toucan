@@ -142,6 +142,10 @@ Result CopyVisitor::Visit(ReturnStatement* stmt) {
   return Make<ReturnStatement>(Resolve(stmt->GetExpr()));
 }
 
+Result CopyVisitor::Visit(HeapAllocation* node) {
+  return Make<HeapAllocation>(node->GetType());
+}
+
 Result CopyVisitor::Visit(IfStatement* s) {
   Expr* expr = Resolve(s->GetExpr());
   Stmt* stmt = Resolve(s->GetStmt());
