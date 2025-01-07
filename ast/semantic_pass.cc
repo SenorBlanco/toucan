@@ -608,7 +608,6 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
   if (!type) return nullptr;
   ArgList* arglist = Resolve(node->GetArgList());
   if (!arglist) return nullptr;
-  Method*   constructor = nullptr;
   int       qualifiers;
   Type*     unqualifiedType = type->GetUnqualifiedType(&qualifiers);
   Expr*     length = node->GetLength() ? Resolve(node->GetLength()) : nullptr;
@@ -622,9 +621,9 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
       return Error("cannot allocate partially-specified template class %s",
                    classType->ToString().c_str());
     }
-    std::vector<Expr*> exprList;
     if (node->IsConstructor()) {
-      constructor = FindMethod(nullptr, classType, classType->GetName(), arglist, &exprList);
+      std::vector<Expr*> exprList;
+      Method* constructor = FindMethod(nullptr, classType, classType->GetName(), arglist, &exprList);
       if (!constructor) {
         return Error("matching constructor not found");
       }
