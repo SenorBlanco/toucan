@@ -1283,7 +1283,9 @@ llvm::Value* CodeGenLLVM::GenerateMethodCall(Method*             method,
   std::vector<llvm::Value*> args;
   llvm::Function*           function = GetOrCreateMethodStub(method);
   if (auto builtin = FindBuiltin(method)) { return std::invoke(builtin, this, location); }
+  bool skipArg = false;
   if (method->classType->IsNative() && method->name == method->classType->GetName()) {
+    skipArg = true;
     if (method->classType->GetTemplate()) {
       auto allocation = argList->Get()[0];
       auto type = allocation->GetType(types_);
@@ -1300,6 +1302,10 @@ llvm::Value* CodeGenLLVM::GenerateMethodCall(Method*             method,
   }
   llvm::Intrinsic::ID intrinsic = function->getIntrinsicID();
   for (auto arg : argList->Get()) {
+    if (skipArg) {
+      skipArg = false;
+      continue;
+    }
     llvm::Value* v = GenerateLLVM(arg);
     Type*        type = arg->GetType(types_);
     AppendTemporary(v, type);

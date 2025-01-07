@@ -822,9 +822,6 @@ static void BeginConstructor(int modifiers, Type* type, Stmts* formalArguments) 
     return;
   }
   ClassType* classType = static_cast<ClassType*>(type);
-  if (classType->IsNative()) {
-    modifiers |= Method::Modifier::Static;
-  }
   auto returnType = types_->GetRawPtrType(classType);
   BeginMethod(modifiers, classType->GetName(), nullptr, formalArguments, 0, returnType);
 }

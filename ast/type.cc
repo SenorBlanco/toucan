@@ -319,7 +319,12 @@ std::string Method::GetMangledName() const {
   }
   for (auto& m : classType->GetMethods()) {
     if (m.get() != this && m->name == name) {
+      bool skipFirst = classType->IsNative() && m->name == m->classType->GetName();
       for (auto arg : formalArgList) {
+        if (skipFirst) {
+          skipFirst = false;
+          continue;
+        }
         result += "_";
         if (arg->type->IsPtr()) {
           auto baseType = static_cast<PtrType*>(arg->type)->GetBaseType();
