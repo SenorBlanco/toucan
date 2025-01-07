@@ -156,6 +156,7 @@ class CodeGenLLVM : public Visitor {
                           llvm::Type*  dstLLVMType);
   llvm::Value* GenerateMethodCall(Method*             method,
                                   ExprList*           args,
+                                  int                 qualifiers,
                                   Type*               returnType,
                                   const FileLocation& location);
   llvm::Value* GenerateGlobalData(const void* data, size_t size, Type* type);

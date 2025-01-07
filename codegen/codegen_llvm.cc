@@ -1283,7 +1283,17 @@ llvm::Value* CodeGenLLVM::GenerateMethodCall(Method*             method,
   std::vector<llvm::Value*> args;
   llvm::Function*           function = GetOrCreateMethodStub(method);
   if (auto builtin = FindBuiltin(method)) { return std::invoke(builtin, this, location); }
-  if (method->classType->IsNative() && (method->modifiers & Method::Modifier::Static)) {
+  if (method->classType->IsNative() && method->name == method->classType->GetName()) {
+    if (method->classType->GetTemplate()) {
+      auto allocation = argList->Get()[0];
+      auto type = allocation->GetType(types_);
+      assert(type->IsRawPtr());
+      type = static_cast<RawPtrType*>(type)->GetBaseType();
+      int qualifiers;
+      type->GetUnqualifiedType(&qualifiers);
+      // Prefix the args with the qualifiers
+      args.push_back(llvm::ConstantInt::get(intType_, qualifiers));
+    }
     for (Type* const& type : method->classType->GetTemplateArgs()) {
       args.push_back(CreateTypePtr(type));
     }

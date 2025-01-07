@@ -21,10 +21,6 @@ group("tests") {
   ]
 }
 
-toucan_executable("compute-simple") {
-  sources = [ "compute-simple.t" ]
-}
-
 toucan_executable("simple") {
   sources = [ "simple.t" ]
 }

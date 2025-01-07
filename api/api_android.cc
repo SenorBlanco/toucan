@@ -132,7 +132,7 @@ const uint32_t* System_GetScreenSize() {
 
 wgpu::TextureFormat GetPreferredSwapChainFormat() { return wgpu::TextureFormat::RGBA8Unorm; }
 
-SwapChain* SwapChain_SwapChain(Type* format, int qualifiers, Device* device, Window* window) {
+SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Window* window) {
   wgpu::SurfaceDescriptorFromAndroidNativeWindow awDesc;
   awDesc.window = window->window;
   wgpu::SurfaceDescriptor surfaceDesc;

@@ -612,7 +612,6 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
   int       qualifiers;
   Type*     unqualifiedType = type->GetUnqualifiedType(&qualifiers);
   Expr*     length = node->GetLength() ? Resolve(node->GetLength()) : nullptr;
-  auto      allocation = Make<HeapAllocation>(type, length);
   if (unqualifiedType->IsClass()) {
     auto* classType = static_cast<ClassType*>(unqualifiedType);
     if (classType->HasUnsizedArray()) {
@@ -634,21 +633,9 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
                        constructor->formalArgList[i]->name.c_str());
         }
       }
-      if (!classType->IsNative()) { exprList[0] = allocation; }
       WidenArgList(exprList, constructor->formalArgList);
-      if (classType->IsNative() && classType->GetTemplate()) {
-        exprList.insert(exprList.begin(), Make<IntConstant>(qualifiers, 32));
-      }
       auto args = Make<ExprList>(std::move(exprList));
-      Expr* result = Make<MethodCall>(constructor, args);
-      if (!classType->IsNative()) {
-        result = Make<RawToSmartPtr>(result);
-      }
-      // This is for native templated constructors, which return an untemplated type
-      if (result->GetType(types_) != node->GetType(types_)) {
-        result = Widen(result, node->GetType(types_));
-      }
-      return result;
+      return Make<NewExpr>(type, length, constructor, args);
     }
   }
   // FIXME: refactor this with UnresolvedInitializer visit and ResolveListExpr
@@ -656,6 +643,7 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
   for (auto arg : arglist->GetArgs()) {
     exprs.push_back(arg->GetExpr());
   }
+  auto allocation = Make<HeapAllocation>(type, length);
   int numArgs = arglist->GetArgs().size();
   if (length) { type = types_->GetArrayType(type, numArgs, MemoryLayout::Default); }
   auto args = Make<ExprList>(std::move(exprs));

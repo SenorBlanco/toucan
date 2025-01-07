@@ -194,7 +194,7 @@ wgpu::TextureFormat GetPreferredSwapChainFormat() {
   return static_cast<wgpu::TextureFormat>(format);
 }
 
-SwapChain* SwapChain_SwapChain(Type* format, int qualifiers, Device* device, Window* window) {
+SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Window* window) {
   wgpu::SwapChainDescriptor desc;
   desc.usage = wgpu::TextureUsage::RenderAttachment;
   desc.format = ToDawnTextureFormat(format);
