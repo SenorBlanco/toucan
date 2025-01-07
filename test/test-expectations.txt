@@ -33,7 +33,6 @@ test/cast-uint-to-float.t
 test/cast-uint-vector-to-float-vector.t
 test/chained-method-call.t
 test/class-constructor-calls-constructor.t
-class-constructor-calls-constructor.t:5: syntax error
 test/class-constructor.t
 test/class-initializer.t
 test/complex-method.t

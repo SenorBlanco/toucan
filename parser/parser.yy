@@ -159,7 +159,7 @@ Type* FindType(const char* str) {
 %left '*' '/' '%'
 %right UNARYMINUS '!' T_PLUSPLUS T_MINUSMINUS ':'
 %left '.' '[' ']' '(' ')'
-%expect 1   /* we expect 1 shift/reduce: dangling-else */
+%expect 3   /* we expect 3 shift/reduce: dangling-else, and two for new-expr used as opt_initializer */
 %%
 program:
     statements                              { *rootStmts_ = $1; }
@@ -486,7 +486,7 @@ expr_or_list:
   ;
 
 opt_initializer:
-    ':' '{' arguments '}'                   { $$ = Make<UnresolvedListExpr>($3); }
+    ':' expr_or_list                        { $$ = $2; }
   | /* nothing */                           { $$ = nullptr; }
   ;
 
