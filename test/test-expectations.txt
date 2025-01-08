@@ -41,8 +41,6 @@ Warning: Old MapAsync APIs are deprecated. If using C please pass a CallbackInfo
 test/compute-simple.t
 Warning: Old MapAsync APIs are deprecated. If using C please pass a CallbackInfo struct that has two userdatas. Otherwise, if using C++, please use templated helpers.
 test/constructor-calls-initializer.t
-test/constructor-calls-initializer.t:13: expectation failed
-test/constructor-calls-initializer.t:14: expectation failed
 test/constructor-with-default-arg.t
 test/constructor-with-explicit-initializer.t
 test/constructor.t

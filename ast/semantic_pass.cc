@@ -145,7 +145,7 @@ Result SemanticPass::Visit(UnresolvedInitializer* node) {
   return Make<Initializer>(node->GetType(), exprList);
 }
 
-Stmt* SemanticPass::InitializeVar(Expr* varExpr, Type* type, Expr* initExpr) {
+Stmt* SemanticPass::Initialize(Expr* dest, Type* type, Expr* initExpr) {
   if (initExpr) {
     Type* initExprType = initExpr->GetType(types_);
     if (!initExprType->CanWidenTo(type)) {
@@ -154,20 +154,20 @@ Stmt* SemanticPass::InitializeVar(Expr* varExpr, Type* type, Expr* initExpr) {
       return nullptr;
     }
     initExpr = Widen(initExpr, type);
-    return Make<StoreStmt>(varExpr, initExpr);
+    return Make<StoreStmt>(dest, initExpr);
   } else if (type->IsClass()) {
-    return InitializeClass(varExpr, static_cast<ClassType*>(type));
+    return InitializeClass(dest, static_cast<ClassType*>(type));
   } else {
-    return Make<ZeroInitStmt>(varExpr);
+    return Make<ZeroInitStmt>(dest);
   }
 }
 
-Stmts* SemanticPass::InitializeClass(Expr* thisExpr, ClassType* classType) {
+Stmts* SemanticPass::InitializeClass(Expr* dest, ClassType* classType) {
   Stmts* stmts = Make<Stmts>();
-  if (classType->GetParent()) { stmts->Append(InitializeClass(thisExpr, classType->GetParent())); }
+  if (classType->GetParent()) { stmts->Append(InitializeClass(dest, classType->GetParent())); }
   for (const auto& field : classType->GetFields()) {
-    Expr* fieldExpr = Make<FieldAccess>(thisExpr, field.get());
-    stmts->Append(InitializeVar(fieldExpr, field->type, Resolve(field->defaultValue)));
+    Expr* fieldExpr = Make<FieldAccess>(dest, field.get());
+    stmts->Append(Initialize(fieldExpr, field->type, Resolve(field->defaultValue)));
   }
   return stmts;
 }
@@ -197,7 +197,7 @@ Result SemanticPass::Visit(VarDeclaration* decl) {
   }
   Var*  var = symbols_->DefineVar(id, type);
   Expr* varExpr = Make<VarExpr>(var);
-  return InitializeVar(varExpr, type, initExpr);
+  return Initialize(varExpr, type, initExpr);
 }
 
 Result SemanticPass::ResolveMethodCall(Expr*       expr,
@@ -655,7 +655,6 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
   int numArgs = arglist->GetArgs().size();
   if (length) { type = types_->GetArrayType(type, numArgs, MemoryLayout::Default); }
   auto args = Make<ExprList>(std::move(exprs));
-  auto initializer = Make<Initializer>(type, args);
   Stmt* stmt;
   if (length) {
     auto stmts = Make<Stmts>();
@@ -668,6 +667,7 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
     auto cond = Make<BinOpNode>(BinOpNode::Op::LE, Make<LoadExpr>(index), length);
     auto indexPlusOne = Make<BinOpNode>(BinOpNode::Op::ADD, Make<LoadExpr>(index), MakeConstantOne(types_->GetInt()));
     auto loopStmt = Make<StoreStmt>(index, indexPlusOne);
+    auto initializer = Make<Initializer>(type, args);
     if (numArgs == 0 || numArgs == 1) {
       rhs = initializer;
     } else {
@@ -677,7 +677,7 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
     stmts->Append(Make<ForStatement>(initStmt, cond, loopStmt, body));
     stmt = stmts;
   } else {
-    stmt = Make<StoreStmt>(allocation, initializer);
+    stmt = Initialize(allocation, type);
   }
   return Make<RawToSmartPtr>(Make<ExprWithStmt>(allocation, stmt));
 }
