@@ -157,6 +157,8 @@ Stmt* SemanticPass::Initialize(Expr* dest, Type* type, Expr* initExpr) {
     return Make<StoreStmt>(dest, initExpr);
   } else if (type->IsClass()) {
     return InitializeClass(dest, static_cast<ClassType*>(type));
+  } else if (type->IsArray()) {
+    return Make<Stmts>();
   } else {
     return Make<ZeroInitStmt>(dest);
   }
@@ -647,38 +649,8 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
       return result;
     }
   }
-  // FIXME: refactor this with UnresolvedInitializer visit and ResolveListExpr
-  std::vector<Expr*> exprs;
-  for (auto arg : arglist->GetArgs()) {
-    exprs.push_back(arg->GetExpr());
-  }
-  int numArgs = arglist->GetArgs().size();
-  if (length) { type = types_->GetArrayType(type, numArgs, MemoryLayout::Default); }
-  auto args = Make<ExprList>(std::move(exprs));
-  Stmt* stmt;
-  if (length) {
-    auto stmts = Make<Stmts>();
-    Expr* rhs;
-    auto indexVar = std::make_shared<Var>("", types_->GetInt());
-    stmts->AppendVar(indexVar);
-    auto index = Make<VarExpr>(indexVar.get());
-    auto lhs = Make<ArrayAccess>(MakeIndexable(allocation), Make<LoadExpr>(index));
-    auto initStmt = Make<StoreStmt>(index, Make<IntConstant>(0, 32));
-    auto cond = Make<BinOpNode>(BinOpNode::Op::LE, Make<LoadExpr>(index), length);
-    auto indexPlusOne = Make<BinOpNode>(BinOpNode::Op::ADD, Make<LoadExpr>(index), MakeConstantOne(types_->GetInt()));
-    auto loopStmt = Make<StoreStmt>(index, indexPlusOne);
-    auto initializer = Make<Initializer>(type, args);
-    if (numArgs == 0 || numArgs == 1) {
-      rhs = initializer;
-    } else {
-      rhs = Make<ArrayAccess>(MakeIndexable(initializer), Make<LoadExpr>(index));
-    }
-    auto body = Make<StoreStmt>(lhs, rhs);
-    stmts->Append(Make<ForStatement>(initStmt, cond, loopStmt, body));
-    stmt = stmts;
-  } else {
-    stmt = Initialize(allocation, type);
-  }
+  if (length) { type = types_->GetArrayType(type, 0, MemoryLayout::Default); }
+  Stmt* stmt = Initialize(allocation, type);
   return Make<RawToSmartPtr>(Make<ExprWithStmt>(allocation, stmt));
 }
 
