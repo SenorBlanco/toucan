@@ -176,16 +176,6 @@ Stmts* SemanticPass::InitializeClass(Expr* dest, ClassType* classType) {
 }
 
 Stmts* SemanticPass::InitializeArray(Expr* dest, Type* elementType, ExprList* exprList) {
-  int numArgs = exprList->Get().size();
-  Expr* value;
-  if (numArgs <= 1) {
-    value = Make<TempVarExpr>(elementType);
-    value = Make<ExprWithStmt>(value, Initialize(value, elementType));
-    value = Make<LoadExpr>(value);
-  } else {
-    Type* type = types_->GetArrayType(elementType, numArgs, MemoryLayout::Default);
-    value = Make<Initializer>(type, exprList);
-  }
   Expr* length = Make<LengthExpr>(dest);
   auto stmts = Make<Stmts>();
   auto indexVar = std::make_shared<Var>("", types_->GetInt());
@@ -196,11 +186,18 @@ Stmts* SemanticPass::InitializeArray(Expr* dest, Type* elementType, ExprList* ex
   auto cond = Make<BinOpNode>(BinOpNode::Op::LE, Make<LoadExpr>(index), length);
   auto indexPlusOne = Make<BinOpNode>(BinOpNode::Op::ADD, Make<LoadExpr>(index), MakeConstantOne(types_->GetInt()));
   auto loopStmt = Make<StoreStmt>(index, indexPlusOne);
-  Expr* rhs = value;
-  if (numArgs > 1) {
-    rhs = Make<ArrayAccess>(MakeIndexable(value), Make<LoadExpr>(index));
+  Stmt* body;
+  int numArgs = exprList->Get().size();
+  if (numArgs == 0) {
+    body = Initialize(lhs, elementType);
+  } else if (numArgs == 1) {
+    body = Make<StoreStmt>(lhs, exprList->Get()[0]);
+  } else {
+    Type* type = types_->GetArrayType(elementType, numArgs, MemoryLayout::Default);
+    auto value = Make<Initializer>(type, exprList);
+    auto rhs = Make<LoadExpr>(Make<ArrayAccess>(MakeIndexable(value), Make<LoadExpr>(index)));
+    body = Make<StoreStmt>(lhs, rhs);
   }
-  auto body = Make<StoreStmt>(lhs, rhs);
   stmts->Append(Make<ForStatement>(initStmt, cond, loopStmt, body));
   return stmts;
 }
