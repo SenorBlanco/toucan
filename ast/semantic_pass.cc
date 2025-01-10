@@ -155,10 +155,11 @@ Stmt* SemanticPass::Initialize(Expr* dest, Type* type, Expr* initExpr) {
     }
     initExpr = Widen(initExpr, type);
     return Make<StoreStmt>(dest, initExpr);
+  } else if (type->IsArray()) {
+    auto arrayType = static_cast<ArrayType*>(type);
+    return InitializeArray(MakeIndexable(dest), arrayType->GetElementType(), Make<ExprList>());
   } else if (type->IsClass()) {
     return InitializeClass(dest, static_cast<ClassType*>(type));
-  } else if (type->IsArray()) {
-    return Make<Stmts>();
   } else {
     return Make<ZeroInitStmt>(dest);
   }
@@ -171,6 +172,36 @@ Stmts* SemanticPass::InitializeClass(Expr* dest, ClassType* classType) {
     Expr* fieldExpr = Make<FieldAccess>(dest, field.get());
     stmts->Append(Initialize(fieldExpr, field->type, Resolve(field->defaultValue)));
   }
+  return stmts;
+}
+
+Stmts* SemanticPass::InitializeArray(Expr* dest, Type* elementType, ExprList* exprList) {
+  int numArgs = exprList->Get().size();
+  Expr* value;
+  if (numArgs <= 1) {
+    value = Make<TempVarExpr>(elementType);
+    value = Make<ExprWithStmt>(value, Initialize(value, elementType));
+    value = Make<LoadExpr>(value);
+  } else {
+    Type* type = types_->GetArrayType(elementType, numArgs, MemoryLayout::Default);
+    value = Make<Initializer>(type, exprList);
+  }
+  Expr* length = Make<LengthExpr>(dest);
+  auto stmts = Make<Stmts>();
+  auto indexVar = std::make_shared<Var>("", types_->GetInt());
+  stmts->AppendVar(indexVar);
+  auto index = Make<VarExpr>(indexVar.get());
+  auto lhs = Make<ArrayAccess>(dest, Make<LoadExpr>(index));
+  auto initStmt = Make<StoreStmt>(index, Make<IntConstant>(0, 32));
+  auto cond = Make<BinOpNode>(BinOpNode::Op::LE, Make<LoadExpr>(index), length);
+  auto indexPlusOne = Make<BinOpNode>(BinOpNode::Op::ADD, Make<LoadExpr>(index), MakeConstantOne(types_->GetInt()));
+  auto loopStmt = Make<StoreStmt>(index, indexPlusOne);
+  Expr* rhs = value;
+  if (numArgs > 1) {
+    rhs = Make<ArrayAccess>(MakeIndexable(value), Make<LoadExpr>(index));
+  }
+  auto body = Make<StoreStmt>(lhs, rhs);
+  stmts->Append(Make<ForStatement>(initStmt, cond, loopStmt, body));
   return stmts;
 }
 
@@ -649,8 +680,19 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
       return result;
     }
   }
-  if (length) { type = types_->GetArrayType(type, 0, MemoryLayout::Default); }
-  Stmt* stmt = Initialize(allocation, type);
+  Stmt* stmt;
+  if (length) {
+    if (arglist->IsNamed()) {
+      return Error("array initializer list must not be named");
+    }
+    auto exprList = Make<ExprList>();
+    for (int i = 0; i < arglist->GetArgs().size(); ++i) {
+      exprList->Append(arglist->GetArgs()[i]->GetExpr());
+    }
+    stmt = InitializeArray(allocation, type, exprList);
+  } else {
+    stmt = Initialize(allocation, type);
+  }
   return Make<RawToSmartPtr>(Make<ExprWithStmt>(allocation, stmt));
 }
 

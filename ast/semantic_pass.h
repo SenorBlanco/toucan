@@ -62,6 +62,7 @@ class SemanticPass : public CopyVisitor {
   Expr*   MakeIndexable(Expr* expr);
   Stmt*   Initialize(Expr* dest, Type* type, Expr* initExpr = nullptr);
   Stmts*  InitializeClass(Expr* thisExpr, ClassType* classType);
+  Stmts*  InitializeArray(Expr* dest, Type* elementType, ExprList* exprList);
   int     FindFormalArg(Arg* arg, Method* m, TypeTable* types);
   bool    MatchArgs(Expr* thisExpr, ArgList* args, Method* m, TypeTable* types, std::vector<Expr*>* newArgList);
   Method* FindMethod(Expr*               thisExpr,
