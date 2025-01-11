@@ -17,3 +17,11 @@ var g = [3] int(3, 2, 1);
 Test.Expect(e[0] == 0 && e[1] == 0 && e[2] == 0);
 Test.Expect(f[0] == 42 && f[1] == 42 && f[2] == 42);
 Test.Expect(g[0] == 3 && g[1] == 2 && g[2] == 1);
+
+var h : [3] int = {};
+var i : [3] int = {42};
+var j : [3] int = {3, 2, 1};
+
+Test.Expect(h[0] == 0 && h[1] == 0 && h[2] == 0);
+Test.Expect(i[0] == 42 && i[1] == 42 && i[2] == 42);
+Test.Expect(j[0] == 3 && j[1] == 2 && j[2] == 1);

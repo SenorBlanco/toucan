@@ -377,21 +377,31 @@ Expr* SemanticPass::ResolveListExpr(UnresolvedListExpr* node, Type* dstType) {
       return nullptr;
     }
     Type* elementType;
+    int length;
     if (dstType->IsVector()) {
-      elementType = static_cast<VectorType*>(dstType)->GetComponentType();
+      auto vectorType = static_cast<VectorType*>(dstType);
+      elementType = vectorType->GetComponentType();
+      length = vectorType->GetLength();
     } else if (dstType->IsArray()) {
-      elementType = static_cast<ArrayType*>(dstType)->GetElementType();
+      auto arrayType = static_cast<ArrayType*>(dstType);
+      elementType = arrayType->GetElementType();
+      length = arrayType->GetNumElements();
     } else if (dstType->IsMatrix()) {
-      elementType = static_cast<MatrixType*>(dstType)->GetColumnType();
+      auto matrixType = static_cast<MatrixType*>(dstType);
+      elementType = matrixType->GetColumnType();
+      length = matrixType->GetNumColumns();
     } else {
       assert(!"unexpected type in arglist");
     }
-    for (auto arg : argList->GetArgs()) {
-      Expr* argExpr = arg->GetExpr();
-      if (argExpr->IsUnresolvedListExpr()) {
-        argExpr = ResolveListExpr(static_cast<UnresolvedListExpr*>(argExpr), elementType);
+    if (argList->GetArgs().size() == 1) {
+      Expr* arg = Widen(argList->GetArgs()[0]->GetExpr(), elementType);
+      for (int i = 0; i < length; ++i) {
+        exprs.push_back(arg);
       }
-      exprs.push_back(argExpr);
+    } else {
+      for (auto arg : argList->GetArgs()) {
+        exprs.push_back(Widen(arg->GetExpr(), elementType));
+      }
     }
   }
   auto exprList = Make<ExprList>(std::move(exprs));
