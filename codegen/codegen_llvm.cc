@@ -594,7 +594,7 @@ llvm::Value* CodeGenLLVM::ConvertToNative(Type* type, llvm::Value* value) {
 }
 
 llvm::Value* CodeGenLLVM::ConvertFromNative(Type* type, llvm::Value* value) {
-  if (type->IsPtr()) {
+  if (type->IsStrongPtr() || type->IsWeakPtr()) {
     Type* baseType = static_cast<PtrType*>(type)->GetBaseType();
     Type* unqualifiedType = baseType->GetUnqualifiedType();
     if (unqualifiedType->IsClass() && static_cast<ClassType*>(unqualifiedType)->IsNative()) {

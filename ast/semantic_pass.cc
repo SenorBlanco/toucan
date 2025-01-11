@@ -639,9 +639,7 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
       exprList[0] = allocation;
       auto args = Make<ExprList>(std::move(exprList));
       Expr* result = Make<MethodCall>(constructor, args);
-      if (!classType->IsNative()) {
-        result = Make<RawToSmartPtr>(result);
-      }
+      result = Make<RawToSmartPtr>(result);
       // This is for native templated constructors, which return an untemplated type
       if (result->GetType(types_) != node->GetType(types_)) {
         result = Widen(result, node->GetType(types_));
