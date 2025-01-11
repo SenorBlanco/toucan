@@ -689,6 +689,9 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
       return result;
     }
   }
+  if (unqualifiedType->IsUnsizedArray()) {
+    return Error("cannot allocate unsized array");
+  }
   Stmt* stmt;
   if (length) {
     if (arglist->IsNamed()) {
