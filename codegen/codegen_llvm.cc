@@ -374,9 +374,11 @@ llvm::Function* CodeGenLLVM::GetOrCreateMethodStub(Method* method) {
   if (auto function = functions_[method]) { return function; }
   std::vector<llvm::Type*> params;
   llvm::Intrinsic::ID      intrinsic = llvm::Intrinsic::not_intrinsic;
+  bool skipFirst = false;
   if (method->classType->IsNative()) {
     if (method->templateMethod) { return GetOrCreateMethodStub(method->templateMethod); }
-    if (method->modifiers & Method::Modifier::Static) {
+    if (method->name == method->classType->GetName()) {
+      skipFirst = true;
       if (method->classType->IsClassTemplate()) {
         // First argument is the storage qualifier (as uint)
         params.push_back(intType_);
@@ -390,6 +392,10 @@ llvm::Function* CodeGenLLVM::GetOrCreateMethodStub(Method* method) {
   }
   bool nativeTypes = method->classType->IsNative() && !intrinsic;
   for (const auto& it : method->formalArgList) {
+    if (skipFirst) {
+      skipFirst = false;
+      continue;
+    }
     Var* var = it.get();
     if (nativeTypes) {
       params.push_back(ConvertTypeToNative(var->type));
