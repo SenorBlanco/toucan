@@ -48,11 +48,11 @@ Result SemanticPass::Visit(ArrayAccess* node) {
   Expr* index = Resolve(node->GetIndex());
   if (!index) return nullptr;
 
-  expr = MakeIndexable(expr);
-  if (!expr) {
-    return Error("expression is not of indexable type");
+  if (auto indexableExpr = MakeIndexable(expr)) {
+    expr = indexableExpr;
+  } else {
+    Error("expression is not of indexable type");
   }
-
   return Make<ArrayAccess>(expr, index);
 }
 
