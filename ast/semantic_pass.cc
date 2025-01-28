@@ -660,6 +660,7 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
   Type* type = node->GetType();
   if (!type) return nullptr;
   if (type->IsUnsizedArray()) { return Error("cannot allocate unsized array"); }
+  if (type->ContainsRawPtr()) { return Error("cannot allocate raw pointer"); }
 
   ArgList* arglist = Resolve(node->GetArgList());
   if (!arglist) return nullptr;
@@ -699,9 +700,6 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
       }
       return result;
     }
-  }
-  if (unqualifiedType->IsUnsizedArray()) {
-    return Error("cannot allocate unsized array");
   }
   Stmt* stmt;
   if (length && !type->IsUnsizedClass()) {
