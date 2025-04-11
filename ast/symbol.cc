@@ -98,9 +98,7 @@ const EnumValue* SymbolTable::FindEnumValue(const std::string& identifier) const
     for (const auto& j : scope->types) {
       Type* type = j.second;
       if (type->IsEnum()) {
-        for (const EnumValue& k : static_cast<EnumType*>(type)->GetValues()) {
-          if (identifier == k.id) { return &k; }
-        }
+        return static_cast<EnumType*>(type)->FindValue(identifier);
       }
     }
   }

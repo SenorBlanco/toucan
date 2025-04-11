@@ -267,11 +267,22 @@ std::string UnresolvedScopedType::ToString() const { return baseType_->ToString(
 
 EnumType::EnumType(std::string name) : name_(name), nextValue_(0) {}
 
-void EnumType::Append(std::string id) { values_.push_back(EnumValue(this, id, nextValue_++)); }
+void EnumType::Append(std::string id) {
+  values_.push_back(std::make_unique<EnumValue>(this, id, nextValue_++));
+}
 
 void EnumType::Append(std::string id, int value) {
-  values_.push_back(EnumValue(this, id, value));
+  values_.push_back(std::make_unique<EnumValue>(this, id, value));
   nextValue_ = value + 1;
+}
+
+EnumValue* EnumType::FindValue(const std::string id) {
+  for (const auto& e : values_) {
+    if (e->id == id) {
+      return e.get();
+    }
+  }
+  return nullptr;
 }
 
 int EnumType::GetSizeInBytes() const { return 4; }

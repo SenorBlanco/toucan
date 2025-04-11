@@ -171,8 +171,8 @@ void GenBindings::GenType(Type* type) {
     if (header_) {
       fprintf(header_, "enum %s {\n", enumType->GetName().c_str());
       const EnumValueVector& values = enumType->GetValues();
-      for (EnumValue const& v : values) {
-        fprintf(header_, "  %s = %d,\n", v.id.c_str(), v.value);
+      for (const auto& v : values) {
+        fprintf(header_, "  %s = %d,\n", v->id.c_str(), v->value);
       }
       fprintf(header_, "};\n");
     }
@@ -478,8 +478,8 @@ void GenBindings::GenBindingsForClass(ClassType* classType) {
 
 void GenBindings::GenBindingsForEnum(EnumType* enumType) {
   fprintf(file_, "  e = static_cast<EnumType*>(typeList[%d]);\n", typeMap_[enumType]);
-  for (const EnumValue& v : enumType->GetValues()) {
-    fprintf(file_, "  e->Append(\"%s\", %d);\n", v.id.c_str(), v.value);
+  for (const auto& v : enumType->GetValues()) {
+    fprintf(file_, "  e->Append(\"%s\", %d);\n", v->id.c_str(), v->value);
   }
   fprintf(file_, "  symbols->DefineType(\"%s\", e);\n\n", enumType->GetName().c_str());
 }
