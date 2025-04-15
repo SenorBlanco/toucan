@@ -172,8 +172,8 @@ Event* System_GetNextEvent() {
     }
   }
   result->modifiers = 0;
-  if (event["shiftKey"].as<bool>()) { result->modifiers |= Shift; }
-  if (event["ctrlKey"].as<bool>()) { result->modifiers |= Control; }
+  if (event["shiftKey"].as<bool>()) { result->modifiers |= static_cast<int>(EventModifiers::Shift); }
+  if (event["ctrlKey"].as<bool>()) { result->modifiers |= static_cast<int>(EventModifiers::Control); }
   return result;
 }
 
