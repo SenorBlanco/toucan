@@ -481,8 +481,6 @@ Result SemanticPass::Visit(UnresolvedIdentifier* node) {
       Expr* base = Make<LoadExpr>(Make<VarExpr>(thisPtr));
       return Make<FieldAccess>(base, field);
     }
-  } else if (const EnumValue* enumValue = symbols_->FindEnumValue(id)) {
-    return Make<EnumConstant>(enumValue);
   } else {
     return Error("unknown symbol \"%s\"", id.c_str());
   }
