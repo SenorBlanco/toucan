@@ -9,11 +9,11 @@ class A {
 };
 var a = new A;
 a.init();
-Test.Expect(a.f == Foo);
-a.f = Bar;
-Test.Expect(a.f == Bar);
+Test.Expect(a.f == Enum.Foo);
+a.f = Enum.Bar;
+Test.Expect(a.f == Enum.Bar);
 var r = 0.0;
-if (a.f == Bar ) {
+if (a.f == Enum.Bar ) {
   r = 1.0;
 }
 Test.Expect(r == 1.0);
