@@ -3,7 +3,7 @@ include "include/test.t"
 enum Enum { Foo, Bar, Baz };
 class A {
   init() {
-    f = Foo;
+    f = Enum.Foo;
   }
   var f : Enum;
 };

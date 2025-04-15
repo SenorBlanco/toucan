@@ -205,7 +205,7 @@ struct EnumValue {
   int         value;
 };
 
-typedef std::vector<std::unique_ptr<EnumValue>> EnumValueVector;
+typedef std::vector<EnumValue> EnumValueVector;
 
 class StringType : public Type {
  public:
@@ -349,7 +349,7 @@ class EnumType : public Type {
   std::string            ToString() const override;
   int                    GetSizeInBytes() const override;
   const EnumValueVector& GetValues() { return values_; }
-  EnumValue*             FindValue(const std::string id);
+  const EnumValue*       FindValue(const std::string& id);
   std::string            GetName() { return name_; }
   bool                   CanWidenTo(Type* type) const override;
 

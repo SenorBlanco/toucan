@@ -98,11 +98,12 @@ const EnumValue* SymbolTable::FindEnumValue(const std::string& identifier) const
     for (const auto& j : scope->types) {
       Type* type = j.second;
       if (type->IsEnum()) {
-        return static_cast<EnumType*>(type)->FindValue(identifier);
+        const EnumValue* e = static_cast<EnumType*>(type)->FindValue(identifier);
+        if (e != nullptr) return e;
       }
     }
   }
-  return 0;
+  return nullptr;
 }
 
 void SymbolTable::Dump() {

@@ -528,6 +528,13 @@ Result SemanticPass::Visit(UnresolvedDot* node) {
     } else {
       return Error("invalid swizzle '%s'", id.c_str());
     }
+  } else if (type->IsEnum()) {
+    const EnumValue* enumValue = static_cast<EnumType*>(type)->FindValue(id);
+    if (enumValue) {
+      return Make<IntConstant>(enumValue->value, 32);
+    } else {
+      return Error("%s has no value named \"%s\"", type->ToString().c_str(), id.c_str());
+    }
   } else {
     return Error("Expression is not of class, reference or vector type");
   }
