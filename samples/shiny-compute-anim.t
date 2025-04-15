@@ -302,7 +302,7 @@ while (System.IsRunning()) {
   tessPass.End();
 
   var fb = swapChain.GetCurrentTexture().CreateColorAttachment(LoadOp.Clear, StoreOp.Store);
-  var db = depthBuffer.CreateDepthStencilAttachment(LoadOp.Clear, StoreOp.Store, 1.0, LoadOp.LoadUndefined, StoreOp.StoreUndefined, 0);
+  var db = depthBuffer.CreateDepthStencilAttachment(LoadOp.Clear, StoreOp.Store, 1.0, LoadOp.Undefined, StoreOp.Undefined, 0);
   var renderPass = new RenderPass<DrawPipeline>(encoder, { fragColor = fb, depth = db });
 
   var cubePass = new RenderPass<SkyboxPipeline>(renderPass);

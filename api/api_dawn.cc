@@ -61,7 +61,7 @@ wgpu::TextureUsage ToDawnTextureUsage(int qualifiers) {
 
 wgpu::LoadOp ToDawnLoadOp(LoadOp loadOp) {
   switch (loadOp) {
-    case LoadOp::LoadUndefined: return wgpu::LoadOp::Undefined;
+    case LoadOp::Undefined: return wgpu::LoadOp::Undefined;
     case LoadOp::Load: return wgpu::LoadOp::Load;
     case LoadOp::Clear: return wgpu::LoadOp::Clear;
     default: assert(!"unknown LoadOp"); return wgpu::LoadOp::Load;
@@ -70,7 +70,7 @@ wgpu::LoadOp ToDawnLoadOp(LoadOp loadOp) {
 
 wgpu::StoreOp ToDawnStoreOp(StoreOp loadOp) {
   switch (loadOp) {
-    case StoreOp::StoreUndefined: return wgpu::StoreOp::Undefined;
+    case StoreOp::Undefined: return wgpu::StoreOp::Undefined;
     case StoreOp::Store: return wgpu::StoreOp::Store;
     case StoreOp::Discard: return wgpu::StoreOp::Discard;
     default: assert(!"unknown StoreOp"); return wgpu::StoreOp::Store;
