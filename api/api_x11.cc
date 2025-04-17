@@ -45,8 +45,8 @@ namespace Toucan {
 namespace {
 int ToToucanEventModifiers(int state) {
   int result = 0;
-  if (state & ShiftMask) { result |= static_cast<int>(EventModifiers::Shift); }
-  if (state & ControlMask) { result |= static_cast<int>(EventModifiers::Control); }
+  if (state & ShiftMask) { result |= static_cast<uint32_t>(EventModifiers::Shift); }
+  if (state & ControlMask) { result |= static_cast<uint32_t>(EventModifiers::Control); }
   return result;
 }
 }  // namespace
