@@ -276,9 +276,7 @@ void EnumType::Append(std::string id, int value) {
 
 const EnumValue* EnumType::FindValue(const std::string& id) {
   for (const EnumValue& e : values_) {
-    if (e.id == id) {
-      return &e;
-    }
+    if (e.id == id) return &e;
   }
   return nullptr;
 }
