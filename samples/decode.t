@@ -35,8 +35,6 @@ indices[2] = 2;
 indices[3] = 1;
 indices[4] = 2;
 indices[5] = 3;
-var vb = new vertex Buffer<[]Vertex>(device, verts);
-var ib = new index Buffer<[]uint>(device, indices);
 class Bindings {
   var sampler : *Sampler;
   var textureView : *SampleableTexture2D<float>;
@@ -51,7 +49,7 @@ class Pipeline {
     fragment main(fb : &FragmentBuiltins, texCoord : float<2>) {
       fragColor.Set(bindings.Get().textureView.Sample(bindings.Get().sampler, texCoord));
     }
-    var vert : *vertex Buffer<[]Vertex>;
+    var vert : *VertexInput<Vertex>;
     var indexBuffer : *index Buffer<[]uint>;
     var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
     var bindings : *BindGroup<Bindings>;
@@ -65,8 +63,8 @@ bindings.textureView = texView;
 var bindGroup = new BindGroup<Bindings>(device, &bindings);
 var encoder = new CommandEncoder(device);
 var p : Pipeline;
-p.vert = vb;
-p.indexBuffer = ib;
+p.vert = new VertexInput<Vertex>(new vertex Buffer<[]Vertex>(device, verts));
+p.indexBuffer = new index Buffer<[]uint>(device, indices);
 p.fragColor = swapChain.GetCurrentTexture().CreateColorAttachment(LoadOp.Clear);
 p.bindings = bindGroup;
 var renderPass = new RenderPass<Pipeline>(encoder, &p);
