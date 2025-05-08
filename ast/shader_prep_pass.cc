@@ -205,10 +205,7 @@ Type* ShaderPrepPass::ConvertType(Type* type) {
       } else if (classType->GetTemplate() == NativeClass::Buffer) {
         assert(classType->GetTemplateArgs().size() == 1);
         type = classType->GetTemplateArgs()[0];
-        if (qualifiers & Type::Qualifier::Vertex) { // FIXME: remove this
-          assert(type->IsArray());
-          return static_cast<ArrayType*>(type)->GetElementType();
-        } else if (qualifiers & (Type::Qualifier::Storage | Type::Qualifier::Uniform)) {
+        if (qualifiers & (Type::Qualifier::Storage | Type::Qualifier::Uniform)) {
           if (!type->IsClass()) {
             type = GetWrapper(type, qualifiers);
           } else {
@@ -252,9 +249,7 @@ void ShaderPrepPass::ExtractPipelineVars(ClassType* classType, std::vector<Var*>
     } else if (classType->GetTemplate() == NativeClass::DepthStencilAttachment) {
       // Depth/stencil variables are inaccessible from device code.
       globalVars->push_back(nullptr);
-    } else if (classType->GetTemplate() == NativeClass::VertexInput ||
-               (classType->GetTemplate() == NativeClass::Buffer &&    // FIXME: remove this
-                qualifiers & Type::Qualifier::Vertex)) {
+    } else if (classType->GetTemplate() == NativeClass::VertexInput) {
       if (methodModifiers_ & Method::Modifier::Vertex) {
         auto input = std::make_shared<Var>(field->name, ConvertType(field->type));
         inputs_.push_back(input);

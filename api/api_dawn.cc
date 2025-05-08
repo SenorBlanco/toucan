@@ -688,10 +688,7 @@ static void ExtractPipelineLayout(ClassType* classType, Device* device, wgpu::Bl
       assert(templateArgs.size() == 1);
       assert(templateArgs[0]->IsUnsizedArray());
       Type* elementType = static_cast<ArrayType*>(templateArgs[0])->GetElementType();
-      if (qualifiers == Type::Qualifier::Vertex) { // FIXME: remove this
-        auto layout = toDawnVertexBufferLayout(elementType, &out->vertexAttributes);
-        out->vertexBufferLayouts.push_back(layout);
-      } else if (qualifiers == Type::Qualifier::Index) {
+      if (qualifiers == Type::Qualifier::Index) {
         out->indexFormat = toDawnIndexFormat(elementType);
       }
     } else if (classType->GetTemplate() == NativeClass::BindGroup) {
@@ -744,16 +741,12 @@ static void ExtractPipelineData(Type* type, void* data, PipelineData* out) {
     void* ptr = object->ptr;
     assert(fieldType->IsClass());
     auto classType = static_cast<ClassType*>(fieldType);
-    if (classType->GetTemplate() == NativeClass::VertexInput) {
+    if (classType->GetTemplate() == NativeClass::VertexInput && ptr) {
       out->vertexBuffers.push_back(static_cast<VertexInput*>(ptr)->buffer);
     } else if (classType->GetTemplate() == NativeClass::ColorAttachment && ptr) {
       out->colorAttachments.push_back(static_cast<ColorAttachment*>(ptr)->attachment);
     } else if (classType->GetTemplate() == NativeClass::DepthStencilAttachment && ptr) {
       out->depthStencilAttachment = static_cast<DepthStencilAttachment*>(ptr)->attachment;
-    } else if (classType->GetTemplate() == NativeClass::Buffer &&
-               qualifiers == Type::Qualifier::Vertex) {
-      // FIXME: remove this
-      out->vertexBuffers.push_back(ptr ? static_cast<Buffer*>(ptr)->buffer : nullptr);
     } else if (classType->GetTemplate() == NativeClass::Buffer &&
                qualifiers == Type::Qualifier::Index) {
       if (auto buffer = static_cast<Buffer*>(ptr)) {
