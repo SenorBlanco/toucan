@@ -28,7 +28,7 @@ class Pipeline {
   vertex main(vb : &VertexBuiltins) { var v = vert.Get(); vb.position = v.position; }
   fragment main(fb : &FragmentBuiltins) { fragColor.Set(float<4>(0.0, 1.0, 0.0, 1.0)); }
   var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
-  var vert : *vertex Buffer<[]Vertex>;
+  var vert : *VertexInput<Vertex>;
 }
 
 var pipeline = new RenderPipeline<Pipeline>(device);

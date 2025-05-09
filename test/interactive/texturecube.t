@@ -43,7 +43,7 @@ class Pipeline {
       var b = bindings.Get();
       fragColor.Set(b.textureView.Sample(b.sampler, varyings.texCoord));
     }
-    var vert : *vertex Buffer<[]Vertex>;
+    var vert : *VertexInput<Vertex>;
     var indices : *index Buffer<[]uint>;
     var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
     var bindings : *BindGroup<Bindings>;

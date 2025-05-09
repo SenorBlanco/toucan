@@ -15,7 +15,7 @@ class RTTPipeline {
   }
   var red : *ColorAttachment<RGBA8unorm>;
   var green : *ColorAttachment<RGBA8unorm>;
-  var vert : *vertex Buffer<[]Vertex>;
+  var vert : *VertexInput<Vertex>;
 }
 
 class Bindings {
@@ -32,7 +32,7 @@ class Pipeline {
     fragColor.Set(b.red.Sample(b.sampler, onehalf) + b.green.Sample(b.sampler, onehalf));
   }
   var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
-  var vert : *vertex Buffer<[]Vertex>;
+  var vert : *VertexInput<Vertex>;
   var bindings : *BindGroup<Bindings>;
 }
 var encoder = new CommandEncoder(device);

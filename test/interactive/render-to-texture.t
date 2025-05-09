@@ -6,7 +6,7 @@ var triVB = new vertex Buffer<[]float<4>>(device, &triVerts);
 class GreenPipeline {
     vertex main(vb : &VertexBuiltins) { vb.position = position.Get(); }
     fragment main(fb : &FragmentBuiltins) { renderTex.Set(float<4>(0.0, 1.0, 0.0, 1.0)); }
-    var position : *vertex Buffer<[]float<4>>;
+    var position : *VertexInput<float<4>>;
     var renderTex : *ColorAttachment<RGBA8unorm>;
 }
 
@@ -30,7 +30,7 @@ class TexPipeline {
       var b = bindings.Get();
       fragColor.Set(b.textureView.Sample(b.sampler, texCoord));
     }
-    var vertices : *vertex Buffer<[]QuadVertex>;
+    var vertices : *VertexInput<QuadVertex>;
     var indices : *index Buffer<[]uint>;
     var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
     var bindings : *BindGroup<Bindings>;

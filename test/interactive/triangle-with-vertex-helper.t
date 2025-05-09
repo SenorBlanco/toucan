@@ -8,7 +8,7 @@ class Pipeline {
   static deviceonly helper(v : *vertex Buffer<[]Vertex>) : Vertex { return v.Get(); }
   vertex main(vb : &VertexBuiltins) { vb.position = Pipeline.helper(vertices); }
   fragment main(fb : &FragmentBuiltins) { fragColor.Set( {0.0, 1.0, 0.0, 1.0} ); }
-  var vertices : *vertex Buffer<[]Vertex>;
+  var vertices : *VertexInput<Vertex>;
   var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
 }
 var pipeline = new RenderPipeline<Pipeline>(device);

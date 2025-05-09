@@ -22,8 +22,8 @@ class Pipeline {
     fragColor.Set(float<4>(varyings.r, varyings.g, varyings.b, 1.0));
   }
   var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
-  var position : *vertex Buffer<[]float<2>>;
-  var color : *vertex Buffer<[]float<3>>;
+  var position : *VertexInput<float<2>>;
+  var color : *VertexInput<float<3>>;
 }
 
 var pipeline = new RenderPipeline<Pipeline>(device);

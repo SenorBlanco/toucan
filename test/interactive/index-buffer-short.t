@@ -32,7 +32,7 @@ class Pipeline {
     return v.color;
   }
   fragment main(fb : &FragmentBuiltins, v : Varyings) { fragColor.Set(v); }
-  var vertices : *vertex Buffer<[]Vertex>;
+  var vertices : *VertexInput<Vertex>;
   var indices : *index Buffer<[]ushort>;
   var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
 }

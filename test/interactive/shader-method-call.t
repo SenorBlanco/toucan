@@ -11,7 +11,7 @@ class Pipeline {
   vertex main(vb : &VertexBuiltins) { vb.position = position.Get(); }
   static green() : float<4> { return float<4>(0.0, 1.0, 0.0, 1.0); }
   fragment main(fb : &FragmentBuiltins) { fragColor.Set(Pipeline.green()); }
-  var position : *vertex Buffer<[]Vertex>;
+  var position : *VertexInput<Vertex>;
   var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
 }
 

@@ -15,7 +15,7 @@ class Pipeline {
   fragment main(fb : &FragmentBuiltins) {
     fragColor.Set(bindings.Get().uniforms.Map().color);
   }
-  var vertices : *vertex Buffer<[]Vertex>;
+  var vertices : *VertexInput<Vertex>;
   var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
   var bindings : *BindGroup<Bindings>;
 }
