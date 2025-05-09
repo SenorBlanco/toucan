@@ -258,6 +258,16 @@ Type* Data::GetType(TypeTable* types) { return types->GetStrongPtrType(type_); }
 
 CastExpr::CastExpr(Type* type, Expr* expr) : type_(type), expr_(expr) {}
 
+bool CastExpr::IsTransparent(TypeTable* types) const {
+  auto srcType = expr_->GetType(types);
+  return (srcType->IsInt() && type_->IsUInt() ||
+      srcType->IsUInt() && type_->IsInt() ||
+      srcType->IsShort() && type_->IsUShort() ||
+      srcType->IsUShort() && type_->IsShort() ||
+      srcType->IsByte() && type_->IsUByte() ||
+      srcType->IsUByte() && type_->IsByte());
+}
+
 Type* CastExpr::GetType(TypeTable* types) { return type_; }
 
 EnumConstant::EnumConstant(const EnumValue* value) : value_(value) {}
@@ -282,6 +292,13 @@ bool Stmts::ContainsReturn() const {
 ExprList::ExprList() {}
 
 ExprList::ExprList(std::vector<Expr*>&& exprs) : exprs_(std::move(exprs)) {}
+
+bool ExprList::IsConstant(TypeTable* types) const {
+  for (auto expr : exprs_) {
+    if (!expr || !expr->IsConstant(types)) { return false; }
+  }
+  return true;
+}
 
 ExprStmt::ExprStmt(Expr* expr) : expr_(expr) {}
 
