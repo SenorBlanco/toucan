@@ -859,10 +859,26 @@ Result CodeGenSPIRV::Visit(MethodCall* expr) {
       return AppendExtInst(GLSLstd450Sin, resultType, expr->GetArgList());
     } else if (method->name == "cos") {
       return AppendExtInst(GLSLstd450Cos, resultType, expr->GetArgList());
+    } else if (method->name == "dot") {
+      auto v1 = GenerateSPIRV(args[0]);
+      auto v2 = GenerateSPIRV(args[1]);
+      return AppendCode(spv::OpDot, resultType, { v1, v2 });
     } else if (method->name == "fabs") {
       return AppendExtInst(GLSLstd450FAbs, resultType, expr->GetArgList());
     } else if (method->name == "clz") {
       return AppendExtInst(GLSLstd450FindSMsb, resultType, expr->GetArgList());
+    } else if (method->name == "floor") {
+      return AppendExtInst(GLSLstd450Floor, resultType, expr->GetArgList());
+    } else if (method->name == "ceil") {
+      return AppendExtInst(GLSLstd450Ceil, resultType, expr->GetArgList());
+    } else if (method->name == "length") {
+      return AppendExtInst(GLSLstd450Length, resultType, expr->GetArgList());
+    } else if (method->name == "min") {
+      return AppendExtInst(GLSLstd450FMin, resultType, expr->GetArgList());
+    } else if (method->name == "max") {
+      return AppendExtInst(GLSLstd450FMax, resultType, expr->GetArgList());
+    } else if (method->name == "pow") {
+      return AppendExtInst(GLSLstd450Pow, resultType, expr->GetArgList());
     } else if (method->name == "reflect") {
       return AppendExtInst(GLSLstd450Reflect, resultType, expr->GetArgList());
     } else if (method->name == "refract") {
