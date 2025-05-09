@@ -43,7 +43,6 @@ native class Buffer<T> {
  ~Buffer();
   SetData(data : &T);
   CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<T>);
-  deviceonly Get() vertex : T:ElementType;
   deviceonly Map() uniform : ^uniform T;
   deviceonly Map() writeonly storage : ^writeonly storage T;
   deviceonly Map() storage : ^storage T;
