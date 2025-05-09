@@ -844,6 +844,12 @@ Result CodeGenSPIRV::Visit(MethodCall* expr) {
         coord = AppendCode(spv::Op::OpCompositeConstruct, float3, {x, y, layer});
       }
       return AppendCode(spv::Op::OpImageFetch, resultType, {texture, coord});
+    } else if (method->name == "Dimensions") {
+      uint32_t resultType = ConvertType(expr->GetType(types_));
+      Type*    textureType = static_cast<PtrType*>(args[0]->GetType(types_))->GetBaseType();
+      uint32_t texture = GenerateSPIRV(args[0]);
+      texture = AppendCode(spv::Op::OpLoad, ConvertType(textureType), {texture});
+      return AppendCode(spv::Op::OpImageQuerySize, resultType, {texture});
     }
   } else if (isMath(method->classType)) {
     uint32_t resultType = ConvertType(expr->GetType(types_));
