@@ -23,7 +23,7 @@ indices[2] = 2s;
 indices[3] = 1s;
 indices[4] = 2s;
 indices[5] = 3s;
-var vb = new vertex Buffer<[]Vertex>(device, verts);
+var vb = new VertexInput<Vertex>(new vertex Buffer<[]Vertex>(device, verts));
 var ib = new index Buffer<[]ushort>(device, indices);
 class Pipeline {
   vertex main(vb : &VertexBuiltins) : Varyings {

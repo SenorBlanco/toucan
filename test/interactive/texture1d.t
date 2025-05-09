@@ -66,7 +66,7 @@ var bindGroup = new BindGroup<Bindings>(device, &bindings);
 var encoder = new CommandEncoder(device);
 var p : Pipeline;
 p.fragColor = swapChain.GetCurrentTexture().CreateColorAttachment(LoadOp.Clear);
-p.vert = new vertex Buffer<[]Vertex>(device, verts);
+p.vert = new VertexInput<Vertex>(new vertex Buffer<[]Vertex>(device, verts));
 p.indices = new index Buffer<[]uint>(device, indices);
 p.bindings = bindGroup;
 var renderPass = new RenderPass<Pipeline>(encoder, &p);

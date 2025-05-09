@@ -3,7 +3,7 @@ var device = new Device();
 var window = new Window({0, 0}, System.GetScreenSize());
 var swapChain = new SwapChain<PreferredSwapChainFormat>(device, window);
 var verts : [3]Vertex = { { 0.0, 1.0, 0.0, 1.0 }, {-1.0, -1.0, 0.0, 1.0 }, { 1.0, -1.0, 0.0, 1.0 } };
-var vb = new vertex Buffer<[]Vertex>(device, &verts);
+var vb = new VertexInput<Vertex>(new vertex Buffer<[]Vertex>(device, &verts));
 class Pipeline {
   static deviceonly helper(v : *vertex Buffer<[]Vertex>) : Vertex { return v.Get(); }
   vertex main(vb : &VertexBuiltins) { vb.position = Pipeline.helper(vertices); }

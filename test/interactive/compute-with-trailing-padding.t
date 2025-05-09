@@ -45,7 +45,7 @@ while (System.IsRunning()) {
   computePass.Dispatch(verts.length, 1, 1);
   computePass.End();
   var fb = swapChain.GetCurrentTexture().CreateColorAttachment(LoadOp.Clear);
-  var renderPass = new RenderPass<Pipeline>(encoder, {vert = vb, fragColor = fb});
+  var renderPass = new RenderPass<Pipeline>(encoder, {vert = new VertexInput<Vertex>(vb), fragColor = fb});
   renderPass.SetPipeline(pipeline);
   renderPass.Draw(3, 1, 0, 0);
   renderPass.End();

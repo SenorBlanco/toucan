@@ -42,7 +42,7 @@ while (System.IsRunning()) {
   computePass.Dispatch(verts.length, 1, 1);
   computePass.End();
   var p : Pipeline;
-  p.vert = vb;
+  p.vert = new VertexInput<Vertex>(vb);
   p.fragColor = swapChain.GetCurrentTexture().CreateColorAttachment(LoadOp.Clear);
   var renderPass = new RenderPass<Pipeline>(encoder, &p);
   renderPass.SetPipeline(pipeline);
