@@ -26,8 +26,7 @@ class Bindings1 {
 }
 
 class Pipeline {
-  worldFromScreenCoord(coord : float<2>, depthSample : float) : float<3> {
-    var camera = b1.Get().camera.Map();
+  deviceonly static worldFromScreenCoord(camera : Camera, coord : float<2>, depthSample : float) : float<3> {
     // reconstruct world-space position from the screen coordinate.
     var posClip = float<4>(coord.x * 2.0 - 1.0, (1.0 - coord.y) * 2.0 - 1.0, depthSample, 1.0);
     var posWorldW = camera.invViewProjectionMatrix * posClip;
@@ -35,7 +34,12 @@ class Pipeline {
     return posWorld;
   }
 
-  vertex main(vb : &VertexBuiltins) { }
+  vertex main(vb : &VertexBuiltins) {
+    var pos : [6]float<2> = { { -1.0, -1.0 }, { 1.0, -1.0 }, { -1.0,  1.0 },
+                              { -1.0,  1.0 }, { 1.0, -1.0 }, {  1.0,  1.0 } };
+    var pos2 = pos[vb.vertexIndex];
+    vb.position = float<4>(pos2.x, pos2.y, 0.0, 1.0);
+  }
 
   fragment main(fb : &FragmentBuiltins) {
     var result : float<3>;
@@ -43,8 +47,9 @@ class Pipeline {
     var gBufferNormal = b0.Get().gBufferNormal;
     var gBufferAlbedo = b0.Get().gBufferAlbedo;
     var fragCoord = fb.fragCoord;
+    var fragCoord2ui = uint<2>((uint) Math.floor(fragCoord.x), (uint) Math.floor(fragCoord.y));
 
-    var depthPixel = gBufferDepth.Load(uint<2>( (uint) fragCoord.x, (uint) fragCoord.y), 0);
+    var depthPixel = gBufferDepth.Load(fragCoord2ui, 0);
     var depth = depthPixel.x;
 
     // Don't light the sky.
@@ -52,25 +57,25 @@ class Pipeline {
       return;
     }
 
-    var fragCoord2 = float<2>(fragCoord.x, fragCoord.y);
-    var bufferSize = gBufferDepth.Dimensions();
-    var coordUV = fragCoord2 / float<2>(bufferSize);
-    var position = this.worldFromScreenCoord(coordUV, depth);
-    var normal4 = gBufferNormal.Load(uint<2>(Math.floor(fragCoord2)), 0);
+    var bufferSize = gBufferDepth.GetSize();
+    var coordUV = float<2>((float) fragCoord.x / (float) bufferSize.x,
+                           (float) fragCoord.y / (float) bufferSize.y);
+    var camera = b1.Get().camera.Map():;
+    var position = this.worldFromScreenCoord(camera, coordUV, depth);
+    var normal4 = gBufferNormal.Load(fragCoord2ui, 0);
     var normal = float<3>(normal4.x, normal4.y, normal4.z);
-    var albedo = gBufferAlbedo.Load(uint<2>(Math.floor(fragCoord2)), 0);
+    var albedo4 = gBufferAlbedo.Load(fragCoord2ui, 0);
+    var albedo = float<3>(albedo4.x, albedo4.y, albedo4.z);
 
     var config = b1.Get().config.Map();
     var lights = b1.Get().lights.Map();
-    for (var i = 0u; i < config.numLights; i++) {
+    for (var i = 0; i < config.numLights; i++) {
       var lightPos = lights[i].position;
       var L = float<3>(lightPos.x, lightPos.y, lightPos.z) - position;
       var distance = Math.length(L);
       if (distance <= lights[i].radius) {
         var lambert = Math.max(Math.dot(normal, Math.normalize(L)), 0.0);
-        result += float<3>(
-          lambert * Math.pow(1.0 - distance / lights[i].radius, 2.0) * lights[i].color * albedo
-        );
+        result += lambert * Math.pow(1.0 - distance / lights[i].radius, 2.0) * lights[i].color * albedo;
       }
     }
 
@@ -84,3 +89,6 @@ class Pipeline {
   var b0 : *BindGroup<Bindings0>;
   var b1 : *BindGroup<Bindings1>;
 }
+
+var device = new Device();
+var pipeline = new RenderPipeline<Pipeline>(device);
