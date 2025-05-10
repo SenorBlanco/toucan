@@ -229,6 +229,9 @@ void CodeGenSPIRV::DeclareBindGroupVars(const BindGroupList& bindGroups) {
       if (qualifiers & Type::Qualifier::Coherent) {
         Append(spv::OpDecorate, {varId, spv::DecorationCoherent}, &annotations_);
       }
+      if (qualifiers & Type::Qualifier::ReadOnly) {
+        Append(spv::OpDecorate, {varId, spv::DecorationNonWritable}, &annotations_);
+      }
       binding++;
     }
     group++;
