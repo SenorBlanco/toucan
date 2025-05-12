@@ -212,6 +212,8 @@ wgpu::TextureFormat ToDawnTextureFormat(Type* format) {
     return wgpu::TextureFormat::Depth24Plus;
   } else if (classType->GetName() == "PreferredSwapChainFormat") {
     return GetPreferredSwapChainFormat();
+  } else if (classType->GetName() == "RGBA16float") {
+    return wgpu::TextureFormat::RGBA16Float;
   } else {
     assert(!"unknown Format");
     return wgpu::TextureFormat::RGBA8Unorm;
