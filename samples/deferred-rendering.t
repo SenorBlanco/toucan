@@ -31,7 +31,7 @@ class Camera {
 class GBufferTextureBindings {
   var gBufferNormal : *SampleableTexture2D<float>;
   var gBufferAlbedo : *SampleableTexture2D<float>;
-  var gBufferDepth : *SampleableTexture2D<float>;
+  var gBufferDepth : *SampleableTexture2D<unfilterable float>;
 }
 
 class LightsBufferBindings {
@@ -310,8 +310,8 @@ var sceneUniformBindGroup = new BindGroup<WriteGBuffersBindings>(device, {
 
 var gBufferTexturesBindGroup = new BindGroup<GBufferTextureBindings>(device, {
   gBufferNormal = gBufferTexture2DFloat16.CreateSampleableView(),
-  gBufferAlbedo = gBufferTextureAlbedo.CreateSampleableView(),
-  gBufferDepth = depthTexture.CreateSampleableView()
+  gBufferAlbedo = gBufferTextureAlbedo.CreateSampleableView()
+//  gBufferDepth = depthTexture.CreateSampleableView()
 });
 
 // FIXME: put these color attachments elsewhere
@@ -377,21 +377,15 @@ var invertTransposeModelMatrix = Math.transpose(Transform.invert(modelMatrix));
 var normalModelData = invertTransposeModelMatrix;
 modelUniformBuffer.SetData({modelMatrix, invertTransposeModelMatrix});
 
-// Rotates the camera around the origin based on time.
-class CameraUtil {
-  static getCameraViewProjMatrix(origin : float<3>) : float<4,4> {
-    var rad = pi * (float) (System.GetCurrentTime() / 5000.0d);
-    var rotation = Transform.translate(origin.x, origin.y, origin.z) * Transform.rotate(float<3>{0.0, 1.0, 0.0}, rad);
-    var rotatedEyePosition = rotation * Utils.makeFloat4(eyePosition, 1.0);
-
-    var viewMatrix = Transform.lookAt(Utils.makeFloat3(rotatedEyePosition), origin, upVector);
-
-    return projectionMatrix * viewMatrix;
-  }
-};
-
 while (System.IsRunning()) {
-  var cameraViewProj = CameraUtil.getCameraViewProjMatrix(origin);
+  // Rotates the camera around the origin based on time.
+  var rad = pi * (float) (System.GetCurrentTime() / 5000.0d);
+  var rotation = Transform.translate(origin.x, origin.y, origin.z) * Transform.rotate(float<3>{0.0, 1.0, 0.0}, rad);
+  var rotatedEyePosition = rotation * Utils.makeFloat4(eyePosition, 1.0);
+
+  var viewMatrix = Transform.lookAt(Utils.makeFloat3(rotatedEyePosition), origin, upVector);
+
+  var cameraViewProj = projectionMatrix * viewMatrix;
   var cameraInvViewProj = Transform.invert(cameraViewProj);
   cameraUniformBuffer.SetData({cameraViewProj, cameraInvViewProj});
 
