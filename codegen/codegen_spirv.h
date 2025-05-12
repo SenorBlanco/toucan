@@ -58,7 +58,7 @@ class CodeGenSPIRV : public Visitor {
   uint32_t AppendDecl(uint32_t opCode, uint32_t resultType, const Code& args);
   uint32_t AppendExtInst(uint32_t extInst, uint32_t resultType, ExprList* argList);
   uint32_t GetStorageClass(Type* type);
-  uint32_t AppendImageDecl(uint32_t dim, bool array, int qualifiers, const TypeList& templateArgs);
+  uint32_t AppendImageDecl(uint32_t dim, bool array, int qualifiers, ClassType* classType);
   uint32_t ConvertType(Type* type);
   uint32_t GetFunctionType(const Code& signature);
   uint32_t ConvertPointerToType(Type* type, uint32_t storageClass);

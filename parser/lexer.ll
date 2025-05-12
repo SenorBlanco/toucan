@@ -114,6 +114,7 @@ deviceonly { return T_DEVICEONLY; }
 coherent { return T_COHERENT; }
 using   { return T_USING; }
 inline  { return T_INLINE; }
+unfilterable { return T_UNFILTERABLE; }
 include BEGIN(include);
 
 int     { return T_INT; }
