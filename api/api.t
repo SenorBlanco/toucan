@@ -433,6 +433,6 @@ class RGBA32float : PixelFormat<float, float<4>> {}
 class RGB10A2unorm : PixelFormat<float, uint> {}
 class RG11B10ufloat : PixelFormat<float, uint> {}
 
-class Depth24Plus : PixelFormat<float, uint> {}
+class Depth24Plus : PixelFormat<unfilterable float, uint> {}
 
 class PreferredSwapChainFormat : PixelFormat<float, ubyte<4>> {}

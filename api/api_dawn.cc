@@ -226,8 +226,14 @@ wgpu::TextureFormat ToDawnTextureFormat(Type* format) {
 
 wgpu::TextureSampleType ToDawnTextureSampleType(ClassType* type) {
   Type* arg = type->GetTemplateArgs()[0];
+  int qualifiers;
+  arg = arg->GetUnqualifiedType(&qualifiers);
   if (arg->IsFloat()) {
-    return wgpu::TextureSampleType::Float;
+    if (qualifiers & Type::Qualifier::Unfilterable) {
+      return wgpu::TextureSampleType::UnfilterableFloat;
+    } else {
+      return wgpu::TextureSampleType::Float;
+    }
   } else if (arg->IsInt()) {
     return wgpu::TextureSampleType::Sint;
   } else if (arg->IsUInt()) {

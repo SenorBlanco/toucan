@@ -149,7 +149,7 @@ Type* FindType(const char* str) {
 %token T_HALF
 %token T_STATIC T_NATIVE T_VERTEX T_FRAGMENT T_COMPUTE T_THIS
 %token T_INDEX T_UNIFORM T_STORAGE T_SAMPLEABLE T_RENDERABLE
-%token T_USING T_INLINE
+%token T_USING T_INLINE T_UNFILTERABLE
 %right '=' T_ADD_EQUALS T_SUB_EQUALS T_MUL_EQUALS T_DIV_EQUALS
 %left T_LOGICAL_OR
 %left T_LOGICAL_AND
@@ -378,6 +378,7 @@ type_qualifier:
   | T_READONLY                              { $$ = Type::Qualifier::ReadOnly; }
   | T_WRITEONLY                             { $$ = Type::Qualifier::WriteOnly; }
   | T_COHERENT                              { $$ = Type::Qualifier::Coherent; }
+  | T_UNFILTERABLE                          { $$ = Type::Qualifier::Unfilterable; }
   ;
 
 type_qualifiers:

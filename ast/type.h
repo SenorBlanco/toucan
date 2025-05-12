@@ -100,6 +100,7 @@ class Type {
     ReadOnly = 0x0040,
     WriteOnly = 0x0080,
     Coherent = 0x0100,
+    Unfilterable = 0x0200,
   };
 };
 
