@@ -17,6 +17,9 @@ class Utils {
   static length(v : float<3>) : float {
     return Math.sqrt(Utils.dot(v, v));
   }
+  static makeFloat3(v : float<4>) : float<3> {
+    return float<3>(v.x, v.y, v.z);
+  }
   static makeFloat4(v : float<2>) : float<4> {
     return float<4>(v.x, v.y, 0.0, 1.0);
   }
