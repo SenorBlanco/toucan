@@ -31,7 +31,7 @@ class Camera {
 class GBufferTextureBindings {
   var gBufferNormal : *SampleableTexture2D<float>;
   var gBufferAlbedo : *SampleableTexture2D<float>;
-  var gBufferDepth : *SampleableTexture2D<float>;
+  var gBufferDepth : *SampleableTexture2D<unfilterable float>;
 }
 
 class LightsBufferBindings {

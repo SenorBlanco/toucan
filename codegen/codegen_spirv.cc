@@ -393,8 +393,12 @@ uint32_t CodeGenSPIRV::DeclareVar(Var* var) {
 uint32_t CodeGenSPIRV::AppendImageDecl(uint32_t        dim,
                                        bool            array,
                                        int             qualifiers,
-                                       const TypeList& templateArgs) {
+                                       ClassType*      classType) {
+  const TypeList& templateArgs = classType->GetTemplateArgs();
   assert(templateArgs.size() >= 1);
+  if (templateArgs[0]->IsQualified()) {
+    return ConvertType(types_->GetClassTemplateInstance(classType->GetTemplate(), { templateArgs[0]->GetUnqualifiedType() }));
+  }
   uint32_t sampledType = ConvertType(templateArgs[0]);
   uint32_t depth = 0;  // not depth
   uint32_t arrayed = array ? 1 : 0;
@@ -434,15 +438,15 @@ uint32_t CodeGenSPIRV::ConvertType(Type* type) {
       if (isSampler(classType)) {
         resultId = AppendTypeDecl(spv::Op::OpTypeSampler, {});
       } else if (isSampleableTexture1D(classType)) {
-        resultId = AppendImageDecl(spv::Dim1D, false, qualifiers, classType->GetTemplateArgs());
+        resultId = AppendImageDecl(spv::Dim1D, false, qualifiers, classType);
       } else if (isSampleableTexture2D(classType)) {
-        resultId = AppendImageDecl(spv::Dim2D, false, qualifiers, classType->GetTemplateArgs());
+        resultId = AppendImageDecl(spv::Dim2D, false, qualifiers, classType);
       } else if (isSampleableTexture3D(classType)) {
-        resultId = AppendImageDecl(spv::Dim3D, false, qualifiers, classType->GetTemplateArgs());
+        resultId = AppendImageDecl(spv::Dim3D, false, qualifiers, classType);
       } else if (isSampleableTexture2DArray(classType)) {
-        resultId = AppendImageDecl(spv::Dim2D, true, qualifiers, classType->GetTemplateArgs());
+        resultId = AppendImageDecl(spv::Dim2D, true, qualifiers, classType);
       } else if (isSampleableTextureCube(classType)) {
-        resultId = AppendImageDecl(spv::DimCube, false, qualifiers, classType->GetTemplateArgs());
+        resultId = AppendImageDecl(spv::DimCube, false, qualifiers, classType);
       } else {
         assert(!"unsupported native class type in shader");
       }
@@ -481,8 +485,11 @@ uint32_t CodeGenSPIRV::ConvertType(Type* type) {
     resultId = AppendTypeDecl(spv::Op::OpTypeBool, {});
   } else if (type->IsVector()) {
     VectorType* v = static_cast<VectorType*>(type);
-    uint32_t    componentType = ConvertType(v->GetComponentType());
-    resultId = AppendTypeDecl(spv::Op::OpTypeVector, {componentType, v->GetLength()});
+    Type* componentType = v->GetComponentType();
+    if (componentType->IsQualified()) {
+      return ConvertType(types_->GetVector(componentType->GetUnqualifiedType(), v->GetLength()));
+    }
+    resultId = AppendTypeDecl(spv::Op::OpTypeVector, {ConvertType(componentType), v->GetLength()});
   } else if (type->IsMatrix()) {
     auto*    m = static_cast<MatrixType*>(type);
     uint32_t columnType = ConvertType(m->GetColumnType());
