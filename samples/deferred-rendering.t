@@ -155,10 +155,10 @@ class CanvasSizeBindings {
 }
 
 class GBuffersDebugView : TextureQuadPass {
-  vertex main() {
+  vertex main(vb : &VertexBuiltins) {
    // call vertexTextureQuad
   }
-  fragment main() {
+  fragment main(fb : &FragmentBuiltins) {
    // do fragmentGBuffersDebugView
   }
   var bindings : *BindGroup<GBufferTextureBindings>;
