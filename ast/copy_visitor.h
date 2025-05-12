@@ -43,6 +43,7 @@ class CopyVisitor : public Visitor {
   Result        Visit(HeapAllocation* node) override;
   Result        Visit(IfStatement* stmt) override;
   Result        Visit(Initializer* node) override;
+  Result        Visit(InsertElementExpr* node) override;
   Result        Visit(IntConstant* constant) override;
   Result        Visit(MethodCall* node) override;
   Result        Visit(UnresolvedNewExpr* node) override;
