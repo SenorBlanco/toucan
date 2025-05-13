@@ -1,4 +1,4 @@
-//include "teapot.t"
+include "include/dragon.t"
 include "include/transform.t"
 include "include/utils.t"
 
@@ -229,6 +229,8 @@ class DeferredRender : TextureQuadPass {
 
 // Host code
 
+include "include/mesh.t"
+
 var kMaxNumLights = 1024;
 var lightExtentMin = float<3>{-50.0, -30.0, -50.0};
 var lightExtentMax = float<3>{ 50.0, 50.0, 50.0};
@@ -240,19 +242,11 @@ var swapChain = new SwapChain<PreferredSwapChainFormat>(device, window);
 var windowSize = window.GetSize();
 var aspect = (float) windowSize.x / (float) windowSize.y;
 
+// Meshify the dragon
+var dragon = new Mesh(&dragonVertices, &dragonTriangles);
+
 // Create the model vertex buffer.
-var length = 100; // FIXME: mesh.positions.length
-var vertexBuffer = new vertex Buffer<[]Vertex>(device, length);
-var verts = [length] new Vertex;
-{
-  for (var i = 0; i < verts.length; ++i) {
-    var v = verts[i];
-//    v.position = mesh.positions[i];
-//    v.normal = mesh.normals[i];
-//    v.uvs = mesh.uvs[i];
-  }
-}
-vertexBuffer.SetData(verts);
+var vertexBuffer = new vertex Buffer<[]Vertex>(device, dragon.vertices);
 
 // Create the model index buffer.
 var meshTriangleCount = 100; // FIXME: mesh.triangles.length
