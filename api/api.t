@@ -299,6 +299,10 @@ native class Math {
   static floor(v : float<2>) : float<2>;
   static floor(v : float<3>) : float<3>;
   static floor(v : float<4>) : float<4>;
+  static ceil(v : float)   : float;
+  static ceil(v : float<2>) : float<2>;
+  static ceil(v : float<3>) : float<3>;
+  static ceil(v : float<4>) : float<4>;
   static min(v1 : float,    v2 : float) : float;
   static min(v1 : float<2>, v2 : float<2>) : float<2>;
   static min(v1 : float<3>, v2 : float<3>) : float<3>;

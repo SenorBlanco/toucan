@@ -408,8 +408,7 @@ while (System.IsRunning()) {
     var lightPass = new ComputePass<LightUpdate>(commandEncoder, {});
     lightPass.SetPipeline(lightUpdateComputePipeline);
     lightPass.Set({bindings = lightsBufferComputeBindGroup});
-    // FIXME: Math.ceil
-    lightPass.Dispatch(kMaxNumLights / 64, 1, 1);
+    lightPass.Dispatch((kMaxNumLights + 63) / 64, 1, 1);
     lightPass.End();
   }
   if (mode == Mode.GBuffersView) {
