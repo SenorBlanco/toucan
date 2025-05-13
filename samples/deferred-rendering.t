@@ -118,10 +118,11 @@ class WriteGBuffers {
 
 class TextureQuadPass {
   vertex main(vb : &VertexBuiltins) {
-    var pos : [6]float<2> = { { -1.0, -1.0 }, { 1.0, -1.0 }, { -1.0,  1.0 },
-                              { -1.0,  1.0 }, { 1.0, -1.0 }, {  1.0,  1.0 } };
-    var pos2 = pos[vb.vertexIndex];
-    vb.position = float<4>(pos2.x, pos2.y, 0.0, 1.0);
+    // TextureQuadPass vertex shader
+    var pos : [6]float<2> = {
+      { -1.0, -1.0 }, { 1.0, -1.0 }, { -1.0,  1.0 },
+      { -1.0,  1.0 }, { 1.0, -1.0 }, {  1.0,  1.0 } };
+    vb.position = Utils.makeFloat4(pos[vb.vertexIndex]);
   }
 
   var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
@@ -226,26 +227,18 @@ class DeferredRender : TextureQuadPass {
   var bufferBindings : *BindGroup<DeferredRenderBufferBindings>;
 }
 
-var device = new Device();
-var window = new Window({0, 0}, {640, 480});
-
-// import { mesh } from '../../meshes/stanfordDragon';
+// Host code
 
 var kMaxNumLights = 1024;
 var lightExtentMin = float<3>{-50.0, -30.0, -50.0};
 var lightExtentMax = float<3>{ 50.0, 50.0, 50.0};
 
+var device = new Device();
+var window = new Window({0, 0}, {640, 480});
+
 var swapChain = new SwapChain<PreferredSwapChainFormat>(device, window);
-//const devicePixelRatio = window.devicePixelRatio;
-//canvas.width = canvas.clientWidth * devicePixelRatio;
-//canvas.height = canvas.clientHeight * devicePixelRatio;
 var canvasSize = window.GetSize();
 var aspect = (float) canvasSize.x / (float) canvasSize.y;
-//const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
-//context.configure({
-//  device,
-//  format: presentationFormat,
-//});
 
 // Create the model vertex buffer.
 var length = 100; // FIXME: mesh.positions.length
