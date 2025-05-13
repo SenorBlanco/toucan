@@ -1,4 +1,4 @@
-var dragonTriangles : [11102][3]int = {
+var dragonTriangles : [11102][3]uint = {
   {5, 0, 2},
   {0, 1, 2},
   {0, 3, 1},
