@@ -266,9 +266,13 @@ var indices = [indexCount] new ushort;
 }
 indexBuffer.SetData(indices);
 
-// GBuffer texture render targets
+// Create normals texture
 var gBufferTexture2DFloat16 = new renderable sampleable Texture2D<RGBA16float>(device, windowSize);
+
+// Create albedo texture
 var gBufferTextureAlbedo = new renderable sampleable Texture2D<BGRA8unorm>(device, windowSize);
+
+// Create depth texture
 var depthTexture = new renderable sampleable Texture2D<Depth24Plus>(device, windowSize);
 
 // FIXME: add depth/stencil stuff here
@@ -277,70 +281,67 @@ var depthTexture = new renderable sampleable Texture2D<Depth24Plus>(device, wind
 //    depthCompare: 'less',
 //    format: 'depth24plus',
 //  },
+
+// Create WriteGBuffers RenderPipeline
 var writeGBuffersPipeline = new RenderPipeline<WriteGBuffers>(device = device, cullMode = CullMode.Back);
 
+// Create GBuffersDebugView RenderPipeline
 var gBuffersDebugViewPipeline = new RenderPipeline<GBuffersDebugView>(device);
 
+// Create DeferredRender RenderPipeline
 var deferredRenderPipeline = new RenderPipeline<DeferredRender>(device);
 
+// Create ColorAttachments for GBuffer textures
 var writeGBufferPassDescriptor : WriteGBuffers;
 writeGBufferPassDescriptor.normals = gBufferTexture2DFloat16.CreateColorAttachment(clearValue = {0.0, 0.0, 0.0, 1.0}, loadOp = LoadOp.Clear);
 writeGBufferPassDescriptor.albedo = gBufferTextureAlbedo.CreateColorAttachment(clearValue = {0.0, 0.0, 0.0, 1.0}, loadOp = LoadOp.Clear);
 writeGBufferPassDescriptor.depth = depthTexture.CreateDepthStencilAttachment(depthLoadOp = LoadOp.Clear, depthClearValue = 1.0);
 
-var numLights = 128u;
-
 enum Mode {
   Rendering,
   GBuffersView
-};
+}
 
-var configUniformBuffer = new uniform Buffer<Config>(device, {numLights});
+// Settings
+class Settings {
+  var mode = Mode.Rendering;
+  var numLights = 128;
+}
 
-var mode = Mode.Rendering;
+var settings : Settings;
 
-//const gui = new GUI();
-//gui.add(settings, 'mode', ['rendering', 'gBuffers view']);
-//gui
-//  .add(settings, 'numLights', 1, kMaxNumLights)
-//  .step(1)
-//  .onChange(() => {
-//    device.queue.writeBuffer(
-//      configUniformBuffer,
-//      0,
-//      new Uint32Array([settings.numLights])
-//    );
-//  });
+// Create Config uniform buffer
+var configUniformBuffer = new uniform Buffer<Config>(device, {settings.numLights});
 
+// Create Uniforms uniform buffer
 var modelUniformBuffer = new uniform Buffer<Uniforms>(device);
+
+// Create Camera uniform buffer
 var cameraUniformBuffer = new uniform Buffer<Camera>(device);
 
+// Create WriteGBuffersBindings BindGroup
 var sceneUniformBindGroup = new BindGroup<WriteGBuffersBindings>(device, {
-  modelUniformBuffer,
-  cameraUniformBuffer
+  uniforms = modelUniformBuffer,
+  camera = cameraUniformBuffer
 });
 
+// Create GBufferTextureBindings BindGroup
 var gBufferTexturesBindGroup = new BindGroup<GBufferTextureBindings>(device, {
   gBufferNormal = gBufferTexture2DFloat16.CreateSampleableView(),
   gBufferAlbedo = gBufferTextureAlbedo.CreateSampleableView(),
   gBufferDepth = depthTexture.CreateSampleableView()
 });
 
-// FIXME: put these color attachments elsewhere
-//  gBufferNormal = gBufferTexture2DFloat16.CreateColorAttachment(LoadOp.Clear, StoreOp.Store, {0.0, 0.0, 1.0, 1.0}),
-//  gBufferAlbedo = gBufferTextureAlbedo.CreateColorAttachment(LoadOp.Clear, StoreOp.Store, { 0.0, 0.0, 0.0, 1.0}),
-//  // FIXME: have to cast this to a SampleableTexture2D somehow.
-//  gBufferDepth = depthTexture.CreateDepthStencilAttachment(LoadOp.Clear),
-
 // Lights data are uploaded in a storage buffer
 // which could be updated/culled/etc. with a compute shader
 var extent = lightExtentMax - lightExtentMin;
-var lightDataStride = 8;
+
+// Create storage buffer for lights
+var lightsBuffer = new storage Buffer<[]LightData>(device, kMaxNumLights);
 
 // We randomaly populate lights randomly in a box range
 // And simply move them along y-axis per frame to show they are
 // dynamic lightings
-var lightsBuffer = new storage Buffer<[]LightData>(device, kMaxNumLights);
 var lightData = [kMaxNumLights] new LightData;
 for (var j = 0; j < kMaxNumLights; j++) {
   var light = lightData[j];  // FIXME: do we need &LightData here?
@@ -360,15 +361,20 @@ for (var j = 0; j < kMaxNumLights; j++) {
 }
 lightsBuffer.SetData(lightData);
 
+// Create LightExtent uniform buffer
 var lightExtentBuffer = new uniform Buffer<LightExtent>(device, {lightExtentMin, lightExtentMax});
 
+// Create LightUpdate ComputePipeline
 var lightUpdateComputePipeline = new ComputePipeline<LightUpdate>(device);
 
+// Create DeferredRenderBufferBindings BindGroup
 var lightsBufferBindGroup = new BindGroup<DeferredRenderBufferBindings>(device, {
   lightsBuffer,
   configUniformBuffer,
   cameraUniformBuffer
 });
+
+// Create LightUpdateBindings BindGroup
 var lightsBufferComputeBindGroup = new BindGroup<LightUpdateBindings>(device, {
   lightsBuffer,
   configUniformBuffer,
@@ -397,9 +403,11 @@ while (System.IsRunning()) {
 
   var viewMatrix = Transform.lookAt(Utils.makeFloat3(rotatedEyePosition), origin, upVector);
 
-  var cameraViewProj = projectionMatrix * viewMatrix;
-  var cameraInvViewProj = Transform.invert(cameraViewProj);
-  cameraUniformBuffer.SetData({cameraViewProj, cameraInvViewProj});
+  // Update camera matrices
+  var camera : Camera;
+  camera.viewProjectionMatrix = projectionMatrix * viewMatrix;
+  camera.invViewProjectionMatrix = Transform.invert(camera.viewProjectionMatrix);
+  cameraUniformBuffer.SetData(&camera);
 
   var commandEncoder = new CommandEncoder(device);
   {
@@ -422,7 +430,7 @@ while (System.IsRunning()) {
     lightPass.Dispatch((kMaxNumLights + 63) / 64, 1, 1);
     lightPass.End();
   }
-  if (mode == Mode.GBuffersView) {
+  if (settings.mode == Mode.GBuffersView) {
     // GBuffers debug view
     // Left: depth
     // Middle: normal
