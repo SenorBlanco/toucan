@@ -9,7 +9,7 @@ cells = data["cells"]
 positions = data["positions"]
 
 count = 0
-print("var dragonTriangles : [" + str(len(cells)) + "][3]int = {");
+print("var dragonTriangles : [" + str(len(cells)) + "][3]uint = {");
 for cell in cells:
   count += 1
   possibleComma = "," if (count < len(cells)) else ""
