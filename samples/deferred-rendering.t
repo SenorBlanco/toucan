@@ -2,175 +2,25 @@
 include "include/transform.t"
 include "include/utils.t"
 
-class VertexBuffers {
-  var position : float<3>;
-  var normal : float<3>;
-  var uv : float<2>;
-}
-
+// LightData
 class LightData {
   var position : float<4>;
   var color    : float<3>;
   var radius   : float;
 }
 
+// Config
 class Config {
   var numLights : uint;
 }
 
-class Uniforms {
-  var modelMatrix : float<4,4>;
-  var normalModelMatrix : float<4,4>;
-}
-
-class Camera {
-  var viewProjectionMatrix : float<4,4>;
-  var invViewProjectionMatrix : float<4,4>;
-}
-
-class GBufferTextureBindings {
-  var gBufferNormal : *SampleableTexture2D<float>;
-  var gBufferAlbedo : *SampleableTexture2D<float>;
-  var gBufferDepth : *SampleableTexture2D<unfilterable float>;
-}
-
-class LightsBufferBindings {
-  var lights : *readonly storage Buffer<[]LightData>;
-  var config : *uniform Buffer<Config>;
-  var camera : *uniform Buffer<Camera>;
-}
-
-class TextureQuadPass {
-  var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
-}
-
-class DeferredRender : TextureQuadPass {
-  deviceonly static worldFromScreenCoord(camera : Camera, coord : float<2>, depthSample : float) : float<3> {
-    // reconstruct world-space position from the screen coordinate.
-    var posClip = float<4>(coord.x * 2.0 - 1.0, (1.0 - coord.y) * 2.0 - 1.0, depthSample, 1.0);
-    var posWorldW = camera.invViewProjectionMatrix * posClip;
-    var posWorld = float<3>(posWorldW.x, posWorldW.y, posWorldW.z) / posWorldW.w;
-    return posWorld;
-  }
-
-  vertex main(vb : &VertexBuiltins) {
-    var pos : [6]float<2> = { { -1.0, -1.0 }, { 1.0, -1.0 }, { -1.0,  1.0 },
-                              { -1.0,  1.0 }, { 1.0, -1.0 }, {  1.0,  1.0 } };
-    var pos2 = pos[vb.vertexIndex];
-    vb.position = float<4>(pos2.x, pos2.y, 0.0, 1.0);
-  }
-
-  fragment main(fb : &FragmentBuiltins) {
-    var result : float<3>;
-    var gBufferDepth = b0.Get().gBufferDepth;
-    var gBufferNormal = b0.Get().gBufferNormal;
-    var gBufferAlbedo = b0.Get().gBufferAlbedo;
-    var fragCoord = fb.fragCoord;
-    var fragCoord2ui = uint<2>((uint) Math.floor(fragCoord.x), (uint) Math.floor(fragCoord.y));
-
-    var depthPixel = gBufferDepth.Load(fragCoord2ui, 0);
-    var depth = depthPixel.x;
-
-    // Don't light the sky.
-    if (depth >= 1.0) {
-      return;
-    }
-
-    var bufferSize = gBufferDepth.GetSize();
-    var coordUV = float<2>((float) fragCoord.x / (float) bufferSize.x,
-                           (float) fragCoord.y / (float) bufferSize.y);
-    var camera = b1.Get().camera.Map():;
-    var position = this.worldFromScreenCoord(camera, coordUV, depth);
-    var normal4 = gBufferNormal.Load(fragCoord2ui, 0);
-    var normal = float<3>(normal4.x, normal4.y, normal4.z);
-    var albedo4 = gBufferAlbedo.Load(fragCoord2ui, 0);
-    var albedo = float<3>(albedo4.x, albedo4.y, albedo4.z);
-
-    var config = b1.Get().config.Map();
-    var lights = b1.Get().lights.Map();
-    for (var i = 0; i < config.numLights; i++) {
-      var lightPos = lights[i].position;
-      var L = float<3>(lightPos.x, lightPos.y, lightPos.z) - position;
-      var distance = Math.length(L);
-      if (distance <= lights[i].radius) {
-        var lambert = Math.max(Math.dot(normal, Math.normalize(L)), 0.0);
-        result += lambert * Math.pow(1.0 - distance / lights[i].radius, 2.0) * lights[i].color * albedo;
-      }
-    }
-
-    // some manual ambient
-    result += float<3>(0.2);
-
-    fragColor.Set(float<4>(result.x, result.y, result.z, 1.0));
-  }
-
-  var b0 : *BindGroup<GBufferTextureBindings>;
-  var b1 : *BindGroup<LightsBufferBindings>;
-}
-
-class WriteGBuffersVaryings {
-  var fragNormal : float<3>;
-  var fragUV : float<2>;
-}
-
-class WriteGBuffersBindings {
-  var uniforms : *uniform Buffer<Uniforms>;
-  var camera : *uniform Buffer<Camera>;
-}
-
-class WriteGBuffers {
-  vertex main(vb : &VertexBuiltins) : WriteGBuffersVaryings {
-    var uniforms = bindings.Get().uniforms.Map();
-    var camera = bindings.Get().camera.Map();
-    var v = vertexes.Get();
-    var worldPosition = uniforms.modelMatrix * Utils.makeFloat4(v.position, 1.0);
-    vb.position = camera.viewProjectionMatrix * worldPosition;
-    var normal4 = float<4>(v.normal.x, v.normal.y, v.normal.z, 1.0);
-    var fn4 = uniforms.normalModelMatrix * normal4;
-    var fn3 = float<3>(fn4.x, fn4.y, fn4.z);
-    var output : WriteGBuffersVaryings;
-    output.fragNormal = float<3>{fn4.x, fn4.y, fn4.z};
-    output.fragUV = v.uv;
-    return output;
-  }
-  fragment main(fb : &FragmentBuiltins, varyings : WriteGBuffersVaryings) {
-    // faking some kind of checkerboard texture
-    var uv = Math.floor(30.0 * varyings.fragUV);
-    var c = 0.2 + 0.5 * ((uv.x + uv.y) - 2.0 * Math.floor((uv.x + uv.y) / 2.0));
-
-    var n = Math.normalize(varyings.fragNormal);
-    normals.Set(float<4>{n.x, n.y, n.z, 1.0});
-    albedo.Set(float<4>{c, c, c, 1.0});
-  }
-
-  var normals : *ColorAttachment<RGBA16float>;
-  var albedo : *ColorAttachment<BGRA8unorm>;
-  var depth : *DepthStencilAttachment<Depth24Plus>;
-  var bindings : *BindGroup<WriteGBuffersBindings>;
-  var vertexes : *VertexInput<VertexBuffers>;
-  var indexes : *index Buffer<[]ushort>;
-}
-
-class CanvasSizeBindings {
-  var size : *uniform Buffer<uint<2>>;
-}
-
-class GBuffersDebugView : TextureQuadPass {
-  vertex main(vb : &VertexBuiltins) {
-   // call vertexTextureQuad
-  }
-  fragment main(fb : &FragmentBuiltins) {
-   // do fragmentGBuffersDebugView
-  }
-  var bindings : *BindGroup<GBufferTextureBindings>;
-  var canvasSizeBindings : *BindGroup<CanvasSizeBindings>;
-}
-
+// LightExtent
 class LightExtent {
   var min : float<3>;
   var max : float<3>;
 }
 
+// LightUpdateBindings
 class LightUpdateBindings {
   var lights : *storage Buffer<[]LightData>;
   var config : *uniform Buffer<Config>;
@@ -200,18 +50,201 @@ class LightUpdate {
   var bindings : *BindGroup<LightUpdateBindings>;
 }
 
+// Uniforms
+class Uniforms {
+  var modelMatrix : float<4,4>;
+  var normalModelMatrix : float<4,4>;
+}
+
+// Camera
+class Camera {
+  var viewProjectionMatrix : float<4,4>;
+  var invViewProjectionMatrix : float<4,4>;
+}
+
+// VertexOutput
+class VertexOutput {
+  var fragNormal : float<3>;
+  var fragUV : float<2>;
+}
+
+// WriteGBuffersBindings
+class WriteGBuffersBindings {
+  var uniforms : *uniform Buffer<Uniforms>;
+  var camera : *uniform Buffer<Camera>;
+}
+
+// Vertex
+class Vertex {
+  var position : float<3>;
+  var normal : float<3>;
+  var uv : float<2>;
+}
+
+class WriteGBuffers {
+  // WriteGBuffers vertex shader
+  vertex main(vb : &VertexBuiltins) : VertexOutput {
+    var uniforms = bindings.Get().uniforms.Map();
+    var camera = bindings.Get().camera.Map();
+    var v = vertexes.Get();
+
+    // Transform the vertex position by the model and viewProjection matrices.
+    // Transform the vertex normal by the normalModelMatrix (inverse transpose of the model).
+    var output : VertexOutput;
+    var worldPosition = uniforms.modelMatrix * Utils.makeFloat4(v.position, 1.0);
+    vb.position = camera.viewProjectionMatrix * worldPosition;
+    output.fragNormal = Utils.makeFloat3(uniforms.normalModelMatrix * Utils.makeFloat4(v.normal, 1.0));
+    output.fragUV = v.uv;
+    return output;
+  }
+
+  fragment main(fb : &FragmentBuiltins, varyings : VertexOutput) {
+    // WriteGBuffers fragment shader
+
+    var uv = Math.floor(30.0 * varyings.fragUV);
+    var c = 0.2 + 0.5 * ((uv.x + uv.y) - 2.0 * Math.floor((uv.x + uv.y) / 2.0));
+
+    normals.Set(Utils.makeFloat4(Math.normalize(varyings.fragNormal), 1.0));
+    albedo.Set(float<4>(c, c, c, 1.0));
+  }
+
+  var normals : *ColorAttachment<RGBA16float>;
+  var albedo : *ColorAttachment<BGRA8unorm>;
+  var depth : *DepthStencilAttachment<Depth24Plus>;
+  var bindings : *BindGroup<WriteGBuffersBindings>;
+  var vertexes : *VertexInput<Vertex>;
+  var indexes : *index Buffer<[]ushort>;
+}
+
+class TextureQuadPass {
+  var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
+}
+
+// GBufferTextureBindings
+class GBufferTextureBindings {
+  var gBufferNormal : *SampleableTexture2D<float>;
+  var gBufferAlbedo : *SampleableTexture2D<float>;
+  var gBufferDepth : *SampleableTexture2D<unfilterable float>;
+}
+
+// CanvasSizeBindings
+class CanvasSizeBindings {
+  var size : *uniform Buffer<uint<2>>;
+}
+
+class GBuffersDebugView : TextureQuadPass {
+  fragment main(fb : &FragmentBuiltins) {
+    var gBufferDepth = textureBindings.Get().gBufferDepth;
+    var gBufferNormal = textureBindings.Get().gBufferNormal;
+    var gBufferAlbedo = textureBindings.Get().gBufferAlbedo;
+    var coord = Utils.makeFloat2(fb.fragCoord);
+    var result : float<4>;
+    var canvasSize = canvasSizeBindings.Get().size.Map();
+    var c = coord / float<2>((float) canvasSize.x, (float) canvasSize.y);
+    var cfloor = Math.floor(c);
+    var ci = uint<2>((uint) cfloor.x, (uint) cfloor.y);
+    if (c.x < 0.33333) {
+      var rawDepth2 = gBufferDepth.Load(ci, 0);
+      var rawDepth = rawDepth2.x;
+      // remap depth into something a bit more visible
+      var depth = (1.0 - rawDepth) * 50.0;
+      result = float<4>(depth);
+    } else if (c.x < 0.66667) {
+      result = gBufferNormal.Load(ci, 0);
+      result = (result + float<4>(1.0, 1.0, 1.0, 0.0)) * float<4>(0.5, 0.5, 0.5, 1.0);
+    } else {
+      result = gBufferAlbedo.Load(ci, 0);
+    }
+    fragColor.Set(result);
+  }
+
+  // FIXME: refactor into TextureQuadPass
+  vertex main(vb : &VertexBuiltins) {
+    var pos : [6]float<2> = { { -1.0, -1.0 }, { 1.0, -1.0 }, { -1.0,  1.0 },
+                              { -1.0,  1.0 }, { 1.0, -1.0 }, {  1.0,  1.0 } };
+    var pos2 = pos[vb.vertexIndex];
+    vb.position = float<4>(pos2.x, pos2.y, 0.0, 1.0);
+  }
+
+  var textureBindings : *BindGroup<GBufferTextureBindings>;
+  var canvasSizeBindings : *BindGroup<CanvasSizeBindings>;
+  var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
+}
+
+// DeferredRenderBufferBindings
+class DeferredRenderBufferBindings {
+  var lights : *readonly storage Buffer<[]LightData>;
+  var config : *uniform Buffer<Config>;
+  var camera : *uniform Buffer<Camera>;
+}
+
+class DeferredRender : TextureQuadPass {
+  // worldFromScreenCoord
+  deviceonly static worldFromScreenCoord(camera : Camera, coord : float<2>, depthSample : float) : float<3> {
+    // reconstruct world-space position from the screen coordinate.
+    var posClip = float<4>(coord.x * 2.0 - 1.0, (1.0 - coord.y) * 2.0 - 1.0, depthSample, 1.0);
+    var posWorldW = camera.invViewProjectionMatrix * posClip;
+    var posWorld = float<3>(posWorldW.x, posWorldW.y, posWorldW.z) / posWorldW.w;
+    return posWorld;
+  }
+
+  // DeferredRender fragment shader
+  fragment main(fb : &FragmentBuiltins) {
+    var buffers = bufferBindings.Get();
+    var config = buffers.config.Map();
+    var lights = buffers.lights.Map();
+    var camera = buffers.camera.Map():;
+    var textures = textureBindings.Get();
+    var result : float<3>;
+    var fragCoord2Floor = Math.floor(Utils.makeFloat2(fb.fragCoord));
+    // FIXME: fix (uint<2>) cast
+    var fragCoord2ui = uint<2>((uint) fragCoord2Floor.x, (uint) fragCoord2Floor.y);
+
+    var depthPixel = textures.gBufferDepth.Load(fragCoord2ui, 0);
+    var depth = depthPixel.x;
+
+    // Don't light the sky.
+    if (depth >= 1.0) {
+      return;
+    }
+
+    var bufferSize = textures.gBufferDepth.GetSize();
+    var coordUV = Utils.makeFloat2(fb.fragCoord) / float<2>((float) bufferSize.x, (float) bufferSize.y);
+    var position = this.worldFromScreenCoord(camera, coordUV, depth);
+    var normal = Utils.makeFloat3(textures.gBufferNormal.Load(fragCoord2ui, 0));
+    var albedo = Utils.makeFloat3(textures.gBufferAlbedo.Load(fragCoord2ui, 0));
+
+    for (var i = 0; i < config.numLights; i++) {
+      var L = Utils.makeFloat3(lights[i].position) - position;
+      var distance = Math.length(L);
+      if (distance <= lights[i].radius) {
+        var lambert = Math.max(Math.dot(normal, Math.normalize(L)), 0.0);
+        result += lambert * Math.pow(1.0 - distance / lights[i].radius, 2.0) * lights[i].color * albedo;
+      }
+    }
+
+    // some manual ambient
+    result += float<3>(0.2);
+
+    fragColor.Set(float<4>(result.x, result.y, result.z, 1.0));
+  }
+
+  vertex main(vb : &VertexBuiltins) {
+    // TextureQuad vertex shader
+    var pos : [6]float<2> = { { -1.0, -1.0 }, { 1.0, -1.0 }, { -1.0,  1.0 },
+                              { -1.0,  1.0 }, { 1.0, -1.0 }, {  1.0,  1.0 } };
+    var pos2 = pos[vb.vertexIndex];
+    vb.position = float<4>(pos2.x, pos2.y, 0.0, 1.0);
+  }
+
+  var textureBindings : *BindGroup<GBufferTextureBindings>;
+  var bufferBindings : *BindGroup<DeferredRenderBufferBindings>;
+}
+
 var device = new Device();
 var window = new Window({0, 0}, {640, 480});
 
-
 // import { mesh } from '../../meshes/stanfordDragon';
-
-// import lightUpdate from './lightUpdate.wgsl';
-// import vertexWriteGBuffers from './vertexWriteGBuffers.wgsl';
-// import fragmentWriteGBuffers from './fragmentWriteGBuffers.wgsl';
-// import vertexTextureQuad from './vertexTextureQuad.wgsl';
-// import fragmentGBuffersDebugView from './fragmentGBuffersDebugView.wgsl';
-// import fragmentDeferredRendering from './fragmentDeferredRendering.wgsl';
 
 var kMaxNumLights = 1024;
 var lightExtentMin = float<3>{-50.0, -30.0, -50.0};
@@ -231,8 +264,8 @@ var aspect = (float) canvasSize.x / (float) canvasSize.y;
 
 // Create the model vertex buffer.
 var length = 100; // FIXME: mesh.positions.length
-var vertexBuffer = new vertex Buffer<[]VertexBuffers>(device, length);
-var verts = [length] new VertexBuffers;
+var vertexBuffer = new vertex Buffer<[]Vertex>(device, length);
+var verts = [length] new Vertex;
 {
   for (var i = 0; i < verts.length; ++i) {
     var v = verts[i];
@@ -311,8 +344,8 @@ var sceneUniformBindGroup = new BindGroup<WriteGBuffersBindings>(device, {
 
 var gBufferTexturesBindGroup = new BindGroup<GBufferTextureBindings>(device, {
   gBufferNormal = gBufferTexture2DFloat16.CreateSampleableView(),
-  gBufferAlbedo = gBufferTextureAlbedo.CreateSampleableView()
-//  gBufferDepth = depthTexture.CreateSampleableView()
+  gBufferAlbedo = gBufferTextureAlbedo.CreateSampleableView(),
+  gBufferDepth = depthTexture.CreateSampleableView()
 });
 
 // FIXME: put these color attachments elsewhere
@@ -353,7 +386,7 @@ var lightExtentBuffer = new uniform Buffer<LightExtent>(device, {lightExtentMin,
 
 var lightUpdateComputePipeline = new ComputePipeline<LightUpdate>(device);
 
-var lightsBufferBindGroup = new BindGroup<LightsBufferBindings>(device, {
+var lightsBufferBindGroup = new BindGroup<DeferredRenderBufferBindings>(device, {
   lightsBuffer,
   configUniformBuffer,
   cameraUniformBuffer
@@ -398,7 +431,7 @@ while (System.IsRunning()) {
     );
     gBufferPass.SetPipeline(writeGBuffersPipeline);
     gBufferPass.Set({bindings = sceneUniformBindGroup});
-    gBufferPass.Set({vertexes = new VertexInput<VertexBuffers>(vertexBuffer)});
+    gBufferPass.Set({vertexes = new VertexInput<Vertex>(vertexBuffer)});
     gBufferPass.Set({indexes = indexBuffer});
     gBufferPass.DrawIndexed(indexCount, 1, 0, 0, 0);
     gBufferPass.End();
@@ -423,7 +456,7 @@ while (System.IsRunning()) {
       { fragColor = fb }
     );
     debugViewPass.SetPipeline(gBuffersDebugViewPipeline);
-    debugViewPass.Set({bindings = gBufferTexturesBindGroup});
+    debugViewPass.Set({textureBindings = gBufferTexturesBindGroup});
     debugViewPass.Draw(6, 1, 0, 0);
     debugViewPass.End();
   } else {
@@ -435,8 +468,8 @@ while (System.IsRunning()) {
       { fragColor = fb }
     );
     deferredRenderingPass.SetPipeline(deferredRenderPipeline);
-    deferredRenderingPass.Set({b0 = gBufferTexturesBindGroup});
-    deferredRenderingPass.Set({b1 = lightsBufferBindGroup});
+    deferredRenderingPass.Set({textureBindings = gBufferTexturesBindGroup});
+    deferredRenderingPass.Set({bufferBindings = lightsBufferBindGroup});
     deferredRenderingPass.Draw(6, 1, 0, 0);
     deferredRenderingPass.End();
   }
