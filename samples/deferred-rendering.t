@@ -117,6 +117,13 @@ class WriteGBuffers {
 }
 
 class TextureQuadPass {
+  vertex main(vb : &VertexBuiltins) {
+    var pos : [6]float<2> = { { -1.0, -1.0 }, { 1.0, -1.0 }, { -1.0,  1.0 },
+                              { -1.0,  1.0 }, { 1.0, -1.0 }, {  1.0,  1.0 } };
+    var pos2 = pos[vb.vertexIndex];
+    vb.position = float<4>(pos2.x, pos2.y, 0.0, 1.0);
+  }
+
   var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
 }
 
@@ -153,14 +160,6 @@ class GBuffersDebugView : TextureQuadPass {
       result = gBufferAlbedo.Load((uint<2>) Math.floor(Utils.makeFloat2(fb.fragCoord)), 0);
     }
     fragColor.Set(result);
-  }
-
-  // FIXME: refactor into TextureQuadPass
-  vertex main(vb : &VertexBuiltins) {
-    var pos : [6]float<2> = { { -1.0, -1.0 }, { 1.0, -1.0 }, { -1.0,  1.0 },
-                              { -1.0,  1.0 }, { 1.0, -1.0 }, {  1.0,  1.0 } };
-    var pos2 = pos[vb.vertexIndex];
-    vb.position = float<4>(pos2.x, pos2.y, 0.0, 1.0);
   }
 
   var textureBindings : *BindGroup<GBufferTextureBindings>;
@@ -221,14 +220,6 @@ class DeferredRender : TextureQuadPass {
     result += float<3>(0.2);
 
     fragColor.Set(Utils.makeFloat4(result));
-  }
-
-  vertex main(vb : &VertexBuiltins) {
-    // FIXME: refactor this into TextureQuadPass
-    var pos : [6]float<2> = { { -1.0, -1.0 }, { 1.0, -1.0 }, { -1.0,  1.0 },
-                              { -1.0,  1.0 }, { 1.0, -1.0 }, {  1.0,  1.0 } };
-    var pos2 = pos[vb.vertexIndex];
-    vb.position = float<4>(pos2.x, pos2.y, 0.0, 1.0);
   }
 
   var textureBindings : *BindGroup<GBufferTextureBindings>;
