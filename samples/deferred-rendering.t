@@ -135,8 +135,8 @@ class GBufferTextureBindings {
   var gBufferDepth : *SampleableTexture2D<unfilterable float>;
 }
 
-// CanvasSizeBindings
-class CanvasSizeBindings {
+// WindowSizeBindings
+class WindowSizeBindings {
   var size : *uniform Buffer<uint<2>>;
 }
 
@@ -146,8 +146,8 @@ class GBuffersDebugView : TextureQuadPass {
     var gBufferNormal = textureBindings.Get().gBufferNormal;
     var gBufferAlbedo = textureBindings.Get().gBufferAlbedo;
     var result : float<4>;
-    var canvasSize = canvasSizeBindings.Get().size.Map():;
-    var c = Utils.makeFloat2(fb.fragCoord) / (float<2>) canvasSize;
+    var windowSize = windowSizeBindings.Get().size.Map():;
+    var c = Utils.makeFloat2(fb.fragCoord) / (float<2>) windowSize;
     if (c.x < 0.33333) {
       var rawDepth2 = gBufferDepth.Load((uint<2>) Math.floor(Utils.makeFloat2(fb.fragCoord)), 0);
       var rawDepth = rawDepth2.x;
@@ -164,7 +164,7 @@ class GBuffersDebugView : TextureQuadPass {
   }
 
   var textureBindings : *BindGroup<GBufferTextureBindings>;
-  var canvasSizeBindings : *BindGroup<CanvasSizeBindings>;
+  var windowSizeBindings : *BindGroup<WindowSizeBindings>;
   var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
 }
 
@@ -237,8 +237,8 @@ var device = new Device();
 var window = new Window({0, 0}, {640, 480});
 
 var swapChain = new SwapChain<PreferredSwapChainFormat>(device, window);
-var canvasSize = window.GetSize();
-var aspect = (float) canvasSize.x / (float) canvasSize.y;
+var windowSize = window.GetSize();
+var aspect = (float) windowSize.x / (float) windowSize.y;
 
 // Create the model vertex buffer.
 var length = 100; // FIXME: mesh.positions.length
@@ -267,9 +267,9 @@ var indices = [indexCount] new ushort;
 indexBuffer.SetData(indices);
 
 // GBuffer texture render targets
-var gBufferTexture2DFloat16 = new renderable sampleable Texture2D<RGBA16float>(device, canvasSize);
-var gBufferTextureAlbedo = new renderable sampleable Texture2D<BGRA8unorm>(device, canvasSize);
-var depthTexture = new renderable sampleable Texture2D<Depth24Plus>(device, canvasSize);
+var gBufferTexture2DFloat16 = new renderable sampleable Texture2D<RGBA16float>(device, windowSize);
+var gBufferTextureAlbedo = new renderable sampleable Texture2D<BGRA8unorm>(device, windowSize);
+var depthTexture = new renderable sampleable Texture2D<Depth24Plus>(device, windowSize);
 
 // FIXME: add depth/stencil stuff here
 //  depthStencil: {
