@@ -91,8 +91,8 @@ class WriteGBuffers {
     // Transform the vertex position by the model and viewProjection matrices.
     // Transform the vertex normal by the normalModelMatrix (inverse transpose of the model).
     var output : VertexOutput;
-    var worldPosition = uniforms.modelMatrix * Utils.makeFloat4(v.position);
-    vb.position = camera.viewProjectionMatrix * worldPosition;
+    var worldPosition = Utils.makeFloat3(uniforms.modelMatrix * Utils.makeFloat4(v.position));
+    vb.position = camera.viewProjectionMatrix * Utils.makeFloat4(worldPosition);
     output.fragNormal = Utils.makeFloat3(uniforms.normalModelMatrix * Utils.makeFloat4(v.normal));
     output.fragUV = v.uv;
     return output;
@@ -137,23 +137,20 @@ class GBuffersDebugView : TextureQuadPass {
     var gBufferDepth = textureBindings.Get().gBufferDepth;
     var gBufferNormal = textureBindings.Get().gBufferNormal;
     var gBufferAlbedo = textureBindings.Get().gBufferAlbedo;
-    var coord = Utils.makeFloat2(fb.fragCoord);
     var result : float<4>;
-    var canvasSize = canvasSizeBindings.Get().size.Map();
-    var c = coord / float<2>((float) canvasSize.x, (float) canvasSize.y);
-    var cfloor = Math.floor(c);
-    var ci = uint<2>((uint) cfloor.x, (uint) cfloor.y);
+    var canvasSize = canvasSizeBindings.Get().size.Map():;
+    var c = Utils.makeFloat2(fb.fragCoord) / (float<2>) canvasSize;
     if (c.x < 0.33333) {
-      var rawDepth2 = gBufferDepth.Load(ci, 0);
+      var rawDepth2 = gBufferDepth.Load((uint<2>) Math.floor(Utils.makeFloat2(fb.fragCoord)), 0);
       var rawDepth = rawDepth2.x;
       // remap depth into something a bit more visible
       var depth = (1.0 - rawDepth) * 50.0;
       result = float<4>(depth);
     } else if (c.x < 0.66667) {
-      result = gBufferNormal.Load(ci, 0);
+      result = gBufferNormal.Load((uint<2>) Math.floor(Utils.makeFloat2(fb.fragCoord)), 0);
       result = (result + float<4>(1.0, 1.0, 1.0, 0.0)) * float<4>(0.5, 0.5, 0.5, 1.0);
     } else {
-      result = gBufferAlbedo.Load(ci, 0);
+      result = gBufferAlbedo.Load((uint<2>) Math.floor(Utils.makeFloat2(fb.fragCoord)), 0);
     }
     fragColor.Set(result);
   }
@@ -184,7 +181,7 @@ class DeferredRender : TextureQuadPass {
     // reconstruct world-space position from the screen coordinate.
     var posClip = float<4>(coord.x * 2.0 - 1.0, (1.0 - coord.y) * 2.0 - 1.0, depthSample, 1.0);
     var posWorldW = camera.invViewProjectionMatrix * posClip;
-    var posWorld = float<3>(posWorldW.x, posWorldW.y, posWorldW.z) / posWorldW.w;
+    var posWorld = Utils.makeFloat3(posWorldW) / posWorldW.w;
     return posWorld;
   }
 
@@ -196,11 +193,8 @@ class DeferredRender : TextureQuadPass {
     var camera = buffers.camera.Map():;
     var textures = textureBindings.Get();
     var result : float<3>;
-    var fragCoord2Floor = Math.floor(Utils.makeFloat2(fb.fragCoord));
-    // FIXME: fix (uint<2>) cast
-    var fragCoord2ui = uint<2>((uint) fragCoord2Floor.x, (uint) fragCoord2Floor.y);
-
-    var depthPixel = textures.gBufferDepth.Load(fragCoord2ui, 0);
+    var coord2 = (uint<2>) Math.floor(Utils.makeFloat2(fb.fragCoord));
+    var depthPixel = textures.gBufferDepth.Load(coord2, 0);
     var depth = depthPixel.x;
 
     // Don't light the sky.
@@ -209,10 +203,10 @@ class DeferredRender : TextureQuadPass {
     }
 
     var bufferSize = textures.gBufferDepth.GetSize();
-    var coordUV = Utils.makeFloat2(fb.fragCoord) / float<2>((float) bufferSize.x, (float) bufferSize.y);
+    var coordUV = Utils.makeFloat2(fb.fragCoord) / (float<2>) bufferSize;
     var position = this.worldFromScreenCoord(camera, coordUV, depth);
-    var normal = Utils.makeFloat3(textures.gBufferNormal.Load(fragCoord2ui, 0));
-    var albedo = Utils.makeFloat3(textures.gBufferAlbedo.Load(fragCoord2ui, 0));
+    var normal = Utils.makeFloat3(textures.gBufferNormal.Load(coord2, 0));
+    var albedo = Utils.makeFloat3(textures.gBufferAlbedo.Load(coord2, 0));
 
     for (var i = 0; i < config.numLights; i++) {
       var L = Utils.makeFloat3(lights[i].position) - position;
@@ -226,11 +220,11 @@ class DeferredRender : TextureQuadPass {
     // some manual ambient
     result += float<3>(0.2);
 
-    fragColor.Set(float<4>(result.x, result.y, result.z, 1.0));
+    fragColor.Set(Utils.makeFloat4(result));
   }
 
   vertex main(vb : &VertexBuiltins) {
-    // TextureQuad vertex shader
+    // FIXME: refactor this into TextureQuadPass
     var pos : [6]float<2> = { { -1.0, -1.0 }, { 1.0, -1.0 }, { -1.0,  1.0 },
                               { -1.0,  1.0 }, { 1.0, -1.0 }, {  1.0,  1.0 } };
     var pos2 = pos[vb.vertexIndex];
