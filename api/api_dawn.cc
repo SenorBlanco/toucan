@@ -780,19 +780,18 @@ RenderPipeline* RenderPipeline_RenderPipeline(int               qualifiers,
   if (!type->IsClass()) { return nullptr; }
   ClassType*         classType = static_cast<ClassType*>(type);
   wgpu::ShaderModule vertexShader, fragmentShader;
-  for (auto& method : classType->GetMethods()) {
-    if (method->modifiers & Method::Modifier::Vertex) {
-      if (vertexShader) {
-        assert(!"more than one vertex shader specified");
-        return nullptr;
+  for (ClassType* c = classType; c != nullptr && (!vertexShader || !fragmentShader);
+       c = c->GetParent()) {
+    for (auto& method : c->GetMethods()) {
+      if (method->modifiers & Method::Modifier::Vertex) {
+        if (!vertexShader) {
+          vertexShader = createShaderModule(device, method.get());
+        }
+      } else if (method->modifiers & Method::Modifier::Fragment) {
+        if (!fragmentShader) {
+          fragmentShader = createShaderModule(device, method.get());
+        }
       }
-      vertexShader = createShaderModule(device, method.get());
-    } else if (method->modifiers & Method::Modifier::Fragment) {
-      if (fragmentShader) {
-        assert(!"more than one fragment shader specified");
-        return nullptr;
-      }
-      fragmentShader = createShaderModule(device, method.get());
     }
   }
   PipelineLayout pipelineLayout;
