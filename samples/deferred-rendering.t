@@ -145,6 +145,7 @@ class WriteGBuffers {
 
   var normals : *ColorAttachment<RGBA16float>;
   var albedo : *ColorAttachment<BGRA8unorm>;
+  var depth : *DepthStencilAttachment<Depth24Plus>;
   var bindings : *BindGroup<WriteGBuffersBindings>;
   var vertexes : *VertexInput<VertexBuffers>;
   var indexes : *index Buffer<[]ushort>;
@@ -271,13 +272,10 @@ var gBuffersDebugViewPipeline = new RenderPipeline<GBuffersDebugView>(device);
 
 var deferredRenderPipeline = new RenderPipeline<DeferredRender>(device);
 
-var writeGBufferPassDescriptor : WriteGBuffers = {
-  normals = gBufferTexture2DFloat16.CreateColorAttachment(clearValue = {0.0, 0.0, 0.0, 1.0}, loadOp = LoadOp.Clear),
-  albedo = gBufferTextureAlbedo.CreateColorAttachment(clearValue = {0.0, 0.0, 0.0, 1.0}, loadOp = LoadOp.Clear)
-//  depth = depthTexture.CreateColorAttachment(loadOp = LoadOp.Clear),
-};
-
-var textureQuadPassDescriptor : TextureQuadPass;
+var writeGBufferPassDescriptor : WriteGBuffers;
+writeGBufferPassDescriptor.normals = gBufferTexture2DFloat16.CreateColorAttachment(clearValue = {0.0, 0.0, 0.0, 1.0}, loadOp = LoadOp.Clear);
+writeGBufferPassDescriptor.albedo = gBufferTextureAlbedo.CreateColorAttachment(clearValue = {0.0, 0.0, 0.0, 1.0}, loadOp = LoadOp.Clear);
+writeGBufferPassDescriptor.depth = depthTexture.CreateDepthStencilAttachment(depthLoadOp = LoadOp.Clear, depthClearValue = 1.0);
 
 var numLights = 128u;
 
@@ -444,6 +442,7 @@ while (System.IsRunning()) {
     deferredRenderingPass.End();
   }
   device.GetQueue().Submit(commandEncoder.Finish());
+  swapChain.Present();
   while (System.HasPendingEvents()) {
     System.GetNextEvent();
   }
