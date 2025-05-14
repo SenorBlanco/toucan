@@ -14,12 +14,12 @@ class Edge {
   var next : ^Edge;
 
   static InsertInto(head : &^Edge, edge : ^Edge) {
-//    if (head == null) {
+    if (head == null) {
       head = edge;
-//    } else {
-//      edge->next = head;
-//      head.next = edge;
-//    }
+    } else {
+      edge.next = head;
+      head.next = edge;
+    }
   }
 }
 
@@ -48,7 +48,7 @@ class Mesh {
       var p0 = positions[p];
       var p1 = positions[q];
       var p2 = positions[r];
-      var normal = Utils.cross(Math.normalize(p1 - p0), Math.normalize(p2 - p0));
+      var normal = Math.cross(Math.normalize(p1 - p0), Math.normalize(p2 - p0));
       indices[j] = j; vertices[j++] = { p0, normal, float<2>(0.0, 0.0) };
       indices[j] = j; vertices[j++] = { p1, normal, float<2>(1.0, 0.0) };
       indices[j] = j; vertices[j++] = { p2, normal, float<2>(1.0, 1.0) };
