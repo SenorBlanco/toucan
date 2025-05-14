@@ -28,7 +28,7 @@ class Edge {
 class Mesh {
   Mesh(positions : &[]float<3>, triangles : &[][3]uint, creaseAngle : float) {
     vertices = [triangles.length * 3] new Vertex;
-    indices = [triangles.length * 3] new uint;
+    indices = [triangles.length * 3] new ushort;
     var edgesByFirstIndex = [positions.length] new *Edge;
     var normals = [triangles.length] new [3]float<3>;
     for (var i = 0; i < triangles.length; ++i) {
@@ -66,11 +66,11 @@ class Mesh {
         v.position = positions[triangles[i][j]];
         v.normal = Math.normalize(normals[i][j]);
         vertices[dstIndex] = v;
-        indices[dstIndex] = dstIndex;
+        indices[dstIndex] = (ushort) dstIndex;
         dstIndex++;
       }
     }
   }
   var vertices : *[]Vertex;
-  var indices : *[]uint;
+  var indices : *[]ushort;
 }
