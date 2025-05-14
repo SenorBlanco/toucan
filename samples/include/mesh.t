@@ -14,12 +14,12 @@ class Edge {
   var next : ^Edge;
 
   static InsertInto(head : &^Edge, edge : ^Edge) {
-//    if (head == null) {
+    if (head == null) {
       head = edge;
-//    } else {
-//      edge->next = head;
-//      head.next = edge;
-//    }
+    } else {
+      edge.next = head;
+      head.next = edge;
+    }
   }
 }
 

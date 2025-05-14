@@ -106,7 +106,7 @@ test/error-index-buffer-get.t
 error-index-buffer-get.t:4:  class Buffer<[]uint> has no method Get()
 test/error-int-literal-too-large.t
 test/error-invalid-class-casts.t
-error-invalid-class-casts.t:14:  cannot store a value of type "null" to a location of type "int"
+error-invalid-class-casts.t:14:  cannot store a value of type "*void" to a location of type "int"
 error-invalid-class-casts.t:17:  cannot store a value of type "*Base2" to a location of type "*Base"
 error-invalid-class-casts.t:19:  cannot store a value of type "*Derived" to a location of type "*Derived2"
 test/error-invalid-forward-decl.t
@@ -179,7 +179,7 @@ error-unknown-return-type.t:2: syntax error
 test/error-unsized-array-not-last-in-class.t
 error-unsized-array-not-last-in-class.t:4:  Unsized arrays are only allwed as the last field of a class
 test/error-widen-null-to-raw-ptr.t
-error-widen-null-to-raw-ptr.t:1:  cannot store a value of type "null" to a location of type "&int"
+error-widen-null-to-raw-ptr.t:1:  cannot store a value of type "*void" to a location of type "&int"
 test/error-widen-weak-ptr-short-to-weak-ptr-int.t
 error-widen-weak-ptr-short-to-weak-ptr-int.t:7:  cannot cast value of type ^short to ^int
 error-widen-weak-ptr-short-to-weak-ptr-int.t:9:  unknown symbol "wpi"
@@ -249,11 +249,13 @@ test/mutual-recursion.t
 test/named-param-default-value.t
 test/named-param.t
 test/new.t
+test/null-ptr.t
 test/overload.t
 test/override.t
 test/post-increment-with-side-effects.t
 test/raw-ptr.t
 test/really-simple.t
+test/recursive-type.t
 test/scope-test.t
 test/short-vector.t
 test/short.t
