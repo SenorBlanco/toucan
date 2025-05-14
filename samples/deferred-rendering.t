@@ -243,22 +243,13 @@ var windowSize = window.GetSize();
 var aspect = (float) windowSize.x / (float) windowSize.y;
 
 // Meshify the dragon
-var dragon = new Mesh(&dragonVertices, &dragonTriangles);
+var mesh = new Mesh(&dragonVertices, &dragonTriangles, 3.1415926535);
 
 // Create the model vertex buffer.
-var vertexBuffer = new vertex Buffer<[]Vertex>(device, dragon.vertices);
+var vertexBuffer = new vertex Buffer<[]Vertex>(device, mesh.vertices);
 
 // Create the model index buffer.
-var meshTriangleCount = 100; // FIXME: mesh.triangles.length
-var indexCount = meshTriangleCount * 3;
-var indexBuffer = new index Buffer<[]ushort>(device, indexCount);
-var indices = [indexCount] new ushort;
-{
-  for (var i = 0; i < 100; ++i) {
-//    indices[i] = mesh.triangles[i];
-  }
-}
-indexBuffer.SetData(indices);
+var indexBuffer = new index Buffer<[]ushort>(device, mesh.indices);
 
 // Create normals texture
 var gBufferTexture2DFloat16 = new renderable sampleable Texture2D<RGBA16float>(device, windowSize);
@@ -338,7 +329,7 @@ var lightsBuffer = new storage Buffer<[]LightData>(device, kMaxNumLights);
 // dynamic lightings
 var lightData = [kMaxNumLights] new LightData;
 for (var j = 0; j < kMaxNumLights; j++) {
-  var light = lightData[j];  // FIXME: do we need &LightData here?
+  var light = &lightData[j];
   // position
   for (var i = 0; i < 3; i++) {
     light.position[i] = Math.rand() * extent[i] + lightExtentMin[i];
@@ -413,7 +404,7 @@ while (System.IsRunning()) {
     gBufferPass.Set({bindings = sceneUniformBindGroup});
     gBufferPass.Set({vertexes = new VertexInput<Vertex>(vertexBuffer)});
     gBufferPass.Set({indexes = indexBuffer});
-    gBufferPass.DrawIndexed(indexCount, 1, 0, 0, 0);
+    gBufferPass.DrawIndexed(mesh.indices.length, 1, 0, 0, 0);
     gBufferPass.End();
   }
   {

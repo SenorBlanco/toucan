@@ -130,6 +130,10 @@ Type* BinOpNode::GetType(TypeTable* types) {
       return rhsType;
     } else if (lhsType->IsUInt() && rhsType->IsInt()) {
       return lhsType;
+    } else if (lhsType->IsShort() && rhsType->IsUShort()) {
+      return rhsType;
+    } else if (lhsType->IsUShort() && rhsType->IsShort()) {
+      return lhsType;
     } else {
       assert(false);
       return lhsType;
