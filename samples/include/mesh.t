@@ -9,15 +9,13 @@ class Face {
 }
 
 class Edge {
-  var i2 : uint;
-  var j2 : uint;
+  var v2 : int;
   var face : *Face;
   var next : *Edge;
 
-  static Create(i : uint, j : uint, face : *Face, head : &*Edge) : *Edge {
+  static Create(v2 : uint, face : *Face, head : &*Edge) : *Edge {
     var edge = new Edge;
-    edge.i2 = i;
-    edge.j2 = j;
+    edge.v2 = v2;
     edge.face = face;
     if (head != null) {
       edge.next = head;
@@ -28,7 +26,7 @@ class Edge {
 }
 
 class Mesh {
-  Mesh(positions : &[]float<3>, triangles : &[][3]uint) {
+  Mesh(positions : &[]float<3>, triangles : &[][3]uint, creaseAngle : float) {
     vertices = [triangles.length * 3] new Vertex;
     indices = [triangles.length * 3] new uint;
     var edgesByFirstIndex = [positions.length] new *Edge;
@@ -43,22 +41,18 @@ class Mesh {
       face.normal = Math.normalize(Math.cross(p[1] - p[0], p[2] - p[0]));
       for (var j = 0; j < 3; ++j) {
         normals[i][j] = face.normal;
-        Edge.Create(i, (j + 1) % 3, face, &edgesByFirstIndex[t[j]]);
+        Edge.Create(t[(j + 1) % 3], face, &edgesByFirstIndex[t[j]]);
       }
     }
-    var creaseAngle = 3.14159;
     var cosAngle = Math.cos(creaseAngle);
     for (var i = 0; i < triangles.length; ++i) {
       for (var j = 0; j < 3; ++j) {
         var v1 = triangles[i][j];
         for (var edge1 = edgesByFirstIndex[v1]; edge1 != null; edge1 = edge1.next) {
-          var face1 = edge1.face;
-          for (var edge2 = edgesByFirstIndex[triangles[edge1.i2][edge1.j2]]; edge2 != null; edge2 = edge2.next) {
-            if (triangles[edge2.i2][edge2.j2] == v1) {
-              var face2 = edge2.face;
-              if (Math.dot(face1.normal, face2.normal) > cosAngle) {
-                normals[i][j] += face2.normal;
-                normals[edge2.i2][edge2.j2] = normals[i][j];
+          for (var edge2 = edgesByFirstIndex[edge1.v2]; edge2 != null; edge2 = edge2.next) {
+            if (edge2.v2 == v1) {
+              if (Math.dot(edge1.face.normal, edge2.face.normal) > cosAngle) {
+                normals[i][j] += edge2.face.normal;
               }
             }
           }
