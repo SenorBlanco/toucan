@@ -41,7 +41,7 @@ CubeLoader.Load(device, inline("third_party/home-cube/back.jpg"), texture, 5);
 var window = new Window({0, 0}, System.GetScreenSize());
 var swapChain = new SwapChain<PreferredSwapChainFormat>(device, window);
 
-var dragon = new Mesh(&dragonVertices, &dragonTriangles);
+var dragon = new Mesh(&dragonVertices, &dragonTriangles, 0.5 * 3.1415926);
 
 class Uniforms {
   var model       : float<4,4>;
