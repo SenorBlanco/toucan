@@ -499,7 +499,7 @@ llvm::Intrinsic::ID CodeGenLLVM::FindIntrinsic(Method* method) {
       "Math", "sqrt", llvm::Intrinsic::sqrt, "Math", "sin",   llvm::Intrinsic::sin,
       "Math", "cos",  llvm::Intrinsic::cos,  "Math", "fabs",  llvm::Intrinsic::fabs,
       "Math", "clz",  llvm::Intrinsic::ctlz, "Math", "floor", llvm::Intrinsic::floor,
-      "Math", "ceil", llvm::Intrinsic::ceil,
+      "Math", "ceil", llvm::Intrinsic::ceil, "Math", "tan",   llvm::Intrinsic::tan,
   };
 
   for (auto intrinsic : intrinsics) {
