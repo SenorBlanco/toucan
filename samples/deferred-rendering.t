@@ -165,7 +165,6 @@ class GBuffersDebugView : TextureQuadPass {
 
   var textureBindings : *BindGroup<GBufferTextureBindings>;
   var windowSizeBindings : *BindGroup<WindowSizeBindings>;
-  var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
 }
 
 // DeferredRenderBufferBindings
@@ -382,7 +381,7 @@ modelUniformBuffer.SetData({modelMatrix, invertTransposeModelMatrix});
 
 while (System.IsRunning()) {
   // Rotates the camera around the origin based on time.
-  var rad = pi * (float) (System.GetCurrentTime() / 5000.0d);
+  var rad = pi * (float) (System.GetCurrentTime() / 5.0d);
   var rotation = Transform.translate(origin.x, origin.y, origin.z) * Transform.rotate(float<3>{0.0, 1.0, 0.0}, rad);
   var rotatedEyePosition = rotation * Utils.makeFloat4(eyePosition);
 
@@ -426,8 +425,11 @@ while (System.IsRunning()) {
     var debugViewPass = new RenderPass<GBuffersDebugView>(commandEncoder,
       { fragColor = fb }
     );
+    var windowSizeBuffer = new uniform Buffer<uint<2>>(device, &windowSize);
+    var windowSizeBindGroup = new BindGroup<WindowSizeBindings>(device, {windowSizeBuffer});
     debugViewPass.SetPipeline(gBuffersDebugViewPipeline);
     debugViewPass.Set({textureBindings = gBufferTexturesBindGroup});
+    debugViewPass.Set({windowSizeBindings = windowSizeBindGroup});
     debugViewPass.Draw(6, 1, 0, 0);
     debugViewPass.End();
   } else {
