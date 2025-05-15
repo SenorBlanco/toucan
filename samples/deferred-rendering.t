@@ -373,6 +373,7 @@ var origin = float<3>(0.0, 0.0, 0.0);
 var pi = 3.141592653589;
 var projectionMatrix = Transform.perspective((2.0 * pi) / 5.0, aspect, 1.0, 2000.0);
 
+
 // Move the model so it's centered.
 var modelMatrix = Transform.translate(0.0, -45.0, 0.0);
 var invertTransposeModelMatrix = Math.transpose(Transform.invert(modelMatrix));
@@ -385,9 +386,14 @@ while (System.IsRunning()) {
   var rad = pi * (float) ((System.GetCurrentTime() - startTime) / 5.0d);
   var rotation = Transform.translate(origin.x, origin.y, origin.z) * Transform.rotate({0.0, 1.0, 0.0}, rad);
   var rp4 = rotation * Utils.makeFloat4(eyePosition, 1.0);
-  var rotatedEyePosition = Utils.makeFloat3(rp4 / rp4.w);
+  rp4 /= rp4.w;
+  var rotatedEyePosition = Utils.makeFloat3(rp4);
 
-  var viewMatrix = Transform.lookAt(rotatedEyePosition, origin, upVector);
+// FIXME: should be:
+//  var viewMatrix = Transform.lookAt(rotatedEyePosition, origin, upVector);
+
+  var angle = 0.3 * pi;
+  var viewMatrix = Transform.translate(0.0, 0.0, -100.0) * Transform.rotate({1.0, 0.0, 0.0}, angle) * rotation;
 
   // Update camera matrices
   var camera : Camera;
