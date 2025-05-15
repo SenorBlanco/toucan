@@ -1,3 +1,9 @@
+enum ProjectedPlane {
+  xy = 0,
+  xz = 1,
+  yz = 2
+}
+
 class Edge {
   var v2 : int;
   var faceNormal : float<3>;
@@ -58,6 +64,25 @@ class Mesh<VertexType, IndexType> {
         indices[dstIndex] = (IndexType) dstIndex;
         dstIndex++;
       }
+    }
+  }
+
+  computeProjectedPlaneUVs(positions : &[]float<3>, plane : ProjectedPlane) {
+    var extentMin = float<2>{ 1000000.0,  1000000.0};
+    var extentMax = float<2>{-1000000.0, -1000000.0};
+    var projectedPlaneToComponent : [3]uint<2> = {
+      { 0, 1 }, { 0, 2 }, { 1, 2 }
+    };
+    var components = projectedPlaneToComponent[plane];
+    for (var i = 0; i < positions.length; ++i) {
+      vertices[i].uv.x = positions[i][components.x];
+      vertices[i].uv.y = positions[i][components.y];
+
+      extentMin = Math.min(vertices[i].uv, extentMin);
+      extentMax = Math.max(vertices[i].uv, extentMax);
+    }
+    for (var i = 0; i < positions.length; ++i) {
+      vertices[i].uv = (vertices[i].uv - extentMin) / (extentMax - extentMin);
     }
   }
   var vertices : *[]VertexType;
