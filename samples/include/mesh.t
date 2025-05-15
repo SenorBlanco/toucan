@@ -1,16 +1,12 @@
-class Face {
-  var normal : float<3>;
-}
-
 class Edge {
   var v2 : int;
-  var face : *Face;
+  var faceNormal : float<3>;
   var next : *Edge;
 
-  static Create(v2 : uint, face : *Face, head : &*Edge) : *Edge {
+  static Create(v2 : uint, faceNormal : float<3>, head : &*Edge) : *Edge {
     var edge = new Edge;
     edge.v2 = v2;
-    edge.face = face;
+    edge.faceNormal = faceNormal;
     if (head != null) {
       edge.next = head;
     }
@@ -31,11 +27,10 @@ class Mesh<VertexType, IndexType> {
       for (var j = 0; j < 3; ++j) {
         p[j] = positions[t[j]];
       }
-      var face = new Face;
-      face.normal = Math.normalize(Math.cross(p[1] - p[0], p[2] - p[0]));
+      var faceNormal = Math.normalize(Math.cross(p[1] - p[0], p[2] - p[0]));
       for (var j = 0; j < 3; ++j) {
-        normals[i][j] = face.normal;
-        Edge.Create(t[(j + 1) % 3], face, &edgesByFirstIndex[t[j]]);
+        normals[i][j] = faceNormal;
+        Edge.Create(t[(j + 1) % 3], faceNormal, &edgesByFirstIndex[t[j]]);
       }
     }
     var cosAngle = Math.cos(creaseAngle);
@@ -45,8 +40,8 @@ class Mesh<VertexType, IndexType> {
         for (var edge1 = edgesByFirstIndex[v1]; edge1 != null; edge1 = edge1.next) {
           for (var edge2 = edgesByFirstIndex[edge1.v2]; edge2 != null; edge2 = edge2.next) {
             if (edge2.v2 == v1) {
-              if (Math.dot(edge1.face.normal, edge2.face.normal) > cosAngle) {
-                normals[i][j] += edge2.face.normal;
+              if (Math.dot(edge1.faceNormal, edge2.faceNormal) > cosAngle) {
+                normals[i][j] += edge2.faceNormal;
               }
             }
           }
