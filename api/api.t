@@ -286,6 +286,10 @@ native class Math {
   static cos(v : float<2>)  : float<2>;
   static cos(v : float<3>)  : float<3>;
   static cos(v : float<4>)  : float<4>;
+  static tan(v : float)     : float;
+  static tan(v : float<2>)  : float<2>;
+  static tan(v : float<3>)  : float<3>;
+  static tan(v : float<4>)  : float<4>;
   static dot(v1 : float<2>, v2 : float<2>) : float;
   static dot(v1 : float<3>, v2 : float<3>) : float;
   static dot(v1 : float<4>, v2 : float<4>) : float;

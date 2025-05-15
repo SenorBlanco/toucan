@@ -868,6 +868,8 @@ Result CodeGenSPIRV::Visit(MethodCall* expr) {
       return AppendExtInst(GLSLstd450Sin, resultType, expr->GetArgList());
     } else if (method->name == "cos") {
       return AppendExtInst(GLSLstd450Cos, resultType, expr->GetArgList());
+    } else if (method->name == "tan") {
+      return AppendExtInst(GLSLstd450Tan, resultType, expr->GetArgList());
     } else if (method->name == "dot") {
       auto v1 = GenerateSPIRV(args[0]);
       auto v2 = GenerateSPIRV(args[1]);
