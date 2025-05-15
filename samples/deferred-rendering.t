@@ -33,19 +33,16 @@ class LightUpdate {
     var config = bindings.Get().config.Map();
     var lightExtent = bindings.Get().lightExtent.Map();
     var i = cb.globalInvocationId.x;
+
     if (i >= config.numLights) {
       return;
     }
 
-    var pos = lights[i].position;
+    lights[i].position.y = lights[i].position.y - 0.5 - 0.003 * ((float)(i) - 64.0 * Math.floor((float)(i) / 64.0));
 
-    var y = pos.y - 0.5 - 0.003 * ((float)(i) - 64.0 * Math.floor((float)(i) / 64.0));
-
-    if (y < lightExtent.min.y) {
-      y = lightExtent.max.y;
+    if (lights[i].position.y < lightExtent.min.y) {
+      lights[i].position.y = lightExtent.max.y;
     }
-    pos = float<4>(pos.x, y, pos.z, pos.w);
-    lights[i].position = pos;
   }
 
   var bindings : *BindGroup<LightUpdateBindings>;
@@ -105,7 +102,7 @@ class WriteGBuffers {
     var uv = Math.floor(30.0 * varyings.fragUV);
     var c = 0.2 + 0.5 * ((uv.x + uv.y) - 2.0 * Math.floor((uv.x + uv.y) / 2.0));
 
-    normals.Set(Utils.makeFloat4(Math.normalize(varyings.fragNormal)));
+    normals.Set(Utils.makeFloat4(Math.normalize(varyings.fragNormal), 1.0));
     albedo.Set(float<4>(c, c, c, 1.0));
   }
 
@@ -123,7 +120,7 @@ class TextureQuadPass {
     var pos : [6]float<2> = {
       { -1.0, -1.0 }, { 1.0, -1.0 }, { -1.0,  1.0 },
       { -1.0,  1.0 }, { 1.0, -1.0 }, {  1.0,  1.0 } };
-    vb.position = Utils.makeFloat4(pos[vb.vertexIndex]);
+    vb.position = Utils.makeFloat4(pos[vb.vertexIndex], 0.0, 1.0);
   }
 
   var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
@@ -220,7 +217,7 @@ class DeferredRender : TextureQuadPass {
     // some manual ambient
     result += float<3>(0.2);
 
-    fragColor.Set(Utils.makeFloat4(result));
+    fragColor.Set(Utils.makeFloat4(result, 1.0));
   }
 
   var textureBindings : *BindGroup<GBufferTextureBindings>;
@@ -386,7 +383,7 @@ while (System.IsRunning()) {
   // Rotates the camera around the origin based on time.
   var rad = pi * (float) ((System.GetCurrentTime() - startTime) / 5.0d);
   var rotation = Transform.translate(origin.x, origin.y, origin.z) * Transform.rotate({0.0, 1.0, 0.0}, rad);
-  var rp4 = rotation * Utils.makeFloat4(eyePosition);
+  var rp4 = rotation * Utils.makeFloat4(eyePosition, 1.0);
   rp4 /= rp4.w;
   var rotatedEyePosition = Utils.makeFloat3(rp4);
 
