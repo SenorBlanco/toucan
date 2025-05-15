@@ -155,7 +155,9 @@ class GBuffersDebugView : TextureQuadPass {
       result = float<4>(depth);
     } else if (c.x < 0.66667) {
       result = gBufferNormal.Load((uint<2>) Math.floor(Utils.makeFloat2(fb.fragCoord)), 0);
-      result = (result + float<4>(1.0, 1.0, 1.0, 0.0)) * float<4>(0.5, 0.5, 0.5, 1.0);
+      result.x = (result.x + 1.0) * 0.5;
+      result.y = (result.y + 1.0) * 0.5;
+      result.z = (result.z + 1.0) * 0.5;
     } else {
       result = gBufferAlbedo.Load((uint<2>) Math.floor(Utils.makeFloat2(fb.fragCoord)), 0);
     }
@@ -191,8 +193,9 @@ class DeferredRender : TextureQuadPass {
     var camera = buffers.camera.Map():;
     var textures = textureBindings.Get();
     var result : float<3>;
-    var coord2 = (uint<2>) Math.floor(Utils.makeFloat2(fb.fragCoord));
-    var depthPixel = textures.gBufferDepth.Load(coord2, 0);
+
+    // Retrieve the depth from the depth buffer.
+    var depthPixel = textures.gBufferDepth.Load((uint<2>) Math.floor(Utils.makeFloat2(fb.fragCoord)), 0);
     var depth = depthPixel.x;
 
     // Don't light the sky.
@@ -203,8 +206,8 @@ class DeferredRender : TextureQuadPass {
     var bufferSize = textures.gBufferDepth.GetSize();
     var coordUV = Utils.makeFloat2(fb.fragCoord) / (float<2>) bufferSize;
     var position = this.worldFromScreenCoord(camera, coordUV, depth);
-    var normal = Utils.makeFloat3(textures.gBufferNormal.Load(coord2, 0));
-    var albedo = Utils.makeFloat3(textures.gBufferAlbedo.Load(coord2, 0));
+    var normal = Utils.makeFloat3(textures.gBufferNormal.Load((uint<2>) Math.floor(Utils.makeFloat2(fb.fragCoord)), 0));
+    var albedo = Utils.makeFloat3(textures.gBufferAlbedo.Load((uint<2>) Math.floor(Utils.makeFloat2(fb.fragCoord)), 0));
 
     for (var i = 0; i < config.numLights; i++) {
       var L = Utils.makeFloat3(lights[i].position) - position;
@@ -255,6 +258,18 @@ var gBufferTextureAlbedo = new renderable sampleable Texture2D<BGRA8unorm>(devic
 
 // Create depth texture
 var depthTexture = new renderable sampleable Texture2D<Depth24Plus>(device, windowSize);
+
+var groundPlaneVertices : [4]Vertex = {
+  { position = { -100.0, 20.0, -100.0 }, normal = { 0.0, 1.0, 0.0 }, uv = { 0.0, 0.0 } },
+  { position = {  100.0, 20.0,  100.0 }, normal = { 0.0, 1.0, 0.0 }, uv = { 1.0, 1.0 } },
+  { position = { -100.0, 20.0,  100.0 }, normal = { 0.0, 1.0, 0.0 }, uv = { 0.0, 1.0 } },
+  { position = {  100.0, 20.0, -100.0 }, normal = { 0.0, 1.0, 0.0 }, uv = { 1.0, 0.0 } }
+};
+
+var groundPlaneIndexes : [6]ushort = { 0us, 2us, 1us, 0us, 1us, 3us };
+
+var groundPlaneVertexBuffer = new vertex Buffer<[]Vertex>(device, &groundPlaneVertices);
+var groundPlaneIndexBuffer = new index Buffer<[]ushort>(device, &groundPlaneIndexes);
 
 // FIXME: add depth/stencil stuff here
 //  depthStencil: {
@@ -409,6 +424,9 @@ while (System.IsRunning()) {
     gBufferPass.Set({vertexes = new VertexInput<Vertex>(vertexBuffer)});
     gBufferPass.Set({indexes = indexBuffer});
     gBufferPass.DrawIndexed(mesh.indices.length, 1, 0, 0, 0);
+    gBufferPass.Set({vertexes = new VertexInput<Vertex>(groundPlaneVertexBuffer)});
+    gBufferPass.Set({indexes = groundPlaneIndexBuffer});
+    gBufferPass.DrawIndexed(groundPlaneIndexes.length, 1, 0, 0, 0);
     gBufferPass.End();
   }
   {
