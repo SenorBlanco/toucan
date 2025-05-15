@@ -8,7 +8,6 @@ include "dragon.t"
 class Vertex {
   var position : float<3>;
   var normal : float<3>;
-  var uv : float<2>;
 }
 
 include "mesh.t"
@@ -41,7 +40,7 @@ CubeLoader.Load(device, inline("third_party/home-cube/back.jpg"), texture, 5);
 var window = new Window({0, 0}, System.GetScreenSize());
 var swapChain = new SwapChain<PreferredSwapChainFormat>(device, window);
 
-var dragon = new Mesh(&dragonVertices, &dragonTriangles, 0.5 * 3.1415926);
+var dragon = new Mesh<Vertex, uint>(&dragonVertices, &dragonTriangles, 0.5 * 3.1415926);
 
 class Uniforms {
   var model       : float<4,4>;
@@ -57,6 +56,7 @@ class Bindings {
 }
 
 class DrawPipeline {
+  var indexBuffer : *index Buffer<[]uint>;
   var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
   var depth : *DepthStencilAttachment<Depth24Plus>;
   var bindings : *BindGroup<Bindings>;
@@ -77,7 +77,6 @@ class SkyboxPipeline : DrawPipeline {
       fragColor.Set(b.textureView.Sample(b.sampler, float<3>(-p.x, p.y, p.z)));
     }
     var position : *VertexInput<float<3>>;
-    var indexBuffer : *index Buffer<[]uint>;
 };
 
 class ReflectionPipeline : DrawPipeline {
@@ -104,7 +103,6 @@ class ReflectionPipeline : DrawPipeline {
       fragColor.Set(b.textureView.Sample(b.sampler, float<3>(-r4.x, r4.y, r4.z)));
     }
     var vert : *VertexInput<Vertex>;
-  var indexBuffer : *index Buffer<[]ushort>;
 };
 
 var cubePipeline = new RenderPipeline<SkyboxPipeline>(device);
@@ -128,7 +126,7 @@ dragonBindings.uniforms = new uniform Buffer<Uniforms>(device);
 var dragonVB = new vertex Buffer<[]Vertex>(device, dragon.vertices);
 var dragonData : ReflectionPipeline;
 dragonData.vert = new VertexInput<Vertex>(dragonVB);
-dragonData.indexBuffer = new index Buffer<[]ushort>(device, dragon.indices);
+dragonData.indexBuffer = new index Buffer<[]uint>(device, dragon.indices);
 dragonData.bindings = new BindGroup<Bindings>(device, &dragonBindings);
 
 var handler : EventHandler;

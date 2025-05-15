@@ -1,6 +1,7 @@
 include "include/dragon.t"
 include "include/transform.t"
 include "include/utils.t"
+include "include/mesh.t"
 
 // LightData
 class LightData {
@@ -226,8 +227,6 @@ class DeferredRender : TextureQuadPass {
 
 // Host code
 
-include "include/mesh.t"
-
 var kMaxNumLights = 1024;
 var lightExtentMin = float<3>{-50.0, -30.0, -50.0};
 var lightExtentMax = float<3>{ 50.0, 50.0, 50.0};
@@ -240,7 +239,7 @@ var windowSize = window.GetSize();
 var aspect = (float) windowSize.x / (float) windowSize.y;
 
 // Meshify the dragon
-var mesh = new Mesh(&dragonVertices, &dragonTriangles, 3.1415926535);
+var mesh = new Mesh<Vertex, ushort>(&dragonVertices, &dragonTriangles, 3.1415926535);
 
 // Create the model vertex buffer.
 var vertexBuffer = new vertex Buffer<[]Vertex>(device, mesh.vertices);
