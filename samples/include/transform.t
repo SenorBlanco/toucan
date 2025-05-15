@@ -30,26 +30,24 @@ class Transform {
       float<4>((r + l) / (r - l), (t + b) / (t - b), -(f + n) / (f - n), -1.0),
       float<4>(0.0, 0.0, -2.0 * f * n / (f - n), 0.0));
   }
-  static perspective(fovy : float, aspect : float, near : float, far : float) : float<4,4> {
-    // FIXME: replace with 1.0 / tan(fovy / 2.0).
-    var f = Math.cos(fovy / 2.0) / Math.sin(fovy / 2.0); 
-    var zs = 1.0 / (near - far);
+  static perspective(fovy : float, aspect : float, n: float, f : float) : float<4,4> {
+    var a = 1.0 / Math.tan(fovy / 2.0);
     return float<4,4>(
-      float<4>(f / aspect, 0.0,                   0.0, 0.0),
-      float<4>(0.0,          f,                   0.0, 0.0),
-      float<4>(0.0,        0.0, (far + near) * zs,    -1.0),
-      float<4>(0.0,        0.0, 2.0 * far * near * zs, 0.0));
+      float<4>(a / aspect, 0.0, 0.0,                   0.0),
+      float<4>(0.0,        a,   0.0,                   0.0),
+      float<4>(0.0,        0.0, (f + n) / (n - f),    -1.0),
+      float<4>(0.0,        0.0, 2.0 * f * n / (n - f), 0.0));
   }
   static lookAt(eye : float<3>, center : float<3>, up : float<3>) : float<4,4> {
     var f = Math.normalize(center - eye);
     up = Math.normalize(up);
-    var s = Utils.cross(f, up);
-    var u = Utils.cross(Math.normalize(s), f);
+    var s = Math.normalize(Utils.cross(f, up));
+    var u = Utils.cross(s, f);
     return float<4,4>(
-      float<4>( s.x, u.x, -f.x, 0.0 ),
-      float<4>( s.y, u.y, -f.y, 0.0 ),
-      float<4>( s.z, u.z, -f.z, 0.0 ),
-      float<4>( 0.0, 0.0, 0.0,  1.0 ));
+      float<4>(s.x, u.x, -f.x, 0.0),
+      float<4>(s.y, u.y, -f.y, 0.0),
+      float<4>(s.z, u.z, -f.z, 0.0),
+      float<4>(0.0, 0.0,  0.0, 1.0));
   }
   static swapRows(m : float<4,4>, i : int, j : int) : float<4,4> {
     for (var k = 0; k < 4; ++k) {
