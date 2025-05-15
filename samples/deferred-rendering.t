@@ -39,12 +39,13 @@ class LightUpdate {
 
     var pos = lights[i].position;
 
-    lights[i].position = {
-      pos.x,
-      pos.y - 0.5 - 0.003 * ((float)(i) - 64.0 * Math.floor((float)(i) / 64.0)),
-      pos.z,
-      pos.w
-    };
+    var y = pos.y - 0.5 - 0.003 * ((float)(i) - 64.0 * Math.floor((float)(i) / 64.0));
+
+    if (y < lightExtent.min.y) {
+      y = lightExtent.max.y;
+    }
+    pos = float<4>(pos.x, y, pos.z, pos.w);
+    lights[i].position = pos;
   }
 
   var bindings : *BindGroup<LightUpdateBindings>;
