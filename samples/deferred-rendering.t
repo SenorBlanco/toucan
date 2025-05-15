@@ -33,19 +33,16 @@ class LightUpdate {
     var config = bindings.Get().config.Map();
     var lightExtent = bindings.Get().lightExtent.Map();
     var i = cb.globalInvocationId.x;
+
     if (i >= config.numLights) {
       return;
     }
 
-    var pos = lights[i].position;
+    lights[i].position.y = lights[i].position.y - 0.5 - 0.003 * ((float)(i) - 64.0 * Math.floor((float)(i) / 64.0));
 
-    var y = pos.y - 0.5 - 0.003 * ((float)(i) - 64.0 * Math.floor((float)(i) / 64.0));
-
-    if (y < lightExtent.min.y) {
-      y = lightExtent.max.y;
+    if (lights[i].position.y < lightExtent.min.y) {
+      lights[i].position.y = lightExtent.max.y;
     }
-    pos = float<4>(pos.x, y, pos.z, pos.w);
-    lights[i].position = pos;
   }
 
   var bindings : *BindGroup<LightUpdateBindings>;
