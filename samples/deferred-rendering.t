@@ -379,13 +379,15 @@ var invertTransposeModelMatrix = Math.transpose(Transform.invert(modelMatrix));
 var normalModelData = invertTransposeModelMatrix;
 modelUniformBuffer.SetData({modelMatrix, invertTransposeModelMatrix});
 
+var startTime = System.GetCurrentTime();
 while (System.IsRunning()) {
   // Rotates the camera around the origin based on time.
-  var rad = pi * (float) (System.GetCurrentTime() / 5.0d);
-  var rotation = Transform.translate(origin.x, origin.y, origin.z) * Transform.rotate(float<3>{0.0, 1.0, 0.0}, rad);
-  var rotatedEyePosition = rotation * Utils.makeFloat4(eyePosition);
+  var rad = pi * (float) ((System.GetCurrentTime() - startTime) / 5.0d);
+  var rotation = Transform.translate(origin.x, origin.y, origin.z) * Transform.rotate({0.0, 1.0, 0.0}, rad);
+  var rp4 = rotation * Utils.makeFloat4(eyePosition);
+  var rotatedEyePosition = Utils.makeFloat3(rp4 / rp4.w);
 
-  var viewMatrix = Transform.lookAt(Utils.makeFloat3(rotatedEyePosition), origin, upVector);
+  var viewMatrix = Transform.lookAt(rotatedEyePosition, origin, upVector);
 
   // Update camera matrices
   var camera : Camera;
