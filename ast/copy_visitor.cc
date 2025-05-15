@@ -145,6 +145,12 @@ Result CopyVisitor::Visit(UnaryOp* node) {
   return Make<UnaryOp>(node->GetOp(), rhs);
 }
 
+Result CopyVisitor::Visit(IncDecExpr* node) {
+  Expr* expr = Resolve(node->GetExpr());
+  if (!expr) return nullptr;
+  return Make<IncDecExpr>(node->GetOp(), expr, node->returnOrigValue());
+}
+
 Result CopyVisitor::Visit(DestroyStmt* node) {
   return Make<DestroyStmt>(Resolve(node->GetExpr()));
 }
