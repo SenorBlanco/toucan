@@ -1,9 +1,3 @@
-//class Vertex {
-//  var position : float<3>;
-//  var normal : float<3>;
-//  var uv : float<2>;
-//}
-
 class Face {
   var normal : float<3>;
 }
@@ -25,10 +19,10 @@ class Edge {
   }
 }
 
-class Mesh {
+class Mesh<VertexType, IndexType> {
   Mesh(positions : &[]float<3>, triangles : &[][3]uint, creaseAngle : float) {
-    vertices = [triangles.length * 3] new Vertex;
-    indices = [triangles.length * 3] new ushort;
+    vertices = [triangles.length * 3] new VertexType;
+    indices = [triangles.length * 3] new IndexType;
     var edgesByFirstIndex = [positions.length] new *Edge;
     var normals = [triangles.length] new [3]float<3>;
     for (var i = 0; i < triangles.length; ++i) {
@@ -62,15 +56,15 @@ class Mesh {
     var dstIndex = 0;
     for (var i = 0; i < triangles.length; ++i ) {
       for (var j = 0; j < 3; ++j) {
-        var v : Vertex;
+        var v : VertexType;
         v.position = positions[triangles[i][j]];
         v.normal = Math.normalize(normals[i][j]);
         vertices[dstIndex] = v;
-        indices[dstIndex] = (ushort) dstIndex;
+        indices[dstIndex] = (IndexType) dstIndex;
         dstIndex++;
       }
     }
   }
-  var vertices : *[]Vertex;
-  var indices : *[]ushort;
+  var vertices : *[]VertexType;
+  var indices : *[]IndexType;
 }
