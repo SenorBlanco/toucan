@@ -367,20 +367,25 @@ while (System.IsRunning()) {
       &writeGBufferPassDescriptor
     );
     gBufferPass.SetPipeline(writeGBuffersPipeline);
-    gBufferPass.Set({bindings = sceneUniformBindGroup});
-    gBufferPass.Set({vertexes = new VertexInput<Vertex>(vertexBuffer)});
-    gBufferPass.Set({indexes = indexBuffer});
+    gBufferPass.Set({
+      bindings = sceneUniformBindGroup,
+      vertexes = new VertexInput<Vertex>(vertexBuffer),
+      indexes = indexBuffer
+    });
     gBufferPass.DrawIndexed(mesh.indices.length, 1, 0, 0, 0);
-    gBufferPass.Set({vertexes = new VertexInput<Vertex>(groundPlaneVertexBuffer)});
-    gBufferPass.Set({indexes = groundPlaneIndexBuffer});
+    gBufferPass.Set({
+      vertexes = new VertexInput<Vertex>(groundPlaneVertexBuffer),
+      indexes = groundPlaneIndexBuffer
+    });
     gBufferPass.DrawIndexed(groundPlaneIndexes.length, 1, 0, 0, 0);
     gBufferPass.End();
   }
   {
-    // Update light positions.
-    var lightPass = new ComputePass<LightUpdate>(commandEncoder, {});
+    // Update lights position
+    var lightPass = new ComputePass<LightUpdate>(commandEncoder, {
+      bindings = lightsBufferComputeBindGroup
+    });
     lightPass.SetPipeline(lightUpdateComputePipeline);
-    lightPass.Set({bindings = lightsBufferComputeBindGroup});
     lightPass.Dispatch((kMaxNumLights + 63) / 64, 1, 1);
     lightPass.End();
   }
@@ -398,8 +403,10 @@ while (System.IsRunning()) {
     var windowSizeBuffer = new uniform Buffer<uint<2>>(device, &windowSize);
     var windowSizeBindGroup = new BindGroup<WindowSizeBindings>(device, {windowSizeBuffer});
     debugViewPass.SetPipeline(gBuffersDebugViewPipeline);
-    debugViewPass.Set({textureBindings = gBufferTexturesBindGroup});
-    debugViewPass.Set({windowSizeBindings = windowSizeBindGroup});
+    debugViewPass.Set({
+      textureBindings = gBufferTexturesBindGroup,
+      windowSizeBindings = windowSizeBindGroup
+    });
     debugViewPass.Draw(6, 1, 0, 0);
     debugViewPass.End();
   } else {
@@ -411,8 +418,10 @@ while (System.IsRunning()) {
       fragColor = fb
     });
     deferredRenderingPass.SetPipeline(deferredRenderPipeline);
-    deferredRenderingPass.Set({textureBindings = gBufferTexturesBindGroup});
-    deferredRenderingPass.Set({bufferBindings = lightsBufferBindGroup});
+    deferredRenderingPass.Set({
+      textureBindings = gBufferTexturesBindGroup,
+      bufferBindings = lightsBufferBindGroup
+    });
     deferredRenderingPass.Draw(6, 1, 0, 0);
     deferredRenderingPass.End();
   }
