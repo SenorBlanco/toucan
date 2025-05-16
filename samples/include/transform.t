@@ -41,8 +41,8 @@ class Transform {
   static lookAt(eye : float<3>, center : float<3>, up : float<3>) : float<4,4> {
     var f = Math.normalize(center - eye);
     up = Math.normalize(up);
-    var s = Math.normalize(Utils.cross(f, up));
-    var u = Utils.cross(s, f);
+    var s = Math.normalize(Math.cross(f, up));
+    var u = Math.cross(s, f);
     var t = float<3>(Math.dot(s, -eye), Math.dot(u, -eye), Math.dot(f, eye));
     return float<4,4>(
       float<4>(s.x, u.x, -f.x, 0.0),

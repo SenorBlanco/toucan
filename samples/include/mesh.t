@@ -33,7 +33,7 @@ class Mesh<VertexType, IndexType> {
       for (var j = 0; j < 3; ++j) {
         p[j] = positions[t[j]];
       }
-      var faceNormal = Math.normalize(Utils.cross(p[1] - p[0], p[2] - p[0]));
+      var faceNormal = Math.normalize(Math.cross(p[1] - p[0], p[2] - p[0]));
       for (var j = 0; j < 3; ++j) {
         normals[i][j] = faceNormal;
         Edge.Create(t[(j + 1) % 3], faceNormal, &edgesByFirstIndex[t[j]]);
