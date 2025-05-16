@@ -293,8 +293,6 @@ native class Math {
   static dot(v1 : float<2>, v2 : float<2>) : float;
   static dot(v1 : float<3>, v2 : float<3>) : float;
   static dot(v1 : float<4>, v2 : float<4>) : float;
-  static dot(v : float<3>)  : float;
-  static dot(v : float<4>)  : float;
   static fabs(v : float)    : float;
   static fabs(v : float<2>) : float<2>;
   static fabs(v : float<3>) : float<3>;
