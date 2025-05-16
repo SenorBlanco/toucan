@@ -440,9 +440,9 @@ while (System.IsRunning()) {
     var fb = swapChain
       .GetCurrentTexture()
       .CreateColorAttachment(LoadOp.Clear, StoreOp.Store, {0.0, 0.0, 1.0, 1.0});
-    var debugViewPass = new RenderPass<GBuffersDebugView>(commandEncoder,
-      { fragColor = fb }
-    );
+    var debugViewPass = new RenderPass<GBuffersDebugView>(commandEncoder, {
+      fragColor = fb
+    });
     var windowSizeBuffer = new uniform Buffer<uint<2>>(device, &windowSize);
     var windowSizeBindGroup = new BindGroup<WindowSizeBindings>(device, {windowSizeBuffer});
     debugViewPass.SetPipeline(gBuffersDebugViewPipeline);
@@ -455,9 +455,9 @@ while (System.IsRunning()) {
     var fb = swapChain
       .GetCurrentTexture()
       .CreateColorAttachment(LoadOp.Clear, StoreOp.Store, {0.0, 0.0, 1.0, 1.0});
-    var deferredRenderingPass = new RenderPass<DeferredRender>(commandEncoder,
-      { fragColor = fb }
-    );
+    var deferredRenderingPass = new RenderPass<DeferredRender>(commandEncoder, {
+      fragColor = fb
+    });
     deferredRenderingPass.SetPipeline(deferredRenderPipeline);
     deferredRenderingPass.Set({textureBindings = gBufferTexturesBindGroup});
     deferredRenderingPass.Set({bufferBindings = lightsBufferBindGroup});
