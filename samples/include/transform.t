@@ -41,13 +41,14 @@ class Transform {
   static lookAt(eye : float<3>, center : float<3>, up : float<3>) : float<4,4> {
     var f = Math.normalize(center - eye);
     up = Math.normalize(up);
-    var s = Math.cross(f, up);
-    var u = Math.cross(Math.normalize(s), f);
-    return float<4,4>(
+    var s = Math.normalize(Math.cross(f, up));
+    var u = Math.cross(s, f);
+    var m = float<4,4>(
       float<4>(s.x, u.x, -f.x, 0.0),
       float<4>(s.y, u.y, -f.y, 0.0),
       float<4>(s.z, u.z, -f.z, 0.0),
       float<4>(0.0, 0.0,  0.0, 1.0));
+    return m * Transform.translate(-eye.x, -eye.y, -eye.z);
   }
   static swapRows(m : float<4,4>, i : int, j : int) : float<4,4> {
     for (var k = 0; k < 4; ++k) {
