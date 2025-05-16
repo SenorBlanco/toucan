@@ -43,11 +43,12 @@ class Transform {
     up = Math.normalize(up);
     var s = Math.normalize(Utils.cross(f, up));
     var u = Utils.cross(s, f);
-    return float<4,4>(
+    var m = float<4,4>(
       float<4>(s.x, u.x, -f.x, 0.0),
       float<4>(s.y, u.y, -f.y, 0.0),
       float<4>(s.z, u.z, -f.z, 0.0),
       float<4>(0.0, 0.0,  0.0, 1.0));
+    return m * Transform.translate(-eye.x, -eye.y, -eye.z);
   }
   static swapRows(m : float<4,4>, i : int, j : int) : float<4,4> {
     for (var k = 0; k < 4; ++k) {

@@ -389,8 +389,12 @@ var projectionMatrix = Transform.perspective((2.0 * pi) / 5.0, aspect, 1.0, 2000
 
 // Move the model so it's centered.
 var modelMatrix = Transform.translate(0.0, -45.0, 0.0);
-var invertTransposeModelMatrix = Math.transpose(Transform.invert(modelMatrix));
-var normalModelData = invertTransposeModelMatrix;
+
+// Compute the inverse transpose for transforming normals.
+var invertTransposeModelMatrix = Transform.invert(modelMatrix);
+invertTransposeModelMatrix = Math.transpose(invertTransposeModelMatrix);
+
+// Set the matrix uniform data.
 modelUniformBuffer.SetData({modelMatrix, invertTransposeModelMatrix});
 
 var startTime = System.GetCurrentTime();
@@ -402,11 +406,7 @@ while (System.IsRunning()) {
   rp4 /= rp4.w;
   var rotatedEyePosition = Utils.makeFloat3(rp4);
 
-// FIXME: should be:
-//  var viewMatrix = Transform.lookAt(rotatedEyePosition, origin, upVector);
-
-  var angle = 0.3 * pi;
-  var viewMatrix = Transform.translate(0.0, 0.0, -100.0) * Transform.rotate({1.0, 0.0, 0.0}, angle) * rotation;
+  var viewMatrix = Transform.lookAt(rotatedEyePosition, origin, upVector);
 
   // Update camera matrices
   var camera : Camera;
