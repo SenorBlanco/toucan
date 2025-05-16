@@ -343,6 +343,31 @@ invertTransposeModelMatrix = Math.transpose(invertTransposeModelMatrix);
 // Set the matrix uniform data.
 modelUniformBuffer.SetData({modelMatrix, invertTransposeModelMatrix});
 
+// Set DeferredRender pipeline data
+var deferredRenderingData : DeferredRender = {
+  textureBindings = gBufferTexturesBindGroup,
+  bufferBindings = lightsBufferBindGroup
+};
+
+var windowSizeBuffer = new uniform Buffer<uint<2>>(device, &windowSize);
+var windowSizeBindGroup = new BindGroup<WindowSizeBindings>(device, {windowSizeBuffer});
+
+var gBuffersDebugViewData : GBuffersDebugView = {
+  textureBindings = gBufferTexturesBindGroup,
+  windowSizeBindings = windowSizeBindGroup
+};
+
+var dragonPipelineData : WriteGBuffers = {
+  bindings = sceneUniformBindGroup,
+  vertexes = new VertexInput<Vertex>(vertexBuffer),
+  indexes = indexBuffer
+};
+
+var groundPlanePipelineData : WriteGBuffers = {
+  vertexes = new VertexInput<Vertex>(groundPlaneVertexBuffer),
+  indexes = groundPlaneIndexBuffer
+};
+
 var startTime = System.GetCurrentTime();
 while (System.IsRunning()) {
   // Rotate the camera around the origin based on time.
@@ -367,16 +392,9 @@ while (System.IsRunning()) {
       &writeGBufferPassDescriptor
     );
     gBufferPass.SetPipeline(writeGBuffersPipeline);
-    gBufferPass.Set({
-      bindings = sceneUniformBindGroup,
-      vertexes = new VertexInput<Vertex>(vertexBuffer),
-      indexes = indexBuffer
-    });
+    gBufferPass.Set(&dragonPipelineData);
     gBufferPass.DrawIndexed(mesh.indices.length, 1, 0, 0, 0);
-    gBufferPass.Set({
-      vertexes = new VertexInput<Vertex>(groundPlaneVertexBuffer),
-      indexes = groundPlaneIndexBuffer
-    });
+    gBufferPass.Set(&groundPlanePipelineData);
     gBufferPass.DrawIndexed(groundPlaneIndexes.length, 1, 0, 0, 0);
     gBufferPass.End();
   }
@@ -400,13 +418,7 @@ while (System.IsRunning()) {
     var debugViewPass = new RenderPass<GBuffersDebugView>(commandEncoder, {
       fragColor = fb
     });
-    var windowSizeBuffer = new uniform Buffer<uint<2>>(device, &windowSize);
-    var windowSizeBindGroup = new BindGroup<WindowSizeBindings>(device, {windowSizeBuffer});
     debugViewPass.SetPipeline(gBuffersDebugViewPipeline);
-    debugViewPass.Set({
-      textureBindings = gBufferTexturesBindGroup,
-      windowSizeBindings = windowSizeBindGroup
-    });
     debugViewPass.Draw(6, 1, 0, 0);
     debugViewPass.End();
   } else {
@@ -418,10 +430,7 @@ while (System.IsRunning()) {
       fragColor = fb
     });
     deferredRenderingPass.SetPipeline(deferredRenderPipeline);
-    deferredRenderingPass.Set({
-      textureBindings = gBufferTexturesBindGroup,
-      bufferBindings = lightsBufferBindGroup
-    });
+    deferredRenderingPass.Set(&deferredRenderingData);
     deferredRenderingPass.Draw(6, 1, 0, 0);
     deferredRenderingPass.End();
   }
