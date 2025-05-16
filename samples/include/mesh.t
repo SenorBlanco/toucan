@@ -67,21 +67,21 @@ class Mesh<VertexType, IndexType> {
     }
   }
 
-  computeProjectedPlaneUVs(positions : &[]float<3>, plane : ProjectedPlane) {
+  computeProjectedPlaneUVs(plane : ProjectedPlane) {
     var extentMin = float<2>{ 1000000.0,  1000000.0};
     var extentMax = float<2>{-1000000.0, -1000000.0};
     var projectedPlaneToComponent : [3]uint<2> = {
       { 0, 1 }, { 0, 2 }, { 1, 2 }
     };
     var components = projectedPlaneToComponent[plane];
-    for (var i = 0; i < positions.length; ++i) {
-      vertices[i].uv.x = positions[i][components.x];
-      vertices[i].uv.y = positions[i][components.y];
+    for (var i = 0; i < vertices.length; ++i) {
+      vertices[i].uv.x = vertices[i].position[components.x];
+      vertices[i].uv.y = vertices[i].position[components.y];
 
       extentMin = Math.min(vertices[i].uv, extentMin);
       extentMax = Math.max(vertices[i].uv, extentMax);
     }
-    for (var i = 0; i < positions.length; ++i) {
+    for (var i = 0; i < vertices.length; ++i) {
       vertices[i].uv = (vertices[i].uv - extentMin) / (extentMax - extentMin);
     }
   }

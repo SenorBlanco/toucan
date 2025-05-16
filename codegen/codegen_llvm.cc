@@ -496,10 +496,11 @@ llvm::Intrinsic::ID CodeGenLLVM::FindIntrinsic(Method* method) {
     const char*         methodName;
     llvm::Intrinsic::ID id;
   } intrinsics[] = {
-      "Math", "sqrt", llvm::Intrinsic::sqrt, "Math", "sin",   llvm::Intrinsic::sin,
-      "Math", "cos",  llvm::Intrinsic::cos,  "Math", "fabs",  llvm::Intrinsic::fabs,
-      "Math", "clz",  llvm::Intrinsic::ctlz, "Math", "floor", llvm::Intrinsic::floor,
-      "Math", "ceil", llvm::Intrinsic::ceil, "Math", "tan",   llvm::Intrinsic::tan,
+      "Math", "sqrt", llvm::Intrinsic::sqrt,    "Math", "sin",   llvm::Intrinsic::sin,
+      "Math", "cos",  llvm::Intrinsic::cos,     "Math", "fabs",  llvm::Intrinsic::fabs,
+      "Math", "clz",  llvm::Intrinsic::ctlz,    "Math", "floor", llvm::Intrinsic::floor,
+      "Math", "ceil", llvm::Intrinsic::ceil,    "Math", "tan",   llvm::Intrinsic::tan,
+      "Math", "min",  llvm::Intrinsic::minimum, "Math", "max",   llvm::Intrinsic::maximum
   };
 
   for (auto intrinsic : intrinsics) {
