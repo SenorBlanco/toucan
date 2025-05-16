@@ -123,6 +123,9 @@ test/error-missing-method.t
 error-missing-method.t:5:  class Foo has no method zzz()
 test/error-missing-parent-class.t
 error-missing-parent-class.t:1: syntax error
+test/error-missing-renderable.t
+error-missing-renderable.t:56:  class Texture2D<RGBA8unorm> has no method CreateColorAttachment(loadOp = LoadOp)
+error-missing-renderable.t:56:  Texture2D<RGBA8unorm>.CreateColorAttachment(LoadOp, StoreOp, float<4>) renderable : *ColorAttachment<RGBA8unorm>
 test/error-missing-sampleable-qualifier.t
 error-missing-sampleable-qualifier.t:3:  class Texture2D<RGBA8unorm> has no method CreateSampleableView()
 error-missing-sampleable-qualifier.t:3:  Texture2D<RGBA8unorm>.CreateSampleableView() sampleable : *SampleableTexture2D<float>
@@ -263,6 +266,8 @@ test/simple.t
 6
 test/spirv-call-graph.t
 test/spirv-if-stmt.t
+test/spirv-insert-element.t
+Warning: Old MapAsync APIs are deprecated. If using C please pass a CallbackInfo struct that has two userdatas. Otherwise, if using C++, please use templated helpers.
 test/stack-method-call.t
 test/static-method-with-args.t
 test/static-method.t
