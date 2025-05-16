@@ -706,6 +706,22 @@ llvm::Value* CodeGenLLVM::GenerateDotProduct(llvm::Value* lhs, llvm::Value* rhs)
   return sum;
 }
 
+llvm::Value* CodeGenLLVM::GenerateCrossProduct(llvm::Value* lhs, llvm::Value* rhs) {
+  assert(llvm::cast<llvm::FixedVectorType>(lhs->getType())->getNumElements() == 3);
+  llvm::Value* dst = llvm::ConstantAggregateZero::get(lhs->getType());
+  for (int i = 0; i < 3; ++i) {
+    llvm::Value* l1 = builder_->CreateExtractElement(lhs, Int((i + 1) % 3));
+    llvm::Value* l2 = builder_->CreateExtractElement(lhs, Int((i + 2) % 3));
+    llvm::Value* r1 = builder_->CreateExtractElement(rhs, Int((i + 1) % 3));
+    llvm::Value* r2 = builder_->CreateExtractElement(rhs, Int((i + 2) % 3));
+    llvm::Value* product1 = builder_->CreateFMul(l1, r2);
+    llvm::Value* product2 = builder_->CreateFMul(l2, r1);
+    llvm::Value* result = builder_->CreateFSub(product1, product2);
+    dst = builder_->CreateInsertElement(dst, result, Int(i));
+  }
+  return dst;
+}
+
 llvm::Value* CodeGenLLVM::GenerateVectorLength(llvm::Value* value) {
   auto dotProduct = GenerateDotProduct(value, value);
   std::vector<llvm::Type*> params;
@@ -1318,6 +1334,8 @@ llvm::Value* CodeGenLLVM::GenerateInlineAPIMethod(Method* method, ExprList* argL
   if (method->classType->GetName() == "Math") {
     if (method->name == "dot") {
       return GenerateDotProduct(GenerateLLVM(args[0]), GenerateLLVM(args[1]));
+    } else if (method->name == "cross") {
+      return GenerateCrossProduct(GenerateLLVM(args[0]), GenerateLLVM(args[1]));
     } else if (method->name == "length") {
       return GenerateVectorLength(GenerateLLVM(args[0]));
     } else if (method->name == "normalize") {

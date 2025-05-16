@@ -61,7 +61,7 @@ class BicubicPatch {
         result.normal = { 0.0, 0.0, 1.0 };
       }
     } else {
-      result.normal = Math.normalize(Utils.cross(vTangent, uTangent));
+      result.normal = Math.normalize(Math.cross(vTangent, uTangent));
     }
     return result;
   }

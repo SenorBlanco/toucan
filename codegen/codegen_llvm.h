@@ -100,6 +100,7 @@ class CodeGenLLVM : public Visitor {
   void                  GenerateFree(llvm::Value* value);
   llvm::Value*          GenerateLLVM(Expr* expr);
   llvm::Value*          GenerateDotProduct(llvm::Value* lhs, llvm::Value* rhs);
+  llvm::Value*          GenerateCrossProduct(llvm::Value* lhs, llvm::Value* rhs);
   llvm::Value*          GenerateVectorLength(llvm::Value* value);
   llvm::Value*          GenerateVectorNormalize(llvm::Value* value);
   llvm::Value*          GenerateTranspose(llvm::Value* value, MatrixType* matrixType);
