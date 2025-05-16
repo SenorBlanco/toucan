@@ -1,7 +1,7 @@
 enum ProjectedPlane {
-  xy = 0,
-  xz = 1,
-  yz = 2
+  XY = 0,
+  XZ = 1,
+  YZ = 2
 }
 
 class Edge {

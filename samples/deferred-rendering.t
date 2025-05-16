@@ -243,7 +243,7 @@ var aspect = (float) windowSize.x / (float) windowSize.y;
 
 // Meshify the dragon
 var mesh = new Mesh<Vertex, ushort>(&dragonVertices, &dragonTriangles, 3.1415926535);
-mesh.computeProjectedPlaneUVs(ProjectedPlane.xy);
+mesh.computeProjectedPlaneUVs(ProjectedPlane.XY);
 
 // Create the model vertex buffer.
 var vertexBuffer = new vertex Buffer<[]Vertex>(device, mesh.vertices);
