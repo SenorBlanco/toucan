@@ -245,6 +245,19 @@ var aspect = (float) windowSize.x / (float) windowSize.y;
 var mesh = new Mesh<Vertex, ushort>(&dragonVertices, &dragonTriangles, 3.1415926535);
 mesh.computeProjectedPlaneUVs(ProjectedPlane.XY);
 
+// Create ground plane geometry.
+var groundPlaneVertices : [4]Vertex = {
+  { position = { -100.0, 20.0, -100.0 }, normal = { 0.0, 1.0, 0.0 }, uv = { 0.0, 0.0 } },
+  { position = {  100.0, 20.0,  100.0 }, normal = { 0.0, 1.0, 0.0 }, uv = { 1.0, 1.0 } },
+  { position = { -100.0, 20.0,  100.0 }, normal = { 0.0, 1.0, 0.0 }, uv = { 0.0, 1.0 } },
+  { position = {  100.0, 20.0, -100.0 }, normal = { 0.0, 1.0, 0.0 }, uv = { 1.0, 0.0 } }
+};
+
+var groundPlaneIndexes : [6]ushort = { 0us, 2us, 1us, 0us, 1us, 3us };
+
+var groundPlaneVertexBuffer = new vertex Buffer<[]Vertex>(device, &groundPlaneVertices);
+var groundPlaneIndexBuffer = new index Buffer<[]ushort>(device, &groundPlaneIndexes);
+
 // Create the model vertex buffer.
 var vertexBuffer = new vertex Buffer<[]Vertex>(device, mesh.vertices);
 
@@ -259,25 +272,6 @@ var gBufferTextureAlbedo = new renderable sampleable Texture2D<BGRA8unorm>(devic
 
 // Create depth texture
 var depthTexture = new renderable sampleable Texture2D<Depth24Plus>(device, windowSize);
-
-var groundPlaneVertices : [4]Vertex = {
-  { position = { -100.0, 20.0, -100.0 }, normal = { 0.0, 1.0, 0.0 }, uv = { 0.0, 0.0 } },
-  { position = {  100.0, 20.0,  100.0 }, normal = { 0.0, 1.0, 0.0 }, uv = { 1.0, 1.0 } },
-  { position = { -100.0, 20.0,  100.0 }, normal = { 0.0, 1.0, 0.0 }, uv = { 0.0, 1.0 } },
-  { position = {  100.0, 20.0, -100.0 }, normal = { 0.0, 1.0, 0.0 }, uv = { 1.0, 0.0 } }
-};
-
-var groundPlaneIndexes : [6]ushort = { 0us, 2us, 1us, 0us, 1us, 3us };
-
-var groundPlaneVertexBuffer = new vertex Buffer<[]Vertex>(device, &groundPlaneVertices);
-var groundPlaneIndexBuffer = new index Buffer<[]ushort>(device, &groundPlaneIndexes);
-
-// FIXME: add depth/stencil stuff here
-//  depthStencil: {
-//    depthWriteEnabled: true,
-//    depthCompare: 'less',
-//    format: 'depth24plus',
-//  },
 
 // Create WriteGBuffers RenderPipeline
 var writeGBuffersPipeline = new RenderPipeline<WriteGBuffers>(device = device, cullMode = CullMode.Back);
