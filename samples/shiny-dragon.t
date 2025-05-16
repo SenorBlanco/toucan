@@ -7,7 +7,8 @@ include "dragon.t"
 
 class Vertex {
   var position : float<3>;
-  var normal : float<3>;
+  var normal   : float<3>;
+  var uv       : float<2>;
 }
 
 include "mesh.t"
