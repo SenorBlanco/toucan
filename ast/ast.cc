@@ -290,6 +290,21 @@ ExprList::ExprList() {}
 
 ExprList::ExprList(std::vector<Expr*>&& exprs) : exprs_(std::move(exprs)) {}
 
+bool ExprList::IsConstant() const {
+  for (auto expr : exprs_) {
+    if (!expr || !expr->IsConstant()) { return false; }
+  }
+  return true;
+}
+
+void ExprList::GetConstantData(void* data, TypeTable* types) const {
+  char* d = static_cast<char*>(data);
+  for (auto expr : exprs_) {
+    expr->GetConstantData(d, types);
+    d += expr->GetType(types)->GetSizeInBytes();
+  }
+}
+
 ExprStmt::ExprStmt(Expr* expr) : expr_(expr) {}
 
 IfStatement::IfStatement(Expr* expr, Stmt* stmt, Stmt* optElse)
