@@ -76,6 +76,8 @@ class Expr : public ASTNode {
   virtual bool  IsIntConstant() const { return false; }
   virtual bool  IsTempVarExpr() const { return false; }
   virtual bool  IsVarExpr() const { return false; }
+  virtual bool  IsConstant() const { return false; }
+  virtual void  GetConstantData(void* data, TypeTable* types) const { assert(false); }
 };
 
 class HeapAllocation : public Expr {
@@ -112,6 +114,8 @@ class IntConstant : public Expr {
   bool     IsIntConstant() const override { return true; }
   int32_t  GetValue() const { return value_; }
   uint32_t GetBits() const { return bits_; }
+  bool     IsConstant() const override { return true; }
+  void     GetConstantData(void* data, TypeTable* types) const override { *static_cast<int32_t*>(data) = value_; }
 
  private:
   int32_t  value_;
@@ -125,6 +129,8 @@ class UIntConstant : public Expr {
   Type*    GetType(TypeTable* types) override;
   uint32_t GetValue() const { return value_; }
   uint32_t GetBits() const { return bits_; }
+  bool     IsConstant() const override { return true; }
+  void     GetConstantData(void* data, TypeTable* types) const override { *static_cast<uint32_t*>(data) = value_; }
 
  private:
   uint32_t value_;
@@ -137,6 +143,8 @@ class FloatConstant : public Expr {
   Result Accept(Visitor* visitor) override;
   Type*  GetType(TypeTable* types) override;
   float  GetValue() const { return value_; }
+  bool   IsConstant() const override { return true; }
+  void   GetConstantData(void* data, TypeTable* types) const override { *static_cast<float*>(data) = value_; }
 
  private:
   float value_;
@@ -148,6 +156,8 @@ class DoubleConstant : public Expr {
   Result Accept(Visitor* visitor) override;
   Type*  GetType(TypeTable* types) override;
   double GetValue() const { return value_; }
+  bool   IsConstant() const override { return true; }
+  void   GetConstantData(void* data, TypeTable* types) const override { *static_cast<double*>(data) = value_; }
 
  private:
   double value_;
@@ -172,6 +182,8 @@ class BoolConstant : public Expr {
   Result Accept(Visitor* visitor) override;
   Type*  GetType(TypeTable* types) override;
   bool   GetValue() { return value_; }
+  bool   IsConstant() const override { return true; }
+  void   GetConstantData(void* data, TypeTable* types) const override { *static_cast<bool*>(data) = value_; }
 
  private:
   bool value_;
@@ -227,6 +239,8 @@ class ExprList : public ASTNode {
   Result                    Accept(Visitor* visitor) override;
   void                      Append(Expr* expr) { exprs_.push_back(expr); }
   const std::vector<Expr*>& Get() const { return exprs_; }
+  bool                      IsConstant() const;
+  void                      GetConstantData(void* data, TypeTable* types) const;
 
  private:
   std::vector<Expr*> exprs_;
@@ -273,6 +287,8 @@ class Initializer : public Expr {
   Type*     GetType(TypeTable* types) override { return type_; }
   Type*     GetType() { return type_; }
   ExprList* GetArgList() { return arglist_; }
+  bool      IsConstant() const override { return arglist_->IsConstant(); }
+  void      GetConstantData(void* data, TypeTable* types) const override { arglist_->GetConstantData(data, types); }
 
  private:
   Type*     type_;
