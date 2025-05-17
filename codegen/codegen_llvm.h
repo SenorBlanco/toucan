@@ -68,7 +68,9 @@ class CodeGenLLVM : public Visitor {
   llvm::Type*     ConvertTypeToNative(Type* type);
   void            ConvertAndAppendFieldTypes(ClassType* classType, std::vector<llvm::Type*>* types);
   llvm::Type*     ControlBlockType();
-  llvm::Constant* Int(int value);
+  llvm::Constant* Int(int32_t value);
+  llvm::Constant* Long(int64_t value);
+  llvm::Constant* Bool(bool value);
   void            Push(llvm::Value* value);
   llvm::Value*    Pop();
   llvm::Value*    GenerateBinOp(BinOpNode* node, llvm::Value* lhs, llvm::Value* rhs, Type* type);
@@ -177,6 +179,7 @@ class CodeGenLLVM : public Visitor {
   llvm::legacy::FunctionPassManager*                    fpm_;
   DataVars                                              dataVars_;
   llvm::Type*                                           intType_;
+  llvm::Type*                                           longType_;
   llvm::Type*                                           floatType_;
   llvm::Type*                                           doubleType_;
   llvm::Type*                                           boolType_;

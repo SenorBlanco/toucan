@@ -36,6 +36,8 @@ namespace Toucan {
 
 namespace {
 
+constexpr int kMinAutoConstantSize = 64;
+
 llvm::Value* GenerateBinOpInt(LLVMBuilder*   builder,
                               BinOpNode::Op  op,
                               llvm::Value*   lhs,
@@ -119,6 +121,7 @@ CodeGenLLVM::CodeGenLLVM(llvm::LLVMContext*                 context,
       debugOutput_(false) {
   boolType_ = llvm::Type::getInt1Ty(*context_);
   intType_ = llvm::Type::getInt32Ty(*context_);
+  longType_ = llvm::Type::getInt64Ty(*context_);
   floatType_ = llvm::Type::getFloatTy(*context_);
   doubleType_ = llvm::Type::getDoubleTy(*context_);
   byteType_ = llvm::Type::getInt8Ty(*context_);
@@ -260,7 +263,11 @@ llvm::Type* CodeGenLLVM::ConvertTypeToNative(Type* type) {
   return ConvertType(type);
 }
 
-llvm::Constant* CodeGenLLVM::Int(int value) { return llvm::ConstantInt::get(intType_, value); }
+llvm::Constant* CodeGenLLVM::Int(int32_t value) { return llvm::ConstantInt::get(intType_, value); }
+
+llvm::Constant* CodeGenLLVM::Long(int64_t value) { return llvm::ConstantInt::get(longType_, value); }
+
+llvm::Constant* CodeGenLLVM::Bool(bool value) { return llvm::ConstantInt::get(boolType_, value ? 1 : 0); }
 
 llvm::GlobalVariable* CodeGenLLVM::GetOrCreateVTable(ClassType* classType) {
   if (auto vtable = vtables_[classType]) return vtable;
@@ -1087,7 +1094,7 @@ Result CodeGenLLVM::Visit(HeapAllocation* node) {
 }
 
 Result CodeGenLLVM::Visit(BoolConstant* node) {
-  return llvm::ConstantInt::get(boolType_, node->GetValue() ? 1 : 0, true);
+  return Bool(node->GetValue());
 }
 
 Result CodeGenLLVM::Visit(FloatConstant* node) {
@@ -1149,8 +1156,21 @@ Result CodeGenLLVM::Visit(ZeroInitStmt* node) {
 }
 
 Result CodeGenLLVM::Visit(StoreStmt* stmt) {
-  llvm::Value* rhs = GenerateLLVM(stmt->GetRHS());
   llvm::Value* lhs = GenerateLLVM(stmt->GetLHS());
+  if (stmt->GetRHS()->IsConstant()) {
+    int64_t size = stmt->GetRHS()->GetType(types_)->GetSizeInBytes();
+    if (size >= kMinAutoConstantSize) {
+      printf("creating memcpy for size %ld\n", size);
+      char* data = new char[size];
+      stmt->GetRHS()->GetConstantData(data, types_);
+      llvm::StringRef stringRef(static_cast<const char*>(data), size);
+      llvm::Constant* initializer = llvm::ConstantDataArray::getRaw(stringRef, size, byteType_);
+      auto rhs = new llvm::GlobalVariable(*module_, initializer->getType(), true,
+        llvm::GlobalVariable::InternalLinkage, initializer, "data");
+      return builder_->CreateMemCpy(lhs, {}, rhs, {}, size);
+    }
+  }
+  llvm::Value* rhs = GenerateLLVM(stmt->GetRHS());
   if (stmt->GetRHS()->GetType(types_)->IsRawPtr() & !temporaries_.empty()) {
     auto temporary = temporaries_.back();
     temporaries_.pop_back();
