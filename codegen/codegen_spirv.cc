@@ -881,7 +881,7 @@ Result CodeGenSPIRV::Visit(MethodCall* expr) {
       return AppendExtInst(GLSLstd450Tan, resultType, argList);
     } else if (method->name == "dot") {
       return AppendCodeFromExprList(spv::Op::OpDot, resultType, argList);
-    } else if (method->name == "dot") {
+    } else if (method->name == "cross") {
       return AppendExtInst(GLSLstd450Cross, resultType, argList);
     } else if (method->name == "fabs") {
       return AppendExtInst(GLSLstd450FAbs, resultType, argList);
