@@ -170,6 +170,8 @@ class CastExpr : public Expr {
   Type*  GetType(TypeTable* types) override;
   Type*  GetType() { return type_; }
   Expr*  GetExpr() { return expr_; }
+  bool   IsConstant() const override { return expr_->IsConstant(); }
+  void   GetConstantData(void* data, TypeTable* types) const override { expr_->GetConstantData(data, types); }
 
  private:
   Type* type_;
@@ -768,6 +770,8 @@ class UnaryOp : public Expr {
   Type*  GetType(TypeTable* types) override;
   Op     GetOp() { return op_; }
   Expr*  GetRHS() { return rhs_; }
+  bool   IsConstant() const override { return rhs_->IsConstant(); }
+  void   GetConstantData(void* data, TypeTable* types) const override;
 
  private:
   Expr* rhs_;
