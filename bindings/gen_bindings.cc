@@ -263,6 +263,7 @@ void GenBindings::Run() {
   }
   int id = 0;
   for (auto type : types) {
+    if (!type || type->IsList()) continue;
     typeMap_[type] = id;
     fprintf(file_, "  typeList[%d] = ", id++);
     GenType(type);
