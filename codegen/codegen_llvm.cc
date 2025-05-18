@@ -1160,6 +1160,7 @@ Result CodeGenLLVM::Visit(StoreStmt* stmt) {
   int64_t size = stmt->GetRHS()->GetType(types_)->GetSizeInBytes();
   if (stmt->GetRHS()->IsConstant() && size >= kMinAutoConstantSize) {
     char* data = new char[size];
+    memset(data, 0, size);
     stmt->GetRHS()->GetConstantData(data, types_);
     llvm::StringRef stringRef(static_cast<const char*>(data), size);
     llvm::Constant* initializer = llvm::ConstantDataArray::getRaw(stringRef, size, byteType_);
