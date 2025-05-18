@@ -204,7 +204,7 @@ void GenBindings::GenType(Type* type) {
             "types->GetUnresolvedScopedType(static_cast<FormalTemplateArg*>(typeList[%d]), \"%s\")",
             typeMap_[unresolvedScopedType->GetBaseType()], unresolvedScopedType->GetID().c_str());
   } else if (type->IsList()) {
-    fprintf(file_, "nullptr");
+    fprintf(file_, "types->GetList({})");       // we don't actually need the ListType for anything, but it must be non-null in the table
   } else {
     assert(!"unknown type");
     exit(-1);
