@@ -36,7 +36,7 @@ namespace Toucan {
 
 namespace {
 
-constexpr int kMinAutoConstantSize = 64;
+constexpr int kMinAutoConstantSize = 1024;
 
 llvm::Value* GenerateBinOpInt(LLVMBuilder*   builder,
                               BinOpNode::Op  op,
@@ -1157,18 +1157,15 @@ Result CodeGenLLVM::Visit(ZeroInitStmt* node) {
 
 Result CodeGenLLVM::Visit(StoreStmt* stmt) {
   llvm::Value* lhs = GenerateLLVM(stmt->GetLHS());
-  if (stmt->GetRHS()->IsConstant()) {
-    int64_t size = stmt->GetRHS()->GetType(types_)->GetSizeInBytes();
-    if (size >= kMinAutoConstantSize) {
-      printf("creating memcpy for size %ld\n", size);
-      char* data = new char[size];
-      stmt->GetRHS()->GetConstantData(data, types_);
-      llvm::StringRef stringRef(static_cast<const char*>(data), size);
-      llvm::Constant* initializer = llvm::ConstantDataArray::getRaw(stringRef, size, byteType_);
-      auto rhs = new llvm::GlobalVariable(*module_, initializer->getType(), true,
-        llvm::GlobalVariable::InternalLinkage, initializer, "data");
-      return builder_->CreateMemCpy(lhs, {}, rhs, {}, size);
-    }
+  int64_t size = stmt->GetRHS()->GetType(types_)->GetSizeInBytes();
+  if (stmt->GetRHS()->IsConstant() && size >= kMinAutoConstantSize) {
+    char* data = new char[size];
+    stmt->GetRHS()->GetConstantData(data, types_);
+    llvm::StringRef stringRef(static_cast<const char*>(data), size);
+    llvm::Constant* initializer = llvm::ConstantDataArray::getRaw(stringRef, size, byteType_);
+    auto rhs = new llvm::GlobalVariable(*module_, initializer->getType(), true,
+      llvm::GlobalVariable::InternalLinkage, initializer, "data");
+    return builder_->CreateMemCpy(lhs, {}, rhs, {}, size);
   }
   llvm::Value* rhs = GenerateLLVM(stmt->GetRHS());
   if (stmt->GetRHS()->GetType(types_)->IsRawPtr() & !temporaries_.empty()) {
