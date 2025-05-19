@@ -90,8 +90,8 @@ class WriteGBuffers {
     // Transform the vertex position by the model and viewProjection matrices.
     // Transform the vertex normal by the normalModelMatrix (inverse transpose of the model).
     var output : VertexOutput;
-    var worldPosition = uniforms.modelMatrix * Utils.makeFloat4(v.position, 1.0);
-    vb.position = camera.viewProjectionMatrix * Utils.makeFloat4(worldPosition.xyz, 1.0);
+    var worldPosition = Utils.makeFloat3(uniforms.modelMatrix * Utils.makeFloat4(v.position, 1.0));
+    vb.position = camera.viewProjectionMatrix * Utils.makeFloat4(worldPosition, 1.0);
     var fragNormal = uniforms.normalModelMatrix * Utils.makeFloat4(v.normal, 1.0);
     output.fragNormal = fragNormal.xyz;
     output.fragUV = v.uv;
@@ -274,46 +274,20 @@ var gBufferTextureAlbedo = new renderable sampleable Texture2D<BGRA8unorm>(devic
 // Create depth texture
 var depthTexture = new renderable sampleable Texture2D<Depth24Plus>(device, windowSize);
 
-// VertexBufferLayout
-
-// none
-
 // Create WriteGBuffers RenderPipeline
-var writeGBuffersPipeline = new RenderPipeline<WriteGBuffers>(
-  device = device,
-  cullMode = CullMode.Back
-);
-
-// BufferTextures BindGroupLayout
-
-// none
-
-// LightBuffers BindGroupLayout
-
-// none
+var writeGBuffersPipeline = new RenderPipeline<WriteGBuffers>(device = device, cullMode = CullMode.Back);
 
 // Create GBuffersDebugView RenderPipeline
-
 var gBuffersDebugViewPipeline = new RenderPipeline<GBuffersDebugView>(device);
 
 // Create DeferredRender RenderPipeline
-
 var deferredRenderPipeline = new RenderPipeline<DeferredRender>(device);
 
 // Create ColorAttachments for GBuffer textures
 var writeGBufferPassDescriptor : WriteGBuffers;
-writeGBufferPassDescriptor.normals = gBufferTexture2DFloat16.CreateColorAttachment(
-  clearValue = {0.0, 0.0, 0.0, 1.0},
-  loadOp = LoadOp.Clear
-);
-writeGBufferPassDescriptor.albedo = gBufferTextureAlbedo.CreateColorAttachment(
-  clearValue = {0.0, 0.0, 0.0, 1.0},
-  loadOp = LoadOp.Clear
-);
-writeGBufferPassDescriptor.depth = depthTexture.CreateDepthStencilAttachment(
-  depthLoadOp = LoadOp.Clear,
-  depthClearValue = 1.0
-);
+writeGBufferPassDescriptor.normals = gBufferTexture2DFloat16.CreateColorAttachment(clearValue = {0.0, 0.0, 0.0, 1.0}, loadOp = LoadOp.Clear);
+writeGBufferPassDescriptor.albedo = gBufferTextureAlbedo.CreateColorAttachment(clearValue = {0.0, 0.0, 0.0, 1.0}, loadOp = LoadOp.Clear);
+writeGBufferPassDescriptor.depth = depthTexture.CreateDepthStencilAttachment(depthLoadOp = LoadOp.Clear, depthClearValue = 1.0);
 
 enum Mode {
   Rendering,
