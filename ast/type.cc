@@ -723,6 +723,10 @@ ListType* TypeTable::GetList(VarVector&& types) {
   return type;
 }
 
+Type* TypeTable::GetPlaceholder() {
+  return Make<BoolType>();
+}
+
 StrongPtrType* TypeTable::GetStrongPtrType(Type* baseType) {
   StrongPtrType* type = strongPtrTypes_[baseType];
   if (type == nullptr) {
