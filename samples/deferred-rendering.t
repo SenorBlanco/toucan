@@ -1,7 +1,8 @@
 include "include/dragon.t"
-include "include/transform.t"
-include "include/utils.t"
 include "include/mesh.t"
+include "include/transform.t"
+include "include/tex-coord-utils.t"
+include "include/utils.t"
 
 // LightData
 class LightData {
@@ -243,7 +244,7 @@ var aspect = (float) windowSize.x / (float) windowSize.y;
 
 // Meshify the dragon
 var mesh = new Mesh<Vertex, ushort>(&dragonVertices, &dragonTriangles, 3.1415926535);
-mesh.computeProjectedPlaneUVs(ProjectedPlane.XY);
+TexCoordUtils<Vertex>.computeProjectedPlaneUVs(mesh.vertices, ProjectedPlane.XY);
 
 // Create ground plane geometry.
 var groundPlaneVertices : [4]Vertex = {
