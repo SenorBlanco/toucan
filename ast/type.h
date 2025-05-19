@@ -305,7 +305,7 @@ struct Var {
   Type*       type;
 };
 
-class VarVector : public std::vector<std::shared_ptr<Var>> {};
+using VarVector = std::vector<std::shared_ptr<Var>>;
 
 class Stmts;
 
@@ -573,6 +573,7 @@ class TypeTable {
   VoidType*          GetVoid();
   AutoType*          GetAuto();
   ListType*          GetList(VarVector&& types);
+  Type*              GetPlaceholder();
   VectorType*        GetVector(Type* componentType, int size);
   MatrixType*        GetMatrix(VectorType* columnType, int numColumns);
   StrongPtrType*     GetStrongPtrType(Type* type);
@@ -611,6 +612,7 @@ class TypeTable {
   std::unordered_map<std::string, FormalTemplateArg*>  formalTemplateArgs_;
   std::unordered_map<TypeAndInt, QualifiedType*>       qualifiedTypes_;
   std::unordered_map<TypeAndId, UnresolvedScopedType*> unresolvedScopedTypes_;
+  std::vector<ListType*>                               listTypes_;
   BoolType*                                            bool_;
   StringType*                                          string_;
   VoidType*                                            void_;

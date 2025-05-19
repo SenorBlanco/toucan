@@ -204,7 +204,14 @@ void GenBindings::GenType(Type* type) {
             "types->GetUnresolvedScopedType(static_cast<FormalTemplateArg*>(typeList[%d]), \"%s\")",
             typeMap_[unresolvedScopedType->GetBaseType()], unresolvedScopedType->GetID().c_str());
   } else if (type->IsList()) {
-    fprintf(file_, "types->GetList({})");       // we don't actually need the ListType for anything, but it must be non-null in the table
+//    const VarVector& vars = static_cast<ListType*>(type)->GetTypes();
+//    fprintf(file_, "types->GetList(std::vector<Var>{");
+//    for (auto var : vars) {
+//      fprintf(file_, "{\"%s\", typeList[%d]}", var->name.c_str(), typeMap_[var->type]);
+//      if (var != vars.back()) { fprintf(file_, ", "); }
+//    }
+//    fprintf(file_,"})");
+    fprintf(file_, "types->GetPlaceholder()");
   } else {
     assert(!"unknown type");
     exit(-1);
