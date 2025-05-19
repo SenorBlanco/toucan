@@ -2,7 +2,6 @@ include "include/dragon.t"
 include "include/mesh.t"
 include "include/transform.t"
 include "include/tex-coord-utils.t"
-include "include/utils.t"
 
 // LightData
 class LightData {
