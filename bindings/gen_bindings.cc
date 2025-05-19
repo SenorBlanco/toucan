@@ -276,6 +276,7 @@ void GenBindings::Run() {
       GenBindingsForEnum(static_cast<EnumType*>(type));
     }
   }
+  fprintf(file_, "  assert(types->GetTypes().size() == %d);\n", numTypes);
   fprintf(file_, "  delete[] typeList;\n");
   fprintf(file_, "  delete[] nodeList;\n");
   fprintf(file_, "}\n\n");
