@@ -1,17 +1,16 @@
 include "cube.t"
 include "cubic.t"
+include "dragon.t"
 include "event-handler.t"
+include "mesh.t"
 include "quaternion.t"
 include "transform.t"
-include "dragon.t"
 
 class Vertex {
   var position : float<3>;
   var normal   : float<3>;
-  var uv       : float<2>;
 }
 
-include "mesh.t"
 using Format = RGBA8unorm;
 
 class CubeLoader {
@@ -118,17 +117,17 @@ cubeData.position = new VertexInput<float<3>>(cubeVB);
 cubeData.indexBuffer = new index Buffer<[]uint>(device, &cubeIndices);
 cubeData.bindings = new BindGroup<Bindings>(device, &cubeBindings);
 
-var dragonPipeline = new RenderPipeline<ReflectionPipeline>(device);
+var reflectionPipeline = new RenderPipeline<ReflectionPipeline>(device);
 var dragonBindings : Bindings;
 dragonBindings.sampler = cubeBindings.sampler;
 dragonBindings.textureView = cubeBindings.textureView;
 dragonBindings.uniforms = new uniform Buffer<Uniforms>(device);
 
 var dragonVB = new vertex Buffer<[]Vertex>(device, dragon.vertices);
-var dragonData : ReflectionPipeline;
-dragonData.vert = new VertexInput<Vertex>(dragonVB);
-dragonData.indexBuffer = new index Buffer<[]uint>(device, dragon.indices);
-dragonData.bindings = new BindGroup<Bindings>(device, &dragonBindings);
+var reflectionData : ReflectionPipeline;
+reflectionData.vert = new VertexInput<Vertex>(dragonVB);
+reflectionData.indexBuffer = new index Buffer<[]uint>(device, dragon.indices);
+reflectionData.bindings = new BindGroup<Bindings>(device, &dragonBindings);
 
 var handler : EventHandler;
 handler.rotation = float<2>(0.0, 0.0);
@@ -169,8 +168,8 @@ while (System.IsRunning()) {
   cubePass.DrawIndexed(cubeIndices.length, 1, 0, 0, 0);
 
   var dragonPass = new RenderPass<ReflectionPipeline>(renderPass);
-  dragonPass.SetPipeline(dragonPipeline);
-  dragonPass.Set(&dragonData);
+  dragonPass.SetPipeline(reflectionPipeline);
+  dragonPass.Set(&reflectionData);
   dragonPass.DrawIndexed(dragon.indices.length, 1, 0, 0, 0);
 
   renderPass.End();
