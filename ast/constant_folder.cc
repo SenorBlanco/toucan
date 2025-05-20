@@ -48,32 +48,32 @@ Result ConstantFolder::Visit(CastExpr* node) {
   return {};
 }
 
-template <class T> void ConstantFolder::Append(T value) {
+template <class T> void ConstantFolder::Store(T value) {
   *static_cast<T*>(data_) = value;
 }
 
 Result ConstantFolder::Visit(IntConstant* node) {
-  Append<int32_t>(node->GetValue());
+  Store<int32_t>(node->GetValue());
   return {};
 }
 
 Result ConstantFolder::Visit(UIntConstant* node) {
-  Append<uint32_t>(node->GetValue());
+  Store<uint32_t>(node->GetValue());
   return {};
 }
 
 Result ConstantFolder::Visit(FloatConstant* node) {
-  Append<float>(node->GetValue());
+  Store<float>(node->GetValue());
   return {};
 }
 
 Result ConstantFolder::Visit(DoubleConstant* node) {
-  Append<double>(node->GetValue());
+  Store<double>(node->GetValue());
   return {};
 }
 
 Result ConstantFolder::Visit(BoolConstant* node) {
-  Append<bool>(node->GetValue());
+  Store<bool>(node->GetValue());
   return {};
 }
 
@@ -86,22 +86,22 @@ template <class T> void ConstantFolder::IntegralBinOp(BinOpNode::Op op, void* lh
   auto l = *static_cast<T*>(lhs);
   auto r = *static_cast<T*>(rhs);
   switch (op) {
-    case BinOpNode::ADD:           Append<T>(l + r); break;
-    case BinOpNode::SUB:           Append<T>(l - r); break;
-    case BinOpNode::MUL:           Append<T>(l * r); break;
-    case BinOpNode::DIV:           Append<T>(l / r); break;
-    case BinOpNode::MOD:           Append<T>(l % r); break;
-    case BinOpNode::LT:            Append<T>(l < r); break;
-    case BinOpNode::LE:            Append<T>(l <= r); break;
-    case BinOpNode::EQ:            Append<T>(l == r); break;
-    case BinOpNode::GE:            Append<T>(l >= r); break;
-    case BinOpNode::GT:            Append<T>(l > r); break;
-    case BinOpNode::NE:            Append<T>(l != r); break;
-    case BinOpNode::LOGICAL_AND:   Append<T>(l && r); break;
-    case BinOpNode::BITWISE_AND:   Append<T>(l & r); break;
-    case BinOpNode::LOGICAL_OR:    Append<T>(l || r); break;
-    case BinOpNode::BITWISE_OR:    Append<T>(l | r); break;
-    case BinOpNode::BITWISE_XOR:   Append<T>(l ^ r); break;
+    case BinOpNode::ADD:           Store<T>(l + r); break;
+    case BinOpNode::SUB:           Store<T>(l - r); break;
+    case BinOpNode::MUL:           Store<T>(l * r); break;
+    case BinOpNode::DIV:           Store<T>(l / r); break;
+    case BinOpNode::MOD:           Store<T>(l % r); break;
+    case BinOpNode::LT:            Store<T>(l < r); break;
+    case BinOpNode::LE:            Store<T>(l <= r); break;
+    case BinOpNode::EQ:            Store<T>(l == r); break;
+    case BinOpNode::GE:            Store<T>(l >= r); break;
+    case BinOpNode::GT:            Store<T>(l > r); break;
+    case BinOpNode::NE:            Store<T>(l != r); break;
+    case BinOpNode::LOGICAL_AND:   Store<T>(l && r); break;
+    case BinOpNode::BITWISE_AND:   Store<T>(l & r); break;
+    case BinOpNode::LOGICAL_OR:    Store<T>(l || r); break;
+    case BinOpNode::BITWISE_OR:    Store<T>(l | r); break;
+    case BinOpNode::BITWISE_XOR:   Store<T>(l ^ r); break;
     default: assert(false);
   }
 }
@@ -110,25 +110,25 @@ template <class T> void ConstantFolder::FloatingPointBinOp(BinOpNode::Op op, voi
   auto l = *static_cast<T*>(lhs);
   auto r = *static_cast<T*>(rhs);
   switch (op) {
-    case BinOpNode::ADD:           Append<T>(l + r); break;
-    case BinOpNode::SUB:           Append<T>(l - r); break;
-    case BinOpNode::MUL:           Append<T>(l * r); break;
-    case BinOpNode::DIV:           Append<T>(l / r); break;
-    case BinOpNode::LT:            Append<T>(l < r); break;
-    case BinOpNode::LE:            Append<T>(l <= r); break;
-    case BinOpNode::EQ:            Append<T>(l == r); break;
-    case BinOpNode::GE:            Append<T>(l >= r); break;
-    case BinOpNode::GT:            Append<T>(l > r); break;
-    case BinOpNode::NE:            Append<T>(l != r); break;
+    case BinOpNode::ADD:           Store<T>(l + r); break;
+    case BinOpNode::SUB:           Store<T>(l - r); break;
+    case BinOpNode::MUL:           Store<T>(l * r); break;
+    case BinOpNode::DIV:           Store<T>(l / r); break;
+    case BinOpNode::LT:            Store<T>(l < r); break;
+    case BinOpNode::LE:            Store<T>(l <= r); break;
+    case BinOpNode::EQ:            Store<T>(l == r); break;
+    case BinOpNode::GE:            Store<T>(l >= r); break;
+    case BinOpNode::GT:            Store<T>(l > r); break;
+    case BinOpNode::NE:            Store<T>(l != r); break;
     default: assert(false);
   }
 }
 
-template <class T> void ConstantFolder::AppendUnaryOp(UnaryOp::Op op, void *rhs) {
+template <class T> void ConstantFolder::StoreUnaryOp(UnaryOp::Op op, void *rhs) {
   auto r = *static_cast<T*>(rhs);
   switch (op) {
-    case UnaryOp::Op::Minus:       Append<T>(-r); break;
-    case UnaryOp::Op::Negate:      Append<T>(!r); break;
+    case UnaryOp::Op::Minus:       Store<T>(-r); break;
+    case UnaryOp::Op::Negate:      Store<T>(!r); break;
     default: assert(false);
   }
 }
@@ -167,21 +167,21 @@ Result ConstantFolder::Visit(UnaryOp* node) {
   auto rhs = alloca(rhsType->GetSizeInBytes());
   Resolve(node->GetRHS(), rhs);
   if (rhsType->IsInt()) {
-    AppendUnaryOp<int32_t>(node->GetOp(), rhs);
+    StoreUnaryOp<int32_t>(node->GetOp(), rhs);
   } else if (rhsType->IsUInt()) {
-    AppendUnaryOp<uint32_t>(node->GetOp(), rhs);
+    StoreUnaryOp<uint32_t>(node->GetOp(), rhs);
   } else if (rhsType->IsShort()) {
-    AppendUnaryOp<int16_t>(node->GetOp(), rhs);
+    StoreUnaryOp<int16_t>(node->GetOp(), rhs);
   } else if (rhsType->IsUShort()) {
-    AppendUnaryOp<uint16_t>(node->GetOp(), rhs);
+    StoreUnaryOp<uint16_t>(node->GetOp(), rhs);
   } else if (rhsType->IsByte()) {
-    AppendUnaryOp<int8_t>(node->GetOp(), rhs);
+    StoreUnaryOp<int8_t>(node->GetOp(), rhs);
   } else if (rhsType->IsUByte()) {
-    AppendUnaryOp<uint8_t>(node->GetOp(), rhs);
+    StoreUnaryOp<uint8_t>(node->GetOp(), rhs);
   } else if (rhsType->IsFloat()) {
-    AppendUnaryOp<float>(node->GetOp(), rhs);
+    StoreUnaryOp<float>(node->GetOp(), rhs);
   } else if (rhsType->IsDouble()) {
-    AppendUnaryOp<double>(node->GetOp(), rhs);
+    StoreUnaryOp<double>(node->GetOp(), rhs);
   } else {
     assert(false);
   }
@@ -189,9 +189,10 @@ Result ConstantFolder::Visit(UnaryOp* node) {
 }
 
 Result ConstantFolder::Visit(ExprList* node) {
+  auto d = static_cast<char*>(data_);
   for (auto expr : node->Get()) {
-    Resolve(expr);
-    data_ = static_cast<char*>(data_) + expr->GetType(types_)->GetAlignmentInBytes();
+    Resolve(expr, d);
+    d += expr->GetType(types_)->GetAlignmentInBytes();
   }
   return {};
 }
