@@ -38,6 +38,7 @@ class ConstantFolder : public Visitor {
   Result Visit(Initializer* node) override;
   Result Visit(IntConstant* node) override;
   Result Visit(UIntConstant* node) override;
+  Result Visit(UnaryOp* node) override;
   Result Default(ASTNode* node) override;
 
  private:

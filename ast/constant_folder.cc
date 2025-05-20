@@ -135,7 +135,7 @@ Result ConstantFolder::Visit(BinOpNode* node) {
   if (lhsType->IsInt()) {
     IntegralBinOp<int32_t>(l, r, node->GetOp());
   } else if (lhsType->IsUInt()) {
-    IntegralBinOp<int32_t>(l, r, node->GetOp());
+    IntegralBinOp<uint32_t>(l, r, node->GetOp());
   } else if (lhsType->IsShort()) {
     IntegralBinOp<int16_t>(l, r, node->GetOp());
   } else if (lhsType->IsUShort()) {
@@ -148,6 +148,42 @@ Result ConstantFolder::Visit(BinOpNode* node) {
     FloatingPointBinOp<float>(l, r, node->GetOp());
   } else if (lhsType->IsDouble()) {
     FloatingPointBinOp<double>(l, r, node->GetOp());
+  } else {
+    assert(false);
+  }
+  return {};
+}
+
+template<class T> void ConstantFolder::IntegralUnaryOp() {
+  auto l = *static_cast<T*>(lhs);
+  switch (op) {
+    case UnaryOp::Op::Minus:       Append<T>(-r);
+    case UnaryOp::Op::Negate:      Append<T>(!r);
+    default: assert(false);
+  }
+}
+
+Result ConstantFolder::Visit(UnaryOp* node) {
+  auto type = node->GetRHS()->GetType(types_);
+  std::vector<char> rhs(rhsType->GetSizeInBytes());
+  auto r = rhs.data();
+  Resolve(node->GetRHS(), r);
+  if (lhsType->IsInt()) {
+    IntegralUnaryOp<int32_t>(r, node->GetOp());
+  } else if (lhsType->IsUInt()) {
+    IntegralUnaryOp<uint32_t>(r, node->GetOp());
+  } else if (lhsType->IsShort()) {
+    IntegralUnaryOp<int16_t>(r, node->GetOp());
+  } else if (lhsType->IsUShort()) {
+    IntegralUnaryOp<uint16_t>(r, node->GetOp());
+  } else if (lhsType->IsByte()) {
+    IntegralUnaryOp<int8_t>(r, node->GetOp());
+  } else if (lhsType->IsUByte()) {
+    IntegralUnaryOp<uint8_t>(r, node->GetOp());
+  } else if (lhsType->IsFloat()) {
+    FloatingPointUnaryOp<float>(r, node->GetOp());
+  } else if (lhsType->IsDouble()) {
+    FloatingPointUnaryOp<double>(r, node->GetOp());
   } else {
     assert(false);
   }
