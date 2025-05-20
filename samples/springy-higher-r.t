@@ -7,7 +7,6 @@ using Vector = float<2>;
 
 var width =  10;
 var height = 10;
-var depth =   1;
 
 class Body {
   var position : Vector;
@@ -147,8 +146,8 @@ class DrawPipeline {
   var bindings : *BindGroup<DrawBindings>;
 }
 
-var bodies = [width * height * depth] new Body;
-var springs = [bodies.length * 3 - width * depth - height * depth - width * height] new Spring;
+var bodies = [width * height] new Body;
+var springs = [bodies.length * 3 - width - height - width * height] new Spring;
 var spring = 0;
 for (var i = 0; i < bodies.length; ++i) {
   bodies[i].springWeight[0] = 0.0;
@@ -162,10 +161,8 @@ for (var i = 0; i < bodies.length; ++i) {
 for (var i = 0; i < bodies.length; ++i) {
   var x = i % width;
   var y = i % (width * height) / width;
-  var z = i / (width * height);
-  var pos = Utils.makeVector((float) (x - width / 2) + 0.5,
-                             (float) (y - height / 2) + 0.5,
-                             (float) (z - depth / 2) + 0.5, Vector(0.0));
+  var pos = Vector((float) (x - width / 2) + 0.5,
+                   (float) (y - height / 2) + 0.5);
   bodies[i].position = pos;
   bodies[i].mass = Math.rand() * 2.5 + 1.25;
   bodies[i].velocity = Vector(0.0);
@@ -194,16 +191,6 @@ for (var i = 0; i < bodies.length; ++i) {
     bodies[body2].spring[4] = spring;
     bodies[body1].springWeight[1] = 1.0;
     bodies[body2].springWeight[4] = -1.0;
-    ++spring;
-  }
-
-  if (z < depth - 1) {
-    var body2 = i + width * height;
-    springs[spring] = Spring(body1, body2);
-    bodies[body1].spring[2] = spring;
-    bodies[body2].spring[5] = spring;
-    bodies[body1].springWeight[2] = 1.0;
-    bodies[body2].springWeight[5] = -1.0;
     ++spring;
   }
 }
