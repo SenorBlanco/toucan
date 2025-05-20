@@ -199,7 +199,7 @@ Result ConstantFolder::Visit(ExprList* node) {
   auto d = static_cast<char*>(data_);
   for (auto expr : node->Get()) {
     Resolve(expr, d);
-    d += expr->GetType(types_)->GetAlignmentInBytes();
+    d += expr->GetType(types_)->GetSizeInBytes();
   }
   return {};
 }
