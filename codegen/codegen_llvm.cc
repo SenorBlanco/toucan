@@ -29,6 +29,7 @@
 #include <tint/tint.h>
 #endif
 
+#include <ast/constant_folder.h>
 #include <ast/symbol.h>
 #include "codegen_spirv.h"
 
@@ -1161,7 +1162,8 @@ Result CodeGenLLVM::Visit(StoreStmt* stmt) {
   if (stmt->GetRHS()->IsConstant() && size >= kMinAutoConstantSize) {
     char* data = new char[size];
     memset(data, 0, size);
-    stmt->GetRHS()->GetConstantData(data, types_);
+    ConstantFolder constantFolder(types_, data);
+    constantFolder.Resolve(stmt->GetRHS());
     llvm::StringRef stringRef(static_cast<const char*>(data), size);
     llvm::Constant* initializer = llvm::ConstantDataArray::getRaw(stringRef, size, byteType_);
     auto rhs = new llvm::GlobalVariable(*module_, initializer->getType(), true,
