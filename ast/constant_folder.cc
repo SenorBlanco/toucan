@@ -164,25 +164,24 @@ Result ConstantFolder::Visit(BinOpNode* node) {
 
 Result ConstantFolder::Visit(UnaryOp* node) {
   auto rhsType = node->GetRHS()->GetType(types_);
-  std::vector<char> rhs(rhsType->GetSizeInBytes());
-  auto r = rhs.data();
-  Resolve(node->GetRHS(), r);
+  auto rhs = alloca(rhsType->GetSizeInBytes());
+  Resolve(node->GetRHS(), rhs);
   if (rhsType->IsInt()) {
-    AppendUnaryOp<int32_t>(node->GetOp(), r);
+    AppendUnaryOp<int32_t>(node->GetOp(), rhs);
   } else if (rhsType->IsUInt()) {
-    AppendUnaryOp<uint32_t>(node->GetOp(), r);
+    AppendUnaryOp<uint32_t>(node->GetOp(), rhs);
   } else if (rhsType->IsShort()) {
-    AppendUnaryOp<int16_t>(node->GetOp(), r);
+    AppendUnaryOp<int16_t>(node->GetOp(), rhs);
   } else if (rhsType->IsUShort()) {
-    AppendUnaryOp<uint16_t>(node->GetOp(), r);
+    AppendUnaryOp<uint16_t>(node->GetOp(), rhs);
   } else if (rhsType->IsByte()) {
-    AppendUnaryOp<int8_t>(node->GetOp(), r);
+    AppendUnaryOp<int8_t>(node->GetOp(), rhs);
   } else if (rhsType->IsUByte()) {
-    AppendUnaryOp<uint8_t>(node->GetOp(), r);
+    AppendUnaryOp<uint8_t>(node->GetOp(), rhs);
   } else if (rhsType->IsFloat()) {
-    AppendUnaryOp<float>(node->GetOp(), r);
+    AppendUnaryOp<float>(node->GetOp(), rhs);
   } else if (rhsType->IsDouble()) {
-    AppendUnaryOp<double>(node->GetOp(), r);
+    AppendUnaryOp<double>(node->GetOp(), rhs);
   } else {
     assert(false);
   }
