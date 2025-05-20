@@ -133,21 +133,23 @@ Result SemanticPass::Visit(UnresolvedInitializer* node) {
     auto* exprList = Make<ExprList>(std::move(constructorArgs));
     Expr* result = Make<MethodCall>(constructor, exprList);
     return Make<LoadExpr>(result);
-  } else if (type->IsVector() && args.size() == 1) {
-    unsigned int length = static_cast<VectorType*>(type)->GetLength();
+  }
+  size_t length;
+  if (type->IsVector()) {
+    length = static_cast<VectorType*>(type)->GetLength();
+  } else if (type->IsArray()) {
+    length = static_cast<ArrayType*>(type)->GetNumElements();
+  } else if (type->IsMatrix()) {
+    length = static_cast<MatrixType*>(type)->GetNumColumns();
+  } else {
+    return Error("unsupported type in initializer");
+  }
+  if (args.size() == 1) {
     for (int i = 0; i < length; ++i) {
       exprs.push_back(args[0]->GetExpr());
     }
-  } else if (type->IsArray() && args.size() == 1) {
-    unsigned int length = static_cast<ArrayType*>(type)->GetNumElements();
-    for (int i = 0; i < length; ++i) {
-      exprs.push_back(args[0]->GetExpr());
-    }
-  } else if (type->IsMatrix() && args.size() == 1) {
-    unsigned int length = static_cast<MatrixType*>(type)->GetNumColumns();
-    for (int i = 0; i < length; ++i) {
-      exprs.push_back(args[0]->GetExpr());
-    }
+  } else if (args.size() != length) {
+    return Error("%s initializer must have 1 or %d args", type->ToString().c_str(), length);
   } else {
     for (auto arg : args) {
       exprs.push_back(arg->GetExpr());

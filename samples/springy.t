@@ -7,7 +7,6 @@ using Vector = float<2>;
 
 var width =  10;
 var height = 10;
-var depth =   1;
 
 class Body {
   var position : Vector;
@@ -101,16 +100,14 @@ class DrawPipeline {
   var bindings : *BindGroup<Bindings>;
 }
 
-var bodies = [width * height * depth] new Body;
-var springs = [bodies.length * 3 - width * depth - height * depth - width * height] new Spring;
+var bodies = [width * height] new Body;
+var springs = [bodies.length * 3 - width - height - width * height] new Spring;
 var spring = 0;
 for (var i = 0; i < bodies.length; ++i) {
   var x = i % width;
   var y = i % (width * height) / width;
-  var z = i / (width * height);
-  var pos = Utils.makeVector((float) (x - width / 2) + 0.5,
-                             (float) (y - height / 2) + 0.5,
-                             (float) (z - depth / 2) + 0.5, Vector(0.0));
+  var pos = Vector((float) (x - width / 2) + 0.5,
+                   (float) (y - height / 2) + 0.5);
   bodies[i].position = pos;
   bodies[i].mass = Math.rand() * 2.5 + 1.25;
   bodies[i].velocity = Vector(0.0);
@@ -127,10 +124,6 @@ for (var i = 0; i < bodies.length; ++i) {
 
   if (y < height - 1) {
     springs[spring++] = Spring(i, i + width);
-  }
-
-  if (z < depth - 1) {
-    springs[spring++] = Spring(i, i + width * height);
   }
 }
 

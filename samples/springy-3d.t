@@ -60,8 +60,8 @@ class ParticleSystem {
   }
 
   eulerStep(deltaT : float) {
-    var gravity = Vector(0.0, -0.25);
-    var wind = Vector(Math.rand() * 0.05, 0.0);
+    var gravity = Vector(0.0, -0.25, 0.0);
+    var wind = Vector(Math.rand() * 0.05, 0.0, 0.0);
     for (var i = 0; i < bodies.length; ++i) {
       bodies[i].force = gravity + wind;
     }
@@ -108,9 +108,9 @@ for (var i = 0; i < bodies.length; ++i) {
   var x = i % width;
   var y = i % (width * height) / width;
   var z = i / (width * height);
-  var pos = Utils.makeVector((float) (x - width / 2) + 0.5,
-                             (float) (y - height / 2) + 0.5,
-                             (float) (z - depth / 2) + 0.5, Vector(0.0));
+  var pos = Vector((float) (x - width / 2) + 0.5,
+                   (float) (y - height / 2) + 0.5,
+                   (float) (z - depth / 2) + 0.5);
   bodies[i].position = pos;
   bodies[i].mass = Math.rand() * 2.5 + 1.25;
   bodies[i].velocity = Vector(0.0);
@@ -177,9 +177,9 @@ while(System.IsRunning()) {
   bodyBindings.uniforms.SetData(&drawUniforms);
   for (var i = 0; i < bodies.length; ++i) {
     var p = bodies[i].position;
-    bodyVerts[i*3  ] = p + Vector( 0.1,  0.0);
-    bodyVerts[i*3+1] = p + Vector(-0.1,  0.0);
-    bodyVerts[i*3+2] = p + Vector( 0.0, -0.2);
+    bodyVerts[i*3  ] = p + Vector( 0.1,  0.0, 0.0);
+    bodyVerts[i*3+1] = p + Vector(-0.1,  0.0, 0.0);
+    bodyVerts[i*3+2] = p + Vector( 0.0, -0.2, 0.0);
   }
   bodyVBO.SetData(bodyVerts);
 
