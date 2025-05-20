@@ -32,19 +32,8 @@ void ConstantFolder::Resolve(ASTNode* node, void* data) {
 }
 
 Result ConstantFolder::Visit(CastExpr* node) {
-  Type* srcType = node->GetExpr()->GetType(types_);
-  Type* dstType = node->GetType(types_);
-  // FIXME: refactor into "IsTransparentCast()"
-  if (srcType->IsInt() && dstType->IsUInt() ||
-      srcType->IsUInt() && dstType->IsInt() ||
-      srcType->IsShort() && dstType->IsUShort() ||
-      srcType->IsUShort() && dstType->IsShort() ||
-      srcType->IsByte() && dstType->IsUByte() ||
-      srcType->IsUByte() && dstType->IsByte()) {
-    Resolve(node->GetExpr());
-  } else {
-    assert(false);
-  }
+  assert(node->IsTransparent(types_));
+  Resolve(node->GetExpr());
   return {};
 }
 
@@ -53,12 +42,30 @@ template <class T> void ConstantFolder::Store(T value) {
 }
 
 Result ConstantFolder::Visit(IntConstant* node) {
-  Store<int32_t>(node->GetValue());
+  switch (node->GetBits()) {
+    case 8:
+      Store<int8_t>(node->GetValue()); break;
+    case 16:
+      Store<int16_t>(node->GetValue()); break;
+    case 32:
+      Store<int32_t>(node->GetValue()); break;
+    default:
+      assert(!"unsupported bit width");
+  }
   return {};
 }
 
 Result ConstantFolder::Visit(UIntConstant* node) {
-  Store<uint32_t>(node->GetValue());
+  switch (node->GetBits()) {
+    case 8:
+      Store<uint8_t>(node->GetValue()); break;
+    case 16:
+      Store<uint16_t>(node->GetValue()); break;
+    case 32:
+      Store<uint32_t>(node->GetValue()); break;
+    default:
+      assert(!"unsupported bit width");
+  }
   return {};
 }
 
@@ -73,7 +80,7 @@ Result ConstantFolder::Visit(DoubleConstant* node) {
 }
 
 Result ConstantFolder::Visit(BoolConstant* node) {
-  Store<bool>(node->GetValue());
+  Store<uint8_t>(node->GetValue() ? 1 : 0);
   return {};
 }
 

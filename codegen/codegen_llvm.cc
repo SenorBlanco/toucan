@@ -1159,7 +1159,7 @@ Result CodeGenLLVM::Visit(ZeroInitStmt* node) {
 Result CodeGenLLVM::Visit(StoreStmt* stmt) {
   llvm::Value* lhs = GenerateLLVM(stmt->GetLHS());
   int64_t size = stmt->GetRHS()->GetType(types_)->GetSizeInBytes();
-  if (stmt->GetRHS()->IsConstant() && size >= kMinAutoConstantSize) {
+  if (stmt->GetRHS()->IsConstant(types_) && size >= kMinAutoConstantSize) {
     char* data = new char[size];
     memset(data, 0, size);
     ConstantFolder constantFolder(types_, data);
