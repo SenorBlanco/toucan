@@ -288,7 +288,7 @@ class Initializer : public Expr {
   Type*     GetType(TypeTable* types) override { return type_; }
   Type*     GetType() { return type_; }
   ExprList* GetArgList() { return arglist_; }
-  bool      IsConstant() const override { return arglist_->IsConstant(); }
+  bool      IsConstant() const override { return arglist_->IsConstant() && !type_->IsClass(); }
   void      GetConstantData(void* data, TypeTable* types) const override { arglist_->GetConstantData(data, types); }
 
  private:

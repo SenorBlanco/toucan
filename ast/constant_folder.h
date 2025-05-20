@@ -26,9 +26,10 @@ class ConstantFolder : public Visitor {
   ConstantFolder(TypeTable* types, void* data);
   void Resolve(ASTNode* node);
   void Resolve(ASTNode* node, void* data);
-  template<class T> Result Append(T value);
-  template<class T> void IntegralBinOp(void* lhs, void* rhs, BinOpNode::Op op);
-  template<class T> void FloatingPointBinOp(void* lhs, void* rhs, BinOpNode::Op op);
+  template<class T> void Append(T value);
+  template<class T> void IntegralBinOp(BinOpNode::Op, void* lhs, void* rhs);
+  template<class T> void FloatingPointBinOp(BinOpNode::Op, void* lhs, void* rhs);
+  template<class T> void AppendUnaryOp(UnaryOp::Op, void* rhs);
   Result Visit(CastExpr* node) override;
   Result Visit(BinOpNode* node) override;
   Result Visit(BoolConstant* node) override;
