@@ -36,8 +36,6 @@ namespace Toucan {
 
 namespace {
 
-constexpr int kMinAutoConstantSize = 1024;
-
 llvm::Value* GenerateBinOpInt(LLVMBuilder*   builder,
                               BinOpNode::Op  op,
                               llvm::Value*   lhs,
@@ -274,7 +272,7 @@ llvm::GlobalVariable* CodeGenLLVM::GetOrCreateVTable(ClassType* classType) {
 
   llvm::ArrayType*      arrayType = llvm::ArrayType::get(funcPtrType_, classType->GetVTableSize());
   llvm::GlobalVariable* vtable = new llvm::GlobalVariable(
-      *module_, arrayType, true, llvm::GlobalVariable::ExternalLinkage, nullptr, "vtable");
+      *module_, arrayType, true, llvm::GlobalVariable::InternalLinkage, nullptr, "vtable");
   return vtables_[classType] = vtable;
 }
 
@@ -1156,19 +1154,8 @@ Result CodeGenLLVM::Visit(ZeroInitStmt* node) {
 }
 
 Result CodeGenLLVM::Visit(StoreStmt* stmt) {
-  llvm::Value* lhs = GenerateLLVM(stmt->GetLHS());
-  int64_t size = stmt->GetRHS()->GetType(types_)->GetSizeInBytes();
-  if (stmt->GetRHS()->IsConstant() && size >= kMinAutoConstantSize) {
-    char* data = new char[size];
-    memset(data, 0, size);
-    stmt->GetRHS()->GetConstantData(data, types_);
-    llvm::StringRef stringRef(static_cast<const char*>(data), size);
-    llvm::Constant* initializer = llvm::ConstantDataArray::getRaw(stringRef, size, byteType_);
-    auto rhs = new llvm::GlobalVariable(*module_, initializer->getType(), true,
-      llvm::GlobalVariable::InternalLinkage, initializer, "data");
-    return builder_->CreateMemCpy(lhs, {}, rhs, {}, size);
-  }
   llvm::Value* rhs = GenerateLLVM(stmt->GetRHS());
+  llvm::Value* lhs = GenerateLLVM(stmt->GetLHS());
   if (stmt->GetRHS()->GetType(types_)->IsRawPtr() & !temporaries_.empty()) {
     auto temporary = temporaries_.back();
     temporaries_.pop_back();
@@ -1270,6 +1257,39 @@ Result CodeGenLLVM::Visit(FieldAccess* node) {
 
 Result CodeGenLLVM::Visit(Initializer* node) {
   llvm::Type*  type = ConvertType(node->GetType());
+  if (node->IsConstant()) {
+    std::vector<llvm::Constant*> elements;
+    if (node->GetType()->IsVector()) {
+      int i = 0;
+      for (auto arg : node->GetArgList()->Get()) {
+        elements.push_back(llvm::dyn_cast<llvm::Constant>(GenerateLLVM(arg)));
+      }
+      return llvm::ConstantVector::get(elements);
+    } else if (node->GetType()->IsArray() || node->GetType()->IsMatrix()) {
+      for (auto arg : node->GetArgList()->Get()) {
+        elements.push_back(llvm::dyn_cast<llvm::Constant>(GenerateLLVM(arg)));
+      }
+      return llvm::ConstantArray::get(llvm::dyn_cast<llvm::ArrayType>(type), elements);
+    } else if (node->GetType()->IsClass()) {
+      auto classType = static_cast<ClassType*>(node->GetType());
+      auto args = node->GetArgList()->Get();
+      for (; classType != nullptr; classType = classType->GetParent()) {
+        for (auto& field : classType->GetFields()) {
+          auto arg = args[field->index];
+          elements.push_back(llvm::dyn_cast<llvm::Constant>(GenerateLLVM(arg)));
+          if (field->padding) {
+            auto paddingType = llvm::ArrayType::get(byteType_, field->padding);
+            elements.push_back(llvm::ConstantAggregateZero::get(paddingType));
+          }
+        }
+        if (int padding = classType->GetPadding()) {
+          auto paddingType = llvm::ArrayType::get(byteType_, padding);
+          elements.push_back(llvm::ConstantAggregateZero::get(paddingType));
+        }
+      }
+      return llvm::ConstantStruct::get(llvm::dyn_cast<llvm::StructType>(type), elements);
+    }
+  }
   llvm::Value* result = llvm::ConstantAggregateZero::get(type);
   if (node->GetType()->IsVector()) {
     int i = 0;

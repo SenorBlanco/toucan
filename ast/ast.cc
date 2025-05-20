@@ -152,18 +152,6 @@ UnaryOp::UnaryOp(Op op, Expr* rhs) : op_(op), rhs_(rhs) {}
 
 Type* UnaryOp::GetType(TypeTable* types) { return rhs_->GetType(types); }
 
-void UnaryOp::GetConstantData(void* data, TypeTable* types) const {
-  Type* rhsType = rhs_->GetType(types);
-  auto rhs = std::make_unique<char []>(rhsType->GetSizeInBytes());
-  void* p = rhs.get();
-  rhs_->GetConstantData(p, types);
-  if (rhsType->IsFloat()) {
-    *static_cast<float*>(data) = -*static_cast<float*>(p);
-  } else {
-    assert(false);
-  }
-}
-
 UnresolvedInitializer::UnresolvedInitializer(Type* type, ArgList* arglist, bool constructor)
     : type_(type), arglist_(arglist), constructor_(constructor) {}
 
@@ -307,14 +295,6 @@ bool ExprList::IsConstant() const {
     if (!expr || !expr->IsConstant()) { return false; }
   }
   return true;
-}
-
-void ExprList::GetConstantData(void* data, TypeTable* types) const {
-  char* d = static_cast<char*>(data);
-  for (auto expr : exprs_) {
-    expr->GetConstantData(d, types);
-    d += expr->GetType(types)->GetSizeInBytes();
-  }
 }
 
 ExprStmt::ExprStmt(Expr* expr) : expr_(expr) {}

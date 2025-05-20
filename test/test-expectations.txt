@@ -18,6 +18,7 @@ test/array-class.t
 test/array-constant.t
 test/array-float.t
 test/array-float4.t
+test/array-initialization-bug.t
 test/array-initialization.t
 test/array-length-dynamic.t
 test/array-length-static.t
@@ -248,6 +249,8 @@ test/matrix-initializer.t
 test/matrix.t
 test/method-chained.t
 test/method.t
+test/min4-crash.t
+LLVM main function is broken; aborting
 test/mutual-recursion.t
 test/named-param-default-value.t
 test/named-param.t
@@ -279,6 +282,7 @@ test/string-conversions.t
 -1
 12
 123456789
+test/strong-fixed-size-array.t
 test/swizzle-store.t
 test/templated-class-initializer.t
 test/templated-class-on-primitive-type.t
