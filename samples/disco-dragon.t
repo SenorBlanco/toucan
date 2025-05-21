@@ -274,14 +274,23 @@ var gBufferTextureAlbedo = new renderable sampleable Texture2D<BGRA8unorm>(devic
 // Create depth texture
 var depthTexture = new renderable sampleable Texture2D<Depth24Plus>(device, windowSize);
 
-// Vertex layout
+// VertexBufferLayout
+
+// none
 
 // Create WriteGBuffers RenderPipeline
-
 var writeGBuffersPipeline = new RenderPipeline<WriteGBuffers>(
   device = device,
   cullMode = CullMode.Back
 );
+
+// BufferTextures BindGroupLayout
+
+// none
+
+// LightBuffers BindGroupLayout
+
+// none
 
 // Create GBuffersDebugView RenderPipeline
 
