@@ -273,14 +273,23 @@ var gBufferTextureAlbedo = new renderable sampleable Texture2D<BGRA8unorm>(devic
 // Create depth texture
 var depthTexture = new renderable sampleable Texture2D<Depth24Plus>(device, windowSize);
 
-// Vertex layout
+// VertexBufferLayout
+
+// none
 
 // Create WriteGBuffers RenderPipeline
-
 var writeGBuffersPipeline = new RenderPipeline<WriteGBuffers>(
   device = device,
   cullMode = CullMode.Back
 );
+
+// BufferTextures BindGroupLayout
+
+// none
+
+// LightBuffers BindGroupLayout
+
+// none
 
 // Create GBuffersDebugView RenderPipeline
 
@@ -396,7 +405,6 @@ var origin = float<3>(0.0, 0.0, 0.0);
 
 var pi = 3.141592653589;
 var projectionMatrix = Transform.perspective((2.0 * pi) / 5.0, aspect, 1.0, 2000.0);
-
 
 // Move the model so it's centered.
 var modelMatrix = Transform.translate(0.0, -45.0, 0.0);
