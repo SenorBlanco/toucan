@@ -179,6 +179,20 @@ LoadExpr::LoadExpr(Expr* expr) : expr_(expr) {}
 
 StoreStmt::StoreStmt(Expr* lhs, Expr* rhs) : lhs_(lhs), rhs_(rhs) {}
 
+SwizzleExpr::SwizzleExpr(Expr* expr, std::vector<int>&& indices) : expr_(expr), indices_(std::move(indices)) {}
+
+Type* SwizzleExpr::GetType(TypeTable* types) {
+  auto exprType = expr_->GetType(types);
+  assert(exprType->IsVector());
+  auto componentType = static_cast<VectorType*>(exprType)->GetComponentType();
+  auto size = indices_.size();
+  if (size == 1) {
+    return componentType;
+  } else {
+    return types->GetVector(componentType, indices_.size());
+  }
+}
+
 DestroyStmt::DestroyStmt(Expr* expr) : expr_(expr) {}
 
 IncDecExpr::IncDecExpr(Op op, Expr* expr, bool returnOrigValue)
@@ -332,6 +346,7 @@ Result NullConstant::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ReturnStatement::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result MethodCall::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result Stmts::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result SwizzleExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result TempVarExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result UIntConstant::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result UnaryOp::Accept(Visitor* visitor) { return visitor->Visit(this); }
