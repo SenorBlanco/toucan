@@ -503,6 +503,20 @@ Result SemanticPass::Visit(UnresolvedIdentifier* node) {
   }
 }
 
+Result SemanticPass::MakeSwizzle(VectorType* type, Expr* lhs, const std::string& swizzle) {
+  auto indices = std::vector<int>(swizzle.size());
+  size_t resultLength = ParseSwizzle(swizzle, type->GetLength(), indices.data());
+  if (resultLength < swizzle.size()) {
+    return Error("invalid swizzle at '%c' at position %d\n", swizzle[resultLength], resultLength);
+  }
+  lhs = MakeLoad(lhs);
+  if (indices.size() == 1) {
+    return Make<ExtractElementExpr>(lhs, indices[0]);
+  } else {
+    return Make<SwizzleExpr>(lhs, std::move(indices));
+  }
+}
+
 Result SemanticPass::Visit(UnresolvedDot* node) {
   Expr* expr = Resolve(node->GetExpr());
   if (!expr) return nullptr;
@@ -608,12 +622,21 @@ Result SemanticPass::Visit(StoreStmt* node) {
   if (!lhs) return nullptr;
   Expr* rhs = Resolve(node->GetRHS());
   if (!rhs) return nullptr;
-  if (lhs->IsUnresolvedSwizzleExpr()) {
-    auto swizzle = static_cast<UnresolvedSwizzleExpr*>(lhs);
-    // Bypass the swizzle, load its arg and insert our new value.
+  if (lhs->IsSwizzleExpr()) {
+    auto swizzle = static_cast<SwizzleExpr*>(lhs);
     lhs = swizzle->GetExpr();
     Expr* loadedBase = Make<LoadExpr>(lhs);
-    rhs = Make<InsertElementExpr>(loadedBase, rhs, swizzle->GetIndex());
+    auto indices = swizzle->GetIndices();
+    for (int i = 0; i < indices.size(); ++i) {
+      auto value = Make<ExtractElementExpr>(rhs, i);
+      loadedBase = Make<InsertElementExpr>(loadedBase, value, indices[i]);
+    }
+    rhs = loadedBase;
+  } else if (lhs->IsExtractElementExpr()) {
+    auto extractElement = static_cast<ExtractElementExpr*>(lhs);
+    lhs = extractElement->GetExpr();
+    auto loadedBase = MakeLoad(lhs);
+    rhs = Make<InsertElementExpr>(loadedBase, rhs, extractElement->GetIndex());
   }
   Type* lhsType = lhs->GetType(types_);
   if (!lhsType->IsRawPtr()) { return Error("expression is not an assignable value"); }

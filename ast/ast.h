@@ -70,11 +70,13 @@ class Expr : public ASTNode {
   Expr();
   virtual Type* GetType(TypeTable* types) = 0;
   virtual bool  IsArrayAccess() const { return false; }
+  virtual bool  IsExtractElementExpr() const { return false; }
   virtual bool  IsFieldAccess() const { return false; }
   virtual bool  IsUnresolvedSwizzleExpr() const { return false; }
   virtual bool  IsUnresolvedListExpr() const { return false; }
   virtual bool  IsIntConstant() const { return false; }
   virtual bool  IsTempVarExpr() const { return false; }
+  virtual bool  IsSwizzleExpr() const { return false; }
   virtual bool  IsVarExpr() const { return false; }
 };
 
@@ -507,7 +509,8 @@ class ExtractElementExpr : public Expr {
  public:
   ExtractElementExpr(Expr* expr, int index);
   Result        Accept(Visitor* visitor) override;
-  virtual Type* GetType(TypeTable* types) override;
+  Type*         GetType(TypeTable* types) override;
+  bool          IsExtractElementExpr() const override { return true; }
   Expr*         GetExpr() { return expr_; }
   int           GetIndex() { return index_; }
 
@@ -520,7 +523,7 @@ class InsertElementExpr : public Expr {
  public:
   InsertElementExpr(Expr* expr, Expr* newElement, int index);
   Result        Accept(Visitor* visitor) override;
-  virtual Type* GetType(TypeTable* types) override;
+  Type*         GetType(TypeTable* types) override;
   Expr*         GetExpr() { return expr_; }
   Expr*         newElement() { return newElement_; }
   int           GetIndex() { return index_; }
@@ -529,6 +532,20 @@ class InsertElementExpr : public Expr {
   Expr* expr_;
   Expr* newElement_;
   int   index_;
+};
+
+class SwizzleExpr : public Expr {
+ public:
+  SwizzleExpr(Expr* expr, std::vector<int>&& indices);
+  Result                   Accept(Visitor* visitor) override;
+  Type*                    GetType(TypeTable* types) override;
+  bool                     IsSwizzleExpr() const override { return false; }
+  Expr*                    GetExpr() { return expr_; }
+  const std::vector<int>&  GetIndices() const { return indices_; }
+
+ private:
+  Expr*            expr_;
+  std::vector<int> indices_;
 };
 
 class LengthExpr : public Expr {
@@ -822,6 +839,7 @@ class Visitor {
   virtual Result Visit(VarExpr* node) { return Default(node); }
   virtual Result Visit(LoadExpr* node) { return Default(node); }
   virtual Result Visit(StoreStmt* node) { return Default(node); }
+  virtual Result Visit(SwizzleExpr* node) { return Default(node); }
   virtual Result Visit(ZeroInitStmt* node) { return Default(node); }
   virtual Result Visit(IncDecExpr* node) { return Default(node); }
   virtual Result Visit(WhileStatement* node) { return Default(node); }
