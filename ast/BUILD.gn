@@ -18,6 +18,7 @@ source_set("ast") {
     "dump_as_source_pass.cc",
     "native_class.cc",
     "copy_visitor.cc",
+    "print_ast.cc",
     "semantic_pass.cc",
     "shader_prep_pass.cc",
     "symbol.cc",
