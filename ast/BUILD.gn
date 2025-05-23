@@ -18,6 +18,7 @@ source_set("ast") {
     "constant_folder.cc",
     "native_class.cc",
     "copy_visitor.cc",
+    "print_ast.cc",
     "semantic_pass.cc",
     "shader_prep_pass.cc",
     "symbol.cc",
