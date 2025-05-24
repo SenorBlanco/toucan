@@ -72,7 +72,6 @@ class Expr : public ASTNode {
   virtual bool  IsArrayAccess() const { return false; }
   virtual bool  IsExtractElementExpr() const { return false; }
   virtual bool  IsFieldAccess() const { return false; }
-  virtual bool  IsUnresolvedSwizzleExpr() const { return false; }
   virtual bool  IsUnresolvedListExpr() const { return false; }
   virtual bool  IsIntConstant() const { return false; }
   virtual bool  IsTempVarExpr() const { return false; }
@@ -491,20 +490,6 @@ class FieldAccess : public Expr {
   Field* field_;
 };
 
-class UnresolvedSwizzleExpr : public Expr {
- public:
-  UnresolvedSwizzleExpr(Expr* expr, int index);
-  Result        Accept(Visitor* visitor) override;
-  virtual Type* GetType(TypeTable* types) override;
-  virtual bool  IsUnresolvedSwizzleExpr() const override { return true; }
-  Expr*         GetExpr() { return expr_; }
-  int           GetIndex() { return index_; }
-
- private:
-  Expr* expr_;
-  int   index_;
-};
-
 class ExtractElementExpr : public Expr {
  public:
   ExtractElementExpr(Expr* expr, int index);
@@ -536,7 +521,7 @@ class InsertElementExpr : public Expr {
 
 class SwizzleExpr : public Expr {
  public:
-  SwizzleExpr(Expr* expr, std::vector<int>&& indices);
+  SwizzleExpr(Expr* expr, const std::vector<int>& indices);
   Result                   Accept(Visitor* visitor) override;
   Type*                    GetType(TypeTable* types) override;
   bool                     IsSwizzleExpr() const override { return false; }
@@ -834,7 +819,6 @@ class Visitor {
   virtual Result Visit(UnresolvedNewExpr* node) { return Default(node); }
   virtual Result Visit(UnresolvedMethodCall* node) { return Default(node); }
   virtual Result Visit(UnresolvedStaticMethodCall* node) { return Default(node); }
-  virtual Result Visit(UnresolvedSwizzleExpr* node) { return Default(node); }
   virtual Result Visit(VarDeclaration* node) { return Default(node); }
   virtual Result Visit(VarExpr* node) { return Default(node); }
   virtual Result Visit(LoadExpr* node) { return Default(node); }

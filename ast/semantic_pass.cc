@@ -28,6 +28,32 @@
 
 namespace Toucan {
 
+namespace {
+
+// Returns in the index corresponding to a given swizzle char, or -1 if invalid.
+int ParseSwizzleChar(char c) {
+  if (c == 'x' || c == 'r' || c == 's') return 0;
+  if (c == 'y' || c == 'g' || c == 't') return 1;
+  if (c == 'z' || c == 'b' || c == 'p') return 2;
+  if (c == 'w' || c == 'a' || c == 'q') return 3;
+  return -1;
+}
+
+// Returns the passed-in length if successful, or the first invalid char.
+size_t ParseSwizzle(const std::string& str, size_t baseLength, int* result) {
+  size_t i = 0;
+  for (char c : str) {
+    size_t r = ParseSwizzleChar(c);
+    if (r < 0 || r >= baseLength) {
+      return i;
+    }
+    result[i++] = r;
+  }
+  return i;
+}
+
+}
+
 SemanticPass::SemanticPass(NodeVector* nodes, SymbolTable* symbols, TypeTable* types)
     : CopyVisitor(nodes), symbols_(symbols), types_(types), numErrors_(0) {}
 
@@ -472,12 +498,6 @@ Expr* SemanticPass::MakeLoad(Expr* expr) {
 Result SemanticPass::Visit(LoadExpr* node) {
   Expr* expr = Resolve(node->GetExpr());
   if (!expr) return nullptr;
-  if (expr->IsUnresolvedSwizzleExpr()) {
-    auto swizzle = static_cast<UnresolvedSwizzleExpr*>(expr);
-    // Bypass the swizzle, load its base and extract our element.
-    Expr* loadedBase = Make<LoadExpr>(swizzle->GetExpr());
-    return Make<ExtractElementExpr>(loadedBase, swizzle->GetIndex());
-  }
   return MakeLoad(expr);
 }
 
@@ -503,18 +523,19 @@ Result SemanticPass::Visit(UnresolvedIdentifier* node) {
   }
 }
 
-Result SemanticPass::MakeSwizzle(VectorType* type, Expr* lhs, const std::string& swizzle) {
+Result SemanticPass::MakeSwizzle(int srcLength, Expr* expr, const std::string& swizzle) {
   auto indices = std::vector<int>(swizzle.size());
-  size_t resultLength = ParseSwizzle(swizzle, type->GetLength(), indices.data());
+  size_t resultLength = ParseSwizzle(swizzle, srcLength, indices.data());
   if (resultLength < swizzle.size()) {
     return Error("invalid swizzle at '%c' at position %d\n", swizzle[resultLength], resultLength);
   }
-  lhs = MakeLoad(lhs);
+  expr = MakeLoad(expr);
   if (indices.size() == 1) {
-    return Make<ExtractElementExpr>(lhs, indices[0]);
+    expr = Make<ExtractElementExpr>(expr, indices[0]);
   } else {
-    return Make<SwizzleExpr>(lhs, std::move(indices));
+    expr = Make<SwizzleExpr>(expr, indices);
   }
+  return Make<TempVarExpr>(expr->GetType(types_), expr);
 }
 
 Result SemanticPass::Visit(UnresolvedDot* node) {
@@ -550,12 +571,9 @@ Result SemanticPass::Visit(UnresolvedDot* node) {
                    classType->ToString().c_str());
     }
   } else if (type->IsVector()) {
-    int index = static_cast<VectorType*>(type)->GetSwizzle(id);
-    if (index >= 0 && index <= 3) {
-      return Make<UnresolvedSwizzleExpr>(expr, index);
-    } else {
-      return Error("invalid swizzle '%s'", id.c_str());
-    }
+    return MakeSwizzle(static_cast<VectorType*>(type)->GetLength(), expr, id);
+  } else if (type->IsMatrix()) {
+    return MakeSwizzle(static_cast<MatrixType*>(type)->GetNumColumns(), expr, id);
   } else {
     return Error("Expression is not of class, reference or vector type");
   }

@@ -923,6 +923,18 @@ Result CodeGenSPIRV::Visit(StoreStmt* stmt) {
   return 0u;
 }
 
+Result CodeGenSPIRV::Visit(SwizzleExpr* node) {
+  uint32_t resultType = ConvertType(node->GetType(types_));
+  Code args;
+  args.push_back(GenerateSPIRV(node->GetExpr()));
+  args.push_back(spv::Op::OpUndef);
+  for (uint32_t index : node->GetIndices()) {
+    args.push_back(index);
+  }
+  AppendCode(spv::Op::OpVectorShuffle, resultType, args);
+  return 0u;
+}
+
 Result CodeGenSPIRV::Visit(WhileStatement* whileStmt) {
   uint32_t topOfLoop = NextId();
   uint32_t condition = NextId();
