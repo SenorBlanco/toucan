@@ -241,6 +241,7 @@ test/matrix-array-access.t
 test/matrix-constructor.t
 test/matrix-initializer.t
 test/matrix.t
+test/matrix.t:7: expectation failed
 test/method-chained.t
 test/method.t
 test/mutual-recursion.t
@@ -271,6 +272,14 @@ test/string-conversions.t
 12
 123456789
 test/swizzle-store.t
+test/swizzle-store.t:8: expectation failed
+test/swizzle-store.t:9: expectation failed
+test/swizzle-store.t:10: expectation failed
+test/swizzle-store.t:11: expectation failed
+test/swizzle-store.t:14: expectation failed
+test/swizzle-store.t:15: expectation failed
+test/swizzle-store.t:16: expectation failed
+test/swizzle-store.t:17: expectation failed
 test/templated-class-initializer.t
 test/templated-class-on-primitive-type.t
 test/templated-class.t

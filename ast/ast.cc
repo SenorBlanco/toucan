@@ -179,20 +179,6 @@ LoadExpr::LoadExpr(Expr* expr) : expr_(expr) {}
 
 StoreStmt::StoreStmt(Expr* lhs, Expr* rhs) : lhs_(lhs), rhs_(rhs) {}
 
-SwizzleExpr::SwizzleExpr(Expr* expr, std::vector<int>&& indices) : expr_(expr), indices_(std::move(indices)) {}
-
-Type* SwizzleExpr::GetType(TypeTable* types) {
-  auto exprType = expr_->GetType(types);
-  assert(exprType->IsVector());
-  auto componentType = static_cast<VectorType*>(exprType)->GetComponentType();
-  auto size = indices_.size();
-  if (size == 1) {
-    return componentType;
-  } else {
-    return types->GetVector(componentType, indices_.size());
-  }
-}
-
 DestroyStmt::DestroyStmt(Expr* expr) : expr_(expr) {}
 
 IncDecExpr::IncDecExpr(Op op, Expr* expr, bool returnOrigValue)
@@ -218,14 +204,18 @@ LengthExpr::LengthExpr(Expr* expr) : expr_(expr) {}
 
 Type* LengthExpr::GetType(TypeTable* types) { return types->GetInt(); }
 
-UnresolvedSwizzleExpr::UnresolvedSwizzleExpr(Expr* expr, int index) : expr_(expr), index_(index) {}
+SwizzleExpr::SwizzleExpr(Expr* expr, const std::vector<int>& indices) : expr_(expr), indices_(indices) {}
 
-Type* UnresolvedSwizzleExpr::GetType(TypeTable* types) {
-  Type* type = expr_->GetType(types);
-  if (!type) return nullptr;
-  if (!type->IsVector()) return nullptr;
-  VectorType* vtype = static_cast<VectorType*>(type);
-  return vtype->GetComponentType();
+Type* SwizzleExpr::GetType(TypeTable* types) {
+  auto exprType = expr_->GetType(types);
+  assert(exprType->IsVector());
+  auto componentType = static_cast<VectorType*>(exprType)->GetComponentType();
+  auto size = indices_.size();
+  if (size == 1) {
+    return componentType;
+  } else {
+    return types->GetVector(componentType, indices_.size());
+  }
 }
 
 ExtractElementExpr::ExtractElementExpr(Expr* expr, int index) : expr_(expr), index_(index) {}
@@ -360,7 +350,6 @@ Result UnresolvedMethodCall::Accept(Visitor* visitor) { return visitor->Visit(th
 Result UnresolvedNewExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result UnresolvedStaticDot::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result UnresolvedStaticMethodCall::Accept(Visitor* visitor) { return visitor->Visit(this); }
-Result UnresolvedSwizzleExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result VarDeclaration::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result VarExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result LoadExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
