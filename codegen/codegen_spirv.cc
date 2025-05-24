@@ -925,14 +925,14 @@ Result CodeGenSPIRV::Visit(StoreStmt* stmt) {
 
 Result CodeGenSPIRV::Visit(SwizzleExpr* node) {
   uint32_t resultType = ConvertType(node->GetType(types_));
+  uint32_t value = GenerateSPIRV(node->GetExpr());
   Code args;
-  args.push_back(GenerateSPIRV(node->GetExpr()));
-  args.push_back(spv::Op::OpUndef);
+  args.push_back(value);
+  args.push_back(value);
   for (uint32_t index : node->GetIndices()) {
     args.push_back(index);
   }
-  AppendCode(spv::Op::OpVectorShuffle, resultType, args);
-  return 0u;
+  return AppendCode(spv::Op::OpVectorShuffle, resultType, args);
 }
 
 Result CodeGenSPIRV::Visit(WhileStatement* whileStmt) {
