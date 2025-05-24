@@ -70,12 +70,11 @@ class Expr : public ASTNode {
   Expr();
   virtual Type* GetType(TypeTable* types) = 0;
   virtual bool  IsArrayAccess() const { return false; }
-  virtual bool  IsExtractElementExpr() const { return false; }
   virtual bool  IsFieldAccess() const { return false; }
   virtual bool  IsUnresolvedListExpr() const { return false; }
   virtual bool  IsIntConstant() const { return false; }
   virtual bool  IsTempVarExpr() const { return false; }
-  virtual bool  IsSwizzleExpr() const { return false; }
+  virtual bool  IsUnresolvedDot() const { return false; }
   virtual bool  IsVarExpr() const { return false; }
 };
 
@@ -326,6 +325,7 @@ class UnresolvedDot : public Expr {
   UnresolvedDot(Expr* expr, std::string id);
   Result      Accept(Visitor* visitor) override;
   Type*       GetType(TypeTable* types) override { return nullptr; }
+  bool        IsUnresolvedDot() const override { return true; }
   Expr*       GetExpr() { return expr_; }
   std::string GetID() { return id_; }
 
@@ -495,7 +495,6 @@ class ExtractElementExpr : public Expr {
   ExtractElementExpr(Expr* expr, int index);
   Result        Accept(Visitor* visitor) override;
   Type*         GetType(TypeTable* types) override;
-  bool          IsExtractElementExpr() const override { return true; }
   Expr*         GetExpr() { return expr_; }
   int           GetIndex() { return index_; }
 
@@ -524,7 +523,6 @@ class SwizzleExpr : public Expr {
   SwizzleExpr(Expr* expr, const std::vector<int>& indices);
   Result                   Accept(Visitor* visitor) override;
   Type*                    GetType(TypeTable* types) override;
-  bool                     IsSwizzleExpr() const override { return false; }
   Expr*                    GetExpr() { return expr_; }
   const std::vector<int>&  GetIndices() const { return indices_; }
 

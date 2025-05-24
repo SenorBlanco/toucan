@@ -523,19 +523,36 @@ Result SemanticPass::Visit(UnresolvedIdentifier* node) {
   }
 }
 
-Result SemanticPass::MakeSwizzle(int srcLength, Expr* expr, const std::string& swizzle) {
+Result SemanticPass::MakeSwizzle(int srcLength, Expr* lhs, const std::string& swizzle) {
   auto indices = std::vector<int>(swizzle.size());
   size_t resultLength = ParseSwizzle(swizzle, srcLength, indices.data());
   if (resultLength < swizzle.size()) {
     return Error("invalid swizzle at '%c' at position %d\n", swizzle[resultLength], resultLength);
   }
-  expr = MakeLoad(expr);
+  Expr* expr = MakeLoad(lhs);
   if (indices.size() == 1) {
     expr = Make<ExtractElementExpr>(expr, indices[0]);
   } else {
     expr = Make<SwizzleExpr>(expr, indices);
   }
   return Make<TempVarExpr>(expr->GetType(types_), expr);
+}
+
+Expr* SemanticPass::MakeSwizzleForStore(int exprLength, Expr* expr, const std::string& swizzle, Expr* rhs) {
+  auto indices = std::vector<int>(swizzle.size());
+  size_t resultLength = ParseSwizzle(swizzle, exprLength, indices.data());
+  if (resultLength < swizzle.size()) {
+    Error("invalid swizzle at '%c' at position %d\n", swizzle[resultLength], resultLength);
+    return nullptr;
+  }
+  // FIXME: check for duplicate indices here
+  if (indices.size() == 1) {
+    expr = Make<InsertElementExpr>(expr, rhs, indices[0]);
+  } else for (int i = 0; i < indices.size(); ++i) {
+    auto value = Make<ExtractElementExpr>(rhs, i);
+    expr = Make<InsertElementExpr>(expr, value, indices[i]);
+  }
+  return expr;
 }
 
 Result SemanticPass::Visit(UnresolvedDot* node) {
@@ -636,25 +653,25 @@ Result SemanticPass::Visit(ExprWithStmt* node) {
 }
 
 Result SemanticPass::Visit(StoreStmt* node) {
-  Expr* lhs = Resolve(node->GetLHS());
-  if (!lhs) return nullptr;
   Expr* rhs = Resolve(node->GetRHS());
   if (!rhs) return nullptr;
-  if (lhs->IsSwizzleExpr()) {
-    auto swizzle = static_cast<SwizzleExpr*>(lhs);
-    lhs = swizzle->GetExpr();
-    Expr* loadedBase = Make<LoadExpr>(lhs);
-    auto indices = swizzle->GetIndices();
-    for (int i = 0; i < indices.size(); ++i) {
-      auto value = Make<ExtractElementExpr>(rhs, i);
-      loadedBase = Make<InsertElementExpr>(loadedBase, value, indices[i]);
+  Expr* lhs = nullptr;
+  if (node->GetLHS()->IsUnresolvedDot()) {
+    auto dot = static_cast<UnresolvedDot*>(node->GetLHS());
+    auto base = Resolve(dot->GetExpr());
+    if (!base) return nullptr;
+    Expr* expr = MakeLoad(base);
+    auto exprType = expr->GetType(types_);
+    if (exprType->IsVector()) {
+      rhs = MakeSwizzleForStore(static_cast<VectorType*>(exprType)->GetLength(), expr, dot->GetID(), rhs);
+      lhs = base;
+    } else if (exprType->IsMatrix()) {
+      rhs = MakeSwizzleForStore(static_cast<MatrixType*>(exprType)->GetNumColumns(), expr, dot->GetID(), rhs);
+      lhs = base;
     }
-    rhs = loadedBase;
-  } else if (lhs->IsExtractElementExpr()) {
-    auto extractElement = static_cast<ExtractElementExpr*>(lhs);
-    lhs = extractElement->GetExpr();
-    auto loadedBase = MakeLoad(lhs);
-    rhs = Make<InsertElementExpr>(loadedBase, rhs, extractElement->GetIndex());
+  }
+  if (!lhs) {
+    lhs = Resolve(node->GetLHS());
   }
   Type* lhsType = lhs->GetType(types_);
   if (!lhsType->IsRawPtr()) { return Error("expression is not an assignable value"); }
