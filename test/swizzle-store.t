@@ -15,3 +15,9 @@ Test.Expect(v.x == 1);
 Test.Expect(v.y == 2);
 Test.Expect(v.z == 3);
 Test.Expect(v.w == 4);
+v.wzxy = int<3>{8, 7, 5, 6};
+Test.Expect(v.x == 5);
+Test.Expect(v.y == 6);
+Test.Expect(v.z == 7);
+Test.Expect(v.w == 8);
+

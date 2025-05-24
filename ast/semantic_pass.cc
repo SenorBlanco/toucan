@@ -589,8 +589,6 @@ Result SemanticPass::Visit(UnresolvedDot* node) {
     }
   } else if (type->IsVector()) {
     return MakeSwizzle(static_cast<VectorType*>(type)->GetLength(), expr, id);
-  } else if (type->IsMatrix()) {
-    return MakeSwizzle(static_cast<MatrixType*>(type)->GetNumColumns(), expr, id);
   } else {
     return Error("Expression is not of class, reference or vector type");
   }
@@ -664,9 +662,6 @@ Result SemanticPass::Visit(StoreStmt* node) {
     auto exprType = expr->GetType(types_);
     if (exprType->IsVector()) {
       rhs = MakeSwizzleForStore(static_cast<VectorType*>(exprType)->GetLength(), expr, dot->GetID(), rhs);
-      lhs = base;
-    } else if (exprType->IsMatrix()) {
-      rhs = MakeSwizzleForStore(static_cast<MatrixType*>(exprType)->GetNumColumns(), expr, dot->GetID(), rhs);
       lhs = base;
     }
   }

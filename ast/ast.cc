@@ -222,8 +222,13 @@ ExtractElementExpr::ExtractElementExpr(Expr* expr, int index) : expr_(expr), ind
 
 Type* ExtractElementExpr::GetType(TypeTable* types) {
   Type* type = expr_->GetType(types)->GetUnqualifiedType();
-  assert(type->IsVector());
-  return static_cast<VectorType*>(type)->GetComponentType();
+  if (type->IsVector()) {
+    return static_cast<VectorType*>(type)->GetComponentType();
+  } else if (type->IsMatrix()) {
+    return static_cast<MatrixType*>(type)->GetColumnType();
+  } else {
+    assert(!"unknown type in ExtractElement");
+  }
 }
 
 InsertElementExpr::InsertElementExpr(Expr* expr, Expr* newElement, int index)
