@@ -73,7 +73,6 @@ static Method* EndConstructor(Expr* initializer, Stmts* stmts);
 static void BeginBlock();
 static void EndBlock(Stmts* stmts);
 static Expr* ThisExpr();
-static Expr* Load(Expr* expr);
 static Stmt* Store(Expr* expr, Expr* value);
 static Expr* Identifier(const char* id);
 static Expr* MakeArrayAccess(Expr* lhs, Expr* expr);
@@ -194,10 +193,10 @@ expr_statement:
 
 assignment:
     assignable '=' expr_or_list             { $$ = Store($1, $3); }
-  | assignable T_ADD_EQUALS expr            { $$ = Store($1, BinOp(BinOpNode::ADD, Load($1), $3)); }
-  | assignable T_SUB_EQUALS expr            { $$ = Store($1, BinOp(BinOpNode::SUB, Load($1), $3)); }
-  | assignable T_MUL_EQUALS expr            { $$ = Store($1, BinOp(BinOpNode::MUL, Load($1), $3)); }
-  | assignable T_DIV_EQUALS expr            { $$ = Store($1, BinOp(BinOpNode::DIV, Load($1), $3)); }
+  | assignable T_ADD_EQUALS expr            { $$ = Store($1, BinOp(BinOpNode::ADD, $1, $3)); }
+  | assignable T_SUB_EQUALS expr            { $$ = Store($1, BinOp(BinOpNode::SUB, $1, $3)); }
+  | assignable T_MUL_EQUALS expr            { $$ = Store($1, BinOp(BinOpNode::MUL, $1, $3)); }
+  | assignable T_DIV_EQUALS expr            { $$ = Store($1, BinOp(BinOpNode::DIV, $1, $3)); }
   ;
 
 if_statement:
@@ -577,11 +576,6 @@ static Expr* MakeArrayAccess(Expr* lhs, Expr* expr) {
   return Make<ArrayAccess>(lhs, expr);
 }
 
-static Expr* Load(Expr* expr) {
-  if (!expr) return nullptr;
-  return Make<LoadExpr>(expr);
-}
-
 static Expr* MakeNewExpr(UnresolvedInitializer* initializer, Expr* length) {
   if (!initializer->GetType()) return nullptr;
   return Make<UnresolvedNewExpr>(initializer->GetType(), length, initializer->GetArgList(), initializer->IsConstructor());
@@ -602,7 +596,7 @@ static Expr* TryInlineFile(std::string dir, const char* filename) {
   auto buffer = std::make_unique<uint8_t[]>(size);
   fread(buffer.get(), size, 1, f);
   Type* type = types_->GetArrayType(types_->GetUByte(), 0, MemoryLayout::Default);
-  return Make<Data>(type, std::move(buffer), size);
+  return Make<TempVarExpr>(type, Make<Data>(type, std::move(buffer), size));
 }
 
 static Expr* InlineFile(const char* filename) {
@@ -623,7 +617,7 @@ static Expr* StringLiteral(const char* str) {
   auto buffer = std::make_unique<uint8_t[]>(length);
   memcpy(buffer.get(), str, length);
   Type* type = types_->GetArrayType(types_->GetUByte(), 0, MemoryLayout::Default);
-  return Make<Data>(type, std::move(buffer), length);
+  return Make<TempVarExpr>(type, Make<Data>(type, std::move(buffer), length));
 }
 
 static void PushFile(const char* filename) {

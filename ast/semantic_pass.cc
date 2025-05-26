@@ -57,18 +57,21 @@ Result SemanticPass::Visit(ArrayAccess* node) {
 }
 
 Result SemanticPass::Visit(CastExpr* node) {
-  Expr* expr = ResolveAndLoad(node->GetExpr());
+  Type* dstType = node->GetType();
+  bool isPtrCast = dstType->IsRawPtr();
+  Expr* expr = isPtrCast ? Resolve(node->GetExpr()) : ResolveAndLoad(node->GetExpr());
   if (!expr) { return nullptr; }
 
   Type* srcType = expr->GetType(types_);
-  Type* dstType = node->GetType();
+  Expr* result;
   if (srcType == dstType) {
-    return expr;
+    // no-op
   } else if (srcType->CanWidenTo(dstType) || srcType->CanNarrowTo(dstType)) {
-    return Widen(expr, dstType);
+    expr = Widen(expr, dstType);
   } else {
     return Error("cannot cast value of type %s to %s", srcType->ToString().c_str(), dstType->ToString().c_str());
   }
+  return isPtrCast ? expr : Spill(expr);
 }
 
 Result SemanticPass::Visit(Data* node) { return node; }
@@ -228,7 +231,7 @@ Result SemanticPass::Visit(VarDeclaration* decl) {
   if (!type) return nullptr;
   Expr* initExpr = nullptr;
   if (decl->GetInitExpr()) {
-    initExpr = Resolve(decl->GetInitExpr());
+    initExpr = ResolveAndLoad(decl->GetInitExpr());
     if (!initExpr) { return nullptr; }
   }
   if (type->IsAuto()) {
@@ -289,7 +292,7 @@ Result SemanticPass::ResolveMethodCall(Expr*       expr,
   WidenArgList(newArgList, method->formalArgList);
   auto* exprList = Make<ExprList>(std::move(newArgList));
   Expr* result = Make<MethodCall>(method, exprList);
-  if (!method->returnType->IsRawPtr()) {
+  if (!method->returnType->IsRawPtr() && !method->returnType->GetUnqualifiedType()->IsVoid()) {
     // All non-rawptr return values are turned into rawptr to enable chaining.
     return Spill(result);
   }
@@ -785,7 +788,7 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
       if (result->GetType(types_) != node->GetType(types_)) {
         result = Widen(result, node->GetType(types_));
       }
-      return result;
+      return Spill(result);
     }
   }
   Stmt* stmt;
@@ -951,7 +954,8 @@ void SemanticPass::UnwindStack(Scope* scope, Stmts* stmts) {
 }
 
 Result SemanticPass::Visit(ReturnStatement* stmt) {
-  if (auto returnValue = ResolveAndLoad(stmt->GetExpr())) {
+  Expr* returnValue = ResolveAndLoad(stmt->GetExpr());
+  if (returnValue) {
     auto type = returnValue->GetType(types_);
     auto scope = symbols_->PeekScope();
     while (scope && !scope->method) { scope = scope->parent; }
@@ -963,7 +967,7 @@ Result SemanticPass::Visit(ReturnStatement* stmt) {
   }
   auto stmts = Make<Stmts>();
   UnwindStack(symbols_->PeekScope(), stmts);
-  stmts->Append(Make<ReturnStatement>(Resolve(stmt->GetExpr())));
+  stmts->Append(Make<ReturnStatement>(returnValue));
   return stmts;
 }
 
