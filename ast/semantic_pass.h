@@ -24,6 +24,7 @@ class SymbolTable;
 class SemanticPass : public CopyVisitor {
  public:
   SemanticPass(NodeVector* nodes, SymbolTable* symbols, TypeTable* types);
+  Result Visit(Arg* node) override;
   Result Visit(ArgList* node) override;
   Result Visit(ArrayAccess* node) override;
   Result Visit(BinOpNode* node) override;
@@ -40,6 +41,7 @@ class SemanticPass : public CopyVisitor {
   Result Visit(Stmts* stmts) override;
   Result Visit(IncDecExpr* node) override;
   Result Visit(StoreStmt* node) override;
+  Result Visit(UnaryOp* node) override;
   Result Visit(UnresolvedDot* node) override;
   Result Visit(UnresolvedIdentifier* node) override;
   Result Visit(UnresolvedInitializer* node) override;
@@ -55,6 +57,7 @@ class SemanticPass : public CopyVisitor {
 
  private:
   Expr*   ResolveAsValue(Expr*);
+  Expr*   ResolveAsReference(Expr*);
   void    UnwindStack(Scope* scope, Stmts* stmts);
   Expr*   MakeConstantOne(Type* type);
   Expr*   MakeLoad(Expr* expr);

@@ -43,9 +43,9 @@ Result SemanticPass::Visit(SmartToRawPtr* node) {
 
 Result SemanticPass::Visit(ArrayAccess* node) {
   if (!node->GetIndex()) { return Error("variable-sized array type used as expression"); }
-  Expr* expr = Resolve(node->GetExpr());
+  Expr* expr = ResolveAsReference(node->GetExpr());
   if (!expr) return nullptr;
-  Expr* index = Resolve(node->GetIndex());
+  Expr* index = ResolveAsValue(node->GetIndex());
   if (!index) return nullptr;
 
   expr = MakeIndexable(expr);
@@ -95,6 +95,10 @@ Result SemanticPass::Visit(Stmts* stmts) {
     }
   }
   return newStmts;
+}
+
+Result SemanticPass::Visit(Arg* node) {
+  return Make<Arg>(node->GetID(), ResolveAsValue(node->GetExpr()));
 }
 
 Result SemanticPass::Visit(ArgList* node) {
@@ -247,8 +251,17 @@ Result SemanticPass::Visit(VarDeclaration* decl) {
 }
 
 Expr* SemanticPass::ResolveAsValue(Expr* node) {
+  node = Resolve(node);
   if (node && node->IsAssignable()) {
     return Make<LoadExpr>(node);
+  }
+  return node;
+}
+
+Expr* SemanticPass::ResolveAsReference(Expr* node) {
+  node = Resolve(node);
+  if (node && !node->IsAssignable()) {
+    return Make<TempVarExpr>(node->GetType(types_), node);
   }
   return node;
 }
@@ -441,7 +454,7 @@ Expr* SemanticPass::ResolveListExpr(UnresolvedListExpr* node, Type* dstType) {
 
 Result SemanticPass::Visit(UnresolvedMethodCall* node) {
   std::string id = node->GetID();
-  Expr*       expr = Resolve(node->GetExpr());
+  Expr*       expr = ResolveAsReference(node->GetExpr());
   if (!expr) return nullptr;
   ArgList* arglist = Resolve(node->GetArgList());
   if (!arglist) return nullptr;
@@ -506,7 +519,7 @@ Result SemanticPass::Visit(UnresolvedIdentifier* node) {
 }
 
 Result SemanticPass::Visit(UnresolvedDot* node) {
-  Expr* expr = Resolve(node->GetExpr());
+  Expr* expr = ResolveAsReference(node->GetExpr());
   if (!expr) return nullptr;
   expr = AutoDereference(expr);
   Type* type = expr->GetType(types_);
@@ -682,6 +695,12 @@ Result SemanticPass::Visit(BinOpNode* node) {
   return Make<BinOpNode>(node->GetOp(), lhs, rhs);
 }
 
+Result SemanticPass::Visit(UnaryOp* node) {
+  Expr* rhs = ResolveAsValue(node->GetRHS());
+  if (!rhs) return nullptr;
+  return Make<UnaryOp>(node->GetOp(), rhs);
+}
+
 void SemanticPass::WidenArgList(std::vector<Expr*>& argList, const VarVector& formalArgList) {
   assert(argList.size() == formalArgList.size());
   for (int i = 0; i < argList.size(); ++i) {
@@ -702,7 +721,7 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
   if (!arglist) return nullptr;
   int       qualifiers;
   Type*     unqualifiedType = type->GetUnqualifiedType(&qualifiers);
-  Expr*     length = node->GetLength() ? Resolve(node->GetLength()) : nullptr;
+  Expr*     length = node->GetLength() ? ResolveAsValue(node->GetLength()) : nullptr;
   auto      allocation = Make<HeapAllocation>(type, length);
   if (unqualifiedType->IsClass()) {
     auto* classType = static_cast<ClassType*>(unqualifiedType);
@@ -754,7 +773,7 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
 }
 
 Result SemanticPass::Visit(IfStatement* s) {
-  Expr* expr = Resolve(s->GetExpr());
+  Expr* expr = ResolveAsValue(s->GetExpr());
   if (expr && expr->GetType(types_) != types_->GetBool()) {
     return Error("condition must be boolean");
   } else {
@@ -765,7 +784,7 @@ Result SemanticPass::Visit(IfStatement* s) {
 }
 
 Result SemanticPass::Visit(WhileStatement* s) {
-  Expr* cond = Resolve(s->GetCond());
+  Expr* cond = ResolveAsValue(s->GetCond());
   Stmt* body = Resolve(s->GetBody());
   if (cond && cond->GetType(types_) != types_->GetBool()) {
     return Error("condition must be boolean");
@@ -776,7 +795,7 @@ Result SemanticPass::Visit(WhileStatement* s) {
 
 Result SemanticPass::Visit(DoStatement* s) {
   Stmt* body = Resolve(s->GetBody());
-  Expr* cond = Resolve(s->GetCond());
+  Expr* cond = ResolveAsValue(s->GetCond());
   if (cond && cond->GetType(types_) != types_->GetBool()) {
     return Error("condition must be boolean");
   } else {
@@ -786,7 +805,7 @@ Result SemanticPass::Visit(DoStatement* s) {
 
 Result SemanticPass::Visit(ForStatement* node) {
   Stmt* initStmt = Resolve(node->GetInitStmt());
-  Expr* cond = Resolve(node->GetCond());
+  Expr* cond = ResolveAsValue(node->GetCond());
   Stmt* loopStmt = Resolve(node->GetLoopStmt());
   Stmt* body = Resolve(node->GetBody());
   return Make<ForStatement>(initStmt, cond, loopStmt, body);
@@ -899,7 +918,7 @@ void SemanticPass::UnwindStack(Scope* scope, Stmts* stmts) {
 }
 
 Result SemanticPass::Visit(ReturnStatement* stmt) {
-  if (auto returnValue = Resolve(stmt->GetExpr())) {
+  if (auto returnValue = ResolveAsValue(stmt->GetExpr())) {
     auto type = returnValue->GetType(types_);
     auto scope = symbols_->PeekScope();
     while (scope && !scope->method) { scope = scope->parent; }
