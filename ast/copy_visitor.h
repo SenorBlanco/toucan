@@ -81,7 +81,7 @@ class CopyVisitor : public Visitor {
     nodeCache_[t] = result;
     return result;
   }
-
+  void          SetCopyFileLocation(bool copyFileLocation) { copyFileLocation_ = copyFileLocation; }
  protected:
   template <typename T, typename... ARGS>
   T* Make(ARGS&&... args) {

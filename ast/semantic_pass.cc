@@ -1026,10 +1026,9 @@ bool SemanticPass::MatchArgs(Expr*               thisExpr,
   for (int i = offset; i < result.size(); ++i) {
     if (!result[i]) {
       if (!m->defaultArgs[i]) { return false; }
-      copyFileLocation_ = false;
-      // Override the file location by resolving the default args (again).
-      result[i] = Resolve(m->defaultArgs[i]);
-      copyFileLocation_ = true;
+      CopyVisitor copier(nodes_);
+      copier.SetCopyFileLocation(false);
+      result[i] = copier.Resolve(m->defaultArgs[i]);
     }
   }
   *newArgList = result;
