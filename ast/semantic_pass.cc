@@ -885,7 +885,10 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
       method->stmts = Resolve(method->stmts);
       // If last statement is not a return statement,
       if (!method->stmts->ContainsReturn()) {
-        if (method->returnType != types_->GetVoid()) {
+        if (method->name == method->classType->GetName()) {
+          Var* thisPtr = method->formalArgList[0].get();
+          method->stmts->Append(Make<ReturnStatement>(Make<LoadExpr>(Make<VarExpr>(thisPtr))));
+        } else if (method->returnType != types_->GetVoid()) {
           return Error("implicit void return, in method returning non-void.");
         } else {
           UnwindStack(method->stmts->GetScope(), method->stmts);

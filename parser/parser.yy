@@ -880,9 +880,6 @@ static Type* GetScopedType(Type* type, const char* id) {
 }
 
 static Method* EndConstructor(Expr* initializer, Stmts* stmts) {
-  if (stmts) {
-    stmts->Append(Make<ReturnStatement>(ThisExpr()));
-  }
   Method* method = EndMethod(stmts);
   if (method->stmts) {
     if (!initializer) {
