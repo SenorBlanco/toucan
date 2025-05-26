@@ -41,6 +41,10 @@ Result SemanticPass::Visit(SmartToRawPtr* node) {
   return Make<SmartToRawPtr>(expr);
 }
 
+Result SemanticPass::Visit(AddressOf* node) {
+  return Resolve(node->GetRHS());
+}
+
 Result SemanticPass::Visit(ArrayAccess* node) {
   if (!node->GetIndex()) { return Error("variable-sized array type used as expression"); }
   Expr* expr = Resolve(node->GetExpr());
@@ -481,6 +485,9 @@ Expr* SemanticPass::MakeLoad(Expr* expr) {
 }
 
 Expr* SemanticPass::ResolveAndLoad(Expr* expr) {
+  if (expr && expr->IsAddressOf()) {
+    return Resolve(static_cast<AddressOf*>(expr)->GetRHS());
+  }
   expr = Resolve(expr);
   if (!expr) return nullptr;
 

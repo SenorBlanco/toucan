@@ -69,6 +69,7 @@ class Expr : public ASTNode {
  public:
   Expr();
   virtual Type* GetType(TypeTable* types) = 0;
+  virtual bool  IsAddressOf() const { return false; }
   virtual bool  IsArrayAccess() const { return false; }
   virtual bool  IsFieldAccess() const { return false; }
   virtual bool  IsUnresolvedSwizzleExpr() const { return false; }
@@ -82,6 +83,7 @@ class AddressOf : public Expr {
  public:
   AddressOf(Expr* rhs);
   Type* GetType(TypeTable* types) override;
+  bool  IsAddressOf() const override { return true; }
   Result Accept(Visitor* visitor) override;
   Expr* GetRHS() const { return rhs_; }
  private:
