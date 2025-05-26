@@ -837,7 +837,7 @@ Result SemanticPass::Visit(DoStatement* s) {
 
 Result SemanticPass::Visit(ForStatement* node) {
   Stmt* initStmt = Resolve(node->GetInitStmt());
-  Expr* cond = Resolve(node->GetCond());
+  Expr* cond = ResolveAndLoad(node->GetCond());
   Stmt* loopStmt = Resolve(node->GetLoopStmt());
   Stmt* body = Resolve(node->GetBody());
   return Make<ForStatement>(initStmt, cond, loopStmt, body);

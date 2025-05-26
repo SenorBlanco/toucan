@@ -539,9 +539,6 @@ void ClassType::AppendToVTable(Method* method) {
 }
 
 void Method::AddFormalArg(std::string name, Type* type, Expr* defaultValue) {
-  if (defaultValue && defaultValue->IsTempVarExpr()) {
-    printf("AWOOGA\n");
-  }
   formalArgList.push_back(std::make_shared<Var>(name, type));
   defaultArgs.push_back(defaultValue);
 }
