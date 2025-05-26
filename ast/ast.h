@@ -78,6 +78,26 @@ class Expr : public ASTNode {
   virtual bool  IsVarExpr() const { return false; }
 };
 
+class AddressOf : public Expr {
+ public:
+  AddressOf(Expr* rhs);
+  Type* GetType(TypeTable* types) override;
+  Result Accept(Visitor* visitor) override;
+  Expr* GetRHS() const { return rhs_; }
+ private:
+  Expr* rhs_;
+};
+
+class Spill : public Expr {
+ public:
+  Spill(Expr* rhs);
+  Type* GetType(TypeTable* types) override;
+  Result Accept(Visitor* visitor) override;
+  Expr* GetRHS() const { return rhs_; }
+ private:
+  Expr* rhs_;
+};
+
 class HeapAllocation : public Expr {
  public:
   HeapAllocation(Type* type, Expr* length = nullptr);
@@ -774,6 +794,7 @@ class NodeVector {
 
 class Visitor {
  public:
+  virtual Result Visit(AddressOf* node) { return Default(node); }
   virtual Result Visit(Arg* node) { return Default(node); }
   virtual Result Visit(ArgList* node) { return Default(node); }
   virtual Result Visit(ArrayAccess* node) { return Default(node); }
@@ -821,6 +842,7 @@ class Visitor {
   virtual Result Visit(VarDeclaration* node) { return Default(node); }
   virtual Result Visit(VarExpr* node) { return Default(node); }
   virtual Result Visit(LoadExpr* node) { return Default(node); }
+  virtual Result Visit(Spill* node) { return Default(node); }
   virtual Result Visit(StoreStmt* node) { return Default(node); }
   virtual Result Visit(ZeroInitStmt* node) { return Default(node); }
   virtual Result Visit(IncDecExpr* node) { return Default(node); }

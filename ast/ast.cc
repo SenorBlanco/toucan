@@ -27,6 +27,14 @@ ASTNode::ASTNode() {}
 
 Expr::Expr() {}
 
+AddressOf::AddressOf(Expr* rhs) : rhs_(rhs) { }
+
+Type* AddressOf::GetType(TypeTable* types) { return rhs_->GetType(types); }
+
+Spill::Spill(Expr* rhs) : rhs_(rhs) { }
+
+Type* Spill::GetType(TypeTable* types) { return types->GetRawPtrType(rhs_->GetType(types)); }
+
 HeapAllocation::HeapAllocation(Type* type, Expr* length) : type_(type), length_(length) {}
 
 Type* HeapAllocation::GetType(TypeTable* types) {
@@ -302,6 +310,7 @@ UnresolvedClassDefinition::UnresolvedClassDefinition(Scope* scope) : scope_(scop
 
 NodeVector::NodeVector() {}
 
+Result AddressOf::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result Arg::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ArgList::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ArrayAccess::Accept(Visitor* visitor) { return visitor->Visit(this); }
@@ -351,6 +360,7 @@ Result VarExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result LoadExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result IncDecExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ZeroInitStmt::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result Spill::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result StoreStmt::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result WhileStatement::Accept(Visitor* visitor) { return visitor->Visit(this); }
 };  // namespace Toucan

@@ -32,7 +32,7 @@ SemanticPass::SemanticPass(NodeVector* nodes, SymbolTable* symbols, TypeTable* t
     : CopyVisitor(nodes), symbols_(symbols), types_(types), numErrors_(0) {}
 
 Result SemanticPass::Visit(SmartToRawPtr* node) {
-  Expr* expr = Resolve(node->GetExpr());
+  Expr* expr = ResolveAndLoad(node->GetExpr());
   if (!expr) return nullptr;
   Type* exprType = expr->GetType(types_);
   if (!exprType->IsStrongPtr() && !exprType->IsWeakPtr()) {
@@ -45,7 +45,7 @@ Result SemanticPass::Visit(ArrayAccess* node) {
   if (!node->GetIndex()) { return Error("variable-sized array type used as expression"); }
   Expr* expr = Resolve(node->GetExpr());
   if (!expr) return nullptr;
-  Expr* index = Resolve(node->GetIndex());
+  Expr* index = ResolveAndLoad(node->GetIndex());
   if (!index) return nullptr;
 
   expr = MakeIndexable(expr);
@@ -57,7 +57,7 @@ Result SemanticPass::Visit(ArrayAccess* node) {
 }
 
 Result SemanticPass::Visit(CastExpr* node) {
-  Expr* expr = Resolve(node->GetExpr());
+  Expr* expr = ResolveAndLoad(node->GetExpr());
   if (!expr) { return nullptr; }
 
   Type* srcType = expr->GetType(types_);
@@ -95,6 +95,10 @@ Result SemanticPass::Visit(Stmts* stmts) {
     }
   }
   return newStmts;
+}
+
+Result SemanticPass::Visit(Arg* node) {
+  return Make<Arg>(node->GetID(), ResolveAndLoad(node->GetExpr()));
 }
 
 Result SemanticPass::Visit(ArgList* node) {
@@ -153,7 +157,7 @@ Result SemanticPass::Visit(UnresolvedInitializer* node) {
     }
   }
   auto exprList = Make<ExprList>(std::move(exprs));
-  return Make<Initializer>(node->GetType(), exprList);
+  return Spill(Make<Initializer>(node->GetType(), exprList));
 }
 
 Stmt* SemanticPass::Initialize(Expr* dest, Expr* initExpr) {
@@ -287,7 +291,7 @@ Result SemanticPass::ResolveMethodCall(Expr*       expr,
   Expr* result = Make<MethodCall>(method, exprList);
   if (!method->returnType->IsRawPtr()) {
     // All non-rawptr return values are turned into rawptr to enable chaining.
-    return MakeReadOnlyTempVar(result);
+    return Spill(result);
   }
   return result;
 }
@@ -366,6 +370,10 @@ void SemanticPass::AddDefaultInitializers(Type* type, std::vector<Expr*>* exprs)
       }
     }
   }
+}
+
+Result SemanticPass::Visit(UnresolvedListExpr* node) {
+  return Spill(Make<UnresolvedListExpr>(Resolve(node->GetArgList())));
 }
 
 Expr* SemanticPass::ResolveListExpr(UnresolvedListExpr* node, Type* dstType) {
@@ -469,6 +477,13 @@ Expr* SemanticPass::MakeLoad(Expr* expr) {
   return Make<LoadExpr>(expr);
 }
 
+Expr* SemanticPass::ResolveAndLoad(Expr* expr) {
+  expr = Resolve(expr);
+  if (!expr) return nullptr;
+
+  return MakeLoad(expr);
+}
+
 Result SemanticPass::Visit(LoadExpr* node) {
   Expr* expr = Resolve(node->GetExpr());
   if (!expr) return nullptr;
@@ -521,7 +536,7 @@ Result SemanticPass::Visit(UnresolvedDot* node) {
       } else {
         lengthExpr = Make<LengthExpr>(expr);
       }
-      return MakeReadOnlyTempVar(lengthExpr);
+      return Spill(lengthExpr);
     } else {
       return Error("unknown array property \"%s\"", id.c_str());
     }
@@ -555,7 +570,7 @@ Result SemanticPass::Visit(UnresolvedStaticDot* node) {
     auto enumType = static_cast<EnumType*>(type);
     const EnumValue* enumValue = enumType->FindValue(id);
     if (enumValue) {
-      return MakeReadOnlyTempVar(Make<EnumConstant>(enumValue));
+      return Spill(Make<EnumConstant>(enumValue));
     } else {
       return Error("value \"%s\" not found on enum \"%s\"", id.c_str(),
                    enumType->ToString().c_str());
@@ -563,6 +578,30 @@ Result SemanticPass::Visit(UnresolvedStaticDot* node) {
   } else {
     return Error("expression is not of enum type");
   }
+}
+
+Result SemanticPass::Visit(BoolConstant* node) {
+  return Spill(node);
+}
+
+Result SemanticPass::Visit(EnumConstant* node) {
+  return Spill(node);
+}
+
+Result SemanticPass::Visit(FloatConstant* node) {
+  return Spill(node);
+}
+
+Result SemanticPass::Visit(IntConstant* node) {
+  return Spill(node);
+}
+
+Result SemanticPass::Visit(UIntConstant* node) {
+  return Spill(node);
+}
+
+Result SemanticPass::Visit(Initializer* node) {
+  return Spill(node);
 }
 
 Expr* SemanticPass::MakeConstantOne(Type* type) {
@@ -578,7 +617,7 @@ Expr* SemanticPass::MakeConstantOne(Type* type) {
   }
 }
 
-Expr* SemanticPass::MakeReadOnlyTempVar(Expr* expr) {
+Expr* SemanticPass::Spill(Expr* expr) {
   auto type = expr->GetType(types_);
   type = types_->GetQualifiedType(type, Type::Qualifier::ReadOnly);
   return Make<TempVarExpr>(type, expr);
@@ -606,7 +645,7 @@ Result SemanticPass::Visit(ExprWithStmt* node) {
 Result SemanticPass::Visit(StoreStmt* node) {
   Expr* lhs = Resolve(node->GetLHS());
   if (!lhs) return nullptr;
-  Expr* rhs = Resolve(node->GetRHS());
+  Expr* rhs = ResolveAndLoad(node->GetRHS());
   if (!rhs) return nullptr;
   if (lhs->IsUnresolvedSwizzleExpr()) {
     auto swizzle = static_cast<UnresolvedSwizzleExpr*>(lhs);
@@ -655,9 +694,9 @@ bool IsValidNonMatchingOp(BinOpNode::Op op, Type* lhs, Type* rhs) {
 }  // namespace
 
 Result SemanticPass::Visit(BinOpNode* node) {
-  Expr* rhs = Resolve(node->GetRHS());
+  Expr* rhs = ResolveAndLoad(node->GetRHS());
   if (!rhs) return nullptr;
-  Expr* lhs = Resolve(node->GetLHS());
+  Expr* lhs = ResolveAndLoad(node->GetLHS());
   if (!lhs) return nullptr;
   Type* lhsType = lhs->GetType(types_);
   Type* rhsType = rhs->GetType(types_);
@@ -685,7 +724,13 @@ Result SemanticPass::Visit(BinOpNode* node) {
       rhs = Widen(rhs, lhsType);
     }
   }
-  return Make<BinOpNode>(node->GetOp(), lhs, rhs);
+  return Spill(Make<BinOpNode>(node->GetOp(), lhs, rhs));
+}
+
+Result SemanticPass::Visit(UnaryOp* node) {
+  Expr* rhs = ResolveAndLoad(node->GetRHS());
+  if (!rhs) return nullptr;
+  return Spill(Make<UnaryOp>(node->GetOp(), rhs));
 }
 
 void SemanticPass::WidenArgList(std::vector<Expr*>& argList, const VarVector& formalArgList) {
@@ -708,7 +753,7 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
   if (!arglist) return nullptr;
   int       qualifiers;
   Type*     unqualifiedType = type->GetUnqualifiedType(&qualifiers);
-  Expr*     length = node->GetLength() ? Resolve(node->GetLength()) : nullptr;
+  Expr*     length = node->GetLength() ? ResolveAndLoad(node->GetLength()) : nullptr;
   auto      allocation = Make<HeapAllocation>(type, length);
   if (unqualifiedType->IsClass()) {
     auto* classType = static_cast<ClassType*>(unqualifiedType);
@@ -756,11 +801,11 @@ Result SemanticPass::Visit(UnresolvedNewExpr* node) {
   } else {
     stmt = Initialize(allocation);
   }
-  return Make<RawToSmartPtr>(Make<ExprWithStmt>(allocation, stmt));
+  return Spill(Make<RawToSmartPtr>(Make<ExprWithStmt>(allocation, stmt)));
 }
 
 Result SemanticPass::Visit(IfStatement* s) {
-  Expr* expr = Resolve(s->GetExpr());
+  Expr* expr = ResolveAndLoad(s->GetExpr());
   if (expr && expr->GetType(types_) != types_->GetBool()) {
     return Error("condition must be boolean");
   } else {
@@ -771,7 +816,7 @@ Result SemanticPass::Visit(IfStatement* s) {
 }
 
 Result SemanticPass::Visit(WhileStatement* s) {
-  Expr* cond = Resolve(s->GetCond());
+  Expr* cond = ResolveAndLoad(s->GetCond());
   Stmt* body = Resolve(s->GetBody());
   if (cond && cond->GetType(types_) != types_->GetBool()) {
     return Error("condition must be boolean");
@@ -782,7 +827,7 @@ Result SemanticPass::Visit(WhileStatement* s) {
 
 Result SemanticPass::Visit(DoStatement* s) {
   Stmt* body = Resolve(s->GetBody());
-  Expr* cond = Resolve(s->GetCond());
+  Expr* cond = ResolveAndLoad(s->GetCond());
   if (cond && cond->GetType(types_) != types_->GetBool()) {
     return Error("condition must be boolean");
   } else {
@@ -852,7 +897,8 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
       return Error("cannot return a raw pointer");
     }
     for (int i = 0; i < method->defaultArgs.size(); ++i) {
-      method->defaultArgs[i] = Resolve(method->defaultArgs[i]);
+      method->defaultArgs[i] = ResolveAndLoad(method->defaultArgs[i]);
+      assert(!method->defaultArgs[i] || !method->defaultArgs[i]->IsTempVarExpr());
       if (method->formalArgList[i]->type->IsAuto()) {
         method->formalArgList[i]->type = method->defaultArgs[i]->GetType(types_);
       }
@@ -877,7 +923,7 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   const auto& fields = classType->GetFields();
   for (const auto& field : fields) {
     if (field->type->IsAuto()) {
-      field->defaultValue = Resolve(field->defaultValue);
+      field->defaultValue = ResolveAndLoad(field->defaultValue);
       field->type = field->defaultValue->GetType(types_);
     } else if (field->type->IsUnsizedArray()) {
       if (field != fields.back()) {
@@ -902,7 +948,7 @@ void SemanticPass::UnwindStack(Scope* scope, Stmts* stmts) {
 }
 
 Result SemanticPass::Visit(ReturnStatement* stmt) {
-  if (auto returnValue = Resolve(stmt->GetExpr())) {
+  if (auto returnValue = ResolveAndLoad(stmt->GetExpr())) {
     auto type = returnValue->GetType(types_);
     auto scope = symbols_->PeekScope();
     while (scope && !scope->method) { scope = scope->parent; }
