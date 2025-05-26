@@ -918,7 +918,8 @@ void SemanticPass::UnwindStack(Scope* scope, Stmts* stmts) {
 }
 
 Result SemanticPass::Visit(ReturnStatement* stmt) {
-  if (auto returnValue = ResolveAsValue(stmt->GetExpr())) {
+  auto returnValue = ResolveAsValue(stmt->GetExpr());
+  if (returnValue) {
     auto type = returnValue->GetType(types_);
     auto scope = symbols_->PeekScope();
     while (scope && !scope->method) { scope = scope->parent; }
@@ -930,7 +931,7 @@ Result SemanticPass::Visit(ReturnStatement* stmt) {
   }
   auto stmts = Make<Stmts>();
   UnwindStack(symbols_->PeekScope(), stmts);
-  stmts->Append(Make<ReturnStatement>(Resolve(stmt->GetExpr())));
+  stmts->Append(Make<ReturnStatement>(returnValue));
   return stmts;
 }
 
