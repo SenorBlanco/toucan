@@ -52,6 +52,15 @@ size_t ParseSwizzle(const std::string& str, size_t baseLength, int* result) {
   return i;
 }
 
+bool HasDuplicates(const std::vector<int>& indices) {
+  for (int i = 0; i < indices.size(); ++i) {
+    for (int j = i + 1; j < indices.size(); ++j) {
+      if (indices[i] == indices[j]) return true;
+    }
+  }
+  return false;
+}
+
 }
 
 SemanticPass::SemanticPass(NodeVector* nodes, SymbolTable* symbols, TypeTable* types)
@@ -527,7 +536,7 @@ Result SemanticPass::MakeSwizzle(int srcLength, Expr* lhs, const std::string& sw
   auto indices = std::vector<int>(swizzle.size());
   size_t resultLength = ParseSwizzle(swizzle, srcLength, indices.data());
   if (resultLength < swizzle.size()) {
-    return Error("invalid swizzle at '%c' at position %d\n", swizzle[resultLength], resultLength);
+    return Error("invalid swizzle component '%c'", swizzle[resultLength]);
   }
   Expr* expr = MakeLoad(lhs);
   if (indices.size() == 1) {
@@ -542,10 +551,13 @@ Expr* SemanticPass::MakeSwizzleForStore(int exprLength, Expr* expr, const std::s
   auto indices = std::vector<int>(swizzle.size());
   size_t resultLength = ParseSwizzle(swizzle, exprLength, indices.data());
   if (resultLength < swizzle.size()) {
-    Error("invalid swizzle at '%c' at position %d\n", swizzle[resultLength], resultLength);
+    Error("invalid swizzle component '%c'", swizzle[resultLength]);
     return nullptr;
   }
-  // FIXME: check for duplicate indices here
+  if (HasDuplicates(indices)) {
+    Error("duplicate components in swizzle store");
+    return nullptr;
+  }
   if (indices.size() == 1) {
     expr = Make<InsertElementExpr>(expr, rhs, indices[0]);
   } else for (int i = 0; i < indices.size(); ++i) {
@@ -662,6 +674,7 @@ Result SemanticPass::Visit(StoreStmt* node) {
     auto exprType = expr->GetType(types_);
     if (exprType->IsVector()) {
       rhs = MakeSwizzleForStore(static_cast<VectorType*>(exprType)->GetLength(), expr, dot->GetID(), rhs);
+      if (!rhs) return nullptr;
       lhs = base;
     }
   }
