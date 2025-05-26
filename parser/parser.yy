@@ -478,7 +478,7 @@ arith_expr:
   | T_TRUE                                  { $$ = Make<BoolConstant>(true); }
   | T_FALSE                                 { $$ = Make<BoolConstant>(false); }
   | T_NULL                                  { $$ = Make<NullConstant>(); }
-  | assignable                              { $$ = Load($1); }
+  | assignable                              { $$ = $1; }
   | '&' assignable %prec UNARYMINUS         { $$ = $2; }
   ;
 
@@ -525,7 +525,7 @@ assignable:
   | simple_type '.' T_IDENTIFIER '(' arguments ')'
                                             { $$ = MakeStaticMethodCall($1, $3, $5); }
   | assignable ':'                          { $$ = Make<SmartToRawPtr>(Make<LoadExpr>($1)); }
-  | initializer                             { $$ = Make<TempVarExpr>(nullptr, $1); }
+  | initializer                             { $$ = $1; }
   ;
 
 %%

@@ -207,7 +207,7 @@ Stmts* SemanticPass::InitializeArray(Expr* dest, Type* elementType, Expr* length
     body = Make<StoreStmt>(lhs, exprList->Get()[0]);
   } else {
     Type* type = types_->GetArrayType(elementType, numArgs, MemoryLayout::Default);
-    auto value = Make<TempVarExpr>(type, Make<Initializer>(type, exprList));
+    auto value = Make<Initializer>(type, exprList);
     auto rhs = Make<LoadExpr>(Make<ArrayAccess>(MakeIndexable(value), Make<LoadExpr>(index)));
     body = Make<StoreStmt>(lhs, rhs);
   }
@@ -244,6 +244,13 @@ Result SemanticPass::Visit(VarDeclaration* decl) {
   Var*  var = symbols_->DefineVar(id, type);
   Expr* varExpr = Make<VarExpr>(var);
   return Initialize(varExpr, initExpr);
+}
+
+Expr* SemanticPass::ResolveAsValue(Expr* node) {
+  if (node && node->IsAssignable()) {
+    return Make<LoadExpr>(node);
+  }
+  return node;
 }
 
 Result SemanticPass::ResolveMethodCall(Expr*       expr,
@@ -284,12 +291,7 @@ Result SemanticPass::ResolveMethodCall(Expr*       expr,
   }
   WidenArgList(newArgList, method->formalArgList);
   auto* exprList = Make<ExprList>(std::move(newArgList));
-  Expr* result = Make<MethodCall>(method, exprList);
-  if (!method->returnType->IsRawPtr()) {
-    // All non-rawptr return values are turned into rawptr to enable chaining.
-    return MakeReadOnlyTempVar(result);
-  }
-  return result;
+  return Make<MethodCall>(method, exprList);
 }
 
 Expr* SemanticPass::Widen(Expr* node, Type* dstType) {
@@ -515,13 +517,11 @@ Result SemanticPass::Visit(UnresolvedDot* node) {
   if (type->IsArray()) {
     if (id == "length") {
       ArrayType* atype = static_cast<ArrayType*>(type);
-      Expr* lengthExpr;
       if (atype->GetNumElements() > 0) {
-        lengthExpr = Make<IntConstant>(atype->GetNumElements(), 32);
+        return Make<IntConstant>(atype->GetNumElements(), 32);  // FIXME: uint?
       } else {
-        lengthExpr = Make<LengthExpr>(expr);
+        return Make<LengthExpr>(expr);
       }
-      return MakeReadOnlyTempVar(lengthExpr);
     } else {
       return Error("unknown array property \"%s\"", id.c_str());
     }
@@ -555,7 +555,7 @@ Result SemanticPass::Visit(UnresolvedStaticDot* node) {
     auto enumType = static_cast<EnumType*>(type);
     const EnumValue* enumValue = enumType->FindValue(id);
     if (enumValue) {
-      return MakeReadOnlyTempVar(Make<EnumConstant>(enumValue));
+      return Make<EnumConstant>(enumValue);
     } else {
       return Error("value \"%s\" not found on enum \"%s\"", id.c_str(),
                    enumType->ToString().c_str());
@@ -576,12 +576,6 @@ Expr* SemanticPass::MakeConstantOne(Type* type) {
     assert(!"unexpected type for constant");
     return nullptr;
   }
-}
-
-Expr* SemanticPass::MakeReadOnlyTempVar(Expr* expr) {
-  auto type = expr->GetType(types_);
-  type = types_->GetQualifiedType(type, Type::Qualifier::ReadOnly);
-  return Make<TempVarExpr>(type, expr);
 }
 
 Result SemanticPass::Visit(IncDecExpr* node) {
@@ -606,7 +600,7 @@ Result SemanticPass::Visit(ExprWithStmt* node) {
 Result SemanticPass::Visit(StoreStmt* node) {
   Expr* lhs = Resolve(node->GetLHS());
   if (!lhs) return nullptr;
-  Expr* rhs = Resolve(node->GetRHS());
+  Expr* rhs = ResolveAsValue(node->GetRHS());
   if (!rhs) return nullptr;
   if (lhs->IsUnresolvedSwizzleExpr()) {
     auto swizzle = static_cast<UnresolvedSwizzleExpr*>(lhs);
@@ -655,9 +649,9 @@ bool IsValidNonMatchingOp(BinOpNode::Op op, Type* lhs, Type* rhs) {
 }  // namespace
 
 Result SemanticPass::Visit(BinOpNode* node) {
-  Expr* rhs = Resolve(node->GetRHS());
+  Expr* rhs = ResolveAsValue(node->GetRHS());
   if (!rhs) return nullptr;
-  Expr* lhs = Resolve(node->GetLHS());
+  Expr* lhs = ResolveAsValue(node->GetLHS());
   if (!lhs) return nullptr;
   Type* lhsType = lhs->GetType(types_);
   Type* rhsType = rhs->GetType(types_);
@@ -919,12 +913,6 @@ Result SemanticPass::Visit(ReturnStatement* stmt) {
   UnwindStack(symbols_->PeekScope(), stmts);
   stmts->Append(Make<ReturnStatement>(Resolve(stmt->GetExpr())));
   return stmts;
-}
-
-Result SemanticPass::Visit(TempVarExpr* node) {
-  Expr* initExpr = Resolve(node->GetInitExpr());
-  if (!initExpr) return nullptr;
-  return Make<TempVarExpr>(initExpr->GetType(types_), initExpr);
 }
 
 int SemanticPass::FindFormalArg(Arg* arg, Method* m, TypeTable* types) {

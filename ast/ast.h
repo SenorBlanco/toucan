@@ -69,6 +69,7 @@ class Expr : public ASTNode {
  public:
   Expr();
   virtual Type* GetType(TypeTable* types) = 0;
+  virtual bool  IsAssignable() const { return false; }
   virtual bool  IsArrayAccess() const { return false; }
   virtual bool  IsFieldAccess() const { return false; }
   virtual bool  IsUnresolvedSwizzleExpr() const { return false; }
@@ -81,6 +82,7 @@ class Expr : public ASTNode {
 class HeapAllocation : public Expr {
  public:
   HeapAllocation(Type* type, Expr* length = nullptr);
+  bool  IsAssignable() const override { return true; }
   Type* GetType(TypeTable* types) override;
   Type* GetType() { return type_; }
   Expr* GetLength() const { return length_; }
@@ -155,6 +157,7 @@ class DoubleConstant : public Expr {
 
 class CastExpr : public Expr {
  public:
+  bool  IsAssignable() const override { return expr_->IsAssignable(); }
   CastExpr(Type* type, Expr* expr);
   Result Accept(Visitor* visitor) override;
   Type*  GetType(TypeTable* types) override;
@@ -310,6 +313,7 @@ class ArrayAccess : public Expr {
  public:
   ArrayAccess(Expr* expr, Expr* index);
   Result Accept(Visitor* visitor) override;
+  bool   IsAssignable() const override { return true; }
   bool   IsArrayAccess() const override { return true; }
   Type*  GetType(TypeTable* types) override;
   Expr*  GetExpr() { return expr_; }
@@ -415,6 +419,7 @@ class VarExpr : public Expr {
  public:
   VarExpr(Var* var);
   Result Accept(Visitor* visitor) override;
+  bool   IsAssignable() const override { return true; }
   Type*  GetType(TypeTable* types) override;
   Var*   GetVar() const { return var_; }
   bool   IsVarExpr() const override { return true; }
@@ -428,6 +433,7 @@ class TempVarExpr : public Expr {
   TempVarExpr(Type* type, Expr* initExpr = nullptr);
   Result Accept(Visitor* visitor) override;
   Type*  GetType(TypeTable* types) override;
+  bool   IsAssignable() const override { return true; }
   bool   IsTempVarExpr() const override { return true; }
   Type*  GetType() const { return type_; }
   Expr*  GetInitExpr() const { return initExpr_; }
@@ -441,6 +447,7 @@ class SmartToRawPtr : public Expr {
  public:
   SmartToRawPtr(Expr* expr);
   Result Accept(Visitor* visitor) override;
+  bool   IsAssignable() const override { return true; }
   Type*  GetType(TypeTable* types) override;
   Expr*  GetExpr() { return expr_; }
 
@@ -478,6 +485,7 @@ class ToRawArray : public Expr {
 class FieldAccess : public Expr {
  public:
   FieldAccess(Expr* expr, Field* field);
+  bool   IsAssignable() const override { return true; }
   Result Accept(Visitor* visitor) override;
   Type*  GetType(TypeTable* types) override;
   Expr*  GetExpr() { return expr_; }

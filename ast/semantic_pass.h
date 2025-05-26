@@ -37,7 +37,6 @@ class SemanticPass : public CopyVisitor {
   Result Visit(LoadExpr* node) override;
   Result Visit(ReturnStatement* node) override;
   Result Visit(SmartToRawPtr* expr) override;
-  Result Visit(TempVarExpr* node) override;
   Result Visit(Stmts* stmts) override;
   Result Visit(IncDecExpr* node) override;
   Result Visit(StoreStmt* node) override;
@@ -55,10 +54,10 @@ class SemanticPass : public CopyVisitor {
   int    GetNumErrors() const { return numErrors_; }
 
  private:
+  Expr*   ResolveAsValue(Expr*);
   void    UnwindStack(Scope* scope, Stmts* stmts);
   Expr*   MakeConstantOne(Type* type);
   Expr*   MakeLoad(Expr* expr);
-  Expr*   MakeReadOnlyTempVar(Expr* expr);
   Result  ResolveMethodCall(Expr* expr, ClassType* classType, std::string id, ArgList* arglist);
   Expr*   MakeDefaultInitializer(Type* type);
   void    AddDefaultInitializers(Type* type, std::vector<Expr*>* exprs);
