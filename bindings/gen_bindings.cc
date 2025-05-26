@@ -206,7 +206,9 @@ void GenBindings::GenType(Type* type) {
             "types->GetUnresolvedScopedType(static_cast<FormalTemplateArg*>(typeList[%d]), \"%s\")",
             typeMap_[unresolvedScopedType->GetBaseType()], unresolvedScopedType->GetID().c_str());
   } else if (type->IsList()) {
-    fprintf(file_, "nullptr");
+    // FIXME: for now, support only empty lists
+    assert(static_cast<ListType*>(type)->GetTypes().size() == 0);
+    fprintf(file_, "types->GetList({})");
   } else {
     assert(!"unknown type");
     exit(-1);
