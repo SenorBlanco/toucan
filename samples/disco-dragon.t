@@ -90,8 +90,8 @@ class WriteGBuffers {
     // Transform the vertex position by the model and viewProjection matrices.
     // Transform the vertex normal by the normalModelMatrix (inverse transpose of the model).
     var output : VertexOutput;
-    var worldPosition = Utils.makeFloat3(uniforms.modelMatrix * Utils.makeFloat4(v.position, 1.0));
-    vb.position = camera.viewProjectionMatrix * Utils.makeFloat4(worldPosition, 1.0);
+    var worldPosition = uniforms.modelMatrix * Utils.makeFloat4(v.position, 1.0);
+    vb.position = camera.viewProjectionMatrix * Utils.makeFloat4(worldPosition.xyz, 1.0);
     var fragNormal = uniforms.normalModelMatrix * Utils.makeFloat4(v.normal, 1.0);
     output.fragNormal = fragNormal.xyz;
     output.fragUV = v.uv;
