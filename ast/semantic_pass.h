@@ -24,6 +24,7 @@ class SymbolTable;
 class SemanticPass : public CopyVisitor {
  public:
   SemanticPass(NodeVector* nodes, SymbolTable* symbols, TypeTable* types);
+  Result Visit(UnresolvedAddressOf* node) override;
   Result Visit(Arg* node) override;
   Result Visit(ArgList* node) override;
   Result Visit(ArrayAccess* node) override;

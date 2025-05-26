@@ -479,7 +479,7 @@ arith_expr:
   | T_FALSE                                 { $$ = Make<BoolConstant>(false); }
   | T_NULL                                  { $$ = Make<NullConstant>(); }
   | assignable                              { $$ = $1; }
-  | '&' assignable %prec UNARYMINUS         { $$ = $2; }
+  | '&' assignable %prec UNARYMINUS         { $$ = Make<UnresolvedAddressOf>($2); }
   ;
 
 opt_length:

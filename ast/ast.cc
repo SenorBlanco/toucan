@@ -175,7 +175,7 @@ VarExpr::VarExpr(Var* var) : var_(var) {}
 
 TempVarExpr::TempVarExpr(Type* type, Expr* initExpr) : type_(type), initExpr_(initExpr) {}
 
-LoadExpr::LoadExpr(Expr* expr) : expr_(expr) {}
+LoadExpr::LoadExpr(Expr* expr, bool assignable) : expr_(expr), assignable_(assignable) {}
 
 StoreStmt::StoreStmt(Expr* lhs, Expr* rhs) : lhs_(lhs), rhs_(rhs) {}
 
@@ -255,6 +255,10 @@ Type* Data::GetType(TypeTable* types) { return types->GetStrongPtrType(type_); }
 CastExpr::CastExpr(Type* type, Expr* expr) : type_(type), expr_(expr) {}
 
 Type* CastExpr::GetType(TypeTable* types) { return type_; }
+
+UnresolvedAddressOf::UnresolvedAddressOf(Expr* expr) : expr_(expr) {}
+
+Type* UnresolvedAddressOf::GetType(TypeTable* types) { return expr_->GetType(types); }
 
 EnumConstant::EnumConstant(const EnumValue* value) : value_(value) {}
 
@@ -336,6 +340,7 @@ Result TempVarExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result UIntConstant::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result UnaryOp::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result DestroyStmt::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result UnresolvedAddressOf::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result UnresolvedDot::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result UnresolvedIdentifier::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result UnresolvedListExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }

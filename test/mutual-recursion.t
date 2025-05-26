@@ -1,19 +1,13 @@
 include "include/test.t"
 
 class Foo {
-  var y : float;
-  foo(x : int) {
-    if (x > 0) this.bar(x - 1);
-    return;
+  foo() {
+    this.bar("hi");
   }
-  bar(x : int) {
-    y += 1.0;
-    this.foo(x);
-    return;
+  bar(str : &[]ubyte) {
+    System.PrintLine(str);
   }
 };
 
-var foo = new Foo;
-foo.y = 0.0;
-foo.foo(10);
-Test.Expect(foo.y == 10.0);
+var foo : Foo;
+foo.foo("abc");

@@ -169,6 +169,18 @@ class CastExpr : public Expr {
   Expr* expr_;
 };
 
+class UnresolvedAddressOf : public Expr {
+ public:
+  UnresolvedAddressOf(Expr* expr);
+  bool   IsAssignable() const override { return true; }
+  Result Accept(Visitor* visitor) override;
+  Type*  GetType(TypeTable* types) override;
+  Expr*  GetExpr() { return expr_; }
+
+ private:
+  Expr* expr_;
+};
+
 class BoolConstant : public Expr {
  public:
   BoolConstant(bool value);
@@ -406,13 +418,15 @@ class MethodCall : public Expr {
 
 class LoadExpr : public Expr {
  public:
-  LoadExpr(Expr* expr);
+  LoadExpr(Expr* expr, bool assignable = false);
+  bool   IsAssignable() const override { return assignable_; }
   Result Accept(Visitor* visitor) override;
   Type*  GetType(TypeTable* types) override;
   Expr*  GetExpr() const { return expr_; }
 
  private:
   Expr* expr_;
+  bool  assignable_;
 };
 
 class VarExpr : public Expr {
@@ -816,6 +830,7 @@ class Visitor {
   virtual Result Visit(ToRawArray* node) { return Default(node); }
   virtual Result Visit(UnaryOp* node) { return Default(node); }
   virtual Result Visit(DestroyStmt* node) { return Default(node); }
+  virtual Result Visit(UnresolvedAddressOf* node) { return Default(node); }
   virtual Result Visit(UnresolvedInitializer* node) { return Default(node); }
   virtual Result Visit(UnresolvedDot* node) { return Default(node); }
   virtual Result Visit(UnresolvedStaticDot* node) { return Default(node); }

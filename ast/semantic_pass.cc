@@ -56,6 +56,10 @@ Result SemanticPass::Visit(ArrayAccess* node) {
   return Make<ArrayAccess>(expr, index);
 }
 
+Result SemanticPass::Visit(UnresolvedAddressOf* node) {
+  return ResolveAsReference(node->GetExpr());
+}
+
 Result SemanticPass::Visit(CastExpr* node) {
   Expr* expr = Resolve(node->GetExpr());
   if (!expr) { return nullptr; }
@@ -98,7 +102,7 @@ Result SemanticPass::Visit(Stmts* stmts) {
 }
 
 Result SemanticPass::Visit(Arg* node) {
-  return Make<Arg>(node->GetID(), ResolveAsValue(node->GetExpr()));
+  return Make<Arg>(node->GetID(), Resolve(node->GetExpr()));
 }
 
 Result SemanticPass::Visit(ArgList* node) {
@@ -317,6 +321,8 @@ Expr* SemanticPass::Widen(Expr* node, Type* dstType) {
     return Make<SmartToRawPtr>(node);
   } else if (dstType->IsRawPtr() && static_cast<RawPtrType*>(dstType)->GetBaseType()->IsArray()) {
     return MakeIndexable(node);
+  } else if (srcType->IsRawPtr() && static_cast<RawPtrType*>(srcType)->GetBaseType()->CanWidenTo(dstType)) {
+    return Widen(Make<LoadExpr>(node), dstType);
   } else if (srcType->IsRawPtr() && dstType->IsRawPtr()) {
     return node;
   } else {
@@ -500,7 +506,7 @@ Result SemanticPass::Visit(UnresolvedIdentifier* node) {
   std::string id = node->GetID();
   if (Var* var = symbols_->FindVar(id)) {
     if (var->type->IsRawPtr()) {
-      return Make<LoadExpr>(Make<VarExpr>(var));
+      return Make<LoadExpr>(Make<VarExpr>(var), true);
     } else {
       return Make<VarExpr>(var);
     }
