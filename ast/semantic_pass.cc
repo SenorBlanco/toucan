@@ -97,9 +97,7 @@ Result SemanticPass::Visit(CastExpr* node) {
 
   Type* srcType = expr->GetType(types_);
   Type* dstType = node->GetType();
-  if (srcType == dstType) {
-    return expr;
-  } else if (srcType->CanWidenTo(dstType) || srcType->CanNarrowTo(dstType)) {
+  if (srcType->CanWidenTo(dstType) || srcType->CanNarrowTo(dstType)) {
     return Widen(expr, dstType);
   } else {
     return Error("cannot cast value of type %s to %s", srcType->ToString().c_str(), dstType->ToString().c_str());
@@ -328,7 +326,7 @@ Result SemanticPass::ResolveMethodCall(Expr*       expr,
 
 Expr* SemanticPass::Widen(Expr* node, Type* dstType) {
   Type* srcType = node->GetType(types_);
-  if (srcType == dstType) {
+  if (srcType->GetUnqualifiedType() == dstType->GetUnqualifiedType()) {
     return node;
   } else if (node->IsUnresolvedListExpr()) {
     return ResolveListExpr(static_cast<UnresolvedListExpr*>(node), dstType);

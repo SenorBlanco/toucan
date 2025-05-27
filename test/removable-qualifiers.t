@@ -5,6 +5,7 @@ var s : *storage Buffer<float>;
 var v : *vertex Buffer<float>;
 var i : *index Buffer<float>;
 var us : *uniform storage Buffer<float>;
+
 b = u;
 b = s;
 b = v;
@@ -27,3 +28,5 @@ var srt : *sampleable renderable Texture2D<RGBA8unorm>;
 t = st;
 t = rt;
 t = srt;
+st = srt;
+rt = srt;

@@ -33,6 +33,9 @@ test/cast-static-array-to-dynamic.t
 test/cast-uint-to-float.t
 test/cast-uint-vector-to-float-vector.t
 test/chained-method-call.t
+chained-method-call.t:17:  class Foo has no method plusOne()
+chained-method-call.t:17:  Foo.plusOne() : Foo
+chained-method-call.t:18:  unknown symbol "f"
 test/class-constructor-calls-constructor.t
 test/class-constructor.t
 test/class-initializer.t
@@ -197,7 +200,7 @@ syntax-error.t:2: syntax error
 test/error-texture-from-buffer-incorrect-format.t
 error-texture-from-buffer-incorrect-format.t:2:  matching constructor not found
 error-texture-from-buffer-incorrect-format.t:9:  class Texture1D<RGBA8unorm> has no method CopyFromBuffer(*CommandEncoder, *hostwriteable Buffer<[]float<4>>, int)
-error-texture-from-buffer-incorrect-format.t:9:  Texture1D<RGBA8unorm>.CopyFromBuffer(&CommandEncoder, &Buffer<[]ubyte<4>>, uint, uint) 
+error-texture-from-buffer-incorrect-format.t:9:  Texture1D<RGBA8unorm>.CopyFromBuffer(&CommandEncoder, &readonly Buffer<[]ubyte<4>>, uint, uint) 
 test/error-uint-literal-too-large.t
 test/error-unknown-param-type.t
 error-unknown-param-type.t:2: syntax error
