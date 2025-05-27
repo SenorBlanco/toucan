@@ -1,10 +1,4 @@
 class Utils {
-  static makeFloat2(v : float<3>) : float<2> {
-    return float<2>(v.x, v.y);
-  }
-  static makeFloat2(v : float<4>) : float<2> {
-    return float<2>(v.x, v.y);
-  }
   static makeFloat3(v : float<4>) : float<3> {
     return float<3>(v.x, v.y, v.z);
   }
