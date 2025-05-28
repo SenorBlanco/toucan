@@ -124,7 +124,7 @@ Type* FindType(const char* str) {
 %type <expr> expr opt_expr assignable arith_expr expr_or_list opt_initializer opt_length list_initializer
 %type <initializer> initializer initializer_or_type
 %type <arg> argument
-%type <stmt> statement expr_statement var_decl_statement for_loop_stmt
+%type <stmt> statement expr_statement var_decl_statement const_decl_statement for_loop_stmt
 %type <stmt> assignment
 %type <stmt> if_statement for_statement while_statement do_statement
 %type <stmt> opt_else class_decl class_body_decl var_decl
@@ -145,7 +145,7 @@ Type* FindType(const char* str) {
 %token <f> T_FLOAT_LITERAL
 %token <d> T_DOUBLE_LITERAL
 %token T_TRUE T_FALSE T_NULL T_IF T_ELSE T_FOR T_WHILE T_DO T_RETURN T_NEW
-%token T_CLASS T_ENUM T_VAR
+%token T_CLASS T_ENUM T_VAR T_CONST
 %token T_READONLY T_WRITEONLY T_COHERENT T_DEVICEONLY T_HOSTREADABLE T_HOSTWRITEABLE
 %token T_INT T_UINT T_FLOAT T_DOUBLE T_BOOL T_BYTE T_UBYTE T_SHORT T_USHORT
 %token T_HALF
@@ -241,6 +241,10 @@ do_statement:
   ;
 var_decl_statement:
     T_VAR var_decl_list                     { $$ = $2; }
+  ;
+
+const_decl_statement:
+    T_CONST var_decl_list                { $$ = $2; }
   ;
 
 simple_type:
