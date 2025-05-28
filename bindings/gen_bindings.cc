@@ -274,10 +274,10 @@ void GenBindings::Run() {
     fprintf(header_, "  uint32_t       length;\n");
     fprintf(header_, "};\n\n");
   }
+  int id = 0;
   for (auto type : types) {
-    int id = types_->GetTypeID(type);
     typeMap_[type] = id;
-    fprintf(file_, "  typeList[%d] = ", id);
+    fprintf(file_, "  typeList[%d] = ", id++);
     GenType(type);
     fprintf(file_, ";\n");
   }
