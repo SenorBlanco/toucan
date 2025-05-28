@@ -31,8 +31,8 @@ class LightUpdateBindings {
 class LightUpdate {
   compute(64, 1, 1) main(cb : &ComputeBuiltins) {
     var lights = bindings.Get().lights.Map();
-    var config = bindings.Get().config.Map();
-    var lightExtent = bindings.Get().lightExtent.Map();
+    var config = bindings.Get().config.MapRead();
+    var lightExtent = bindings.Get().lightExtent.MapRead();
     var i = cb.globalInvocationId.x;
 
     if (i >= config.numLights) {
@@ -83,8 +83,8 @@ class Vertex {
 class WriteGBuffers {
   // WriteGBuffers vertex shader
   vertex main(vb : &VertexBuiltins) : VertexOutput {
-    var uniforms = bindings.Get().uniforms.Map();
-    var camera = bindings.Get().camera.Map();
+    var uniforms = bindings.Get().uniforms.MapRead();
+    var camera = bindings.Get().camera.MapRead();
     var v = vertexes.Get();
 
     // Transform the vertex position by the model and viewProjection matrices.
@@ -146,7 +146,7 @@ class GBuffersDebugView : TextureQuadPass {
     var gBufferNormal = textureBindings.Get().gBufferNormal;
     var gBufferAlbedo = textureBindings.Get().gBufferAlbedo;
     var result : float<4>;
-    var windowSize = windowSizeBindings.Get().size.Map():;
+    var windowSize = windowSizeBindings.Get().size.MapRead():;
     var c = fb.fragCoord.xy / (float<2>) windowSize;
     if (c.x < 0.33333) {
       var rawDepth2 = gBufferDepth.Load((uint<2>) Math.floor(fb.fragCoord.xy), 0);
@@ -171,7 +171,7 @@ class GBuffersDebugView : TextureQuadPass {
 
 // DeferredRenderBufferBindings
 class DeferredRenderBufferBindings {
-  var lights : *readonly storage Buffer<[]LightData>;
+  var lights : *storage Buffer<[]LightData>;
   var config : *uniform Buffer<Config>;
   var camera : *uniform Buffer<Camera>;
 }
@@ -189,9 +189,9 @@ class DeferredRender : TextureQuadPass {
   // DeferredRender fragment shader
   fragment main(fb : &FragmentBuiltins) {
     var buffers = bufferBindings.Get();
-    var config = buffers.config.Map();
+    var config = buffers.config.MapRead();
     var lights = buffers.lights.Map();
-    var camera = buffers.camera.Map():;
+    var camera = buffers.camera.MapRead():;
     var textures = textureBindings.Get();
     var result : float<3>;
 
