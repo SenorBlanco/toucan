@@ -204,13 +204,19 @@ void GenBindings::GenType(Type* type) {
             "types->GetUnresolvedScopedType(static_cast<FormalTemplateArg*>(typeList[%d]), \"%s\")",
             typeMap_[unresolvedScopedType->GetBaseType()], unresolvedScopedType->GetID().c_str());
   } else if (type->IsList()) {
-//    const VarVector& vars = static_cast<ListType*>(type)->GetTypes();
-//    fprintf(file_, "types->GetList(std::vector<Var>{");
-//    for (auto var : vars) {
-//      fprintf(file_, "{\"%s\", typeList[%d]}", var->name.c_str(), typeMap_[var->type]);
-//      if (var != vars.back()) { fprintf(file_, ", "); }
-//    }
-//    fprintf(file_,"})");
+    // This is technically correct, but builds very large list types that aren't used.
+    // It also causes the WASM backend to fail with "too many locals".
+#if 0
+    const VarVector& vars = static_cast<ListType*>(type)->GetTypes();
+    fprintf(file_, "types->GetList(VarVector{");
+    for (auto var : vars) {
+      fprintf(file_, "std::make_shared<Var>(\"%s\", typeList[%d])", var->name.c_str(), typeMap_[var->type]);
+      if (var != vars.back()) { fprintf(file_, ", "); }
+    }
+    fprintf(file_,"})");
+#endif
+    // For now, just emit a placeholder type that will still cause the type IDs in
+    // CodeGenLLVM::CreateTypePtr() to match the indices in the type table.
     fprintf(file_, "types->GetPlaceholder()");
   } else {
     assert(!"unknown type");
