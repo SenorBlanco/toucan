@@ -132,7 +132,7 @@ class TextureQuadPass {
 class GBufferTextureBindings {
   var gBufferNormal : *SampleableTexture2D<float>;
   var gBufferAlbedo : *SampleableTexture2D<float>;
-  var gBufferDepth : *SampleableTexture2D<unfilterable float>;
+  var gBufferDepth : *unfilterable SampleableTexture2D<float>;
 }
 
 // WindowSizeBindings
