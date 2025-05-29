@@ -102,14 +102,10 @@ void GenBindings::GenType(Type* type) {
     fprintf(file_, "types->GetBool()");
   } else if (type->IsVector()) {
     VectorType* v = static_cast<VectorType*>(type);
-    fprintf(file_, "types->GetVector(");
-    GenType(v->GetComponentType());
-    fprintf(file_, ", %d)", v->GetLength());
+    fprintf(file_, "types->GetVector(typeList[%d], %d)", typeMap_[v->GetComponentType()], v->GetLength());
   } else if (type->IsMatrix()) {
     MatrixType* m = static_cast<MatrixType*>(type);
-    fprintf(file_, "types->GetMatrix(");
-    GenType(m->GetColumnType());
-    fprintf(file_, ", %d)", m->GetNumColumns());
+    fprintf(file_, "types->GetMatrix(static_cast<VectorType*>(typeList[%d]), %d)", typeMap_[m->GetColumnType()], m->GetNumColumns());
   } else if (type->IsString()) {
     fprintf(file_, "types->GetString()");
   } else if (type->IsVoid()) {
@@ -227,7 +223,6 @@ void GenBindings::GenType(Type* type) {
 void GenBindings::Run() {
   const TypeVector& types = types_->GetTypes();
   typeMap_.clear();
-  // First assign ID's to all resolved types.
   int numTypes = types.size();
   fprintf(file_, "#include <cstdint>\n");
   fprintf(file_, "#include <ast/ast.h>\n");
