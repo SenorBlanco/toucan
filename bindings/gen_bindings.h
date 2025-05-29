@@ -38,7 +38,7 @@ class GenBindings {
               FILE*        header,
               bool         dumpStmtsAsSource);
   void Run();
-  void GenType(Type* type);
+  void GenType(Type* type, int id);
   void GenBindingsForClass(ClassType* classType);
   void GenBindingsForEnum(EnumType* enumType);
   void GenBindingsForMethod(ClassType* classType, Method* method);

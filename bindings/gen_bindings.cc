@@ -91,7 +91,8 @@ GenBindings::GenBindings(SymbolTable* symbols,
       dumpStmtsAsSource_(dumpStmtsAsSource),
       sourcePass_(file_, &typeMap_) {}
 
-void GenBindings::GenType(Type* type) {
+void GenBindings::GenType(Type* type, int id) {
+  fprintf(file_, "  typeList[%d] = ", id);
   if (type->IsInteger()) {
     IntegerType* i = static_cast<IntegerType*>(type);
     fprintf(file_, "types->GetInteger(%d, %s)", i->GetBits(), i->Signed() ? "true" : "false");
@@ -218,6 +219,7 @@ void GenBindings::GenType(Type* type) {
     assert(!"unknown type");
     exit(-1);
   }
+  fprintf(file_, ";\n");
 }
 
 void GenBindings::Run() {
@@ -272,9 +274,7 @@ void GenBindings::Run() {
   int id = 0;
   for (auto type : types) {
     typeMap_[type] = id;
-    fprintf(file_, "  typeList[%d] = ", id++);
-    GenType(type);
-    fprintf(file_, ";\n");
+    GenType(type, id++);
   }
   // Now that we have defined the types, resolve the references.
   for (auto type : types) {
