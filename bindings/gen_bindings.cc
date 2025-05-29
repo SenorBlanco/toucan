@@ -17,6 +17,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <cassert>
+#include <iostream>
+#include <sstream>
 
 #include <ast/symbol.h>
 
@@ -91,53 +93,59 @@ GenBindings::GenBindings(SymbolTable* symbols,
       dumpStmtsAsSource_(dumpStmtsAsSource),
       sourcePass_(file_, &typeMap_) {}
 
-void GenBindings::GenType(Type* type, int id) {
-  fprintf(file_, "  typeList[%d] = ", id);
+int GenBindings::GenType(Type* type) {
+  if (int id = typeMap_[type]) {
+    return id;
+  }
+  int id = numTypes_++;
+  typeMap_[type] = id;
+  std::stringstream result;
+  result << "  Type* type" << std::to_string(id) << " = ";
   if (type->IsInteger()) {
     IntegerType* i = static_cast<IntegerType*>(type);
-    fprintf(file_, "types->GetInteger(%d, %s)", i->GetBits(), i->Signed() ? "true" : "false");
+    result << "types->GetInteger(" << std::to_string(i->GetBits()) << ", "
+           << (i->Signed() ? "true" : "false") << ")";
   } else if (type->IsFloatingPoint()) {
     FloatingPointType* f = static_cast<FloatingPointType*>(type);
-    fprintf(file_, "types->GetFloatingPoint(%d)", f->GetBits());
+    result << "types->GetFloatingPoint(" << std::to_string(f->GetBits()) << ")";
   } else if (type->IsBool()) {
-    fprintf(file_, "types->GetBool()");
+    result << "types->GetBool()";
   } else if (type->IsVector()) {
     VectorType* v = static_cast<VectorType*>(type);
-    fprintf(file_, "types->GetVector(typeList[%d], %d)", typeMap_[v->GetComponentType()], v->GetLength());
+    result << "types->GetVector(type" << std::to_string(GenType(v->GetComponentType())) << ", " << std::to_string(v->GetLength()) << ")";
   } else if (type->IsMatrix()) {
     MatrixType* m = static_cast<MatrixType*>(type);
-    fprintf(file_, "types->GetMatrix(static_cast<VectorType*>(typeList[%d]), %d)", typeMap_[m->GetColumnType()], m->GetNumColumns());
+    result << "types->GetMatrix(static_cast<VectorType*>(type" << GenType(m->GetColumnType()) << "), " << std::to_string(m->GetNumColumns()) << ")";
   } else if (type->IsString()) {
-    fprintf(file_, "types->GetString()");
+    result << "types->GetString()";
   } else if (type->IsVoid()) {
-    fprintf(file_, "types->GetVoid()");
+    result << "types->GetVoid()";
   } else if (type->IsAuto()) {
-    fprintf(file_, "types->GetAuto()");
+    result << "types->GetAuto()";
   } else if (type->IsClassTemplate()) {
     ClassTemplate* classTemplate = static_cast<ClassTemplate*>(type);
-    fprintf(file_, "  types->Make<ClassTemplate>(\"%s\", TypeList({",
-            classTemplate->GetName().c_str());
+    result << " types->Make<ClassTemplate>(\"" << classTemplate->GetName().c_str() << "\", TypeList({";
     for (Type* const& type : classTemplate->GetFormalTemplateArgs()) {
       assert(type->IsFormalTemplateArg());
-      fprintf(file_, "types->GetFormalTemplateArg(\"%s\")",
-              static_cast<FormalTemplateArg*>(type)->GetName().c_str());
-      if (&type != &classTemplate->GetFormalTemplateArgs().back()) { fprintf(file_, ", "); }
+      result << "types->GetFormalTemplateArg(\""
+             << static_cast<FormalTemplateArg*>(type)->GetName() << "\")";
+      if (&type != &classTemplate->GetFormalTemplateArgs().back()) result << ", ";
     }
-    if (header_) { fprintf(header_, "struct %s;\n", classTemplate->GetName().c_str()); }
-    fprintf(file_, "}))");
+    result << "}))";
+    if (header_) {
+      fprintf(header_, "struct %s;\n", classTemplate->GetName().c_str());
+    }
   } else if (type->IsClass()) {
     ClassType* classType = static_cast<ClassType*>(type);
     if (classType->GetTemplate()) {
-      fprintf(file_,
-              "  types->GetClassTemplateInstance(static_cast<ClassTemplate*>(typeList[%d]), {",
-              typeMap_[classType->GetTemplate()]);
+      result << "types->GetClassTemplateInstance(static_cast<ClassTemplate*>(type" << GenType(classType->GetTemplate()) << "), {";
       for (Type* const& type : classType->GetTemplateArgs()) {
-        fprintf(file_, "typeList[%d]", typeMap_[type]);
-        if (&type != &classType->GetTemplateArgs().back()) { fprintf(file_, ", "); }
+        result << "type" << GenType(type);
+        if (&type != &classType->GetTemplateArgs().back()) { result << ", "; }
       }
-      fprintf(file_, "} )");
+      result << "} )";
     } else {
-      fprintf(file_, "  types->Make<ClassType>(\"%s\")", classType->GetName().c_str());
+      result << "types->Make<ClassType>(\"" << classType->GetName() << "\")";
       if (header_) {
         int pad = 0;
         if (classType->GetFields().size() > 0) {
@@ -155,14 +163,9 @@ void GenBindings::GenType(Type* type, int id) {
         }
       }
     }
-#if 0
-    if (nativeClasses && classType->IsNative()) {
-      fprintf(nativeClasses, "  ClassType* %s;";
-    }
-#endif
   } else if (type->IsEnum()) {
     EnumType* enumType = static_cast<EnumType*>(type);
-    fprintf(file_, "  types->Make<EnumType>(\"%s\")", enumType->GetName().c_str());
+    result << "types->Make<EnumType>(\"" << enumType->GetName() << "\")";
     if (header_) {
       fprintf(header_, "enum class %s {\n", enumType->GetName().c_str());
       const EnumValueVector& values = enumType->GetValues();
@@ -173,53 +176,51 @@ void GenBindings::GenType(Type* type, int id) {
     }
   } else if (type->IsPtr()) {
     PtrType* ptrType = static_cast<PtrType*>(type);
-    fprintf(file_, "types->Get%sPtrType(",
-            type->IsStrongPtr() ? "Strong"
-            : type->IsWeakPtr() ? "Weak"
-                                : "Raw");
+    result << "types->Get" << (type->IsStrongPtr() ? "Strong" : type->IsWeakPtr() ? "Weak" : "Raw")
+           << "PtrType(type";
     if (ptrType->GetBaseType()) {
-      fprintf(file_, "typeList[%d]", typeMap_[ptrType->GetBaseType()]);
+      result << GenType(ptrType->GetBaseType());
     } else {
-      fprintf(file_, "nullptr");
+      result << "nullptr";
     }
-    fprintf(file_, ")");
+    result << ")";
   } else if (type->IsArray()) {
     ArrayType* arrayType = static_cast<ArrayType*>(type);
-    fprintf(file_, "types->GetArrayType((typeList[%d]), %d, MemoryLayout::%s)",
-            typeMap_[arrayType->GetElementType()], arrayType->GetNumElements(),
-            MemoryLayoutToString(arrayType->GetMemoryLayout()));
+    result << "types->GetArrayType(type" << GenType(arrayType->GetElementType()) << ", "
+           << arrayType->GetNumElements() << ", MemoryLayout::"
+           << MemoryLayoutToString(arrayType->GetMemoryLayout()) << ")";
   } else if (type->IsFormalTemplateArg()) {
     FormalTemplateArg* formalTemplateArg = static_cast<FormalTemplateArg*>(type);
-    fprintf(file_, "types->GetFormalTemplateArg(\"%s\")", formalTemplateArg->GetName().c_str());
+    result << "types->GetFormalTemplateArg(\"" << formalTemplateArg->GetName() << "\")";
   } else if (type->IsQualified()) {
     QualifiedType* qualifiedType = static_cast<QualifiedType*>(type);
-    fprintf(file_, "types->GetQualifiedType(typeList[%d], %d)",
-            typeMap_[qualifiedType->GetBaseType()], qualifiedType->GetQualifiers());
+    result << "types->GetQualifiedType(type" << GenType(qualifiedType->GetBaseType()) << ", "
+           << qualifiedType->GetQualifiers() << ")";
   } else if (type->IsUnresolvedScopedType()) {
     auto unresolvedScopedType = static_cast<UnresolvedScopedType*>(type);
-    fprintf(file_,
-            "types->GetUnresolvedScopedType(static_cast<FormalTemplateArg*>(typeList[%d]), \"%s\")",
-            typeMap_[unresolvedScopedType->GetBaseType()], unresolvedScopedType->GetID().c_str());
+    result << "types->GetUnresolvedScopedType(static_cast<FormalTemplateArg*>(type"
+           << GenType(unresolvedScopedType->GetBaseType()) << "), \"" << unresolvedScopedType->GetID()
+           << "\")";
   } else if (type->IsList()) {
     // This is technically correct, but builds very large list types that aren't used.
     // It also causes the WASM backend to fail with "too many locals".
-#if 0
     const VarVector& vars = static_cast<ListType*>(type)->GetTypes();
-    fprintf(file_, "types->GetList(VarVector{");
+    result << "types->GetList(VarVector{";
     for (auto var : vars) {
-      fprintf(file_, "std::make_shared<Var>(\"%s\", typeList[%d])", var->name.c_str(), typeMap_[var->type]);
-      if (var != vars.back()) { fprintf(file_, ", "); }
+      result << "std::make_shared<Var>(\"" << var->name << "\", type" << GenType(var->type) << ")";
+      if (var != vars.back()) result << ", ";
     }
-    fprintf(file_,"})");
-#endif
+    result << "})";
     // For now, just emit a placeholder type that will still cause the type IDs in
     // CodeGenLLVM::CreateTypePtr() to match the indices in the type table.
-    fprintf(file_, "types->GetPlaceholder()");
+//    result << "types->GetPlaceholder()";
   } else {
     assert(!"unknown type");
     exit(-1);
   }
-  fprintf(file_, ";\n");
+  typeMap_[type] = id;
+  fprintf(file_, "%s;\n", result.str().c_str());
+  return id;
 }
 
 void GenBindings::Run() {
@@ -235,7 +236,6 @@ void GenBindings::Run() {
   fprintf(file_, "void InitTypes(SymbolTable* symbols, TypeTable* types, NodeVector* nodes) {\n");
   fprintf(file_, "  ClassType* c;\n");
   fprintf(file_, "  EnumType* e;\n");
-  fprintf(file_, "  Type** typeList = new Type*[%d];\n", numTypes);
   fprintf(file_, "  ASTNode** nodeList = new ASTNode*[%d];\n", 1000 /* FIXME num_nodes */);
   fprintf(file_, "  Expr** exprs = reinterpret_cast<Expr**>(nodeList);\n");
   fprintf(file_, "  ArgList** argLists = reinterpret_cast<ArgList**>(nodeList);\n");
@@ -271,10 +271,8 @@ void GenBindings::Run() {
     fprintf(header_, "  uint32_t       length;\n");
     fprintf(header_, "};\n\n");
   }
-  int id = 0;
   for (auto type : types) {
-    typeMap_[type] = id;
-    GenType(type, id++);
+    GenType(type);
   }
   // Now that we have defined the types, resolve the references.
   for (auto type : types) {
@@ -284,8 +282,6 @@ void GenBindings::Run() {
       GenBindingsForEnum(static_cast<EnumType*>(type));
     }
   }
-  fprintf(file_, "  assert(types->GetTypes().size() == %d);\n", numTypes);
-  fprintf(file_, "  delete[] typeList;\n");
   fprintf(file_, "  delete[] nodeList;\n");
   fprintf(file_, "}\n\n");
   fprintf(file_, "};\n");
@@ -356,7 +352,7 @@ void PrintNativeType(FILE* file, Type* type) {
 }
 
 void GenBindings::GenBindingsForMethod(ClassType* classType, Method* method) {
-  fprintf(file_, "  returnType = typeList[%d];\n", typeMap_[method->returnType]);
+  fprintf(file_, "  returnType = type%d;\n", typeMap_[method->returnType]);
   fprintf(file_, "  m = new Method(0");
   if (method->modifiers & Method::Modifier::Static) { fprintf(file_, " | Method::Modifier::Static"); }
   if (method->modifiers & Method::Modifier::Virtual) { fprintf(file_, " | Method::Modifier::Virtual"); }
@@ -365,7 +361,7 @@ void GenBindings::GenBindingsForMethod(ClassType* classType, Method* method) {
   if (method->modifiers & Method::Modifier::Fragment) { fprintf(file_, " | Method::Modifier::Fragment"); }
   if (method->modifiers & Method::Modifier::Compute) { fprintf(file_, " | Method::Modifier::Compute"); }
   std::string name = method->name;
-  fprintf(file_, ", returnType, \"%s\", static_cast<ClassType*>(typeList[%d]));\n", name.c_str(),
+  fprintf(file_, ", returnType, \"%s\", static_cast<ClassType*>(type%d));\n", name.c_str(),
           typeMap_[method->classType]);
   const VarVector& argList = method->formalArgList;
   for (int i = 0; i < argList.size(); ++i) {
@@ -376,7 +372,7 @@ void GenBindings::GenBindingsForMethod(ClassType* classType, Method* method) {
     // TODO: fix this through proper constant folding.
     Expr* defaultValue = method->classType->IsNative() ? method->defaultArgs[i] : nullptr;
     int defaultValueId = defaultValue ? sourcePass_.Resolve(defaultValue) : 0;
-    fprintf(file_, "  m->AddFormalArg(\"%s\", typeList[%d], ", var->name.c_str(),
+    fprintf(file_, "  m->AddFormalArg(\"%s\", type%d, ", var->name.c_str(),
             typeMap_[var->type]);
     if (defaultValue) {
       fprintf(file_, "exprs[%d]", defaultValueId);
@@ -442,7 +438,7 @@ void GenBindings::GenBindingsForMethod(ClassType* classType, Method* method) {
 
 void GenBindings::GenBindingsForClass(ClassType* classType) {
   if (classType->GetTemplate() && classType->IsNative()) { return; }
-  fprintf(file_, "  c = static_cast<ClassType*>(typeList[%d]);\n", typeMap_[classType]);
+  fprintf(file_, "  c = static_cast<ClassType*>(type%d);\n", typeMap_[classType]);
   if (classType->IsNative()) {
     fprintf(file_, "  c->SetNative(true);\n");
     fprintf(file_, "  NativeClass::%s = c;\n;", classType->GetName().c_str());
@@ -453,12 +449,12 @@ void GenBindings::GenBindingsForClass(ClassType* classType) {
   fprintf(file_, "  scope->classType = c;\n");
   fprintf(file_, "  c->SetScope(scope);\n");
   if (ClassType* parent = classType->GetParent()) {
-    fprintf(file_, "  c->SetParent(static_cast<ClassType*>(typeList[%d]));\n", typeMap_[parent]);
+    fprintf(file_, "  c->SetParent(static_cast<ClassType*>(type%d));\n", typeMap_[parent]);
   }
   for (const auto& i : classType->GetFields()) {
     Field* field = i.get();
     int    defaultValueId = field->defaultValue ? sourcePass_.Resolve(field->defaultValue) : 0;
-    fprintf(file_, "  c->AddField(\"%s\", typeList[%d], ", field->name.c_str(),
+    fprintf(file_, "  c->AddField(\"%s\", type%d, ", field->name.c_str(),
             typeMap_[field->type]);
     if (field->defaultValue) {
       fprintf(file_, "exprs[%d]", defaultValueId);
@@ -473,7 +469,7 @@ void GenBindings::GenBindingsForClass(ClassType* classType) {
   }
   if (classType->GetScope()) {
     for (const auto& pair : classType->GetScope()->types) {
-      fprintf(file_, "  scope->types[\"%s\"] = typeList[%d];\n", pair.first.c_str(),
+      fprintf(file_, "  scope->types[\"%s\"] = type%d;\n", pair.first.c_str(),
               typeMap_[pair.second]);
     }
   }
@@ -484,7 +480,7 @@ void GenBindings::GenBindingsForClass(ClassType* classType) {
 }
 
 void GenBindings::GenBindingsForEnum(EnumType* enumType) {
-  fprintf(file_, "  e = static_cast<EnumType*>(typeList[%d]);\n", typeMap_[enumType]);
+  fprintf(file_, "  e = static_cast<EnumType*>(type%d);\n", typeMap_[enumType]);
   for (const EnumValue& v : enumType->GetValues()) {
     fprintf(file_, "  e->Append(\"%s\", %d);\n", v.id.c_str(), v.value);
   }

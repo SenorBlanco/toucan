@@ -58,7 +58,7 @@ Result DumpAsSourcePass::Visit(ArrayAccess* node) {
 Result DumpAsSourcePass::Visit(CastExpr* node) {
   int type = (*typeMap_)[node->GetType()];
   int expr = Resolve(node->GetExpr());
-  Output(node, "Make<CastExpr>(typeList[%d], exprs[%d])", type, expr);
+  Output(node, "Make<CastExpr>(type%d, exprs[%d])", type, expr);
   return {};
 }
 
@@ -75,7 +75,7 @@ Result DumpAsSourcePass::Visit(UIntConstant* node) {
 Result DumpAsSourcePass::Visit(EnumConstant* node) {
   const EnumValue* value = node->GetValue();
   int type = (*typeMap_)[value->type];
-  Output(node, "Make<EnumConstant>(static_cast<EnumType*>(typeList[%d])->FindValue(\"%s\"))", type, value->id.c_str());
+  Output(node, "Make<EnumConstant>(static_cast<EnumType*>(type%d)->FindValue(\"%s\"))", type, value->id.c_str());
   return {};
 }
 
@@ -128,14 +128,14 @@ Result DumpAsSourcePass::Visit(ExprStmt* stmt) {
 Result DumpAsSourcePass::Visit(Initializer* node) {
   int type = (*typeMap_)[node->GetType()];
   int argList = Resolve(node->GetArgList());
-  Output(node, "Make<Initializer>(typeList[%d], exprLists[%d])", type, argList);
+  Output(node, "Make<Initializer>(type%d, exprLists[%d])", type, argList);
   return {};
 }
 
 Result DumpAsSourcePass::Visit(VarDeclaration* decl) {
   int type = (*typeMap_)[decl->GetType()];
   int initExpr = Resolve(decl->GetInitExpr());
-  Output(decl, "Make<VarDeclaration>(\"%s\", typeList[%d], exprs[%d])", decl->GetID().c_str(), type,
+  Output(decl, "Make<VarDeclaration>(\"%s\", type%d, exprs[%d])", decl->GetID().c_str(), type,
          initExpr);
   return {};
 }

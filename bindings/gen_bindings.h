@@ -38,7 +38,9 @@ class GenBindings {
               FILE*        header,
               bool         dumpStmtsAsSource);
   void Run();
-  void GenType(Type* type, int id);
+
+ private:
+  int  GenType(Type* type);
   void GenBindingsForClass(ClassType* classType);
   void GenBindingsForEnum(EnumType* enumType);
   void GenBindingsForMethod(ClassType* classType, Method* method);
@@ -50,6 +52,7 @@ class GenBindings {
   FILE*                          header_;
   bool                           dumpStmtsAsSource_;
   std::unordered_map<Type*, int> typeMap_;
+  int                            numTypes_ = 0;
   DumpAsSourcePass               sourcePass_;
 };
 
