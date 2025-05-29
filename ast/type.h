@@ -588,7 +588,6 @@ class TypeTable {
   Type*       GetQualifiedType(Type* type, int qualifiers);
   Type*       GetUnresolvedScopedType(FormalTemplateArg* baseType, std::string id);
   TypeList*   AppendTypeList(TypeList* type);
-  int         GetTypeID(Type* type) const;
   static bool VectorScalar(Type* lhs, Type* rhs);
   static bool ScalarVector(Type* lhs, Type* rhs);
   static bool MatrixScalar(Type* lhs, Type* rhs);

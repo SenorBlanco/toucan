@@ -223,7 +223,7 @@ int GenBindings::GenType(Type* type) {
   return id;
 }
 
-void GenBindings::Run() {
+void GenBindings::Run(const TypeVector& referencedTypes) {
   const TypeVector& types = types_->GetTypes();
   typeMap_.clear();
   int numTypes = types.size();
@@ -271,7 +271,7 @@ void GenBindings::Run() {
     fprintf(header_, "  uint32_t       length;\n");
     fprintf(header_, "};\n\n");
   }
-  for (auto type : types) {
+  for (auto type : referencedTypes) {
     GenType(type);
   }
   // Now that we have defined the types, resolve the references.

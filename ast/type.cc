@@ -822,13 +822,6 @@ ClassType* TypeTable::PopInstanceQueue() {
   return instance;
 }
 
-int TypeTable::GetTypeID(Type* type) const {
-  for (int i = 0; i < types_.size(); i++) {
-    if (types_[i] == type) { return i; }
-  }
-  return -1;
-}
-
 bool TypeTable::VectorScalar(Type* lhs, Type* rhs) {
   return lhs->IsVector() && static_cast<VectorType*>(lhs)->GetComponentType() == rhs;
 }

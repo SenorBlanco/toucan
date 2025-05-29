@@ -37,7 +37,7 @@ class GenBindings {
               FILE*        file,
               FILE*        header,
               bool         dumpStmtsAsSource);
-  void Run();
+  void Run(const TypeVector& referencedTypes);
 
  private:
   int  GenType(Type* type);
@@ -48,6 +48,7 @@ class GenBindings {
  private:
   SymbolTable*                   symbols_;
   TypeTable*                     types_;
+  TypeVector                     referencedTypes_;
   FILE*                          file_;
   FILE*                          header_;
   bool                           dumpStmtsAsSource_;

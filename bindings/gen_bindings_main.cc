@@ -70,6 +70,6 @@ int main(int argc, char** argv) {
   if (semanticPass.GetNumErrors() > 0) { exit(2); }
 
   GenBindings genBindings(&symbols, &types, outfile, headerfile, true);
-  genBindings.Run();
+  genBindings.Run(types.GetTypes());
   return 0;
 }
