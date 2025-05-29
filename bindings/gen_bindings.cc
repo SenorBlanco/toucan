@@ -124,7 +124,7 @@ int GenBindings::GenType(Type* type) {
     result << "types->GetAuto()";
   } else if (type->IsClassTemplate()) {
     ClassTemplate* classTemplate = static_cast<ClassTemplate*>(type);
-    result << " types->Make<ClassTemplate>(\"" << classTemplate->GetName().c_str() << "\", TypeList({";
+    result << "types->Make<ClassTemplate>(\"" << classTemplate->GetName().c_str() << "\", TypeList({";
     for (Type* const& type : classTemplate->GetFormalTemplateArgs()) {
       assert(type->IsFormalTemplateArg());
       result << "types->GetFormalTemplateArg(\""
@@ -232,8 +232,10 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   fprintf(file_, "#include <ast/native_class.h>\n");
   fprintf(file_, "#include <ast/symbol.h>\n");
   fprintf(file_, "#include <ast/type.h>\n");
+  fprintf(file_, "\n");
   fprintf(file_, "namespace Toucan {\n\n");
-  fprintf(file_, "void InitTypes(SymbolTable* symbols, TypeTable* types, NodeVector* nodes) {\n");
+  fprintf(file_, "Type** InitTypes(SymbolTable* symbols, TypeTable* types, NodeVector* nodes) {\n");
+  fprintf(file_, "  static Type* typeList[%zu];\n\n", referencedTypes.size());
   fprintf(file_, "  ClassType* c;\n");
   fprintf(file_, "  EnumType* e;\n");
   fprintf(file_, "  ASTNode** nodeList = new ASTNode*[%d];\n", 1000 /* FIXME num_nodes */);
@@ -274,6 +276,10 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   for (auto type : referencedTypes) {
     GenType(type);
   }
+  int i = 0;
+  for (auto type : referencedTypes) {
+    fprintf(file_, "  typeList[%d] = type%d;\n", i++, typeMap_[type]);
+  }
   // Now that we have defined the types, resolve the references.
   for (auto type : types) {
     if (type->IsClass()) {
@@ -283,6 +289,7 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
     }
   }
   fprintf(file_, "  delete[] nodeList;\n");
+  fprintf(file_, "  return typeList;\n");
   fprintf(file_, "}\n\n");
   fprintf(file_, "};\n");
   if (header_) { fprintf(header_, "\n};\n}\n"); }
