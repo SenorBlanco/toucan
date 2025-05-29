@@ -281,7 +281,7 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
     fprintf(file_, "  typeList[%d] = type%d;\n", i++, typeMap_[type]);
   }
   // Now that we have defined the types, resolve the references.
-  for (auto type : types) {
+  for (auto type : referencedTypes) {
     if (type->IsClass()) {
       GenBindingsForClass(static_cast<ClassType*>(type));
     } else if (type->IsEnum()) {
