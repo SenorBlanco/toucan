@@ -149,8 +149,7 @@ class GBuffersDebugView : TextureQuadPass {
     var windowSize = windowSizeBindings.Get().size.MapRead():;
     var c = fb.fragCoord.xy / (float<2>) windowSize;
     if (c.x < 0.33333) {
-      var rawDepth2 = gBufferDepth.Load((uint<2>) Math.floor(fb.fragCoord.xy), 0);
-      var rawDepth = rawDepth2.x;
+      var rawDepth = gBufferDepth.Load((uint<2>) Math.floor(fb.fragCoord.xy), 0).x;
       // remap depth into something a bit more visible
       var depth = (1.0 - rawDepth) * 50.0;
       result = float<4>(depth);
@@ -182,7 +181,7 @@ class DeferredRender : TextureQuadPass {
     // reconstruct world-space position from the screen coordinate.
     var posClip = float<4>(coord.x * 2.0 - 1.0, (1.0 - coord.y) * 2.0 - 1.0, depthSample, 1.0);
     var posWorldW = camera.invViewProjectionMatrix * posClip;
-    var posWorld = posWorldW.xyz / posWorldW.w;
+    var posWorld = posWorldW.xyz / posWorldW.www;
     return posWorld;
   }
 
@@ -196,8 +195,7 @@ class DeferredRender : TextureQuadPass {
     var result : float<3>;
 
     // Retrieve the depth from the depth buffer.
-    var depthPixel = textures.gBufferDepth.Load((uint<2>) Math.floor(fb.fragCoord.xy), 0);
-    var depth = depthPixel.x;
+    var depth = textures.gBufferDepth.Load((uint<2>) Math.floor(fb.fragCoord.xy), 0).x;
 
     // Don't light the sky.
     if (depth >= 1.0) {
