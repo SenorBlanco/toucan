@@ -107,7 +107,6 @@ int main(int argc, char** argv) {
   NodeVector  nodes;
   symbols.PushNewScope();
   InitTypes(&symbols, &types, &nodes);
-  const TypeVector& apiTypes = types.GetTypes();
   Stmts*            rootStmts;
   int syntaxErrors = ParseProgram(filename, &symbols, &types, &nodes, includePaths, &rootStmts);
   if (syntaxErrors > 0) { exit(1); }
