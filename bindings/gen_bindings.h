@@ -43,7 +43,7 @@ class GenBindings {
   int  GenType(Type* type);
   void GenBindingsForClass(ClassType* classType);
   void GenBindingsForEnum(EnumType* enumType);
-  void GenBindingsForMethod(ClassType* classType, Method* method);
+  void GenBindingsForMethod(Method* method);
 
  private:
   SymbolTable*                   symbols_;
