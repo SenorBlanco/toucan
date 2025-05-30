@@ -187,8 +187,8 @@ int main(int argc, char** argv) {
   engine->DisableLazyCompilation();
 #endif
   codeGenLLVM.Run(stmts);
-  auto typeList = codeGenLLVM.GetReferencedTypes();
-  engine->addGlobalMapping(codeGenLLVM.GetTypeList(), typeList.data());
+  auto typeList = codeGenLLVM.GetReferencedTypes().data();
+  engine->addGlobalMapping(codeGenLLVM.GetTypeList(), &typeList);
   if (verifyFunction(*main)) { printf("LLVM main function is broken; aborting\n"); }
   Toucan::exitOnAbort = true;
   fpm.run(*main);

@@ -152,7 +152,7 @@ class CodeGenLLVM : public Visitor {
   void               ICE(ASTNode* node);
   void               SetDebugOutput(bool debugOutput) { debugOutput_ = debugOutput; }
   llvm::GlobalValue* GetTypeList() const { return typeList_; }
-  const std::vector<Type*> GetReferencedTypes() { return referencedTypes_; }
+  const std::vector<Type*>& GetReferencedTypes() { return referencedTypes_; }
 
  private:
   llvm::Value* CreateCast(Type*        srcType,

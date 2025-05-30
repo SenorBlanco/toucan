@@ -24,6 +24,7 @@ extern "C" {
 
 extern void        toucan_main();
 const Type* const* _type_list;
+extern int         numReferencedTypesFIXME;
 }
 
 int main(int argc, char** argv) {
@@ -31,6 +32,10 @@ int main(int argc, char** argv) {
   TypeTable   types;
   NodeVector  nodes;
   _type_list = InitTypes(&symbols, &types, &nodes);
+  printf("got %d types\n", numReferencedTypesFIXME);
+  for (int i = 0; i < numReferencedTypesFIXME; ++i) {
+    printf("%s\n", _type_list[i]->ToString().c_str());
+  }
   types.ComputeFieldOffsets();
   toucan_main();
   return 0;
