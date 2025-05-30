@@ -289,7 +289,16 @@ llvm::Value* CodeGenLLVM::CreateTypePtr(Type* type) {
   llvm::Value* typeID = typeMap_[type];
   if (!typeID) {
     typeID = Int(referencedTypes_.size());
+    printf("LLVM referenced type %zu: %s\n", referencedTypes_.size(), type->ToString().c_str());
     referencedTypes_.push_back(type);
+    if (type->IsClass()) {
+      ClassType* classType = static_cast<ClassType*>(type);
+      if (auto classTemplate = classType->GetTemplate()) { 
+        if (std::find(referencedTypes_.begin(), referencedTypes_.end(), classTemplate) == referencedTypes_.end()) {
+          referencedTypes_.push_back(classTemplate);
+        }
+      }
+    }
   }
   ptr = builder_->CreateGEP(typeListType_, ptr, {typeID});
   return builder_->CreateLoad(voidPtrType_, ptr);

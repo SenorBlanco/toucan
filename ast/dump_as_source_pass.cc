@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "dump_as_source_pass.h"
+#include "bindings/gen_bindings.h"
 
 #include <stdarg.h>
 
@@ -20,8 +21,8 @@
 
 namespace Toucan {
 
-DumpAsSourcePass::DumpAsSourcePass(FILE* file, std::unordered_map<Type*, int>* typeMap)
-    : file_(file), typeMap_(typeMap) {
+DumpAsSourcePass::DumpAsSourcePass(FILE* file, GenBindings* genBindings)
+    : file_(file), genBindings_(genBindings) {
   map_[nullptr] = 0;
 }
 
@@ -56,7 +57,7 @@ Result DumpAsSourcePass::Visit(ArrayAccess* node) {
 }
 
 Result DumpAsSourcePass::Visit(CastExpr* node) {
-  int type = (*typeMap_)[node->GetType()];
+  int type = genBindings_->GenType(node->GetType());
   int expr = Resolve(node->GetExpr());
   Output(node, "Make<CastExpr>(type%d, exprs[%d])", type, expr);
   return {};
@@ -74,7 +75,7 @@ Result DumpAsSourcePass::Visit(UIntConstant* node) {
 
 Result DumpAsSourcePass::Visit(EnumConstant* node) {
   const EnumValue* value = node->GetValue();
-  int type = (*typeMap_)[value->type];
+  int type = genBindings_->GenType(value->type);
   Output(node, "Make<EnumConstant>(static_cast<EnumType*>(type%d)->FindValue(\"%s\"))", type, value->id.c_str());
   return {};
 }
@@ -126,14 +127,14 @@ Result DumpAsSourcePass::Visit(ExprStmt* stmt) {
 }
 
 Result DumpAsSourcePass::Visit(Initializer* node) {
-  int type = (*typeMap_)[node->GetType()];
+  int type = genBindings_->GenType(node->GetType());
   int argList = Resolve(node->GetArgList());
   Output(node, "Make<Initializer>(type%d, exprLists[%d])", type, argList);
   return {};
 }
 
 Result DumpAsSourcePass::Visit(VarDeclaration* decl) {
-  int type = (*typeMap_)[decl->GetType()];
+  int type = genBindings_->GenType(decl->GetType());
   int initExpr = Resolve(decl->GetInitExpr());
   Output(decl, "Make<VarDeclaration>(\"%s\", type%d, exprs[%d])", decl->GetID().c_str(), type,
          initExpr);

@@ -91,7 +91,7 @@ GenBindings::GenBindings(SymbolTable* symbols,
       file_(file),
       header_(header),
       dumpStmtsAsSource_(dumpStmtsAsSource),
-      sourcePass_(file_, &typeMap_) {}
+      sourcePass_(file_, this) {}
 
 int GenBindings::GenType(Type* type) {
   auto iter = typeMap_.find(type);

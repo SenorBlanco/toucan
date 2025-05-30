@@ -26,11 +26,12 @@
 
 namespace Toucan {
 
+class GenBindings;
 class SymbolTable;
 
 class DumpAsSourcePass : public Visitor {
  public:
-  DumpAsSourcePass(FILE* file, std::unordered_map<Type*, int>* typeMap);
+  DumpAsSourcePass(FILE* file, GenBindings* genBindings);
   int    Resolve(ASTNode* node);
   int    Output(ASTNode* node, const char* fmt, ...) CHECK_FORMAT(printf, 3, 4);
   Result Visit(ArgList* node) override;
@@ -58,7 +59,7 @@ class DumpAsSourcePass : public Visitor {
  private:
   FILE*                             file_;
   std::unordered_map<ASTNode*, int> map_;
-  std::unordered_map<Type*, int>*   typeMap_;
+  GenBindings*                      genBindings_;
   int                               nodeCount_ = 1;
 };
 

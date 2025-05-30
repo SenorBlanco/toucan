@@ -38,9 +38,9 @@ class GenBindings {
               FILE*        header,
               bool         dumpStmtsAsSource);
   void Run(const TypeVector& referencedTypes);
+  int  GenType(Type* type);
 
  private:
-  int  GenType(Type* type);
   void GenBindingsForClass(ClassType* classType);
   void GenBindingsForEnum(EnumType* enumType);
   void GenBindingsForMethod(Method* method);
