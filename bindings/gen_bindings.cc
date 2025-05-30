@@ -137,6 +137,7 @@ int GenBindings::GenType(Type* type) {
       fwrite(hresult.str().c_str(), hresult.str().length(), 1, header_);
     }
     result << "}))";
+    classes_.push_back(classTemplate);
   } else if (type->IsClass()) {
     ClassType* classType = static_cast<ClassType*>(type);
     if (classType->GetTemplate()) {
@@ -168,6 +169,7 @@ int GenBindings::GenType(Type* type) {
         fwrite(hresult.str().c_str(), hresult.str().length(), 1, header_);
       }
     }
+    classes_.push_back(classType);
   } else if (type->IsEnum()) {
     EnumType* enumType = static_cast<EnumType*>(type);
     result << "types->Make<EnumType>(\"" << enumType->GetName() << "\")";
@@ -181,6 +183,7 @@ int GenBindings::GenType(Type* type) {
       hresult << "};\n";
       fwrite(hresult.str().c_str(), hresult.str().length(), 1, header_);
     }
+    enums_.push_back(enumType);
   } else if (type->IsPtr()) {
     PtrType* ptrType = static_cast<PtrType*>(type);
     result << "types->Get" << (type->IsStrongPtr() ? "Strong" : type->IsWeakPtr() ? "Weak" : "Raw")
@@ -279,13 +282,12 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   for (auto type : referencedTypes) {
     GenType(type);
   }
-  // Now that we have defined the types, resolve the references.
-  for (auto type : referencedTypes) {
-    if (type->IsClass()) {
-      GenBindingsForClass(static_cast<ClassType*>(type));
-    } else if (type->IsEnum()) {
-      GenBindingsForEnum(static_cast<EnumType*>(type));
-    }
+  for (auto enumType : enums_) {
+    GenBindingsForEnum(enumType);
+  }
+  auto classes = classes_; // GenBindingsForClass() may invalidate this list
+  for (auto classType : classes) {
+    GenBindingsForClass(classType);
   }
   int i = 0;
   for (auto type : referencedTypes) {

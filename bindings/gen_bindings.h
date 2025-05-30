@@ -49,6 +49,8 @@ class GenBindings {
   SymbolTable*                   symbols_;
   TypeTable*                     types_;
   TypeVector                     referencedTypes_;
+  std::vector<ClassType*>        classes_;
+  std::vector<EnumType*>         enums_;
   FILE*                          file_;
   FILE*                          header_;
   bool                           dumpStmtsAsSource_;
