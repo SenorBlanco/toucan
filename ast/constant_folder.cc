@@ -15,6 +15,11 @@
 
 #include "constant_folder.h"
 
+#if TARGET_OS_IS_WIN
+#include <malloc.h>
+#define alloca _alloca
+#endif
+
 namespace Toucan {
 
 ConstantFolder::ConstantFolder(TypeTable* types, void* data) : types_(types), data_(data) {
