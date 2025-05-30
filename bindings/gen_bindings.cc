@@ -17,7 +17,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <cassert>
-#include <iostream>
 #include <sstream>
 
 #include <ast/symbol.h>
@@ -132,12 +131,12 @@ int GenBindings::GenType(Type* type) {
              << static_cast<FormalTemplateArg*>(type)->GetName() << "\")";
       if (&type != &classTemplate->GetFormalTemplateArgs().back()) result << ", ";
     }
-    result << "}))";
     if (header_) {
       std::stringstream hresult;
       hresult << "struct " << classTemplate->GetName() << ";\n";
       fwrite(hresult.str().c_str(), hresult.str().length(), 1, header_);
     }
+    result << "}))";
   } else if (type->IsClass()) {
     ClassType* classType = static_cast<ClassType*>(type);
     if (classType->GetTemplate()) {
@@ -219,9 +218,6 @@ int GenBindings::GenType(Type* type) {
       if (var != vars.back()) result << ", ";
     }
     result << "})";
-    // For now, just emit a placeholder type that will still cause the type IDs in
-    // CodeGenLLVM::CreateTypePtr() to match the indices in the type table.
-//    result << "types->GetPlaceholder()";
   } else {
     assert(!"unknown type");
     exit(-1);
@@ -283,7 +279,6 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   for (auto type : referencedTypes) {
     GenType(type);
   }
-  int i = 0;
   // Now that we have defined the types, resolve the references.
   for (auto type : referencedTypes) {
     if (type->IsClass()) {
@@ -292,6 +287,7 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
       GenBindingsForEnum(static_cast<EnumType*>(type));
     }
   }
+  int i = 0;
   for (auto type : referencedTypes) {
     fprintf(file_, "  typeList[%d] = type%d;\n", i++, typeMap_[type]);
   }

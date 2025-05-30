@@ -576,7 +576,6 @@ class TypeTable {
   VoidType*          GetVoid();
   AutoType*          GetAuto();
   ListType*          GetList(VarVector&& types);
-  Type*              GetPlaceholder();
   VectorType*        GetVector(Type* componentType, int size);
   MatrixType*        GetMatrix(VectorType* columnType, int numColumns);
   StrongPtrType*     GetStrongPtrType(Type* type);
