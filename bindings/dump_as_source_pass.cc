@@ -17,7 +17,7 @@
 
 #include <stdarg.h>
 
-#include "symbol.h"
+#include "ast/symbol.h"
 
 namespace Toucan {
 

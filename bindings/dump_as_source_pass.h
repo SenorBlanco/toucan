@@ -15,7 +15,7 @@
 #ifndef _AST_DUMP_AS_SOURCE_PASS_H_
 #define _AST_DUMP_AS_SOURCE_PASS_H_
 
-#include "ast.h"
+#include "ast/ast.h"
 
 #ifdef __gnuc__
 #define CHECK_FORMAT(archetype, string_index, first_to_check) \

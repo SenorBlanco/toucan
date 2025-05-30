@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <unordered_map>
 
-#include <ast/dump_as_source_pass.h>
+#include "dump_as_source_pass.h"
 
 namespace Toucan {
 
