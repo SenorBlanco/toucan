@@ -234,14 +234,12 @@ int GenBindings::GenType(Type* type) {
 void GenBindings::Run(const TypeVector& referencedTypes) {
   const TypeVector& types = types_->GetTypes();
   typeMap_.clear();
-  typeMap_[nullptr] = 0;
   fprintf(file_, "#include <cstdint>\n");
   fprintf(file_, "#include <ast/ast.h>\n");
   fprintf(file_, "#include <ast/native_class.h>\n");
   fprintf(file_, "#include <ast/symbol.h>\n");
   fprintf(file_, "#include <ast/type.h>\n");
   fprintf(file_, "\n");
-  fprintf(file_, "int numReferencedTypesFIXME;");
   fprintf(file_, "namespace Toucan {\n\n");
   fprintf(file_, "Type** InitTypes(SymbolTable* symbols, TypeTable* types, NodeVector* nodes) {\n");
   fprintf(file_, "  ClassType* c;\n");
@@ -297,7 +295,6 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   for (auto type : referencedTypes) {
     fprintf(file_, "  typeList[%d] = type%d;\n", i++, typeMap_[type]);
   }
-  fprintf(file_, "  numReferencedTypesFIXME = %zu;\n", referencedTypes.size());
   fprintf(file_, "  delete[] nodeList;\n");
   fprintf(file_, "  return typeList;\n");
   fprintf(file_, "}\n\n");
@@ -495,7 +492,13 @@ void GenBindings::GenBindingsForClass(ClassType* classType) {
   }
   if (classType->GetScope()) {
     for (const auto& pair : classType->GetScope()->types) {
-      result << "  scope->types[\"" << pair.first << "\"] = type" << GenType(pair.second) << ";\n";
+      result << "  scope->types[\"" << pair.first << "\"] = ";
+      if (pair.second) {
+        result << "type" << GenType(pair.second);
+      } else {
+        result << "nullptr";
+      }
+      result << ";\n";
     }
   }
   result << "  symbols->PopScope();\n";

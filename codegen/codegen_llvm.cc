@@ -289,7 +289,7 @@ llvm::Value* CodeGenLLVM::CreateTypePtr(Type* type) {
   llvm::Value* typeID = typeMap_[type];
   if (!typeID) {
     typeID = Int(referencedTypes_.size());
-    printf("LLVM referenced type %zu: %s\n", referencedTypes_.size(), type->ToString().c_str());
+    typeMap_[type] = typeID;
     referencedTypes_.push_back(type);
     if (type->IsClass()) {
       ClassType* classType = static_cast<ClassType*>(type);
