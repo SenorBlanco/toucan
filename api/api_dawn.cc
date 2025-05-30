@@ -480,25 +480,25 @@ static wgpu::BindGroupLayoutEntry CreateBindGroupLayoutEntry(uint32_t binding,
         wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment | wgpu::ShaderStage::Compute;
   }
   ClassType* templ = classType->GetTemplate();
-  if (templ == NativeClass::Buffer) {
+  if (classType == NativeClass::Sampler) {
+    entry.sampler.type = wgpu::SamplerBindingType::Filtering;
+  } else if (templ && templ == NativeClass::Buffer) {
     entry.buffer.type = toDawnBufferBindingType(qualifiers);
-  } else if (templ == NativeClass::SampleableTexture1D) {
+  } else if (templ && templ == NativeClass::SampleableTexture1D) {
     entry.texture.sampleType = ToDawnTextureSampleType(classType, qualifiers);
     entry.texture.viewDimension = wgpu::TextureViewDimension::e1D;
-  } else if (templ == NativeClass::SampleableTexture2D) {
+  } else if (templ && templ == NativeClass::SampleableTexture2D) {
     entry.texture.sampleType = ToDawnTextureSampleType(classType, qualifiers);
     entry.texture.viewDimension = wgpu::TextureViewDimension::e2D;
-  } else if (templ == NativeClass::SampleableTexture3D) {
+  } else if (templ && templ == NativeClass::SampleableTexture3D) {
     entry.texture.sampleType = ToDawnTextureSampleType(classType, qualifiers);
     entry.texture.viewDimension = wgpu::TextureViewDimension::e3D;
-  } else if (templ == NativeClass::SampleableTexture2DArray) {
+  } else if (templ && templ == NativeClass::SampleableTexture2DArray) {
     entry.texture.sampleType = ToDawnTextureSampleType(classType, qualifiers);
     entry.texture.viewDimension = wgpu::TextureViewDimension::e2DArray;
-  } else if (templ == NativeClass::SampleableTextureCube) {
+  } else if (templ && templ == NativeClass::SampleableTextureCube) {
     entry.texture.sampleType = ToDawnTextureSampleType(classType, qualifiers);
     entry.texture.viewDimension = wgpu::TextureViewDimension::Cube;
-  } else if (classType == NativeClass::Sampler) {
-    entry.sampler.type = wgpu::SamplerBindingType::Filtering;
   } else {
     assert(!"invalid field type in bind group");
   }
@@ -555,15 +555,15 @@ wgpu::BindGroupEntry CreateBindGroupEntry(Type* type, int binding, void* data) {
   assert(type->IsClass() && "bind group entry must be of class type");
   ClassType* c = static_cast<ClassType*>(type);
   ClassType* templ = c->GetTemplate();
-  if (templ == NativeClass::SampleableTexture1D || templ == NativeClass::SampleableTexture2D ||
-      templ == NativeClass::SampleableTexture3D || templ == NativeClass::SampleableTexture2DArray ||
-      templ == NativeClass::SampleableTextureCube) {
-    TextureView* textureView = static_cast<TextureView*>(data);
-    entry.textureView = textureView->view;
-  } else if (c == NativeClass::Sampler) {
+  if (c == NativeClass::Sampler) {
     Sampler* sampler = static_cast<Sampler*>(data);
     entry.sampler = sampler->sampler;
-  } else if (templ == NativeClass::Buffer) {
+  } else if (templ && (templ == NativeClass::SampleableTexture1D || templ == NativeClass::SampleableTexture2D ||
+      templ == NativeClass::SampleableTexture3D || templ == NativeClass::SampleableTexture2DArray ||
+      templ == NativeClass::SampleableTextureCube)) {
+    TextureView* textureView = static_cast<TextureView*>(data);
+    entry.textureView = textureView->view;
+  } else if (templ && templ == NativeClass::Buffer) {
     Buffer* buffer = static_cast<Buffer*>(data);
     entry.buffer = buffer->buffer;
     entry.size = buffer->sizeInBytes;
