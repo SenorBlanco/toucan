@@ -145,6 +145,9 @@ int GenBindings::GenType(Type* type) {
       }
       result << "} )";
     } else {
+      for (const auto& field : classType->GetFields()) {
+        GenType(field->type);
+      }
       result << "types->Make<ClassType>(\"" << classType->GetName() << "\")";
       if (header_) {
         int pad = 0;
@@ -226,7 +229,7 @@ int GenBindings::GenType(Type* type) {
 void GenBindings::Run(const TypeVector& referencedTypes) {
   const TypeVector& types = types_->GetTypes();
   typeMap_.clear();
-  int numTypes = types.size();
+  typeMap_[nullptr] = 0;
   fprintf(file_, "#include <cstdint>\n");
   fprintf(file_, "#include <ast/ast.h>\n");
   fprintf(file_, "#include <ast/native_class.h>\n");
@@ -247,7 +250,6 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   fprintf(file_, "  Arg** args = reinterpret_cast<Arg**>(nodeList);\n");
   fprintf(file_, "  Scope* scope;\n");
   fprintf(file_, "  std::shared_ptr<Var> v;\n");
-  fprintf(file_, "  Type* returnType;\n");
   fprintf(file_, "  Method *m;\n");
   fprintf(file_, "  nodeList[0] = nullptr;\n");
   fprintf(file_, "\n");
@@ -359,7 +361,8 @@ void PrintNativeType(FILE* file, Type* type) {
 }
 
 void GenBindings::GenBindingsForMethod(ClassType* classType, Method* method) {
-  fprintf(file_, "  returnType = type%d;\n", typeMap_[method->returnType]);
+  int returnTypeID = GenType(method->returnType);
+  int classTypeID = GenType(method->classType);
   fprintf(file_, "  m = new Method(0");
   if (method->modifiers & Method::Modifier::Static) { fprintf(file_, " | Method::Modifier::Static"); }
   if (method->modifiers & Method::Modifier::Virtual) { fprintf(file_, " | Method::Modifier::Virtual"); }
@@ -368,11 +371,12 @@ void GenBindings::GenBindingsForMethod(ClassType* classType, Method* method) {
   if (method->modifiers & Method::Modifier::Fragment) { fprintf(file_, " | Method::Modifier::Fragment"); }
   if (method->modifiers & Method::Modifier::Compute) { fprintf(file_, " | Method::Modifier::Compute"); }
   std::string name = method->name;
-  fprintf(file_, ", returnType, \"%s\", static_cast<ClassType*>(type%d));\n", name.c_str(),
-          typeMap_[method->classType]);
+  fprintf(file_, ", type%d, \"%s\", static_cast<ClassType*>(type%d));\n",
+    returnTypeID, name.c_str(), classTypeID);
   const VarVector& argList = method->formalArgList;
   for (int i = 0; i < argList.size(); ++i) {
     Var* var = argList[i].get();
+    assert(var->type);
     // Only emit default values for native methods.
     // The DumpAsSourcePass is not fully implemented for all types, and
     // non-native default values are never used at runtime.
@@ -476,8 +480,9 @@ void GenBindings::GenBindingsForClass(ClassType* classType) {
   }
   if (classType->GetScope()) {
     for (const auto& pair : classType->GetScope()->types) {
+      int id = GenType(pair.second);
       fprintf(file_, "  scope->types[\"%s\"] = type%d;\n", pair.first.c_str(),
-              typeMap_[pair.second]);
+              id);
     }
   }
   fprintf(file_, "  symbols->PopScope();\n");
