@@ -81,12 +81,12 @@ std::string ConvertType(Type* type, const std::string& str) {
 
 GenBindings::GenBindings(SymbolTable*  symbols,
                          TypeTable*    types,
-                         std::ostream& result,
+                         std::ostream& file,
                          std::ostream& header,
                          bool          dumpStmtsAsSource)
     : symbols_(symbols),
       types_(types),
-      file_(result),
+      file_(file),
       header_(header),
       dumpStmtsAsSource_(dumpStmtsAsSource),
       sourcePass_(file_, this) {}
