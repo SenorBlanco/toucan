@@ -99,7 +99,7 @@ int GenBindings::GenType(Type* type) {
   int id = numTypes_++;
   typeMap_[type] = id;
   std::stringstream result;
-  result << "  Type* type" << std::to_string(id) << " = ";
+  result << "  auto* type" << std::to_string(id) << " = ";
   if (type->IsInteger()) {
     IntegerType* i = static_cast<IntegerType*>(type);
     result << "types->GetInteger(" << std::to_string(i->GetBits()) << ", "
@@ -114,7 +114,7 @@ int GenBindings::GenType(Type* type) {
     result << "types->GetVector(type" << std::to_string(GenType(v->GetComponentType())) << ", " << std::to_string(v->GetLength()) << ")";
   } else if (type->IsMatrix()) {
     MatrixType* m = static_cast<MatrixType*>(type);
-    result << "types->GetMatrix(static_cast<VectorType*>(type" << GenType(m->GetColumnType()) << "), " << std::to_string(m->GetNumColumns()) << ")";
+    result << "types->GetMatrix(type" << GenType(m->GetColumnType()) << ", " << std::to_string(m->GetNumColumns()) << ")";
   } else if (type->IsString()) {
     result << "types->GetString()";
   } else if (type->IsVoid()) {
@@ -138,7 +138,7 @@ int GenBindings::GenType(Type* type) {
   } else if (type->IsClass()) {
     ClassType* classType = static_cast<ClassType*>(type);
     if (classType->GetTemplate()) {
-      result << "types->GetClassTemplateInstance(static_cast<ClassTemplate*>(type" << GenType(classType->GetTemplate()) << "), {";
+      result << "types->GetClassTemplateInstance(type" << GenType(classType->GetTemplate()) << ", {";
       for (Type* const& type : classType->GetTemplateArgs()) {
         result << "type" << GenType(type);
         if (&type != &classType->GetTemplateArgs().back()) { result << ", "; }
@@ -200,8 +200,8 @@ int GenBindings::GenType(Type* type) {
            << qualifiedType->GetQualifiers() << ")";
   } else if (type->IsUnresolvedScopedType()) {
     auto unresolvedScopedType = static_cast<UnresolvedScopedType*>(type);
-    result << "types->GetUnresolvedScopedType(static_cast<FormalTemplateArg*>(type"
-           << GenType(unresolvedScopedType->GetBaseType()) << "), \"" << unresolvedScopedType->GetID()
+    result << "types->GetUnresolvedScopedType(type"
+           << GenType(unresolvedScopedType->GetBaseType()) << ", \"" << unresolvedScopedType->GetID()
            << "\")";
   } else if (type->IsList()) {
     // This is technically correct, but builds very large list types that aren't used.
@@ -359,7 +359,7 @@ void GenBindings::GenBindingsForMethod(Method* method) {
   if (method->modifiers & Method::Modifier::Fragment) { result << " | Method::Modifier::Fragment"; }
   if (method->modifiers & Method::Modifier::Compute) { result << " | Method::Modifier::Compute"; }
   std::string name = method->name;
-  result << ", returnType, \"" << name << "\", static_cast<ClassType*>(type" << classTypeID << "));\n";
+  result << ", returnType, \"" << name << "\", type" << classTypeID << ");\n";
   const VarVector& argList = method->formalArgList;
   for (int i = 0; i < argList.size(); ++i) {
     Var* var = argList[i].get();
@@ -439,7 +439,7 @@ void GenBindings::GenBindingsForMethod(Method* method) {
 void GenBindings::GenBindingsForClass(ClassType* classType) {
   if (classType->GetTemplate() && classType->IsNative()) { return; }
   std::stringstream result;
-  result << "  c = static_cast<ClassType*>(type" << GenType(classType) << ");\n";
+  result << "  c = type" << GenType(classType) << ";\n";
   if (classType->IsNative()) {
     result << "  c->SetNative(true);\n";
     result << "  NativeClass::" << classType->GetName() << " = c;\n";
@@ -450,7 +450,7 @@ void GenBindings::GenBindingsForClass(ClassType* classType) {
   result << "  scope->classType = c;\n";
   result << "  c->SetScope(scope);\n";
   if (ClassType* parent = classType->GetParent()) {
-    result << "  c->SetParent(static_cast<ClassType*>(type" << GenType(parent) << "));\n";
+    result << "  c->SetParent(type" << GenType(parent) << ");\n";
   }
   for (const auto& i : classType->GetFields()) {
     Field* field = i.get();
@@ -489,7 +489,7 @@ void GenBindings::GenBindingsForClass(ClassType* classType) {
 
 void GenBindings::GenBindingsForEnum(EnumType* enumType) {
   std::stringstream result;
-  result << "  e = static_cast<EnumType*>(type" << GenType(enumType) << ");\n";
+  result << "  e = type" << GenType(enumType) << ";\n";
   for (const EnumValue& v : enumType->GetValues()) {
     result << "  e->Append(\"" << v.id << "\", " << v.value << ");\n";
   }
