@@ -32,7 +32,7 @@ int DumpAsSourcePass::Resolve(ASTNode* node) {
 }
 
 int DumpAsSourcePass::Output(ASTNode* node) {
-  file_ << "  nodeList[" << nodeCount_ << "] = nodes->";
+  file_ << "  auto* node" << nodeCount_ << " = nodes->";
   map_[node] = nodeCount_;
   return nodeCount_++;
 }
@@ -49,7 +49,7 @@ Result DumpAsSourcePass::Visit(ArrayAccess* node) {
   int expr = Resolve(node->GetExpr());
   int index = Resolve(node->GetIndex());
   Output(node);
-  file_ << "Make<ArrayAccess>(nodeList[" << expr << "], nodeList[" << index << "]);\n";
+  file_ << "Make<ArrayAccess>(node" << expr << ", node" << index << ");\n";
   return {};
 }
 
@@ -57,7 +57,7 @@ Result DumpAsSourcePass::Visit(CastExpr* node) {
   int type = genBindings_->GenType(node->GetType());
   int expr = Resolve(node->GetExpr());
   Output(node);
-  file_ << "Make<CastExpr>(type" << type << ", exprs[" << expr << "]);\n";
+  file_ << "Make<CastExpr>(type" << type << ", node" << expr << ");\n";
   return {};
 }
 
@@ -111,12 +111,12 @@ Result DumpAsSourcePass::Visit(Stmts* stmts) {
   file_ << "Make<Stmts>();\n";
 
   if (stmts->GetScope()) {
-    file_ << "  stmtss[" << id << "]->SetScope(symbols->PushNewScope());\n";
+    file_ << "  node" << id << "->SetScope(symbols->PushNewScope());\n";
   }
   // FIXME: create an actual Stmts from elements
   for (Stmt* const& it : stmts->GetStmts()) {
     auto stmtsID = Resolve(it);
-    file_ << "  stmtss[" << id << "]->Append(stmts[" << stmtsID << "]);\n";
+    file_ << "  node" << id << "->Append(node" << stmtsID << ");\n";
   }
   if (stmts->GetScope()) { file_ << "  symbols->PopScope();\n"; }
   return {};
@@ -127,7 +127,7 @@ Result DumpAsSourcePass::Visit(ExprList* a) {
   file_ << "Make<ExprList>();\n";
   for (auto expr : a->Get()) {
     int exprID = Resolve(expr);
-    file_ << "  exprLists[" << id << "]->Append(exprs[" << exprID << "]);\n";
+    file_ << "  node" << id << "->Append(node" << exprID << ");\n";
   }
   return {};
 }
@@ -135,7 +135,7 @@ Result DumpAsSourcePass::Visit(ExprList* a) {
 Result DumpAsSourcePass::Visit(ExprStmt* stmt) {
   Output(stmt);
   int id = Resolve(stmt->GetExpr());
-  file_ << "Make<ExprStmt>(exprs[" << id << "]);\n";
+  file_ << "Make<ExprStmt>(node" << id << ");\n";
   return {};
 }
 
@@ -143,7 +143,7 @@ Result DumpAsSourcePass::Visit(Initializer* node) {
   int type = genBindings_->GenType(node->GetType());
   int argList = Resolve(node->GetArgList());
   Output(node);
-  file_ << "Make<Initializer>(type" << type << ", exprLists[" << argList << "]);\n";
+  file_ << "Make<Initializer>(type" << type << ", node" << argList << ");\n";
   return {};
 }
 
@@ -151,15 +151,15 @@ Result DumpAsSourcePass::Visit(VarDeclaration* decl) {
   int type = genBindings_->GenType(decl->GetType());
   int initExpr = Resolve(decl->GetInitExpr());
   Output(decl);
-  file_ << "Make<VarDeclaration>(\"" << decl->GetID() << "\", type" << type << ", exprs["
-          << initExpr <<  "]);\n";
+  file_ << "Make<VarDeclaration>(\"" << decl->GetID() << "\", type" << type << ", node"
+          << initExpr <<  ");\n";
   return {};
 }
 
 Result DumpAsSourcePass::Visit(LoadExpr* node) {
   int expr = Resolve(node->GetExpr());
   Output(node);
-  file_ << "Make<LoadExpr>(exprs[" << expr << "]);\n";
+  file_ << "Make<LoadExpr>(node" << expr << ");\n";
   return {};
 }
 
@@ -167,7 +167,7 @@ Result DumpAsSourcePass::Visit(StoreStmt* node) {
   int lhs = Resolve(node->GetLHS());
   int rhs = Resolve(node->GetRHS());
   Output(node);
-  file_ << "Make<StoreStmt>(exprs[" << lhs << "], exprs[" << rhs << "]);\n";
+  file_ << "Make<StoreStmt>(node" << lhs << ", node" << rhs << ");\n";
   return {};
 }
 
@@ -192,8 +192,8 @@ Result DumpAsSourcePass::Visit(BinOpNode* node) {
   int lhs = Resolve(node->GetLHS());
   int rhs = Resolve(node->GetRHS());
   Output(node);
-  file_ << "Make<BinOpNode>(BinOpNode::" << GetOp(node->GetOp()) << ", exprs[" << lhs
-          << "], exprs[" << rhs << "]);\n";
+  file_ << "Make<BinOpNode>(BinOpNode::" << GetOp(node->GetOp()) << ", node" << lhs
+          << ", node" << rhs << ");\n";
   return {};
 }
 
@@ -201,7 +201,7 @@ Result DumpAsSourcePass::Visit(BinOpNode* node) {
 Result DumpAsSourcePass::Visit(UnresolvedListExpr* node) {
   int argList = Resolve(node->GetArgList());
   Output(node);
-  file_ << "Make<UnresolvedListExpr>(argLists[" << argList << "]);\n";
+  file_ << "Make<UnresolvedListExpr>(node" << argList << ");\n";
   return {};
 }
 
@@ -209,7 +209,7 @@ Result DumpAsSourcePass::Visit(ReturnStatement* stmt) {
   if (stmt->GetExpr()) {
     int expr = Resolve(stmt->GetExpr());
     Output(stmt);
-    file_ << "Make<ReturnStatement>(exprs[" << expr << "]);\n";
+    file_ << "Make<ReturnStatement>(node" << expr << ");\n";
   } else {
     Output(stmt);
     file_ << "Make<ReturnStatement>(nullptr);\n";

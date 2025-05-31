@@ -138,8 +138,7 @@ int GenBindings::GenType(Type* type) {
   } else if (type->IsClass()) {
     ClassType* classType = static_cast<ClassType*>(type);
     if (classType->GetTemplate()) {
-      // FIXME: remove this space
-      result << "  types->GetClassTemplateInstance(static_cast<ClassTemplate*>(type" << GenType(classType->GetTemplate()) << "), {";
+      result << "types->GetClassTemplateInstance(static_cast<ClassTemplate*>(type" << GenType(classType->GetTemplate()) << "), {";
       for (Type* const& type : classType->GetTemplateArgs()) {
         result << "type" << GenType(type);
         if (&type != &classType->GetTemplateArgs().back()) { result << ", "; }
@@ -237,18 +236,10 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   file_ << "  ClassType* c;\n";
   file_ << "  EnumType* e;\n";
   file_ << "  static Type* typeList[" << referencedTypes.size() << "];\n\n";
-  file_ << "  ASTNode** nodeList = new ASTNode*[1000];\n"; /* FIXME num_nodes */;
-  file_ << "  Expr** exprs = reinterpret_cast<Expr**>(nodeList);\n";
-  file_ << "  ArgList** argLists = reinterpret_cast<ArgList**>(nodeList);\n";
-  file_ << "  ExprList** exprLists = reinterpret_cast<ExprList**>(nodeList);\n";
-  file_ << "  Stmt** stmts = reinterpret_cast<Stmt**>(nodeList);\n";
-  file_ << "  Stmts** stmtss = reinterpret_cast<Stmts**>(nodeList);\n";
-  file_ << "  Arg** args = reinterpret_cast<Arg**>(nodeList);\n";
   file_ << "  Scope* scope;\n";
   file_ << "  std::shared_ptr<Var> v;\n";
   file_ << "  Type* returnType;\n";
   file_ << "  Method *m;\n";
-  file_ << "  nodeList[0] = nullptr;\n";
   file_ << "\n";
   if (header_) {
     header_ << "#include <cstdint>\n";
@@ -287,7 +278,6 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   for (auto type : referencedTypes) {
     file_ << "  typeList[" << i++ << "] = type" << typeMap_[type] << ";\n";
   }
-  file_ << "  delete[] nodeList;\n";
   file_ << "  return typeList;\n";
   file_ << "}\n\n";
   file_ << "};\n";
@@ -382,7 +372,7 @@ void GenBindings::GenBindingsForMethod(Method* method) {
     int defaultValueId = defaultValue ? sourcePass_.Resolve(defaultValue) : 0;
     result << "  m->AddFormalArg(\"" << var->name << "\", type" << GenType(var->type) << ", ";
     if (defaultValue) {
-      result << "exprs[" << defaultValueId << "]";
+      result << "node" << defaultValueId;
     } else {
       result << "nullptr";
     }
@@ -433,7 +423,7 @@ void GenBindings::GenBindingsForMethod(Method* method) {
     file_ << result.str();
     result.str(std::string());
     int id = sourcePass_.Resolve(method->stmts);
-    result << "  m->stmts = stmtss[" << id << "];\n";
+    result << "  m->stmts = node" << id << ";\n";
   }
   if (!method->spirv.empty()) {
     result << "  m->spirv = {\n";
@@ -464,13 +454,10 @@ void GenBindings::GenBindingsForClass(ClassType* classType) {
   }
   for (const auto& i : classType->GetFields()) {
     Field* field = i.get();
-    // FIXME: remove this once DumpAsSourcePass is using streams
-    file_ << result.str();
-    result.str(std::string());
     int    defaultValueId = field->defaultValue ? sourcePass_.Resolve(field->defaultValue) : 0;
     result << "  c->AddField(\"" << field->name << "\", type" << GenType(field->type) << ", ";
     if (field->defaultValue) {
-      result << "exprs[" << defaultValueId << "]";
+      result << "node" << defaultValueId;
     } else {
       result << "nullptr";
     }
