@@ -285,8 +285,9 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   for (auto enumType : enums_) {
     GenBindingsForEnum(enumType);
   }
-  auto classes = classes_; // GenBindingsForClass() may invalidate this list
-  for (auto classType : classes) {
+  while (!classes_.empty()) {
+    auto classType = classes_.front();
+    classes_.pop_front();
     GenBindingsForClass(classType);
   }
   int i = 0;

@@ -16,6 +16,7 @@
 #define _BINDINGS_GEN_BINDINGS_H_
 
 #include <stdio.h>
+#include <list>
 #include <unordered_map>
 
 #include "dump_as_source_pass.h"
@@ -49,7 +50,7 @@ class GenBindings {
   SymbolTable*                   symbols_;
   TypeTable*                     types_;
   TypeVector                     referencedTypes_;
-  std::vector<ClassType*>        classes_;
+  std::list<ClassType*>          classes_;
   std::vector<EnumType*>         enums_;
   FILE*                          file_;
   FILE*                          header_;
