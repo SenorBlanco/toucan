@@ -27,9 +27,7 @@ DumpAsSourcePass::DumpAsSourcePass(std::ostream& file, GenBindings* genBindings)
 }
 
 int DumpAsSourcePass::Resolve(ASTNode* node) {
-  if (!map_[node]) {
-    node->Accept(this);
-  }
+  if (!map_[node]) { node->Accept(this); }
   return map_[node];
 }
 
