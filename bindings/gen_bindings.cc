@@ -79,14 +79,14 @@ std::string ConvertType(Type* type, const std::string& str) {
 
 }  // namespace
 
-GenBindings::GenBindings(SymbolTable* symbols,
-                         TypeTable*   types,
-                         FILE*        file,
-                         FILE*        header,
-                         bool         dumpStmtsAsSource)
+GenBindings::GenBindings(SymbolTable*  symbols,
+                         TypeTable*    types,
+                         std::ostream& result,
+                         FILE*         header,
+                         bool          dumpStmtsAsSource)
     : symbols_(symbols),
       types_(types),
-      file_(file),
+      file_(result),
       header_(header),
       dumpStmtsAsSource_(dumpStmtsAsSource),
       sourcePass_(file_, this) {}
@@ -225,7 +225,7 @@ int GenBindings::GenType(Type* type) {
     exit(-1);
   }
   result << ";\n";
-  fwrite(result.str().c_str(), result.str().length(), 1, file_);
+  file_ << result.str();
   return id;
 }
 
@@ -256,7 +256,7 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   result_ << "  Method *m;\n";
   result_ << "  nodeList[0] = nullptr;\n";
   result_ << "\n";
-  fwrite(result_.str().c_str(), result_.str().length(), 1, file_);
+  file_ << result_.str();
   result_.str(std::string());
   if (header_) {
     hresult_ << "#include <cstdint>\n";
@@ -301,7 +301,7 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   result_ << "  return typeList;\n";
   result_ << "}\n\n";
   result_ << "};\n";
-  fwrite(result_.str().c_str(), result_.str().length(), 1, file_);
+  file_ << result_.str();
   if (header_) {
     hresult_ << "\n};\n}\n";
     fwrite(hresult_.str().c_str(), hresult_.str().length(), 1, header_);
@@ -444,7 +444,7 @@ void GenBindings::GenBindingsForMethod(Method* method) {
   }
   if ((method->modifiers & (Method::Modifier::Vertex | Method::Modifier::Fragment | Method::Modifier::Compute))) {
   } else if (dumpStmtsAsSource_ && method->stmts) {
-    fwrite(result.str().c_str(), result.str().length(), 1, file_);
+    file_ << result.str();
     result.str(std::string());
     int id = sourcePass_.Resolve(method->stmts);
     result << "  m->stmts = stmtss[" << id << "];\n";
@@ -457,7 +457,7 @@ void GenBindings::GenBindingsForMethod(Method* method) {
     result << "};\n";
   }
   if (!method->wgsl.empty()) { result << "  m->wgsl = R\"(" << method->wgsl << ")\";\n"; }
-  fwrite(result.str().c_str(), result.str().length(), 1, file_);
+  file_ << result.str();
 }
 
 void GenBindings::GenBindingsForClass(ClassType* classType) {
@@ -479,7 +479,7 @@ void GenBindings::GenBindingsForClass(ClassType* classType) {
   for (const auto& i : classType->GetFields()) {
     Field* field = i.get();
     // FIXME: remove this once DumpAsSourcePass is using streams
-    fwrite(result.str().c_str(), result.str().length(), 1, file_);
+    file_ << result.str();
     result.str(std::string());
     int    defaultValueId = field->defaultValue ? sourcePass_.Resolve(field->defaultValue) : 0;
     result << "  c->AddField(\"" << field->name << "\", type" << GenType(field->type) << ", ";
@@ -490,7 +490,7 @@ void GenBindings::GenBindingsForClass(ClassType* classType) {
     }
     result << ");\n";
   }
-  fwrite(result.str().c_str(), result.str().length(), 1, file_);
+  file_ << result.str();
   result.str(std::string());
   for (const auto& m : classType->GetMethods()) {
     Method* method = m.get();
@@ -511,7 +511,7 @@ void GenBindings::GenBindingsForClass(ClassType* classType) {
   if (!classType->GetTemplate()) {
     result << "  symbols->DefineType(\"" << classType->GetName() << "\", c);\n\n";
   }
-  fwrite(result.str().c_str(), result.str().length(), 1, file_);
+  file_ << result.str();
 }
 
 void GenBindings::GenBindingsForEnum(EnumType* enumType) {
@@ -521,7 +521,7 @@ void GenBindings::GenBindingsForEnum(EnumType* enumType) {
     result << "  e->Append(\"" << v.id << "\", " << v.value << ");\n";
   }
   result << "  symbols->DefineType(\"" << enumType->GetName() << "\", e);\n\n";
-  fwrite(result.str().c_str(), result.str().length(), 1, file_);
+  file_ << result.str();
 }
 
 };  // namespace Toucan

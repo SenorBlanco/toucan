@@ -33,11 +33,11 @@ class Type;
 
 class GenBindings {
  public:
-  GenBindings(SymbolTable* symbols,
-              TypeTable*   types,
-              FILE*        file,
-              FILE*        header,
-              bool         dumpStmtsAsSource);
+  GenBindings(SymbolTable*   symbols,
+              TypeTable*     types,
+              std::ostream&  file,
+              FILE*          header,
+              bool           dumpStmtsAsSource);
   void Run(const TypeVector& referencedTypes);
   int  GenType(Type* type);
 
@@ -52,7 +52,7 @@ class GenBindings {
   TypeVector                     referencedTypes_;
   std::list<ClassType*>          classes_;
   std::vector<EnumType*>         enums_;
-  FILE*                          file_;
+  std::ostream&                  file_;
   FILE*                          header_;
   bool                           dumpStmtsAsSource_;
   std::unordered_map<Type*, int> typeMap_;

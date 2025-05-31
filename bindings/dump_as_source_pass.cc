@@ -21,7 +21,7 @@
 
 namespace Toucan {
 
-DumpAsSourcePass::DumpAsSourcePass(FILE* file, GenBindings* genBindings)
+DumpAsSourcePass::DumpAsSourcePass(std::ostream& file, GenBindings* genBindings)
     : file_(file), genBindings_(genBindings) {
   map_[nullptr] = 0;
 }
@@ -29,7 +29,7 @@ DumpAsSourcePass::DumpAsSourcePass(FILE* file, GenBindings* genBindings)
 int DumpAsSourcePass::Resolve(ASTNode* node) {
   if (!map_[node]) {
     node->Accept(this);
-    fwrite(result_.str().c_str(), result_.str().length(), 1, file_);
+    file_ << result_.str();
     result_.str(std::string());
   }
   return map_[node];
@@ -113,7 +113,7 @@ Result DumpAsSourcePass::Visit(NullConstant* node) {
 Result DumpAsSourcePass::Visit(Stmts* stmts) {
   int id = Output(stmts);
   result_ << "Make<Stmts>();\n";
-  fwrite(result_.str().c_str(), result_.str().length(), 1, file_);
+  file_ << result_.str();
   result_.str(std::string());
 
   if (stmts->GetScope()) {

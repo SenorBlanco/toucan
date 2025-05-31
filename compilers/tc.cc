@@ -18,6 +18,7 @@
 #include <unistd.h>
 #endif
 
+#include <fstream>
 #include <iostream>
 
 #include <llvm-c/Target.h>
@@ -87,8 +88,8 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
-  FILE* initTypesFile = fopen(initTypesFilename.c_str(), "w");
-  if (!initTypesFile) { perror(initTypesFilename.c_str()); }
+  std::ofstream initTypesFile(initTypesFilename.c_str(), std::ofstream::out);
+  if (initTypesFile.fail()) { std::perror(initTypesFilename.c_str()); }
 
   SymbolTable symbols;
   TypeTable   types;

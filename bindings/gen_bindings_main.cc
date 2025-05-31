@@ -19,6 +19,8 @@
 #endif
 #include <stdlib.h>
 
+#include <fstream>
+
 #include <ast/semantic_pass.h>
 #include <ast/symbol.h>
 #include <parser/parser.h>
@@ -28,15 +30,15 @@ using namespace Toucan;
 
 int main(int argc, char** argv) {
   int   opt;
-  FILE* outfile = stdout;
+  std::ofstream outfile;
   FILE* headerfile = nullptr;
   char  optstring[] = "o:h:";
   while ((opt = getopt(argc, argv, optstring)) > 0) {
     switch (opt) {
       case 'o':
-        outfile = fopen(optarg, "w");
-        if (!outfile) {
-          perror(optarg);
+        outfile.open(optarg, std::ofstream::out);
+        if (outfile.fail()) {
+          std::perror(optarg);
           exit(3);
         }
         break;

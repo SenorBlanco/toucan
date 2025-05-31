@@ -26,7 +26,7 @@ class SymbolTable;
 
 class DumpAsSourcePass : public Visitor {
  public:
-  DumpAsSourcePass(FILE* file, GenBindings* genBindings);
+  DumpAsSourcePass(std::ostream& file, GenBindings* genBindings);
   int    Resolve(ASTNode* node);
   int    Output(ASTNode* node);
   Result Visit(ArgList* node) override;
@@ -52,7 +52,7 @@ class DumpAsSourcePass : public Visitor {
   Result Default(ASTNode* node) override;
 
  private:
-  FILE*                             file_;
+  std::ostream&                     file_;
   std::unordered_map<ASTNode*, int> map_;
   GenBindings*                      genBindings_;
   int                               nodeCount_ = 1;
