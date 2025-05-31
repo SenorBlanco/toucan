@@ -56,7 +56,6 @@ class DumpAsSourcePass : public Visitor {
   std::unordered_map<ASTNode*, int> map_;
   GenBindings*                      genBindings_;
   int                               nodeCount_ = 1;
-  std::stringstream                 result_;
 };
 
 };  // namespace Toucan
