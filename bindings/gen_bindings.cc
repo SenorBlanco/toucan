@@ -82,7 +82,7 @@ std::string ConvertType(Type* type, const std::string& str) {
 GenBindings::GenBindings(SymbolTable*  symbols,
                          TypeTable*    types,
                          std::ostream& result,
-                         FILE*         header,
+                         std::ostream& header,
                          bool          dumpStmtsAsSource)
     : symbols_(symbols),
       types_(types),
@@ -131,9 +131,7 @@ int GenBindings::GenType(Type* type) {
       if (&type != &classTemplate->GetFormalTemplateArgs().back()) result << ", ";
     }
     if (header_) {
-      std::stringstream hresult;
-      hresult << "struct " << classTemplate->GetName() << ";\n";
-      fwrite(hresult.str().c_str(), hresult.str().length(), 1, header_);
+      header_ << "struct " << classTemplate->GetName() << ";\n";
     }
     result << "}))";
     classes_.push_back(classTemplate);
@@ -150,22 +148,20 @@ int GenBindings::GenType(Type* type) {
     } else {
       result << "types->Make<ClassType>(\"" << classType->GetName() << "\")";
       if (header_) {
-        std::stringstream hresult;
         int pad = 0;
         if (classType->GetFields().size() > 0) {
           classType->ComputeFieldOffsets();
-          hresult << "struct " << classType->GetName() << " {\n";
+          header_ << "struct " << classType->GetName() << " {\n";
           for (const auto& field : classType->GetFields()) {
-            hresult << "  " << ConvertType(field->type, field->name) << ";\n";
+            header_ << "  " << ConvertType(field->type, field->name) << ";\n";
             if (field->padding > 0) {
-              hresult << "  uint8_t pad" << pad++ << "[" << field->padding << "];\n";
+              header_ << "  uint8_t pad" << pad++ << "[" << field->padding << "];\n";
             }
           }
-          hresult << "};\n";
+          header_ << "};\n";
         } else {
-          hresult << "struct " << classType->GetName() << ";\n";
+          header_ << "struct " << classType->GetName() << ";\n";
         }
-        fwrite(hresult.str().c_str(), hresult.str().length(), 1, header_);
       }
     }
     classes_.push_back(classType);
@@ -173,14 +169,12 @@ int GenBindings::GenType(Type* type) {
     EnumType* enumType = static_cast<EnumType*>(type);
     result << "types->Make<EnumType>(\"" << enumType->GetName() << "\")";
     if (header_) {
-      std::stringstream hresult;
-      hresult << "enum class " << enumType->GetName() << " {\n";
+      header_ << "enum class " << enumType->GetName() << " {\n";
       const EnumValueVector& values = enumType->GetValues();
       for (EnumValue const& v : values) {
-        hresult << "  " << v.id << " = " << v.value << ",\n";
+        header_ << "  " << v.id << " = " << v.value << ",\n";
       }
-      hresult << "};\n";
-      fwrite(hresult.str().c_str(), hresult.str().length(), 1, header_);
+      header_ << "};\n";
     }
     enums_.push_back(enumType);
   } else if (type->IsPtr()) {
@@ -257,28 +251,26 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   file_ << "  nodeList[0] = nullptr;\n";
   file_ << "\n";
   if (header_) {
-    hresult_ << "#include <cstdint>\n";
-    hresult_ << "extern \"C\" {\n";
-    hresult_ << "namespace Toucan {\n\n";
-    hresult_ << "class ClassType;\n";
-    hresult_ << "class Type;\n\n";
-    hresult_ << "struct ControlBlock {\n";
-    hresult_ << "  uint32_t    strongRefs = 0;\n";
-    hresult_ << "  uint32_t    weakRefs = 0;\n";
-    hresult_ << "  uint32_t    arrayLength;\n";
-    hresult_ << "  Type*       type = nullptr;\n";
-    hresult_ << "  void*       vtable = nullptr;\n";
-    hresult_ << "};\n\n";
-    hresult_ << "struct Object {\n";
-    hresult_ << "  void*          ptr;\n";
-    hresult_ << "  ControlBlock  *controlBlock;\n";
-    hresult_ << "};\n\n";
-    hresult_ << "struct Array {\n";
-    hresult_ << "  void*          ptr;\n";
-    hresult_ << "  uint32_t       length;\n";
-    hresult_ << "};\n\n";
-    fwrite(hresult_.str().c_str(), hresult_.str().length(), 1, header_);
-    hresult_.str(std::string());
+    header_ << "#include <cstdint>\n";
+    header_ << "extern \"C\" {\n";
+    header_ << "namespace Toucan {\n\n";
+    header_ << "class ClassType;\n";
+    header_ << "class Type;\n\n";
+    header_ << "struct ControlBlock {\n";
+    header_ << "  uint32_t    strongRefs = 0;\n";
+    header_ << "  uint32_t    weakRefs = 0;\n";
+    header_ << "  uint32_t    arrayLength;\n";
+    header_ << "  Type*       type = nullptr;\n";
+    header_ << "  void*       vtable = nullptr;\n";
+    header_ << "};\n\n";
+    header_ << "struct Object {\n";
+    header_ << "  void*          ptr;\n";
+    header_ << "  ControlBlock  *controlBlock;\n";
+    header_ << "};\n\n";
+    header_ << "struct Array {\n";
+    header_ << "  void*          ptr;\n";
+    header_ << "  uint32_t       length;\n";
+    header_ << "};\n\n";
   }
   for (auto type : referencedTypes) {
     GenType(type);
@@ -300,12 +292,11 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   file_ << "}\n\n";
   file_ << "};\n";
   if (header_) {
-    hresult_ << "\n};\n}\n";
-    fwrite(hresult_.str().c_str(), hresult_.str().length(), 1, header_);
+    header_ << "\n};\n}\n";
   }
 }
 
-void PrintNativeType(std::stringstream& result, Type* type) {
+void PrintNativeType(std::ostream& result, Type* type) {
   if (type->IsVoid()) {
     result << "void";
   } else if (type->IsInteger()) {
@@ -405,38 +396,36 @@ void GenBindings::GenBindingsForMethod(Method* method) {
   bool skipFirst = false;
   if (method->classType->IsNative()) {
     if (header_ && !(method->modifiers & Method::Modifier::DeviceOnly)) {
-      std::stringstream hresult;
 #if TARGET_OS_IS_WIN
-      hresult <<_, "__declspec(dllexport) ";
+      header_ <<_, "__declspec(dllexport) ";
 #endif
-      PrintNativeType(hresult, method->returnType);
-      hresult << " " << method->GetMangledName() << "(";
+      PrintNativeType(header_, method->returnType);
+      header_ << " " << method->GetMangledName() << "(";
       if (method->IsConstructor()) {
         skipFirst = true;
         if (method->classType->IsClassTemplate()) {
-          hresult << "int qualifiers, ";
+          header_ << "int qualifiers, ";
           ClassTemplate* classTemplate = static_cast<ClassTemplate*>(method->classType);
           for (Type* arg : classTemplate->GetFormalTemplateArgs()) {
             FormalTemplateArg* formalTemplateArg = static_cast<FormalTemplateArg*>(arg);
-            hresult << "Type* " << formalTemplateArg->GetName();
+            header_ << "Type* " << formalTemplateArg->GetName();
             if (arg != classTemplate->GetFormalTemplateArgs().back() || !argList.empty()) {
-              hresult << ", ";
+              header_ << ", ";
             }
           }
         }
       }
       for (const std::shared_ptr<Var>& var : argList) {
         if (skipFirst) { skipFirst = false; continue; }
-        PrintNativeType(hresult, var->type);
+        PrintNativeType(header_, var->type);
         if (var->name == "this") {
-          hresult << " This";
+          header_ << " This";
         } else {
-          hresult << " " << var->name.c_str();
+          header_ << " " << var->name.c_str();
         }
-        if (&var != &argList.back()) { hresult << ", "; }
+        if (&var != &argList.back()) { header_ << ", "; }
       }
-      hresult << ");\n";
-      fwrite(hresult.str().c_str(), hresult.str().length(), 1, header_);
+      header_ << ");\n";
     }
   }
   if ((method->modifiers & (Method::Modifier::Vertex | Method::Modifier::Fragment | Method::Modifier::Compute))) {

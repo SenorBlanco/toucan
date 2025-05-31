@@ -31,7 +31,7 @@ using namespace Toucan;
 int main(int argc, char** argv) {
   int   opt;
   std::ofstream outfile;
-  FILE* headerfile = nullptr;
+  std::ofstream headerfile;
   char  optstring[] = "o:h:";
   while ((opt = getopt(argc, argv, optstring)) > 0) {
     switch (opt) {
@@ -43,9 +43,9 @@ int main(int argc, char** argv) {
         }
         break;
       case 'h':
-        headerfile = fopen(optarg, "w");
-        if (!headerfile) {
-          perror(optarg);
+        headerfile.open(optarg, std::ofstream::out);
+        if (headerfile.fail()) {
+          std::perror(optarg);
           exit(4);
         }
     }

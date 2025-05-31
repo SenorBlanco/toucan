@@ -15,7 +15,6 @@
 #ifndef _BINDINGS_GEN_BINDINGS_H_
 #define _BINDINGS_GEN_BINDINGS_H_
 
-#include <stdio.h>
 #include <list>
 #include <unordered_map>
 
@@ -36,7 +35,7 @@ class GenBindings {
   GenBindings(SymbolTable*   symbols,
               TypeTable*     types,
               std::ostream&  file,
-              FILE*          header,
+              std::ostream&  header,
               bool           dumpStmtsAsSource);
   void Run(const TypeVector& referencedTypes);
   int  GenType(Type* type);
@@ -53,7 +52,7 @@ class GenBindings {
   std::list<ClassType*>          classes_;
   std::vector<EnumType*>         enums_;
   std::ostream&                  file_;
-  FILE*                          header_;
+  std::ostream&                  header_;
   bool                           dumpStmtsAsSource_;
   std::unordered_map<Type*, int> typeMap_;
   int                            numTypes_ = 0;
