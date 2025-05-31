@@ -14,10 +14,9 @@
 
 #include "gen_bindings.h"
 
-#include <stdlib.h>
-#include <string.h>
 #include <cassert>
 #include <sstream>
+#include <iostream>
 
 #include <ast/symbol.h>
 
@@ -233,51 +232,55 @@ int GenBindings::GenType(Type* type) {
 void GenBindings::Run(const TypeVector& referencedTypes) {
   const TypeVector& types = types_->GetTypes();
   typeMap_.clear();
-  fprintf(file_, "#include <cstdint>\n");
-  fprintf(file_, "#include <ast/ast.h>\n");
-  fprintf(file_, "#include <ast/native_class.h>\n");
-  fprintf(file_, "#include <ast/symbol.h>\n");
-  fprintf(file_, "#include <ast/type.h>\n");
-  fprintf(file_, "\n");
-  fprintf(file_, "namespace Toucan {\n\n");
-  fprintf(file_, "Type** InitTypes(SymbolTable* symbols, TypeTable* types, NodeVector* nodes) {\n");
-  fprintf(file_, "  ClassType* c;\n");
-  fprintf(file_, "  EnumType* e;\n");
-  fprintf(file_, "  static Type* typeList[%zu];\n\n", referencedTypes.size());
-  fprintf(file_, "  ASTNode** nodeList = new ASTNode*[%d];\n", 1000 /* FIXME num_nodes */);
-  fprintf(file_, "  Expr** exprs = reinterpret_cast<Expr**>(nodeList);\n");
-  fprintf(file_, "  ArgList** argLists = reinterpret_cast<ArgList**>(nodeList);\n");
-  fprintf(file_, "  ExprList** exprLists = reinterpret_cast<ExprList**>(nodeList);\n");
-  fprintf(file_, "  Stmt** stmts = reinterpret_cast<Stmt**>(nodeList);\n");
-  fprintf(file_, "  Stmts** stmtss = reinterpret_cast<Stmts**>(nodeList);\n");
-  fprintf(file_, "  Arg** args = reinterpret_cast<Arg**>(nodeList);\n");
-  fprintf(file_, "  Scope* scope;\n");
-  fprintf(file_, "  std::shared_ptr<Var> v;\n");
-  fprintf(file_, "  Type* returnType;\n");
-  fprintf(file_, "  Method *m;\n");
-  fprintf(file_, "  nodeList[0] = nullptr;\n");
-  fprintf(file_, "\n");
+  result_ << "#include <cstdint>\n";
+  result_ << "#include <ast/ast.h>\n";
+  result_ << "#include <ast/native_class.h>\n";
+  result_ << "#include <ast/symbol.h>\n";
+  result_ << "#include <ast/type.h>\n";
+  result_ << "\n";
+  result_ << "namespace Toucan {\n\n";
+  result_ << "Type** InitTypes(SymbolTable* symbols, TypeTable* types, NodeVector* nodes) {\n";
+  result_ << "  ClassType* c;\n";
+  result_ << "  EnumType* e;\n";
+  result_ << "  static Type* typeList[" << referencedTypes.size() << "];\n\n";
+  result_ << "  ASTNode** nodeList = new ASTNode*[1000];\n"; /* FIXME num_nodes */;
+  result_ << "  Expr** exprs = reinterpret_cast<Expr**>(nodeList);\n";
+  result_ << "  ArgList** argLists = reinterpret_cast<ArgList**>(nodeList);\n";
+  result_ << "  ExprList** exprLists = reinterpret_cast<ExprList**>(nodeList);\n";
+  result_ << "  Stmt** stmts = reinterpret_cast<Stmt**>(nodeList);\n";
+  result_ << "  Stmts** stmtss = reinterpret_cast<Stmts**>(nodeList);\n";
+  result_ << "  Arg** args = reinterpret_cast<Arg**>(nodeList);\n";
+  result_ << "  Scope* scope;\n";
+  result_ << "  std::shared_ptr<Var> v;\n";
+  result_ << "  Type* returnType;\n";
+  result_ << "  Method *m;\n";
+  result_ << "  nodeList[0] = nullptr;\n";
+  result_ << "\n";
+  fwrite(result_.str().c_str(), result_.str().length(), 1, file_);
+  result_.str(std::string());
   if (header_) {
-    fprintf(header_, "#include <cstdint>\n");
-    fprintf(header_, "extern \"C\" {\n");
-    fprintf(header_, "namespace Toucan {\n\n");
-    fprintf(header_, "class ClassType;\n");
-    fprintf(header_, "class Type;\n\n");
-    fprintf(header_, "struct ControlBlock {\n");
-    fprintf(header_, "  uint32_t    strongRefs = 0;\n");
-    fprintf(header_, "  uint32_t    weakRefs = 0;\n");
-    fprintf(header_, "  uint32_t    arrayLength;\n");
-    fprintf(header_, "  Type*       type = nullptr;\n");
-    fprintf(header_, "  void*       vtable = nullptr;\n");
-    fprintf(header_, "};\n\n");
-    fprintf(header_, "struct Object {\n");
-    fprintf(header_, "  void*          ptr;\n");
-    fprintf(header_, "  ControlBlock  *controlBlock;\n");
-    fprintf(header_, "};\n\n");
-    fprintf(header_, "struct Array {\n");
-    fprintf(header_, "  void*          ptr;\n");
-    fprintf(header_, "  uint32_t       length;\n");
-    fprintf(header_, "};\n\n");
+    hresult_ << "#include <cstdint>\n";
+    hresult_ << "extern \"C\" {\n";
+    hresult_ << "namespace Toucan {\n\n";
+    hresult_ << "class ClassType;\n";
+    hresult_ << "class Type;\n\n";
+    hresult_ << "struct ControlBlock {\n";
+    hresult_ << "  uint32_t    strongRefs = 0;\n";
+    hresult_ << "  uint32_t    weakRefs = 0;\n";
+    hresult_ << "  uint32_t    arrayLength;\n";
+    hresult_ << "  Type*       type = nullptr;\n";
+    hresult_ << "  void*       vtable = nullptr;\n";
+    hresult_ << "};\n\n";
+    hresult_ << "struct Object {\n";
+    hresult_ << "  void*          ptr;\n";
+    hresult_ << "  ControlBlock  *controlBlock;\n";
+    hresult_ << "};\n\n";
+    hresult_ << "struct Array {\n";
+    hresult_ << "  void*          ptr;\n";
+    hresult_ << "  uint32_t       length;\n";
+    hresult_ << "};\n\n";
+    fwrite(hresult_.str().c_str(), hresult_.str().length(), 1, header_);
+    hresult_.str(std::string());
   }
   for (auto type : referencedTypes) {
     GenType(type);
@@ -292,13 +295,17 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   }
   int i = 0;
   for (auto type : referencedTypes) {
-    fprintf(file_, "  typeList[%d] = type%d;\n", i++, typeMap_[type]);
+    result_ << "  typeList[" << i++ << "] = type" << typeMap_[type] << ";\n";
   }
-  fprintf(file_, "  delete[] nodeList;\n");
-  fprintf(file_, "  return typeList;\n");
-  fprintf(file_, "}\n\n");
-  fprintf(file_, "};\n");
-  if (header_) { fprintf(header_, "\n};\n}\n"); }
+  result_ << "  delete[] nodeList;\n";
+  result_ << "  return typeList;\n";
+  result_ << "}\n\n";
+  result_ << "};\n";
+  fwrite(result_.str().c_str(), result_.str().length(), 1, file_);
+  if (header_) {
+    hresult_ << "\n};\n}\n";
+    fwrite(hresult_.str().c_str(), hresult_.str().length(), 1, header_);
+  }
 }
 
 void PrintNativeType(std::stringstream& result, Type* type) {
@@ -357,7 +364,7 @@ void PrintNativeType(std::stringstream& result, Type* type) {
   } else if (type->IsQualified()) {
     PrintNativeType(result, static_cast<QualifiedType*>(type)->GetBaseType());
   } else {
-    fprintf(stderr, "PrintNativeType():  unknown type \"%s\"\n", type->ToString().c_str());
+    std::cerr << "PrintNativeType():  unknown type \"" << type->ToString() << "\"\n";
     exit(-2);
   }
 }

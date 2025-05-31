@@ -58,6 +58,8 @@ class GenBindings {
   std::unordered_map<Type*, int> typeMap_;
   int                            numTypes_ = 0;
   DumpAsSourcePass               sourcePass_;
+  std::stringstream              result_;
+  std::stringstream              hresult_;
 };
 
 };  // namespace Toucan
