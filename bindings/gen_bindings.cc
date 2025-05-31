@@ -238,7 +238,6 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   file_ << "  static Type* typeList[" << referencedTypes.size() << "];\n\n";
   file_ << "  Scope* scope;\n";
   file_ << "  std::shared_ptr<Var> v;\n";
-  file_ << "  Type* returnType;\n";
   file_ << "  Method *m;\n";
   file_ << "\n";
   if (header_) {
@@ -350,7 +349,7 @@ void PrintNativeType(std::ostream& result, Type* type) {
 void GenBindings::GenBindingsForMethod(Method* method) {
   std::stringstream result;
   int classTypeID = GenType(method->classType);
-  result << "  returnType = type" << GenType(method->returnType) << ";\n";
+  int returnTypeID = GenType(method->returnType);
   result << "  m = new Method(0";
   if (method->modifiers & Method::Modifier::Static) { result << " | Method::Modifier::Static"; }
   if (method->modifiers & Method::Modifier::Virtual) { result << " | Method::Modifier::Virtual"; }
@@ -359,7 +358,7 @@ void GenBindings::GenBindingsForMethod(Method* method) {
   if (method->modifiers & Method::Modifier::Fragment) { result << " | Method::Modifier::Fragment"; }
   if (method->modifiers & Method::Modifier::Compute) { result << " | Method::Modifier::Compute"; }
   std::string name = method->name;
-  result << ", returnType, \"" << name << "\", type" << classTypeID << ");\n";
+  result << ", type" << returnTypeID << ", \"" << name << "\", type" << classTypeID << ");\n";
   const VarVector& argList = method->formalArgList;
   for (int i = 0; i < argList.size(); ++i) {
     Var* var = argList[i].get();
