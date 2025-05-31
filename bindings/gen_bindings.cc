@@ -232,32 +232,30 @@ int GenBindings::GenType(Type* type) {
 void GenBindings::Run(const TypeVector& referencedTypes) {
   const TypeVector& types = types_->GetTypes();
   typeMap_.clear();
-  result_ << "#include <cstdint>\n";
-  result_ << "#include <ast/ast.h>\n";
-  result_ << "#include <ast/native_class.h>\n";
-  result_ << "#include <ast/symbol.h>\n";
-  result_ << "#include <ast/type.h>\n";
-  result_ << "\n";
-  result_ << "namespace Toucan {\n\n";
-  result_ << "Type** InitTypes(SymbolTable* symbols, TypeTable* types, NodeVector* nodes) {\n";
-  result_ << "  ClassType* c;\n";
-  result_ << "  EnumType* e;\n";
-  result_ << "  static Type* typeList[" << referencedTypes.size() << "];\n\n";
-  result_ << "  ASTNode** nodeList = new ASTNode*[1000];\n"; /* FIXME num_nodes */;
-  result_ << "  Expr** exprs = reinterpret_cast<Expr**>(nodeList);\n";
-  result_ << "  ArgList** argLists = reinterpret_cast<ArgList**>(nodeList);\n";
-  result_ << "  ExprList** exprLists = reinterpret_cast<ExprList**>(nodeList);\n";
-  result_ << "  Stmt** stmts = reinterpret_cast<Stmt**>(nodeList);\n";
-  result_ << "  Stmts** stmtss = reinterpret_cast<Stmts**>(nodeList);\n";
-  result_ << "  Arg** args = reinterpret_cast<Arg**>(nodeList);\n";
-  result_ << "  Scope* scope;\n";
-  result_ << "  std::shared_ptr<Var> v;\n";
-  result_ << "  Type* returnType;\n";
-  result_ << "  Method *m;\n";
-  result_ << "  nodeList[0] = nullptr;\n";
-  result_ << "\n";
-  file_ << result_.str();
-  result_.str(std::string());
+  file_ << "#include <cstdint>\n";
+  file_ << "#include <ast/ast.h>\n";
+  file_ << "#include <ast/native_class.h>\n";
+  file_ << "#include <ast/symbol.h>\n";
+  file_ << "#include <ast/type.h>\n";
+  file_ << "\n";
+  file_ << "namespace Toucan {\n\n";
+  file_ << "Type** InitTypes(SymbolTable* symbols, TypeTable* types, NodeVector* nodes) {\n";
+  file_ << "  ClassType* c;\n";
+  file_ << "  EnumType* e;\n";
+  file_ << "  static Type* typeList[" << referencedTypes.size() << "];\n\n";
+  file_ << "  ASTNode** nodeList = new ASTNode*[1000];\n"; /* FIXME num_nodes */;
+  file_ << "  Expr** exprs = reinterpret_cast<Expr**>(nodeList);\n";
+  file_ << "  ArgList** argLists = reinterpret_cast<ArgList**>(nodeList);\n";
+  file_ << "  ExprList** exprLists = reinterpret_cast<ExprList**>(nodeList);\n";
+  file_ << "  Stmt** stmts = reinterpret_cast<Stmt**>(nodeList);\n";
+  file_ << "  Stmts** stmtss = reinterpret_cast<Stmts**>(nodeList);\n";
+  file_ << "  Arg** args = reinterpret_cast<Arg**>(nodeList);\n";
+  file_ << "  Scope* scope;\n";
+  file_ << "  std::shared_ptr<Var> v;\n";
+  file_ << "  Type* returnType;\n";
+  file_ << "  Method *m;\n";
+  file_ << "  nodeList[0] = nullptr;\n";
+  file_ << "\n";
   if (header_) {
     hresult_ << "#include <cstdint>\n";
     hresult_ << "extern \"C\" {\n";
@@ -295,13 +293,12 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   }
   int i = 0;
   for (auto type : referencedTypes) {
-    result_ << "  typeList[" << i++ << "] = type" << typeMap_[type] << ";\n";
+    file_ << "  typeList[" << i++ << "] = type" << typeMap_[type] << ";\n";
   }
-  result_ << "  delete[] nodeList;\n";
-  result_ << "  return typeList;\n";
-  result_ << "}\n\n";
-  result_ << "};\n";
-  file_ << result_.str();
+  file_ << "  delete[] nodeList;\n";
+  file_ << "  return typeList;\n";
+  file_ << "}\n\n";
+  file_ << "};\n";
   if (header_) {
     hresult_ << "\n};\n}\n";
     fwrite(hresult_.str().c_str(), hresult_.str().length(), 1, header_);
