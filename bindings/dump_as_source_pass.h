@@ -17,12 +17,7 @@
 
 #include "ast/ast.h"
 
-#ifdef __gnuc__
-#define CHECK_FORMAT(archetype, string_index, first_to_check) \
-  __attribute__((format(archetype, string_index, first_to_check)))
-#else
-#define CHECK_FORMAT(...)
-#endif
+#include <sstream>
 
 namespace Toucan {
 
@@ -33,7 +28,7 @@ class DumpAsSourcePass : public Visitor {
  public:
   DumpAsSourcePass(FILE* file, GenBindings* genBindings);
   int    Resolve(ASTNode* node);
-  int    Output(ASTNode* node, const char* fmt, ...) CHECK_FORMAT(printf, 3, 4);
+  int    Output(ASTNode* node);
   Result Visit(ArgList* node) override;
   Result Visit(ArrayAccess* node) override;
   Result Visit(BinOpNode* node) override;
@@ -61,6 +56,7 @@ class DumpAsSourcePass : public Visitor {
   std::unordered_map<ASTNode*, int> map_;
   GenBindings*                      genBindings_;
   int                               nodeCount_ = 1;
+  std::stringstream                 result_;
 };
 
 };  // namespace Toucan
