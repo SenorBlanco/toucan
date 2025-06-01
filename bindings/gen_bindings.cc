@@ -103,24 +103,24 @@ int GenBindings::GenType(Type* type) {
   if (type->IsInteger()) {
     IntegerType* i = static_cast<IntegerType*>(type);
     result << "types->GetInteger(" << std::to_string(i->GetBits()) << ", "
-           << (i->Signed() ? "true" : "false") << ")";
+           << (i->Signed() ? "true" : "false") << ");\n";
   } else if (type->IsFloatingPoint()) {
     FloatingPointType* f = static_cast<FloatingPointType*>(type);
-    result << "types->GetFloatingPoint(" << std::to_string(f->GetBits()) << ")";
+    result << "types->GetFloatingPoint(" << std::to_string(f->GetBits()) << ");\n";
   } else if (type->IsBool()) {
-    result << "types->GetBool()";
+    result << "types->GetBool();\n";
   } else if (type->IsVector()) {
     VectorType* v = static_cast<VectorType*>(type);
-    result << "types->GetVector(type" << std::to_string(GenType(v->GetComponentType())) << ", " << std::to_string(v->GetLength()) << ")";
+    result << "types->GetVector(type" << std::to_string(GenType(v->GetComponentType())) << ", " << std::to_string(v->GetLength()) << ");\n";
   } else if (type->IsMatrix()) {
     MatrixType* m = static_cast<MatrixType*>(type);
-    result << "types->GetMatrix(type" << GenType(m->GetColumnType()) << ", " << std::to_string(m->GetNumColumns()) << ")";
+    result << "types->GetMatrix(type" << GenType(m->GetColumnType()) << ", " << std::to_string(m->GetNumColumns()) << ");\n";
   } else if (type->IsString()) {
-    result << "types->GetString()";
+    result << "types->GetString();\n";
   } else if (type->IsVoid()) {
-    result << "types->GetVoid()";
+    result << "types->GetVoid();\n";
   } else if (type->IsAuto()) {
-    result << "types->GetAuto()";
+    result << "types->GetAuto();\n";
   } else if (type->IsClassTemplate()) {
     ClassTemplate* classTemplate = static_cast<ClassTemplate*>(type);
     result << "types->Make<ClassTemplate>(\"" << classTemplate->GetName().c_str() << "\", TypeList({";
@@ -133,7 +133,7 @@ int GenBindings::GenType(Type* type) {
     if (header_) {
       header_ << "struct " << classTemplate->GetName() << ";\n";
     }
-    result << "}))";
+    result << "}));\n";
     classes_.push_back(classTemplate);
   } else if (type->IsClass()) {
     ClassType* classType = static_cast<ClassType*>(type);
@@ -143,9 +143,9 @@ int GenBindings::GenType(Type* type) {
         result << "type" << GenType(type);
         if (&type != &classType->GetTemplateArgs().back()) { result << ", "; }
       }
-      result << "} )";
+      result << "} );\n";
     } else {
-      result << "types->Make<ClassType>(\"" << classType->GetName() << "\")";
+      result << "types->Make<ClassType>(\"" << classType->GetName() << "\");\n";
       if (header_) {
         int pad = 0;
         if (classType->GetFields().size() > 0) {
@@ -166,7 +166,7 @@ int GenBindings::GenType(Type* type) {
     classes_.push_back(classType);
   } else if (type->IsEnum()) {
     EnumType* enumType = static_cast<EnumType*>(type);
-    result << "types->Make<EnumType>(\"" << enumType->GetName() << "\")";
+    result << "types->Make<EnumType>(\"" << enumType->GetName() << "\");\n";
     if (header_) {
       header_ << "enum class " << enumType->GetName() << " {\n";
       const EnumValueVector& values = enumType->GetValues();
@@ -175,7 +175,10 @@ int GenBindings::GenType(Type* type) {
       }
       header_ << "};\n";
     }
-    enums_.push_back(enumType);
+    for (const EnumValue& v : enumType->GetValues()) {
+      result << "  type" << id << "->Append(\"" << v.id << "\", " << v.value << ");\n";
+    }
+    result << "  symbols->DefineType(\"" << enumType->GetName() << "\", type" << id << ");\n\n";
   } else if (type->IsPtr()) {
     PtrType* ptrType = static_cast<PtrType*>(type);
     result << "types->Get" << (type->IsStrongPtr() ? "Strong" : type->IsWeakPtr() ? "Weak" : "Raw")
@@ -185,39 +188,36 @@ int GenBindings::GenType(Type* type) {
     } else {
       result << "nullptr";
     }
-    result << ")";
+    result << ");\n";
   } else if (type->IsArray()) {
     ArrayType* arrayType = static_cast<ArrayType*>(type);
     result << "types->GetArrayType(type" << GenType(arrayType->GetElementType()) << ", "
            << arrayType->GetNumElements() << ", MemoryLayout::"
-           << MemoryLayoutToString(arrayType->GetMemoryLayout()) << ")";
+           << MemoryLayoutToString(arrayType->GetMemoryLayout()) << ");\n";
   } else if (type->IsFormalTemplateArg()) {
     FormalTemplateArg* formalTemplateArg = static_cast<FormalTemplateArg*>(type);
-    result << "types->GetFormalTemplateArg(\"" << formalTemplateArg->GetName() << "\")";
+    result << "types->GetFormalTemplateArg(\"" << formalTemplateArg->GetName() << "\");\n";
   } else if (type->IsQualified()) {
     QualifiedType* qualifiedType = static_cast<QualifiedType*>(type);
     result << "types->GetQualifiedType(type" << GenType(qualifiedType->GetBaseType()) << ", "
-           << qualifiedType->GetQualifiers() << ")";
+           << qualifiedType->GetQualifiers() << ");\n";
   } else if (type->IsUnresolvedScopedType()) {
     auto unresolvedScopedType = static_cast<UnresolvedScopedType*>(type);
     result << "types->GetUnresolvedScopedType(type"
            << GenType(unresolvedScopedType->GetBaseType()) << ", \"" << unresolvedScopedType->GetID()
-           << "\")";
+           << "\");\n";
   } else if (type->IsList()) {
-    // This is technically correct, but builds very large list types that aren't used.
-    // It also causes the WASM backend to fail with "too many locals".
     const VarVector& vars = static_cast<ListType*>(type)->GetTypes();
     result << "types->GetList(VarVector{";
     for (auto var : vars) {
       result << "std::make_shared<Var>(\"" << var->name << "\", type" << GenType(var->type) << ")";
       if (var != vars.back()) result << ", ";
     }
-    result << "})";
+    result << "});\n";
   } else {
     assert(!"unknown type");
     exit(-1);
   }
-  result << ";\n";
   file_ << result.str();
   return id;
 }
@@ -234,7 +234,6 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   file_ << "namespace Toucan {\n\n";
   file_ << "Type** InitTypes(SymbolTable* symbols, TypeTable* types, NodeVector* nodes) {\n";
   file_ << "  ClassType* c;\n";
-  file_ << "  EnumType* e;\n";
   file_ << "  static Type* typeList[" << referencedTypes.size() << "];\n\n";
   file_ << "  Scope* scope;\n";
   file_ << "  std::shared_ptr<Var> v;\n";
@@ -264,9 +263,6 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   }
   for (auto type : referencedTypes) {
     GenType(type);
-  }
-  for (auto enumType : enums_) {
-    GenBindingsForEnum(enumType);
   }
   while (!classes_.empty()) {
     auto classType = classes_.front();
@@ -483,16 +479,6 @@ void GenBindings::GenBindingsForClass(ClassType* classType) {
   if (!classType->GetTemplate()) {
     result << "  symbols->DefineType(\"" << classType->GetName() << "\", c);\n\n";
   }
-  file_ << result.str();
-}
-
-void GenBindings::GenBindingsForEnum(EnumType* enumType) {
-  std::stringstream result;
-  result << "  e = type" << GenType(enumType) << ";\n";
-  for (const EnumValue& v : enumType->GetValues()) {
-    result << "  e->Append(\"" << v.id << "\", " << v.value << ");\n";
-  }
-  result << "  symbols->DefineType(\"" << enumType->GetName() << "\", e);\n\n";
   file_ << result.str();
 }
 

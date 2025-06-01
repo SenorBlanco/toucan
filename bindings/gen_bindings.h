@@ -42,7 +42,6 @@ class GenBindings {
 
  private:
   void GenBindingsForClass(ClassType* classType);
-  void GenBindingsForEnum(EnumType* enumType);
   void GenBindingsForMethod(Method* method);
 
  private:
@@ -50,7 +49,6 @@ class GenBindings {
   TypeTable*                     types_;
   TypeVector                     referencedTypes_;
   std::list<ClassType*>          classes_;
-  std::vector<EnumType*>         enums_;
   std::ostream&                  file_;
   std::ostream&                  header_;
   bool                           dumpStmtsAsSource_;
