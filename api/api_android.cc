@@ -84,8 +84,8 @@ const uint32_t* Window_GetSize(Window* This) {
   return This->size;
 }
 
-static void PrintDeviceError(WGPUErrorType, const char* message, void*) {
-  LOGV("Device error: %s", message);
+static void PrintDeviceError(WGPUErrorType, WGPUStringView message, void*) {
+  LOGV("WebGPU error:\n%s", message.data);
 }
 
 Device* Device_Device() {

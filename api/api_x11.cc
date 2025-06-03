@@ -105,8 +105,8 @@ void Window_Destroy(Window* This) {
   delete This;
 }
 
-static void PrintDeviceError(WGPUErrorType, const char* message, void*) {
-  printf("Device error: %s\n", message);
+static void PrintDeviceError(WGPUErrorType, WGPUStringView message, void*) {
+  printf("WebGPU error:\n%s\n", message.data);
 }
 
 Device* Device_Device() {

@@ -27,7 +27,7 @@ namespace Toucan {
 
 namespace {
 
-void PrintDeviceError(WGPUErrorType, const char* message, void*) { OutputDebugString(message); }
+void PrintDeviceError(WGPUErrorType, WGPUStringView message, void*) { OutputDebugString(message.data); }
 
 unsigned ToToucanEventModifiers(WPARAM wParam) {
   unsigned result = 0;

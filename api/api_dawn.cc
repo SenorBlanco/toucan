@@ -437,6 +437,7 @@ wgpu::VertexBufferLayout toDawnVertexBufferLayout(Type*                         
   }
   wgpu::VertexBufferLayout input;
   input.arrayStride = vertexInput->GetSizeInBytes();
+  input.stepMode = wgpu::VertexStepMode::Vertex;
   input.attributeCount = vaDescs->size() - start;
   // Cast the start offset to pointer; this will be added to the vaDesc pointer
   // in FinalizeVertexLayouts. This is necessary to accommodate reallocation
