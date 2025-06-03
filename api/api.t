@@ -331,9 +331,9 @@ native class Math {
   static transpose(m : float<4,4>) : float<4,4>;
 }
 
-native class ImageDecoder<PF> {
-  ImageDecoder(encodedImage : ^[]ubyte);
- ~ImageDecoder();
+native class Image<PF> {
+  Image(encodedImage : ^[]ubyte);
+ ~Image();
   GetSize() : uint<2>;
   Decode(buffer : ^writeonly []PF:HostType, bufferWidth : uint);
 }
