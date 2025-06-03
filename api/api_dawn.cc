@@ -1425,12 +1425,11 @@ wgpu::Device CreateDawnDevice(wgpu::BackendType type, const wgpu::DeviceDescript
     dawnProcSetProcs(&backendProcs);
   }
 
-  for (auto adapter : nativeInstance->EnumerateAdapters()) {
-    wgpu::AdapterInfo info;
-    adapter.GetInfo(&info);
-    if (info.backendType == type) { return adapter.CreateDevice(desc); }
-  }
-  return nullptr;
+  wgpu::RequestAdapterOptions options;
+  options.backendType = type;
+  auto adapters = nativeInstance->EnumerateAdapters(&options);
+  if (adapters.empty()) return nullptr;
+  return adapters[0].CreateDevice(desc);
 }
 #endif
 
