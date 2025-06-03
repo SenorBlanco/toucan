@@ -5,13 +5,11 @@ class Vertex {
 
 var device = new Device();
 
-using Format = RGBA8unorm;
 var image = new ImageDecoder<RGBA8unorm>(inline("third_party/libjpeg-turbo/testimages/testorig.jpg"));
 var imageSize = image.GetSize();
-var texture = new sampleable Texture2D<Format>(device, imageSize);
-var buffer = new hostwriteable Buffer<[]Format:HostType>(device, texture.MinBufferWidth() * imageSize.y);
-var b = buffer.MapWrite();
-image.Decode(b, texture.MinBufferWidth());
+var texture = new sampleable Texture2D<RGBA8unorm>(device, imageSize);
+var buffer = new hostwriteable Buffer<[]ubyte<4>>(device, texture.MinBufferWidth() * imageSize.y);
+image.Decode(buffer.MapWrite(), texture.MinBufferWidth());
 buffer.Unmap();
 var copyEncoder = new CommandEncoder(device);
 texture.CopyFromBuffer(copyEncoder, buffer, imageSize);
