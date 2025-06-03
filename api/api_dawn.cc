@@ -1414,7 +1414,7 @@ void System_Destroy(System* This) {}
 void Event_Destroy(Event* This) { delete This; }
 
 #if !TARGET_OS_IS_WASM
-wgpu::Device CreateDawnDevice(wgpu::BackendType type, wgpu::ErrorCallback errorCallback) {
+wgpu::Device CreateDawnDevice(wgpu::BackendType type, const wgpu::DeviceDescriptor* desc) {
   static std::unique_ptr<dawn::native::Instance> nativeInstance;
 
   if (!nativeInstance) {
@@ -1425,13 +1425,10 @@ wgpu::Device CreateDawnDevice(wgpu::BackendType type, wgpu::ErrorCallback errorC
     dawnProcSetProcs(&backendProcs);
   }
 
-  wgpu::DeviceDescriptor desc;
-  desc.uncapturedErrorCallbackInfo.callback = errorCallback;
-
   for (auto adapter : nativeInstance->EnumerateAdapters()) {
     wgpu::AdapterInfo info;
     adapter.GetInfo(&info);
-    if (info.backendType == type) { return adapter.CreateDevice(&desc); }
+    if (info.backendType == type) { return adapter.CreateDevice(desc); }
   }
   return nullptr;
 }

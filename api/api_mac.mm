@@ -182,7 +182,14 @@ void SwapChain_Destroy(SwapChain* This) {
 }
 
 Device* Device_Device() {
-  wgpu::Device device = CreateDawnDevice(wgpu::BackendType::Metal, PrintDeviceError);
+  wgpu::DeviceDescriptor desc;
+  desc.SetUncapturedErrorCallback(
+    [](const wgpu::Device&, wgpu::ErrorType type, wgpu::StringView message) {
+      fprintf(stderr, "WebGPU Error:\n%s\n", message.data);
+    }
+  );
+
+  wgpu::Device device = CreateDawnDevice(wgpu::BackendType::Metal, &desc);
   if (!device) { return nullptr; }
   return new Device(device);
 }

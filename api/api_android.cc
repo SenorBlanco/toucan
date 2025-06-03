@@ -84,12 +84,15 @@ const uint32_t* Window_GetSize(Window* This) {
   return This->size;
 }
 
-static void PrintDeviceError(WGPUErrorType, WGPUStringView message, void*) {
-  LOGV("WebGPU error:\n%s", message.data);
-}
-
 Device* Device_Device() {
-  wgpu::Device device = CreateDawnDevice(wgpu::BackendType::Vulkan, PrintDeviceError);
+ wgpu::DeviceDescriptor desc;
+  desc.SetUncapturedErrorCallback(
+   [](const wgpu::Device&, wgpu::ErrorType type, wgpu::StringView message) {
+      LOGV("WebGPU Error:\n%s\n", message.data);
+    }
+  );
+
+  wgpu::Device device = CreateDawnDevice(wgpu::BackendType::Vulkan, &desc);
   if (!device) { return nullptr; }
   return new Device(device);
 }
