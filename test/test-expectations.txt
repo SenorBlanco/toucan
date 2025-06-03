@@ -95,6 +95,7 @@ error-field-access-from-static-method.t:3:  attempt to access non-static field i
 test/error-forward-var.t
 error-forward-var.t:1:  unknown symbol "a"
 test/error-hex-literal-too-large.t
+error-hex-literal-too-large.t:1: integer literal is out of range
 test/error-implicit-void-return.t
 error-implicit-void-return.t:4:  implicit void return, in method returning non-void.
 test/error-include-not-found.t
@@ -193,10 +194,10 @@ error-swizzle.t:13:  cannot store a value of type "null" to a location of type "
 test/error-syntax-error-in-included-file.t
 syntax-error.t:2: syntax error
 test/error-texture-from-buffer-incorrect-format.t
-error-texture-from-buffer-incorrect-format.t:2:  matching constructor not found
 error-texture-from-buffer-incorrect-format.t:9:  class Texture1D<RGBA8unorm> has no method CopyFromBuffer(*CommandEncoder, *hostwriteable Buffer<[]float<4>>, int)
 error-texture-from-buffer-incorrect-format.t:9:  Texture1D<RGBA8unorm>.CopyFromBuffer(&CommandEncoder, &Buffer<[]ubyte<4>>, uint, uint) 
 test/error-uint-literal-too-large.t
+error-uint-literal-too-large.t:1: integer literal is out of range
 test/error-unknown-param-type.t
 error-unknown-param-type.t:2: syntax error
 test/error-unknown-return-type.t
@@ -229,6 +230,7 @@ test/file-location.t
 test/file-location.t:4
 test/for-stmt.t
 test/forward-field.t
+test/hang.t
 test/hello-split.t
 Hello, world.
 test/hello.t

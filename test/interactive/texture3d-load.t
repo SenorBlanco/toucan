@@ -7,7 +7,7 @@ class Varyings {
 };
 
 var device = new Device();
-var window = new Window({0, 0}, {640, 480});
+var window = new Window({640, 480});
 var swapChain = new SwapChain<PreferredSwapChainFormat>(device, window);
 var verts = [4] new Vertex;
 verts[0].position = float<4>(-1.0, -1.0, 0.0, 1.0);

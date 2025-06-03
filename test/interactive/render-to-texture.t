@@ -1,5 +1,5 @@
 var device = new Device();
-var window = new Window({0, 0}, {640, 480});
+var window = new Window({640, 480});
 var swapChain = new SwapChain<PreferredSwapChainFormat>(device, window);
 var triVerts : [3]float<4> = { { 0.0,  1.0, 0.0, 1.0 }, {-1.0, -1.0, 0.0, 1.0 }, { 1.0, -1.0, 0.0, 1.0 }};
 var triVB = new vertex Buffer<[]float<4>>(device, &triVerts);
