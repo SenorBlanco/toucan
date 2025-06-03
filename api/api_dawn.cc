@@ -1141,15 +1141,14 @@ static Object* MapSync(wgpu::MapMode mapMode, Buffer* buffer) {
     buffer->mappedObject.controlBlock->weakRefs++;
     return &buffer->mappedObject;
   }
-
+  auto callback = [&status](wgpu::MapAsyncStatus s, const char*) {
+    status = s;
+  };
 #if TARGET_OS_IS_WASM
   status =
       JSMapSync(buffer->buffer.Get(), static_cast<WGPUMapMode>(mapMode), 0, buffer->sizeInBytes);
 #else
-  buffer->buffer.MapAsync(mapMode, 0, buffer->sizeInBytes, wgpu::CallbackMode::AllowSpontaneous, [&status](wgpu::MapAsyncStatus s, const char*) {
-    status = s;
-  }
-  );
+  buffer->buffer.MapAsync(mapMode, 0, buffer->sizeInBytes, wgpu::CallbackMode::AllowSpontaneous, callback);
   while (status == wgpu::MapAsyncStatus::Unknown) {
     buffer->device.Tick();
   }
