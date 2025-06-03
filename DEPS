@@ -21,7 +21,7 @@ deps = {
   "third_party/abseil-cpp"             : "https://chromium.googlesource.com/chromium/src/third_party/abseil-cpp@f81f6c011baf9b0132a5594c034fe0060820711d",
   "third_party/getopt"                 : "https://github.com/skeeto/getopt@4e618ef782dc80b2cf0307ea74b68e6a62b025de",
   "third_party/llvm" : "https://github.com/llvm/llvm-project@4c26a1e4d7e490a38dcd2a24e4c8939075fd4a5a",
-  "third_party/dawn" : "https://dawn.googlesource.com/dawn.git@4323ad4e94d01969047016a41ca8707b6d2fb943",
+  "third_party/dawn" : "https://dawn.googlesource.com/dawn.git@25453438b422d0560de41b6394823d6d76903088",
   "third_party/jinja2" : "https://chromium.googlesource.com/chromium/src/third_party/jinja2@e2d024354e11cc6b041b0cff032d73f0c7e43a07",
   "third_party/libjpeg-turbo" : "https://github.com/libjpeg-turbo/libjpeg-turbo@3b19db4e6e7493a748369974819b4c5fa84c7614",
   "third_party/markupsafe": "https://chromium.googlesource.com/chromium/src/third_party/markupsafe@0bad08bb207bbfc1d6f3bbc82b9242b0c50e5794",

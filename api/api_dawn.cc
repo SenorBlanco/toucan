@@ -456,7 +456,11 @@ wgpu::BufferBindingType toDawnBufferBindingType(int qualifiers) {
     }
   }
   assert(!"invalid qualifiers for buffer binding");
+#if TARGET_OS_IS_WASM
   return wgpu::BufferBindingType::Undefined;
+#else
+  return wgpu::BufferBindingType::BindingNotUsed;
+#endif
 }
 
 // FIXME: store this in Device.
@@ -864,7 +868,11 @@ ComputePipeline* ComputePipeline_ComputePipeline(int     qualifiers,
       computeShader = createShaderModule(device, method.get());
     }
   }
+#if TARGET_OS_IS_WASM
   wgpu::ProgrammableStageDescriptor computeState;
+#else
+  wgpu::ComputeState computeState;
+#endif
   computeState.module = computeShader;
   computeState.entryPoint = "main";
   wgpu::ComputePipelineDescriptor cpDesc;
