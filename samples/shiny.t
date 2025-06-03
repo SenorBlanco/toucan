@@ -45,10 +45,8 @@ class BicubicPatch {
       pu[i] = vCubics[i].Evaluate(v);
       pv[i] = uCubics[i].Evaluate(u);
     }
-    var uCubic : Cubic<float<3>>;
-    var vCubic : Cubic<float<3>>;
-    uCubic.FromBezier(pu);
-    vCubic.FromBezier(pv);
+    var uCubic = CubicBezier<float<3>>(pu);
+    var vCubic = CubicBezier<float<3>>(pv);
     var result : Vertex;
     result.position = uCubic.Evaluate(u);
     var uTangent = uCubic.EvaluateTangent(u);
@@ -64,8 +62,8 @@ class BicubicPatch {
     }
     return result;
   }
-  var uCubics : [4]Cubic<float<3>>;
-  var vCubics : [4]Cubic<float<3>>;
+  var uCubics : [4]CubicBezier<float<3>>;
+  var vCubics : [4]CubicBezier<float<3>>;
 }
 
 class BicubicTessellator {
@@ -86,8 +84,8 @@ class BicubicTessellator {
           pu[j] = controlPoints[controlIndices[k + i + j * 4]];
           pv[j] = controlPoints[controlIndices[k + i * 4 + j]];
         }
-        patch.uCubics[i].FromBezier(pu);
-        patch.vCubics[i].FromBezier(pv);
+        patch.uCubics[i] = CubicBezier<float<3>>(pu);
+        patch.vCubics[i] = CubicBezier<float<3>>(pv);
       }
       for (var i = 0; i <= level; ++i) {
         var v = (float) i * scale;
