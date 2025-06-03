@@ -33,8 +33,8 @@ class NativeClass {
   static ClassType* ComputePipeline;
   static ClassType* DepthStencilAttachment;
   static ClassType* Device;
+  static ClassType* EncodedImage;
   static ClassType* Event;
-  static ClassType* ImageDecoder;
   static ClassType* Math;
   static ClassType* Queue;
   static ClassType* RenderPass;

@@ -12,7 +12,7 @@ using Format = RGBA8unorm;
 
 class CubeLoader {
   static Load(device : *Device, data : ^[]ubyte, texture : ^TextureCube<Format>, face : uint) {
-    var image = new ImageDecoder<Format>(data);
+    var image = new EncodedImage<Format>(data);
     var size = image.GetSize();
     var buffer = new hostwriteable Buffer<[]Format:HostType>(device, texture.MinBufferWidth() * size.y);
     image.Decode(buffer.MapWrite(), texture.MinBufferWidth());

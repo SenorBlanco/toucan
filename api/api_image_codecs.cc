@@ -25,7 +25,7 @@
 
 namespace Toucan {
 
-struct ImageDecoder {
+struct EncodedImage {
   Type*                         pixelFormat;
   struct jpeg_decompress_struct cinfo;
   struct jpeg_error_mgr         jerr;
@@ -43,9 +43,9 @@ void AssertSupportedPixelFormat(Type* pixelFormat) {
 }
 }  // namespace
 
-ImageDecoder* ImageDecoder_ImageDecoder(int qualifiers, Type* pixelFormat, Object* encodedImage) {
+EncodedImage* EncodedImage_EncodedImage(int qualifiers, Type* pixelFormat, Object* encodedImage) {
   uint32_t length = encodedImage->controlBlock->arrayLength;
-  auto     result = new ImageDecoder();
+  auto     result = new EncodedImage();
   result->pixelFormat = pixelFormat;
   AssertSupportedPixelFormat(pixelFormat);
   result->cinfo.err = jpeg_std_error(&result->jerr);
@@ -57,9 +57,9 @@ ImageDecoder* ImageDecoder_ImageDecoder(int qualifiers, Type* pixelFormat, Objec
   return result;
 }
 
-const uint32_t* ImageDecoder_GetSize(ImageDecoder* This) { return This->size; }
+const uint32_t* EncodedImage_GetSize(EncodedImage* This) { return This->size; }
 
-void ImageDecoder_Decode(ImageDecoder* This, Object* dest, uint32_t bufferWidth) {
+void EncodedImage_Decode(EncodedImage* This, Object* dest, uint32_t bufferWidth) {
   jpeg_start_decompress(&This->cinfo);
   uint32_t* p = static_cast<uint32_t*>(dest->ptr);
 
@@ -91,7 +91,7 @@ void ImageDecoder_Decode(ImageDecoder* This, Object* dest, uint32_t bufferWidth)
   jpeg_finish_decompress(&This->cinfo);
 }
 
-void ImageDecoder_Destroy(ImageDecoder* This) {
+void EncodedImage_Destroy(EncodedImage* This) {
   jpeg_destroy_decompress(&This->cinfo);
   delete This;
 }
