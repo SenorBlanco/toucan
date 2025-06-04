@@ -130,6 +130,7 @@ struct Texture {
                       wgpu::Buffer         source,
                       wgpu::Extent3D       extent,
                       wgpu::Origin3D       origin) {
+#if TARGET_OS_IS_WASM
     wgpu::ImageCopyBuffer sourceICB;
     sourceICB.buffer = source;
     sourceICB.layout.bytesPerRow = MinBufferWidth() * BytesPerPixel(format);
@@ -138,6 +139,16 @@ struct Texture {
     destICT.texture = texture;
     destICT.origin = origin;
     encoder.CopyBufferToTexture(&sourceICB, &destICT, &extent);
+#else
+    wgpu::TexelCopyBufferInfo sourceInfo;
+    sourceInfo.buffer = source;
+    sourceInfo.layout.bytesPerRow = MinBufferWidth() * BytesPerPixel(format);
+    sourceInfo.layout.rowsPerImage = size.height;
+    wgpu::TexelCopyTextureInfo destInfo;
+    destInfo.texture = texture;
+    destInfo.origin = origin;
+    encoder.CopyBufferToTexture(&sourceInfo, &destInfo, &extent);
+#endif
   }
   wgpu::TextureView CreateView(wgpu::TextureViewDimension dimension,
                                uint32_t                   arrayLayer,
