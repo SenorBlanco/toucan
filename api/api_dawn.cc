@@ -1399,6 +1399,7 @@ void SwapChain_Resize(SwapChain* swapChain, const uint32_t* size) {
   config.format = swapChain->format;
   config.width = size[0];
   config.height = size[1];
+  config.presentMode = wgpu::PresentMode::Fifo;
 
   swapChain->surface.Configure(&config);
   swapChain->extent = {size[0], size[1], 1};

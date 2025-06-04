@@ -189,6 +189,7 @@ SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Win
   XGetWindowAttributes(gDisplay, window->window, &attributes);
   config.width = attributes.width;
   config.height = attributes.height;
+  config.presentMode = wgpu::PresentMode::Fifo;
 
   surface.Configure(&config);
 
