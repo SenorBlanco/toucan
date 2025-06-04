@@ -1154,7 +1154,7 @@ static Object* MapSync(wgpu::MapMode mapMode, Buffer* buffer) {
       JSMapSync(buffer->buffer.Get(), static_cast<WGPUMapMode>(mapMode), 0, buffer->sizeInBytes);
   if (status != WGPUBufferMapAsyncStatus_Success) { return &buffer->mappedObject; }
 #else
-  wgpu::MapAsyncStatus mapStatus = wgpu::MapAsyncStatus::Unknown;
+  wgpu::MapAsyncStatus mapStatus = wgpu::MapAsyncStatus::Error;
   wgpu::Future future = buffer->buffer.MapAsync(mapMode, 0, buffer->sizeInBytes, wgpu::CallbackMode::WaitAnyOnly,
                                                 [&mapStatus](wgpu::MapAsyncStatus s, wgpu::StringView) {
                                                   mapStatus = s;
@@ -1427,7 +1427,7 @@ wgpu::Device CreateDawnDevice(wgpu::BackendType type, const wgpu::DeviceDescript
 
   if (!nativeInstance) {
     wgpu::InstanceDescriptor desc;
-    desc.features.timedWaitAnyEnable = true;
+    desc.capabilities.timedWaitAnyEnable = true;
     nativeInstance = std::make_unique<dawn::native::Instance>(&desc);
     DawnProcTable backendProcs = dawn::native::GetProcs();
     dawnProcSetProcs(&backendProcs);
