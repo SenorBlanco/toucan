@@ -53,7 +53,7 @@ template("toucan_executable") {
       "../ast:ast",
       "//samples:main",
       "//third_party/build/libjpeg-turbo",
-      "//third_party/dawn/src/dawn:cpp",
+      "//third_party/dawn/include/dawn:cpp_headers",
     ]
     if (!is_wasm) {
       deps += [
