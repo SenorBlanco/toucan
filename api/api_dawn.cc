@@ -1413,26 +1413,37 @@ void System_Destroy(System* This) {}
 void Event_Destroy(Event* This) { delete This; }
 
 #if !TARGET_OS_IS_WASM
-wgpu::Device CreateDawnDevice(wgpu::BackendType type, wgpu::ErrorCallback errorCallback) {
-  static std::unique_ptr<dawn::native::Instance> nativeInstance;
+wgpu::Device CreateDawnDevice(wgpu::BackendType type, const wgpu::DeviceDescriptor* desc) {
+  static wgpu::Instance instance;
 
-  if (!nativeInstance) {
-    WGPUInstanceDescriptor desc = { 0 };
-    desc.features.timedWaitAnyEnable = true;
-    nativeInstance = std::make_unique<dawn::native::Instance>(&desc);
+  if (!instance) {
     DawnProcTable backendProcs = dawn::native::GetProcs();
     dawnProcSetProcs(&backendProcs);
+
+    wgpu::InstanceDescriptor instanceDesc;
+    instanceDesc.features.timedWaitAnyEnable = true;
+    instance = wgpu::CreateInstance(&instanceDesc);
   }
 
-  wgpu::DeviceDescriptor desc;
-  desc.uncapturedErrorCallbackInfo.callback = errorCallback;
+  wgpu::Adapter adapter;
+  wgpu::RequestAdapterOptions adapterOptions;
+  adapterOptions.backendType = type;
+  auto adapterFuture = instance.RequestAdapter(&adapterOptions, wgpu::CallbackMode::WaitAnyOnly,
+      [&adapter](wgpu::RequestAdapterStatus status, wgpu::Adapter a, const char *msg) {
+    adapter = a;
+  });
+  wgpu::FutureWaitInfo aWaitInfo = { adapterFuture };
+  if (instance.WaitAny(1, &aWaitInfo, UINT64_MAX) != wgpu::WaitStatus::Success) { return nullptr; }
+  if (!adapter) return nullptr;
 
-  for (auto adapter : nativeInstance->EnumerateAdapters()) {
-    wgpu::AdapterInfo info;
-    adapter.GetInfo(&info);
-    if (info.backendType == type) { return adapter.CreateDevice(&desc); }
-  }
-  return nullptr;
+  wgpu::Device device;
+  auto deviceFuture = adapter.RequestDevice(desc, wgpu::CallbackMode::WaitAnyOnly,
+      [&device](wgpu::RequestDeviceStatus status, wgpu::Device d, const char* msg) {
+    device = d;
+  });
+  wgpu::FutureWaitInfo dWaitInfo = { deviceFuture };
+  if (instance.WaitAny(1, &dWaitInfo, UINT64_MAX) != wgpu::WaitStatus::Success) { return nullptr; }
+  return device;
 }
 #endif
 

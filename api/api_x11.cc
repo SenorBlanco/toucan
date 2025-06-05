@@ -105,12 +105,15 @@ void Window_Destroy(Window* This) {
   delete This;
 }
 
-static void PrintDeviceError(WGPUErrorType, const char* message, void*) {
-  printf("Device error: %s\n", message);
-}
-
 Device* Device_Device() {
-  wgpu::Device device = CreateDawnDevice(wgpu::BackendType::Vulkan, PrintDeviceError);
+  wgpu::DeviceDescriptor desc;
+  desc.SetUncapturedErrorCallback(
+    [](const wgpu::Device&, wgpu::ErrorType type, const char* message) {
+      fprintf(stderr, "WebGPU Error:\n%s\n", message);
+    }
+  );
+
+  wgpu::Device device = CreateDawnDevice(wgpu::BackendType::Vulkan, &desc);
   if (!device) { return nullptr; }
   return new Device(device);
 }
