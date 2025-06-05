@@ -61,6 +61,7 @@ template("toucan_executable") {
         "//third_party/dawn/src/dawn/native:shared",
       ]
     }
+
     include_dirs = [ ".." ]
     sources = get_target_outputs(":${make_action}")
     if (is_linux) {
