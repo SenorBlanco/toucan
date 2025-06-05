@@ -88,7 +88,7 @@ Device* Device_Device() {
  wgpu::DeviceDescriptor desc;
   desc.SetUncapturedErrorCallback(
    [](const wgpu::Device&, wgpu::ErrorType type, wgpu::StringView message) {
-      LOGV("WebGPU Error:\n%s\n", message.data);
+      LOGV("WebGPU Error:\n%s", message.data);
     }
   );
 

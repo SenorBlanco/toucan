@@ -130,7 +130,6 @@ Device* Device_Device() {
     [](const wgpu::Device&, wgpu::ErrorType type, wgpu::StringView message) {
       OutputDebugString("WebGPU Error:\n");
       OutputDebugString(message.data);
-      OutputDebugString("\n");
     }
   );
 

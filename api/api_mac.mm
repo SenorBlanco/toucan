@@ -41,8 +41,6 @@ static uint32_t gScreenSize[2];
 namespace Toucan {
 
 namespace {
-void PrintDeviceError(WGPUErrorType, WGPUStringView message, void*) {
-  printf("WebGPU error:\n%s\n", message.data);
 }
 
 }  // namespace

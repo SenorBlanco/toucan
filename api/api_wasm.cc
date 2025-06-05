@@ -102,7 +102,7 @@ const uint32_t* Window_GetSize(Window* This) {
 }
 
 static void PrintDeviceError(WGPUErrorType, const char* message, void*) {
-  printf("WebGPU error:\n%s\n", message);
+  printf("WebGPU error:\n%s", message);
 }
 
 EM_ASYNC_JS(WGPUDevice, JSInitDevice, (), {
