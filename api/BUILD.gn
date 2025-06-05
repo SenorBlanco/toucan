@@ -56,6 +56,10 @@ source_set("api") {
     "../third_party/libjpeg-turbo",
     "../third_party/build/libjpeg-turbo",
   ]
+  if (is_wasm) {
+    include_dirs += [ "${target_gen_dir}/../third_party/dawn/src/emdawnwebgpu/include" ]
+  }
+
   if (is_win) {
     sources += [ "api_win.cc" ]
   }
