@@ -1,5 +1,5 @@
 test/abort-on-assert-failure.t
-test/abort-on-assert-failure.t:4: assertion failed
+test\abort-on-assert-failure.t:4: assertion failed
   Y__Y
 --\__(x)==     (pining for the fjords)
 test/abort-on-strong-null-deref.t
@@ -77,8 +77,8 @@ error-array-size-non-integer.t:3: array size is not an integer constant
 error-array-size-non-integer.t:4: array size is not an integer constant
 error-array-size-non-integer.t:5: array size is not an integer constant
 test/error-assign-padded-array.t
-test/error-assign-padded-array.t:21: expectation failed
-test/error-assign-padded-array.t:22: expectation failed
+test\error-assign-padded-array.t:21: expectation failed
+test\error-assign-padded-array.t:22: expectation failed
 test/error-cast-weak-ptr-to-strong.t
 error-cast-weak-ptr-to-strong.t:3:  cannot cast value of type ^int to *int
 test/error-constructor-not-found.t
@@ -88,13 +88,14 @@ error-dereference.t:2:  attempt to dereference a non-pointer
 test/error-duplicate-enum.t
 error-duplicate-enum.t:4: type is already declared as non-enum
 test/error-expectation-failed.t
-test/error-expectation-failed.t:4: expectation failed
+test\error-expectation-failed.t:4: expectation failed
 test/error-field-access-from-static-method.t
 error-field-access-from-static-method.t:3:  attempt to access non-static field in static method
 error-field-access-from-static-method.t:3:  attempt to access non-static field in static method
 test/error-forward-var.t
 error-forward-var.t:1:  unknown symbol "a"
 test/error-hex-literal-too-large.t
+error-hex-literal-too-large.t:1: integer literal is out of range
 test/error-implicit-void-return.t
 error-implicit-void-return.t:4:  implicit void return, in method returning non-void.
 test/error-include-not-found.t
@@ -197,6 +198,7 @@ error-texture-from-buffer-incorrect-format.t:2:  matching constructor not found
 error-texture-from-buffer-incorrect-format.t:9:  class Texture1D<RGBA8unorm> has no method CopyFromBuffer(*CommandEncoder, *hostwriteable Buffer<[]float<4>>, int)
 error-texture-from-buffer-incorrect-format.t:9:  Texture1D<RGBA8unorm>.CopyFromBuffer(&CommandEncoder, &Buffer<[]ubyte<4>>, uint, uint) 
 test/error-uint-literal-too-large.t
+error-uint-literal-too-large.t:1: integer literal is out of range
 test/error-unknown-param-type.t
 error-unknown-param-type.t:2: syntax error
 test/error-unknown-return-type.t
@@ -222,11 +224,11 @@ test/field-access.t
 test/field-default-value.t
 test/field-store.t
 test/file-location-default-arg.t
-test/file-location-default-arg.t:12
-test/file-location-default-arg.t:13
-test/file-location-default-arg.t:14
+test\file-location-default-arg.t:12
+test\file-location-default-arg.t:13
+test\file-location-default-arg.t:14
 test/file-location.t
-test/file-location.t:4
+test\file-location.t:4
 test/for-stmt.t
 test/forward-field.t
 test/hello-split.t
