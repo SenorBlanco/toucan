@@ -597,21 +597,6 @@ struct BindGroupLayout {
   wgpu::BindGroupLayout bindGroupLayout;
 };
 
-struct VertexInput {
-  VertexInput(const wgpu::Buffer& b) : buffer(b) {}
-  wgpu::Buffer buffer;
-};
-
-struct ColorAttachment {
-  ColorAttachment(const wgpu::RenderPassColorAttachment& a) : attachment(a) {}
-  wgpu::RenderPassColorAttachment attachment;
-};
-
-struct DepthStencilAttachment {
-  DepthStencilAttachment(const wgpu::RenderPassDepthStencilAttachment& a) : attachment(a) {}
-  wgpu::RenderPassDepthStencilAttachment attachment;
-};
-
 struct RenderPass {
   RenderPass(wgpu::RenderPassEncoder e, Type* t) : encoder(e), type(t) {}
   wgpu::RenderPassEncoder encoder;
@@ -684,13 +669,14 @@ static void ExtractPipelineLayout(ClassType* classType, Device* device, wgpu::Bl
   for (const auto& field : classType->GetFields()) {
     Type* type = field->type;
 
-    assert(type->IsPtr());
-    type = static_cast<PtrType*>(type)->GetBaseType();
     int   qualifiers;
-    Type* unqualifiedType = type->GetUnqualifiedType(&qualifiers);
-    assert(unqualifiedType->IsClass());
+    if (type->IsPtr()) {
+      type = static_cast<PtrType*>(type)->GetBaseType();
+      type = type->GetUnqualifiedType(&qualifiers);
+    }
+    assert(type->IsClass());
 
-    ClassType* classType = static_cast<ClassType*>(unqualifiedType);
+    ClassType* classType = static_cast<ClassType*>(type);
     if (classType->GetTemplate() == NativeClass::VertexInput) {
       const auto& templateArgs = classType->GetTemplateArgs();
       assert(templateArgs.size() == 1);
@@ -755,23 +741,40 @@ struct PipelineData {
 static void ExtractPipelineData(Type* type, void* data, PipelineData* out) {
   assert(type->IsClass());
   auto classType = static_cast<ClassType*>(type);
+  classType->ComputeFieldOffsets();
   if (classType->GetParent()) { ExtractPipelineData(classType->GetParent(), data, out); }
   for (const auto& field : classType->GetFields()) {
     Type* fieldType = field->type;
-    assert(fieldType->IsPtr());
-    fieldType = static_cast<PtrType*>(fieldType)->GetBaseType();
+    void* ptr = static_cast<uint8_t*>(data) + field->offset;
+    if (fieldType->IsPtr()) {
+      fieldType = static_cast<PtrType*>(fieldType)->GetBaseType();
+      ptr = static_cast<Object*>(data)->ptr;
+    }
     int qualifiers;
     fieldType = fieldType->GetUnqualifiedType(&qualifiers);
-    Object* object = reinterpret_cast<Object*>((uint8_t*)data + field->offset);
-    void* ptr = object->ptr;
     assert(fieldType->IsClass());
     auto classType = static_cast<ClassType*>(fieldType);
     if (classType->GetTemplate() == NativeClass::VertexInput && ptr) {
-      out->vertexBuffers.push_back(static_cast<VertexInput*>(ptr)->buffer);
+      out->vertexBuffers.push_back(static_cast<VertexInput*>(ptr)->buffer->buffer);
     } else if (classType->GetTemplate() == NativeClass::ColorAttachment && ptr) {
-      out->colorAttachments.push_back(static_cast<ColorAttachment*>(ptr)->attachment);
+      auto v = static_cast<ColorAttachment*>(ptr);
+      out->colorAttachments.push_back({
+        .view = v->texture->view,
+        .loadOp = ToDawnLoadOp(v->loadOp),
+        .storeOp = ToDawnStoreOp(v->storeOp),
+        .clearValue = {v->clearValue[0], v->clearValue[1], v->clearValue[2], v->clearValue[3]},
+      });
     } else if (classType->GetTemplate() == NativeClass::DepthStencilAttachment && ptr) {
-      out->depthStencilAttachment = static_cast<DepthStencilAttachment*>(ptr)->attachment;
+      auto v = static_cast<DepthStencilAttachment*>(ptr);
+      out->depthStencilAttachment = {
+        .view = v->texture->view,
+        .depthLoadOp = ToDawnLoadOp(v->depthLoadOp),
+        .depthStoreOp = ToDawnStoreOp(v->depthStoreOp),
+        .depthClearValue = v->depthClearValue,
+        .stencilLoadOp = ToDawnLoadOp(v->stencilLoadOp),
+        .stencilStoreOp = ToDawnStoreOp(v->stencilStoreOp),
+        .stencilClearValue = v->stencilClearValue,
+      };
     } else if (classType->GetTemplate() == NativeClass::Buffer &&
                qualifiers == Type::Qualifier::Index) {
       if (auto buffer = static_cast<Buffer*>(ptr)) {
@@ -955,36 +958,6 @@ Texture2D* Texture2D_CreateRenderableView(Texture2D* This, uint32_t mipLevel) {
 
 Texture2D* Texture2D_CreateStorageView(Texture2D* This, uint32_t mipLevel) {
   return new Texture2D(This, wgpu::TextureViewDimension::e2D, 0, mipLevel);
-}
-
-ColorAttachment* Texture2D_CreateColorAttachment(Texture2D*   This,
-                                                 LoadOp       loadOp,
-                                                 StoreOp      storeOp,
-                                                 const float* clearValue) {
-  wgpu::RenderPassColorAttachment attachment;
-  attachment.clearValue = {clearValue[0], clearValue[1], clearValue[2], clearValue[3]};
-  attachment.loadOp = ToDawnLoadOp(loadOp);
-  attachment.storeOp = ToDawnStoreOp(storeOp);
-  attachment.view = This->view;
-  return new ColorAttachment(attachment);
-}
-
-DepthStencilAttachment* Texture2D_CreateDepthStencilAttachment(Texture2D* This,
-                                                               LoadOp     depthLoadOp,
-                                                               StoreOp    depthStoreOp,
-                                                               float      depthClearValue,
-                                                               LoadOp     stencilLoadOp,
-                                                               StoreOp    stencilStoreOp,
-                                                               int stencilClearValue) {
-  wgpu::RenderPassDepthStencilAttachment attachment;
-  attachment.view = This->view;
-  attachment.depthLoadOp = ToDawnLoadOp(depthLoadOp);
-  attachment.depthStoreOp = ToDawnStoreOp(depthStoreOp);
-  attachment.depthClearValue = depthClearValue;
-  attachment.stencilLoadOp = ToDawnLoadOp(stencilLoadOp);
-  attachment.stencilStoreOp = ToDawnStoreOp(stencilStoreOp);
-  attachment.stencilClearValue = stencilClearValue;
-  return new DepthStencilAttachment(attachment);
 }
 
 uint32_t Texture2D_MinBufferWidth(Texture2D* This) { return This->MinBufferWidth(); }
@@ -1217,13 +1190,6 @@ void CommandEncoder_Destroy(CommandEncoder* This) { delete This; }
 void Queue_Submit(Queue* queue, CommandBuffer* commandBuffer) {
   queue->queue.Submit(1, &commandBuffer->commandBuffer);
 }
-
-VertexInput* VertexInput_VertexInput(int     qualifiers,
-                                     Type*   type,
-                                     Buffer* buffer) {
-  return new VertexInput(buffer->buffer);
-}
-
 void VertexInput_Destroy(VertexInput* This) { delete This; }
 
 void ColorAttachment_Destroy(ColorAttachment* This) { delete This; }

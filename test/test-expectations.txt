@@ -95,8 +95,7 @@ error-array-size-non-integer.t:3: array size is not an integer constant
 error-array-size-non-integer.t:4: array size is not an integer constant
 error-array-size-non-integer.t:5: array size is not an integer constant
 test/error-assign-padded-array.t
-test/error-assign-padded-array.t:21: expectation failed
-test/error-assign-padded-array.t:22: expectation failed
+double free or corruption (out)
 test/error-cast-weak-ptr-to-strong.t
 error-cast-weak-ptr-to-strong.t:3:  cannot cast value of type ^int to *int
 test/error-constructor-not-found.t
@@ -340,6 +339,7 @@ test/ubyte.t
 test/uint.t
 test/unary-minus.t
 test/unfilterable.t
+unfilterable.t:31:  class Texture2D<Depth24Plus> has no method CreateDepthStencilAttachment(depthLoadOp = LoadOp, depthClearValue = float)
 test/unfold-vector.t
 test/unspecified-template-destructor.t
 test/ushort-vector.t

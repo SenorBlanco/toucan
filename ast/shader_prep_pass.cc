@@ -37,6 +37,9 @@ bool IsValidLocalVar(Type* type) {
     if (qualifiers & (Type::Qualifier::Uniform | Type::Qualifier::Storage)) {
       return false;
     }
+  } else if (type->IsClass() && static_cast<ClassType*>(type)->HasNativeMethods()) {
+    // FIXME: maybe ptrs should be decomposed first, then recursed?
+    return false;
   }
   return true;
 }
@@ -55,6 +58,9 @@ bool NeedsUnfolding(Type* type) {
     }
     if (classType->GetTemplate() == NativeClass::BindGroup) {
       return true;
+    }
+    if (classType->GetTemplate() == NativeClass::VertexInput) {
+      return false;
     }
     for (const auto& field : classType->GetFields()) {
       if (!IsValidLocalVar(field->type)) {
@@ -197,35 +203,35 @@ Result ShaderPrepPass::Visit(VarExpr* node) {
 }
 
 Type* ShaderPrepPass::ConvertType(Type* type) {
+  int qualifiers;
   if (type->IsPtr()) {
-    int qualifiers;
     type = static_cast<PtrType*>(type)->GetBaseType();
     type = type->GetUnqualifiedType(&qualifiers);
-    if (type->IsClass()) {
-      auto classType = static_cast<ClassType*>(type);
-      if (classType->GetTemplate() == NativeClass::VertexInput) {
-        assert(classType->GetTemplateArgs().size() == 1);
-        return classType->GetTemplateArgs()[0];
-      } else if (classType->GetTemplate() == NativeClass::Buffer) {
-        assert(classType->GetTemplateArgs().size() == 1);
-        type = classType->GetTemplateArgs()[0];
-        if (qualifiers & (Type::Qualifier::Storage | Type::Qualifier::Uniform)) {
-          if (!type->IsClass()) {
-            type = GetWrapper(type, qualifiers);
-          } else {
-            type = types_->GetQualifiedType(type, qualifiers);
-          }
-          return type;
-        } else if (qualifiers & Type::Qualifier::Index) {
-          return nullptr;
+  }
+  if (type->IsClass()) {
+    auto classType = static_cast<ClassType*>(type);
+    if (classType->GetTemplate() == NativeClass::VertexInput) {
+      assert(classType->GetTemplateArgs().size() == 1);
+      return classType->GetTemplateArgs()[0];
+    } else if (classType->GetTemplate() == NativeClass::Buffer) {
+      assert(classType->GetTemplateArgs().size() == 1);
+      type = classType->GetTemplateArgs()[0];
+      if (qualifiers & (Type::Qualifier::Storage | Type::Qualifier::Uniform)) {
+        if (!type->IsClass()) {
+          type = GetWrapper(type, qualifiers);
+        } else {
+          type = types_->GetQualifiedType(type, qualifiers);
         }
-      } else if (classType->GetTemplate() == NativeClass::ColorAttachment) {
-        type = classType->GetTemplateArgs()[0];
-        type = static_cast<ClassType*>(type)->FindType("DeviceType");
-        return types_->GetVector(type, 4);
-      } else if (classType->GetTemplate() == NativeClass::BindGroup) {
-        return classType->GetTemplateArgs()[0];
+        return type;
+      } else if (qualifiers & Type::Qualifier::Index) {
+        return nullptr;
       }
+    } else if (classType->GetTemplate() == NativeClass::ColorAttachment) {
+      type = classType->GetTemplateArgs()[0];
+      type = static_cast<ClassType*>(type)->FindType("DeviceType");
+      return types_->GetVector(type, 4);
+    } else if (classType->GetTemplate() == NativeClass::BindGroup) {
+      return classType->GetTemplateArgs()[0];
     }
   }
   return type;
@@ -236,12 +242,13 @@ void ShaderPrepPass::ExtractPipelineVars(ClassType* classType, std::vector<Var*>
   for (const auto& field : classType->GetFields()) {
     Type* type = field->type;
 
-    assert(type->IsPtr());
-    type = static_cast<PtrType*>(type)->GetBaseType();
-    int   qualifiers;
-    Type* unqualifiedType = type->GetUnqualifiedType(&qualifiers);
-    assert(unqualifiedType->IsClass());
-    ClassType* classType = static_cast<ClassType*>(unqualifiedType);
+    int   qualifiers = 0;
+    if (type->IsPtr()) {
+      type = static_cast<PtrType*>(type)->GetBaseType();
+      type = type->GetUnqualifiedType(&qualifiers);
+    }
+    assert(type->IsClass());
+    ClassType* classType = static_cast<ClassType*>(type);
     if (classType->GetTemplate() == NativeClass::ColorAttachment) {
       if (methodModifiers_ & Method::Modifier::Fragment) {
         auto output = std::make_shared<Var>(field->name, ConvertType(field->type));
@@ -449,8 +456,9 @@ Result ShaderPrepPass::ResolveNativeMethodCall(MethodCall* node) {
   if (classType->GetTemplate() == NativeClass::ColorAttachment && method->name == "Set") {
     auto store = Make<StoreStmt>(Resolve(args[0]), Resolve(args[1]));
     return Make<ExprWithStmt>(nullptr, store);
-  } else if (classType->GetTemplate() == NativeClass::VertexInput ||
-             (classType->GetTemplate() == NativeClass::Buffer && method->name == "Get")) {
+  } else if (classType->GetTemplate() == NativeClass::VertexInput) {
+    return Make<LoadExpr>(Resolve(args[0]));
+  } else if (classType->GetTemplate() == NativeClass::Buffer && method->name == "Get") {
     return Make<LoadExpr>(Resolve(args[0]));
   } else if (classType->GetTemplate() == NativeClass::Buffer && (method->name == "Map" || method->name == "MapRead" || method->name == "MapWrite")) {
     return Resolve(args[0]);

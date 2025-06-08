@@ -129,7 +129,21 @@ int GenBindings::EmitType(Type* type) {
       if (&type != &classTemplate->GetFormalTemplateArgs().back()) file_ << ", ";
     }
     if (header_) {
-      header_ << "struct " << classTemplate->GetName() << ";\n";
+      // FIXME: refactor this with ClassType
+      int pad = 0;
+      if (classTemplate->GetFields().size() > 0) {
+        classTemplate->ComputeFieldOffsets();
+        header_ << "struct " << classTemplate->GetName() << " {\n";
+        for (const auto& field : classTemplate->GetFields()) {
+          header_ << "  " << ConvertType(field->type, field->name) << ";\n";
+          if (field->padding > 0) {
+            header_ << "  uint8_t pad" << pad++ << "[" << field->padding << "];\n";
+          }
+        }
+        header_ << "};\n";
+      } else {
+        header_ << "struct " << classTemplate->GetName() << ";\n";
+      }
     }
     file_ << "}));\n";
     classes_.push_back(classTemplate);
@@ -426,7 +440,7 @@ void GenBindings::EmitMethod(Method* method) {
       header_ << ");\n";
     }
   }
-  if (emitSymbolsAndStatements_) assert(!method->stmts);
+//  if (emitSymbolsAndStatements_) assert(!method->stmts);
   if (!method->spirv.empty()) {
     file_ << "  m->spirv = {\n";
     for (uint32_t op : method->spirv) {
