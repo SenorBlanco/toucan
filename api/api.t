@@ -123,21 +123,6 @@ enum StoreOp {
   Discard
 }
 
-native class VertexInput<T> {
-  VertexInput(buffer : &vertex Buffer<[]T>);
-  deviceonly Get() : T;
- ~VertexInput();
-}
-
-native class ColorAttachment<PF> {
-  deviceonly Set(value : PF:DeviceType<4>);
- ~ColorAttachment();
-}
-
-native class DepthStencilAttachment<PF> {
- ~DepthStencilAttachment();
-}
-
 enum AddressMode { Repeat, MirrorRepeat, ClampToEdge };
 
 enum FilterMode { Nearest, Linear };
@@ -195,8 +180,6 @@ native class Texture2D<PF> {
   CreateSampleableView() sampleable : *SampleableTexture2D<PF:DeviceType>;
   CreateRenderableView(mipLevel = 0u) : *renderable Texture2D<PF>;
   CreateStorageView(mipLevel = 0u) : *storage Texture2D<PF>;
-  CreateColorAttachment(loadOp = LoadOp.Load, storeOp = StoreOp.Store, clearValue = float<4>(0.0, 0.0, 0.0, 0.0)) renderable : *ColorAttachment<PF>;
-  CreateDepthStencilAttachment(depthLoadOp = LoadOp.Load, depthStoreOp = StoreOp.Store, depthClearValue = 1.0, stencilLoadOp = LoadOp.Undefined, stencilStoreOp = StoreOp.Undefined, stencilClearValue = 0) renderable : *DepthStencilAttachment<PF>;
   MinBufferWidth() : uint;
   CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<2>, origin : uint<2> = uint<2>(0, 0));
 }
@@ -229,6 +212,29 @@ native class TextureCube<PF> {
   CreateStorageView(face : uint, mipLevel = 0u) : *storage Texture2D<PF>;
   MinBufferWidth() : uint;
   CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<3>, origin = uint<3>(0, 0, 0));
+}
+
+native class VertexInput<T> {
+  deviceonly Get() : T;
+  var buffer : *vertex Buffer<[]T>;
+}
+
+native class ColorAttachment<PF> {
+  deviceonly Set(value : PF:DeviceType<4>);
+  var texture : *renderable Texture2D<PF>;
+  var loadOp = LoadOp.Clear;
+  var storeOp = StoreOp.Store;
+  var clearValue = float<4>{};
+}
+
+native class DepthStencilAttachment<PF> {
+  var texture : *renderable Texture2D<PF>;
+  var depthLoadOp = LoadOp.Clear;
+  var depthStoreOp = StoreOp.Store;
+  var depthClearValue = 1.0;
+  var stencilLoadOp = LoadOp.Undefined;
+  var stencilStoreOp = StoreOp.Undefined;
+  var stencilClearValue = 0u;
 }
 
 native class CommandEncoder {

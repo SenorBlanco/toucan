@@ -7,14 +7,18 @@ var vb = new vertex Buffer<[]Vertex>(device, &verts);
 class Pipeline {
   vertex main(vb : &VertexBuiltins) { vb.position = vertices.Get(); }
   fragment main(fb : &FragmentBuiltins) { fragColor.Set( {0.0, 1.0, 0.0, 1.0} ); }
-  var vertices : *VertexInput<Vertex>;
-  var fragColor : *ColorAttachment<PreferredSwapChainFormat>;
+  var vertices : VertexInput<Vertex>;
+  var fragColor : ColorAttachment<PreferredSwapChainFormat>;
 }
 var pipeline = new RenderPipeline<Pipeline>(device);
 var encoder = new CommandEncoder(device);
-var vi = new VertexInput<Vertex>(vb);
-var fb = swapChain.GetCurrentTexture().CreateColorAttachment(LoadOp.Clear);
-var renderPass = new RenderPass<Pipeline>(encoder, { vertices = vi, fragColor = fb });
+var fb : ColorAttachment<PreferredSwapChainFormat>;
+fb.texture = swapChain.GetCurrentTexture();
+fb.loadOp = LoadOp.Clear;
+fb.storeOp = StoreOp.Store;
+var renderPass = new RenderPass<Pipeline>(encoder, {
+  vertices = { vb }, fragColor = fb
+});
 renderPass.SetPipeline(pipeline);
 renderPass.Draw(3, 1, 0, 0);
 renderPass.End();
