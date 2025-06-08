@@ -277,7 +277,7 @@ var settings : Settings;
 var configUniformBuffer = new uniform Buffer<Config>(device, {settings.numLights});
 var modelUniformBuffer = new uniform Buffer<Uniforms>(device);
 var cameraUniformBuffer = new uniform Buffer<Camera>(device);
-var sceneUniformBindGroup = new BindGroup<WriteGBuffersBindings>(device, {
+writeGBufferPassDescriptor.bindings = new BindGroup<WriteGBuffersBindings>(device, {
   uniforms = modelUniformBuffer,
   camera = cameraUniformBuffer
 });
@@ -343,30 +343,8 @@ invertTransposeModelMatrix = Math.transpose(invertTransposeModelMatrix);
 // Set the matrix uniform data.
 modelUniformBuffer.SetData({modelMatrix, invertTransposeModelMatrix});
 
-// Set DeferredRender pipeline data
-var deferredRenderingData : DeferredRender = {
-  textureBindings = gBufferTexturesBindGroup,
-  bufferBindings = lightsBufferBindGroup
-};
-
 var windowSizeBuffer = new uniform Buffer<uint<2>>(device, &windowSize);
 var windowSizeBindGroup = new BindGroup<WindowSizeBindings>(device, {windowSizeBuffer});
-
-var gBuffersDebugViewData : GBuffersDebugView = {
-  textureBindings = gBufferTexturesBindGroup,
-  windowSizeBindings = windowSizeBindGroup
-};
-
-var dragonPipelineData : WriteGBuffers = {
-  bindings = sceneUniformBindGroup,
-  vertexes = new VertexInput<Vertex>(vertexBuffer),
-  indexes = indexBuffer
-};
-
-var groundPlanePipelineData : WriteGBuffers = {
-  vertexes = new VertexInput<Vertex>(groundPlaneVertexBuffer),
-  indexes = groundPlaneIndexBuffer
-};
 
 var startTime = System.GetCurrentTime();
 while (System.IsRunning()) {
@@ -392,14 +370,20 @@ while (System.IsRunning()) {
       &writeGBufferPassDescriptor
     );
     gBufferPass.SetPipeline(writeGBuffersPipeline);
-    gBufferPass.Set(&dragonPipelineData);
+    gBufferPass.Set({
+      vertexes = new VertexInput<Vertex>(vertexBuffer),
+      indexes = indexBuffer
+    });
     gBufferPass.DrawIndexed(mesh.indices.length, 1, 0, 0, 0);
-    gBufferPass.Set(&groundPlanePipelineData);
+    gBufferPass.Set({
+      vertexes = new VertexInput<Vertex>(groundPlaneVertexBuffer),
+      indexes = groundPlaneIndexBuffer
+    });
     gBufferPass.DrawIndexed(groundPlaneIndexes.length, 1, 0, 0, 0);
     gBufferPass.End();
   }
   {
-    // Update lights position
+    // Update light positions.
     var lightPass = new ComputePass<LightUpdate>(commandEncoder, {
       bindings = lightsBufferComputeBindGroup
     });
@@ -416,7 +400,9 @@ while (System.IsRunning()) {
       .GetCurrentTexture()
       .CreateColorAttachment(LoadOp.Clear, StoreOp.Store, {0.0, 0.0, 1.0, 1.0});
     var debugViewPass = new RenderPass<GBuffersDebugView>(commandEncoder, {
-      fragColor = fb
+      fragColor = fb,
+      textureBindings = gBufferTexturesBindGroup,
+      windowSizeBindings = windowSizeBindGroup
     });
     debugViewPass.SetPipeline(gBuffersDebugViewPipeline);
     debugViewPass.Draw(6, 1, 0, 0);
@@ -430,7 +416,10 @@ while (System.IsRunning()) {
       fragColor = fb
     });
     deferredRenderingPass.SetPipeline(deferredRenderPipeline);
-    deferredRenderingPass.Set(&deferredRenderingData);
+    deferredRenderingPass.Set({
+      textureBindings = gBufferTexturesBindGroup,
+      bufferBindings = lightsBufferBindGroup
+    });
     deferredRenderingPass.Draw(6, 1, 0, 0);
     deferredRenderingPass.End();
   }
