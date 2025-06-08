@@ -45,8 +45,8 @@ class BicubicPatch {
       pu[i] = vCubics[i].Evaluate(v);
       pv[i] = uCubics[i].Evaluate(u);
     }
-    var uCubic : BezierCubic<float<3>>(pu);
-    var vCubic : BezierCubic<float<3>>(pv);
+    var uCubic = CubicBezier<float<3>>(pu);
+    var vCubic = CubicBezier<float<3>>(pv);
     var result : Vertex;
     result.position = uCubic.Evaluate(u);
     var uTangent = uCubic.EvaluateTangent(u);
@@ -62,8 +62,8 @@ class BicubicPatch {
     }
     return result;
   }
-  var uCubics : [4]BezierCubic<float<3>>;
-  var vCubics : [4]BezierCubic<float<3>>;
+  var uCubics : [4]CubicBezier<float<3>>;
+  var vCubics : [4]CubicBezier<float<3>>;
 }
 
 class BicubicTessellator {
@@ -83,8 +83,8 @@ class BicubicTessellator {
           pu[j] = controlPoints[controlIndices[k + i + j * 4]];
           pv[j] = controlPoints[controlIndices[k + i * 4 + j]];
         }
-        patch.uCubics[i].FromBezier(pu);
-        patch.vCubics[i].FromBezier(pv);
+        patch.uCubics[i] = CubicBezier<float<3>>(pu);
+        patch.vCubics[i] = CubicBezier<float<3>>(pv);
       }
       for (var i = 0; i <= level; ++i) {
         var v = (float) i * scale;
@@ -222,11 +222,11 @@ var depthBuffer = new renderable Texture2D<Depth24Plus>(device, window.GetSize()
 var uniforms : Uniforms;
 var prevWindowSize = uint<2>{0, 0};
 var startTime = System.GetCurrentTime();
-var animCurves : [4]BezierCubic<float>;
-animCurves[0].FromBezier({1.0, 1.0, 1.5, 1.5});
-animCurves[1].FromBezier({1.5, 1.5, 1.0, 1.0});
-animCurves[2].FromBezier({1.0, 1.0, 0.5, 0.5});
-animCurves[3].FromBezier({0.5, 0.5, 1.0, 1.0});
+var animCurves : [4]CubicBezier<float>;
+animCurves[0] = CubicBezier<float>({1.0, 1.0, 1.5, 1.5});
+animCurves[1] = CubicBezier<float>({1.5, 1.5, 1.0, 1.0});
+animCurves[2] = CubicBezier<float>({1.0, 1.0, 0.5, 0.5});
+animCurves[3] = CubicBezier<float>({0.5, 0.5, 1.0, 1.0});
 var keyTimes : [4]float = { 0.0, 0.5, 1.5, 1.7 };
 var duration = 2.0;
 var animTeapotControlPoints = [teapotControlPoints.length] new float<3>;
