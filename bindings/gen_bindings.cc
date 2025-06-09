@@ -33,7 +33,9 @@ const char* MemoryLayoutToString(MemoryLayout layout) {
 }
 
 std::string ConvertType(Type* type, const std::string& str) {
-  if (type->IsPtr()) {
+  if (type->IsStrongPtr() || type->IsWeakPtr()) {
+    return "Object " + str;
+  } else if (type->IsRawPtr()) {
     return ConvertType(static_cast<PtrType*>(type)->GetBaseType(), "*" + str);
   } else if (type->IsArrayLike()) {
     ArrayLikeType* a = static_cast<VectorType*>(type);

@@ -755,19 +755,20 @@ static void ExtractPipelineData(Type* type, void* data, PipelineData* out) {
     assert(fieldType->IsClass());
     auto classType = static_cast<ClassType*>(fieldType);
     if (classType->GetTemplate() == NativeClass::VertexInput && ptr) {
-      out->vertexBuffers.push_back(static_cast<VertexInput*>(ptr)->buffer->buffer);
+      auto* v = static_cast<VertexInput*>(ptr);
+      out->vertexBuffers.push_back(static_cast<Buffer*>(v->buffer.ptr)->buffer);
     } else if (classType->GetTemplate() == NativeClass::ColorAttachment && ptr) {
-      auto v = static_cast<ColorAttachment*>(ptr);
+      auto* v = static_cast<ColorAttachment*>(ptr);
       out->colorAttachments.push_back({
-        .view = v->texture->view,
+        .view = static_cast<Texture*>(v->texture.ptr)->view,
         .loadOp = ToDawnLoadOp(v->loadOp),
         .storeOp = ToDawnStoreOp(v->storeOp),
         .clearValue = {v->clearValue[0], v->clearValue[1], v->clearValue[2], v->clearValue[3]},
       });
     } else if (classType->GetTemplate() == NativeClass::DepthStencilAttachment && ptr) {
-      auto v = static_cast<DepthStencilAttachment*>(ptr);
+      auto* v = static_cast<DepthStencilAttachment*>(ptr);
       out->depthStencilAttachment = {
-        .view = v->texture->view,
+        .view = static_cast<Texture*>(v->texture.ptr)->view,
         .depthLoadOp = ToDawnLoadOp(v->depthLoadOp),
         .depthStoreOp = ToDawnStoreOp(v->depthStoreOp),
         .depthClearValue = v->depthClearValue,
