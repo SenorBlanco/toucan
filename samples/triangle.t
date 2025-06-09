@@ -12,12 +12,9 @@ class Pipeline {
 }
 var pipeline = new RenderPipeline<Pipeline>(device);
 var encoder = new CommandEncoder(device);
-var fb : ColorAttachment<PreferredSwapChainFormat>;
-fb.texture = swapChain.GetCurrentTexture();
-fb.loadOp = LoadOp.Clear;
-fb.storeOp = StoreOp.Store;
 var renderPass = new RenderPass<Pipeline>(encoder, {
-  vertices = { vb }, fragColor = fb
+  vertices = { vb },
+  fragColor = { texture = swapChain.GetCurrentTexture() }
 });
 renderPass.SetPipeline(pipeline);
 renderPass.Draw(3, 1, 0, 0);
