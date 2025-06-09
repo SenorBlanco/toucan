@@ -41,7 +41,6 @@ class GenBindings {
 
  private:
   SymbolTable*                   symbols_;
-  TypeTable*                     types_;
   TypeVector                     referencedTypes_;
   std::list<ClassType*>          classes_;
   std::ostream&                  file_;

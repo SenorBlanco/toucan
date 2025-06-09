@@ -300,7 +300,7 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   numTypes_ = 0;
 }
 
-void PrintNativeType(std::ostream& result, Type* type) {
+void PrintNativeType(std::ostream& result, Type* type, bool isReturnType = false) {
   if (type->IsVoid()) {
     result << "void";
   } else if (type->IsInteger()) {
@@ -329,7 +329,9 @@ void PrintNativeType(std::ostream& result, Type* type) {
     }
   } else if (type->IsStrongPtr() || type->IsWeakPtr()) {
     Type* baseType = static_cast<PtrType*>(type)->GetBaseType()->GetUnqualifiedType();
-    if (baseType->IsClass()) {
+    if (isReturnType && baseType->IsClass()) {
+      // Smart ptrs to native types will be wrapped by the calling
+      // code, so emit them as raw ptrs.
       PrintNativeType(result, baseType);
       result << "*";
     } else {
@@ -395,7 +397,7 @@ void GenBindings::EmitMethod(Method* method) {
 #if TARGET_OS_IS_WIN
       header_ << "__declspec(dllexport) ";
 #endif
-      PrintNativeType(header_, method->returnType);
+      PrintNativeType(header_, method->returnType, true);
       header_ << " " << method->GetMangledName() << "(";
       if (method->IsConstructor()) {
         skipFirst = true;
