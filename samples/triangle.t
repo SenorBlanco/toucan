@@ -12,7 +12,8 @@ var pipeline = new RenderPipeline<Pipeline>(device);
 var encoder = new CommandEncoder(device);
 var vb = new vertex Buffer<[]float<2>>(device, &verts);
 var renderPass = new RenderPass<Pipeline>(encoder, {
-  vertices = { vb }, fragColor = { texture = swapChain.GetCurrentTexture() }
+  vertices = { vb },
+  fragColor = { texture = swapChain.GetCurrentTexture() }
 });
 renderPass.SetPipeline(pipeline);
 renderPass.Draw(3, 1, 0, 0);
