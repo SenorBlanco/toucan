@@ -40,6 +40,7 @@ class Type {
  public:
   virtual ~Type(){};
   virtual bool  IsArray() const { return false; }
+  virtual bool  IsArrayLike() const { return false; }
   virtual bool  IsQualified() const { return false; }
   virtual bool  IsUnsizedArray() const { return false; }
   virtual bool  IsUnsizedClass() const { return false; }
@@ -108,7 +109,14 @@ class Type {
 
 using TypeList = std::vector<Type*>;
 
-class VectorType : public Type {
+class ArrayLikeType : public Type {
+ public:
+  bool            IsArrayLike() const override { return true; }
+  virtual int     GetNumElements() const = 0;
+  virtual Type*   GetElementType() const = 0;
+};
+
+class VectorType : public ArrayLikeType {
  public:
   VectorType(Type* componentType, unsigned int size);
   bool         IsVector() const override { return true; }
@@ -121,6 +129,8 @@ class VectorType : public Type {
   bool         CanInitFrom(const ListType* type) const override;
   int          GetSizeInBytes() const override;
   std::string  ToString() const override;
+  int          GetNumElements() const override { return length_; }
+  Type*        GetElementType() const override { return componentType_; }
   Type*        GetComponentType() { return componentType_; }
   unsigned int GetLength() { return length_; }
   int          GetSwizzle(const std::string& str) const;
@@ -130,13 +140,15 @@ class VectorType : public Type {
   unsigned int length_;
 };
 
-class MatrixType : public Type {
+class MatrixType : public ArrayLikeType {
  public:
   MatrixType(VectorType* columnType, unsigned int numColumns);
   bool IsMatrix() const override { return true; }
   bool IsPOD() const override { return true; }
   int  GetSizeInBytes() const override { return numColumns_ * columnType_->GetSizeInBytes(); }
   std::string  ToString() const override;
+  int          GetNumElements() const override { return numColumns_; }
+  Type*        GetElementType() const override { return columnType_; }
   VectorType*  GetColumnType() { return columnType_; }
   unsigned int GetNumColumns() { return numColumns_; }
   bool         CanInitFrom(const ListType* type) const override;
@@ -237,15 +249,15 @@ class AutoType : public Type {
   int         GetSizeInBytes() const override { return 0; }
 };
 
-class ArrayType : public Type {
+class ArrayType : public ArrayLikeType {
  public:
   ArrayType(Type* elementType, int numElements, MemoryLayout memoryLayout);
   bool         IsArray() const override { return true; }
   bool         IsUnsizedArray() const override { return numElements_ == 0; }
   bool         IsPOD() const override { return numElements_ > 0 && GetElementType()->IsPOD(); }
   bool         IsFullySpecified() const override { return elementType_->IsFullySpecified(); }
-  Type*        GetElementType() const { return elementType_; }
-  int          GetNumElements() const { return numElements_; }
+  Type*        GetElementType() const override { return elementType_; }
+  int          GetNumElements() const override { return numElements_; }
   std::string  ToString() const override;
   int          GetElementSizeInBytes() const;
   int          GetElementPadding() const;

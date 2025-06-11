@@ -35,9 +35,6 @@ const char* MemoryLayoutToString(MemoryLayout layout) {
 std::string ConvertType(Type* type, const std::string& str) {
   if (type->IsPtr()) {
     return ConvertType(static_cast<PtrType*>(type)->GetBaseType(), "*" + str);
-  } else if (type->IsArray()) {
-    ArrayType* atype = static_cast<ArrayType*>(type);
-    return ConvertType(atype->GetElementType(), str + "[" + std::to_string(atype->GetNumElements()) + "]");
   } else if (type->IsClass()) {
     return static_cast<ClassType*>(type)->GetName() + " " + str;
   } else if (type->IsByte()) {
@@ -60,12 +57,9 @@ std::string ConvertType(Type* type, const std::string& str) {
     return "double " + str;
   } else if (type->IsBool()) {
     return "bool " + str;
-  } else if (type->IsVector()) {
-    VectorType* v = static_cast<VectorType*>(type);
-    return ConvertType(v->GetComponentType(), str + "[" + std::to_string(v->GetLength()) + "]");
-  } else if (type->IsMatrix()) {
-    MatrixType* m = static_cast<MatrixType*>(type);
-    return ConvertType(m->GetColumnType(), str + "[" + std::to_string(m->GetNumColumns()) + "]");
+  } else if (type->IsArrayLike()) {
+    ArrayLikeType* a = static_cast<VectorType*>(type);
+    return ConvertType(a->GetElementType(), str + "[" + std::to_string(a->GetNumElements()) + "]");
   } else if (type->IsVoid()) {
     return "void " + str;
   } else if (type->IsQualified()) {
