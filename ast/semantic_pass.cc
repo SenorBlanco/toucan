@@ -411,6 +411,7 @@ Expr* SemanticPass::ResolveListExpr(UnresolvedListExpr* node, Type* dstType) {
     } else {
       auto& fields = classType->GetFields();
       int i = 0;
+      assert(argList->GetArgs().size() == classType->GetTotalFields());
       for (auto arg : argList->GetArgs()) {
         exprs.push_back(Widen(arg->GetExpr(), fields[i++]->type));
       }
@@ -420,16 +421,13 @@ Expr* SemanticPass::ResolveListExpr(UnresolvedListExpr* node, Type* dstType) {
       Error("named list expression are unsupported for %s", dstType->ToString().c_str());
       return nullptr;
     }
-    Type* elementType;
-    int length;
-    if (dstType->IsArrayLike()) {
-      auto arrayLikeType = static_cast<ArrayLikeType*>(dstType);
-      elementType = arrayLikeType->GetElementType();
-      length = arrayLikeType->GetNumElements();
-    } else {
+    if (!dstType->IsArrayLike()) {
       assert(!"invalid type in list expression");
       return nullptr;
     }
+    auto arrayLikeType = static_cast<ArrayLikeType*>(dstType);
+    Type* elementType = arrayLikeType->GetElementType();
+    uint32_t length = arrayLikeType->GetNumElements();
     if (argList->GetArgs().size() == 1) {
       Expr* arg = Widen(argList->GetArgs()[0]->GetExpr(), elementType);
       for (int i = 0; i < length; ++i) {
