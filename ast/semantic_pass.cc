@@ -167,18 +167,8 @@ Result SemanticPass::Visit(UnresolvedInitializer* node) {
     auto* exprList = Make<ExprList>(std::move(constructorArgs));
     Expr* result = Make<MethodCall>(constructor, exprList);
     return Make<LoadExpr>(result);
-  } else if (type->IsArrayLike() && args.size() == 1) {
-    int length = static_cast<ArrayLikeType*>(type)->GetNumElements();
-    for (int i = 0; i < length; ++i) {
-      exprs.push_back(args[0]->GetExpr());
-    }
-  } else {
-    for (auto arg : args) {
-      exprs.push_back(arg->GetExpr());
-    }
   }
-  auto exprList = Make<ExprList>(std::move(exprs));
-  return Make<Initializer>(node->GetType(), exprList);
+  return ResolveListExpr(argList, type);
 }
 
 Stmt* SemanticPass::Initialize(Expr* dest, Expr* initExpr) {
@@ -321,7 +311,7 @@ Expr* SemanticPass::Widen(Expr* node, Type* dstType) {
   if (srcType->GetUnqualifiedType() == dstType->GetUnqualifiedType()) {
     return node;
   } else if (node->IsUnresolvedListExpr()) {
-    return ResolveListExpr(static_cast<UnresolvedListExpr*>(node), dstType);
+    return ResolveListExpr(static_cast<UnresolvedListExpr*>(node)->GetArgList(), dstType);
   } else if ((srcType->IsStrongPtr() || srcType->IsWeakPtr()) && dstType->IsRawPtr()) {
     return Make<SmartToRawPtr>(node);
   } else if (dstType->IsRawPtr() && static_cast<RawPtrType*>(dstType)->GetBaseType()->IsArray()) {
@@ -383,21 +373,19 @@ void SemanticPass::AddDefaultInitializers(Type* type, std::vector<Expr*>* exprs)
   }
 }
 
-Expr* SemanticPass::ResolveListExpr(UnresolvedListExpr* node, Type* dstType) {
+Expr* SemanticPass::ResolveListExpr(ArgList* argList, Type* dstType) {
   if (dstType->IsRawPtr()) {
     auto baseType = static_cast<RawPtrType*>(dstType)->GetBaseType();
     if (baseType->IsUnsizedArray()) {
       // Resolve as &[N] of list length, then convert to &[]
       auto arrayType = static_cast<ArrayType*>(baseType);
-      auto length = node->GetArgList()->GetArgs().size();
+      auto length = argList->GetArgs().size();
       dstType = types_->GetArrayType(arrayType->GetElementType(), length, arrayType->GetMemoryLayout());
       dstType = types_->GetRawPtrType(dstType);
-      return MakeIndexable(ResolveListExpr(node, dstType));
+      return MakeIndexable(ResolveListExpr(argList, dstType));
     }
-    return Make<TempVarExpr>(baseType, ResolveListExpr(node, baseType));
+    return Make<TempVarExpr>(baseType, ResolveListExpr(argList, baseType));
   }
-  Type*              type = dstType;
-  auto               argList = node->GetArgList();
   std::vector<Expr*> exprs;
   if (dstType->IsClass()) {
     auto  classType = static_cast<ClassType*>(dstType);
@@ -440,7 +428,7 @@ Expr* SemanticPass::ResolveListExpr(UnresolvedListExpr* node, Type* dstType) {
     }
   }
   auto exprList = Make<ExprList>(std::move(exprs));
-  return Make<Initializer>(type, exprList);
+  return Make<Initializer>(dstType, exprList);
 }
 
 Result SemanticPass::Visit(UnresolvedMethodCall* node) {
