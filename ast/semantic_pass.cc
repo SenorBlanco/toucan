@@ -527,7 +527,7 @@ Result SemanticPass::WideningError(Type* srcType, Type* dstType) {
 
 Expr* SemanticPass::MakeSwizzleForStore(VectorType* lhsType, Expr* lhs, const std::string& swizzle, Expr* rhs) {
   auto indices = std::vector<int>(swizzle.size());
-  size_t resultLength = ParseSwizzle(swizzle, lhsType->GetLength(), indices.data());
+  size_t resultLength = ParseSwizzle(swizzle, lhsType->GetNumElements(), indices.data());
   if (resultLength < swizzle.size()) {
     Error("invalid swizzle component '%c'", swizzle[resultLength]);
     return nullptr;
@@ -537,10 +537,10 @@ Expr* SemanticPass::MakeSwizzleForStore(VectorType* lhsType, Expr* lhs, const st
     return nullptr;
   }
   Type* rhsType = rhs->GetType(types_);
-  auto dstType = types_->GetVector(lhsType->GetComponentType(), indices.size());
+  auto dstType = types_->GetVector(lhsType->GetElementType(), indices.size());
   if (indices.size() == 1) {
-    if (!rhsType->CanWidenTo(lhsType->GetComponentType())) {
-      WideningError(rhsType, lhsType->GetComponentType());
+    if (!rhsType->CanWidenTo(lhsType->GetElementType())) {
+      WideningError(rhsType, lhsType->GetElementType());
       return nullptr;
     }
     lhs = Make<InsertElementExpr>(lhs, rhs, indices[0]);
@@ -590,7 +590,7 @@ Result SemanticPass::Visit(UnresolvedDot* node) {
                    classType->ToString().c_str());
     }
   } else if (type->IsVector()) {
-    return MakeSwizzle(static_cast<VectorType*>(type)->GetLength(), expr, id);
+    return MakeSwizzle(static_cast<VectorType*>(type)->GetNumElements(), expr, id);
   } else {
     return Error("Expression is not of class, reference or vector type");
   }

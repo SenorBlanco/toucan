@@ -111,51 +111,41 @@ using TypeList = std::vector<Type*>;
 
 class ArrayLikeType : public Type {
  public:
-  bool            IsArrayLike() const override { return true; }
-  virtual int     GetNumElements() const = 0;
-  virtual Type*   GetElementType() const = 0;
+  ArrayLikeType(Type* elementType, uint32_t size);
+  bool              IsArrayLike() const override { return true; }
+  Type*             GetElementType() const { return elementType_; }
+  uint32_t          GetNumElements() const { return numElements_; }
+ protected:
+  Type*             elementType_;
+  uint32_t          numElements_;
 };
 
 class VectorType : public ArrayLikeType {
  public:
-  VectorType(Type* componentType, unsigned int size);
+  VectorType(Type* componentType, uint32_t size);
   bool         IsVector() const override { return true; }
-  bool         IsUnsigned() const override { return componentType_->IsUnsigned(); }
-  bool         IsIntegerVector() const override { return componentType_->IsInteger(); }
-  bool         IsFloatVector() const override { return componentType_->IsFloat(); }
+  bool         IsUnsigned() const override { return elementType_->IsUnsigned(); }
+  bool         IsIntegerVector() const override { return elementType_->IsInteger(); }
+  bool         IsFloatVector() const override { return elementType_->IsFloat(); }
   bool         IsPOD() const override { return true; }
   bool         CanWidenTo(Type* type) const override;
   bool         CanNarrowTo(Type* type) const override;
   bool         CanInitFrom(const ListType* type) const override;
   int          GetSizeInBytes() const override;
   std::string  ToString() const override;
-  int          GetNumElements() const override { return length_; }
-  Type*        GetElementType() const override { return componentType_; }
-  Type*        GetComponentType() { return componentType_; }
-  unsigned int GetLength() { return length_; }
   int          GetSwizzle(const std::string& str) const;
-
- private:
-  Type*        componentType_;
-  unsigned int length_;
 };
 
 class MatrixType : public ArrayLikeType {
  public:
-  MatrixType(VectorType* columnType, unsigned int numColumns);
+  MatrixType(VectorType* columnType, uint32_t numColumns);
   bool IsMatrix() const override { return true; }
   bool IsPOD() const override { return true; }
-  int  GetSizeInBytes() const override { return numColumns_ * columnType_->GetSizeInBytes(); }
+  int  GetSizeInBytes() const override { return numElements_ * elementType_->GetSizeInBytes(); }
   std::string  ToString() const override;
-  int          GetNumElements() const override { return numColumns_; }
-  Type*        GetElementType() const override { return columnType_; }
-  VectorType*  GetColumnType() { return columnType_; }
-  unsigned int GetNumColumns() { return numColumns_; }
+  VectorType*  GetColumnType() { return static_cast<VectorType*>(elementType_); }
+  unsigned int GetNumColumns() { return numElements_; }
   bool         CanInitFrom(const ListType* type) const override;
-
- private:
-  VectorType*  columnType_;
-  unsigned int numColumns_;
 };
 
 class IntegerType : public Type {
@@ -251,13 +241,11 @@ class AutoType : public Type {
 
 class ArrayType : public ArrayLikeType {
  public:
-  ArrayType(Type* elementType, int numElements, MemoryLayout memoryLayout);
+  ArrayType(Type* elementType, uint32_t numElements, MemoryLayout memoryLayout);
   bool         IsArray() const override { return true; }
   bool         IsUnsizedArray() const override { return numElements_ == 0; }
-  bool         IsPOD() const override { return numElements_ > 0 && GetElementType()->IsPOD(); }
+  bool         IsPOD() const override { return numElements_ > 0 && elementType_->IsPOD(); }
   bool         IsFullySpecified() const override { return elementType_->IsFullySpecified(); }
-  Type*        GetElementType() const override { return elementType_; }
-  int          GetNumElements() const override { return numElements_; }
   std::string  ToString() const override;
   int          GetElementSizeInBytes() const;
   int          GetElementPadding() const;
@@ -272,8 +260,6 @@ class ArrayType : public ArrayLikeType {
   bool         ContainsRawPtr() const override { return elementType_->ContainsRawPtr(); }
 
  private:
-  Type*        elementType_;
-  int          numElements_;
   MemoryLayout memoryLayout_;
 };
 

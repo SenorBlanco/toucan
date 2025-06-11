@@ -104,9 +104,9 @@ int GenBindings::EmitType(Type* type) {
     emitLHS() << "types->GetBool();\n";
   } else if (type->IsVector()) {
     VectorType* v = static_cast<VectorType*>(type);
-    auto componentTypeID = EmitType(v->GetComponentType());
+    auto componentTypeID = EmitType(v->GetElementType());
     emitLHS() << "types->GetVector(type" << componentTypeID << ", "
-              << v->GetLength() << ");\n";
+              << v->GetNumElements() << ");\n";
   } else if (type->IsMatrix()) {
     MatrixType* m = static_cast<MatrixType*>(type);
     auto columnTypeID = EmitType(m->GetColumnType());
@@ -338,19 +338,19 @@ void PrintNativeType(std::ostream& result, Type* type) {
     ArrayType* arrayType = static_cast<ArrayType*>(type);
     Type*      elementType = arrayType->GetElementType();
     if (elementType->IsVector()) {
-      PrintNativeType(result, static_cast<VectorType*>(type)->GetComponentType());
+      PrintNativeType(result, static_cast<VectorType*>(type)->GetElementType());
     } else if (elementType->IsMatrix()) {
-      PrintNativeType(result, static_cast<MatrixType*>(type)->GetColumnType()->GetComponentType());
+      PrintNativeType(result, static_cast<MatrixType*>(type)->GetColumnType()->GetElementType());
     } else {
       PrintNativeType(result, elementType);
     }
     result << "*";
   } else if (type->IsVector()) {
     result << "const ";
-    PrintNativeType(result, static_cast<VectorType*>(type)->GetComponentType());
+    PrintNativeType(result, static_cast<VectorType*>(type)->GetElementType());
     result << "*";
   } else if (type->IsMatrix()) {
-    PrintNativeType(result, static_cast<MatrixType*>(type)->GetColumnType()->GetComponentType());
+    PrintNativeType(result, static_cast<MatrixType*>(type)->GetColumnType()->GetElementType());
     result << "*";
   } else if (type->IsQualified()) {
     PrintNativeType(result, static_cast<QualifiedType*>(type)->GetBaseType());
