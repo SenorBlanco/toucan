@@ -42,6 +42,7 @@ bool exitOnAbort;
 namespace {
 
 wgpu::Instance gInstance;
+std::unordered_map<void*, wgpu::Buffer> gMappedBuffers;
 
 uint32_t BytesPerPixel(wgpu::TextureFormat format) {
   switch (format) {
@@ -79,6 +80,12 @@ wgpu::StoreOp ToDawnStoreOp(StoreOp loadOp) {
     case StoreOp::Discard: return wgpu::StoreOp::Discard;
     default: assert(!"unknown StoreOp"); return wgpu::StoreOp::Store;
   }
+}
+
+void MappedDataDestructor(void* This) {
+  wgpu::Buffer buffer = gMappedBuffers[This];
+  buffer.Unmap();
+  gMappedBuffers[This] = nullptr;
 }
 
 }  // namespace
@@ -1162,6 +1169,8 @@ static Object* MapSync(wgpu::MapMode mapMode, Buffer* buffer) {
   controlBlock->type = buffer->type;
   controlBlock->arrayLength = buffer->length;
   controlBlock->type = buffer->type;
+  static void* bufferVTable[1] = { MappedDataDestructor };
+  controlBlock->vtable = bufferVTable;
   buffer->mappedObject.controlBlock = controlBlock;
   return &buffer->mappedObject;
 }
