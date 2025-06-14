@@ -82,8 +82,9 @@ wgpu::StoreOp ToDawnStoreOp(StoreOp loadOp) {
   }
 }
 
-void MappedDataDestructor(void* This) {
+void UnmapBuffer(void* This) {
   wgpu::Buffer buffer = gMappedBuffers[This];
+  assert(buffer);
   buffer.Unmap();
   gMappedBuffers[This] = nullptr;
 }
@@ -1165,13 +1166,14 @@ static Object* MapSync(wgpu::MapMode mapMode, Buffer* buffer) {
   ControlBlock* controlBlock = static_cast<ControlBlock*>(malloc(sizeof(ControlBlock)));
 #endif
   controlBlock->strongRefs = 1;
-  controlBlock->weakRefs = 2;
+  controlBlock->weakRefs = 1;
   controlBlock->type = buffer->type;
   controlBlock->arrayLength = buffer->length;
   controlBlock->type = buffer->type;
-  static void* bufferVTable[1] = { MappedDataDestructor };
+  static FuncPtr bufferVTable[1] = { &UnmapBuffer };
   controlBlock->vtable = bufferVTable;
   buffer->mappedObject.controlBlock = controlBlock;
+  gMappedBuffers[buffer->mappedObject.ptr] = buffer->buffer;
   return &buffer->mappedObject;
 }
 
@@ -1197,21 +1199,6 @@ Buffer* Buffer_Buffer_Device_T(int qualifiers, Type* type, Device* device, void*
 Object* Buffer_MapRead_hostreadable_Buffer(Buffer* buffer) { return MapSync(wgpu::MapMode::Read, buffer); }
 
 Object* Buffer_MapWrite_hostwriteable_Buffer(Buffer* buffer) { return MapSync(wgpu::MapMode::Write, buffer); }
-
-void Buffer_Unmap(Buffer* buffer) {
-  buffer->buffer.Unmap();
-  ControlBlock* controlBlock = buffer->mappedObject.controlBlock;
-  controlBlock->strongRefs = 0;
-  if (controlBlock->weakRefs == 0) {
-#if TARGET_OS_IS_WIN && TARGET_CPU_IS_X86
-    _aligned_free(controlBlock);
-#else
-    free(controlBlock);
-#endif
-  }
-  buffer->mappedObject.ptr = nullptr;
-  buffer->mappedObject.controlBlock = nullptr;
-}
 
 void Buffer_SetData(Buffer* buffer, void* data) {
   Type* type = buffer->type;

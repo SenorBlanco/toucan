@@ -389,27 +389,27 @@ void CodeGenLLVM::UnrefStrongPtr(llvm::Value* ptr, StrongPtrType* type) {
   llvm::BasicBlock* trueBlock = CreateBasicBlock("trueBlock");
   builder_->CreateCondBr(isZero, trueBlock, afterBlock);
   builder_->SetInsertPoint(trueBlock);
-  bool  isNativeClass = false;
   Type* baseType = type->GetBaseType()->GetUnqualifiedType();
-  if (baseType->IsClass()) {
-    auto            classType = static_cast<ClassType*>(baseType);
-    Method*         destructor = classType->GetVTable()[0];
-    llvm::Function* function = GetOrCreateMethodStub(destructor);
+//  if (baseType->IsClass()) {
+//    auto            classType = static_cast<ClassType*>(baseType);
+//    Method*         destructor = classType->GetVTable()[0];
+//    llvm::Function* function = GetOrCreateMethodStub(destructor);
     llvm::Value*    v = GetVTableAddress(controlBlock);
     llvm::Value*    vtable = builder_->CreateLoad(vtableType_, v);
     llvm::Value*    gep = builder_->CreateGEP(funcPtrType_, vtable, Int(0));
     llvm::Value*    func = builder_->CreateLoad(funcPtrType_, gep);
+    llvm::FunctionType* ft = llvm::FunctionType::get(voidPtrType_, {voidPtrType_}, false);
     llvm::Value*    typedFunc =
-        builder_->CreateBitCast(func, llvm::PointerType::get(function->getFunctionType(), 0));
+        builder_->CreateBitCast(func, llvm::PointerType::get(ft, 0));
     llvm::Value* arg = builder_->CreateExtractValue(ptr, {0});
-    if (classType->IsUnsizedClass()) {
-      auto length = builder_->CreateLoad(intType_, GetArrayLengthAddress(controlBlock));
-      arg = CreatePointer(arg, length);
-    }
-    isNativeClass = classType->IsNative();
-    builder_->CreateCall(function->getFunctionType(), typedFunc, {arg});
-  }
-  if (!isNativeClass) { GenerateFree(builder_->CreateExtractValue(ptr, {0})); }
+//    if (classType->IsUnsizedClass()) {
+//      auto length = builder_->CreateLoad(intType_, GetArrayLengthAddress(controlBlock));
+//      arg = CreatePointer(arg, length);
+//    }
+    builder_->CreateCall(ft, typedFunc, {arg});
+//  }
+  // FIXME: add this to existing destructors; make one for non-class objects too
+//  GenerateFree(builder_->CreateExtractValue(ptr, {0}));
   builder_->CreateBr(afterBlock);
   builder_->SetInsertPoint(afterBlock);
   UnrefWeakPtr(ptr);
