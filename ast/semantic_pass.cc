@@ -868,7 +868,7 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   Method* destructor = nullptr;
   for (const auto& mit : classType->GetMethods()) {
     Method* method = mit.get();
-    if (method->name[0] == '~') {
+    if (method->IsDestructor()) {
       destructor = method;
     } else {
       Method* match = FindOverriddenMethod(classType->GetParent(), method);

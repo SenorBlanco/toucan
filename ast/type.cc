@@ -362,7 +362,7 @@ std::string Method::ToString() const {
 
 std::string Method::GetMangledName() const {
   std::string result = classType->GetName() + "_";
-  if (name[0] == '~') {
+  if (IsDestructor()) {
     result += "Destroy";
   } else {
     result += name;
@@ -401,6 +401,10 @@ std::string Method::GetMangledName() const {
 
 bool Method::IsConstructor() const {
   return name == classType->GetName();
+}
+
+bool Method::IsDestructor() const {
+  return name[0] == '~';
 }
 
 ClassType::ClassType(std::string name) : name_(name) {

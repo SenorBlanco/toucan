@@ -433,6 +433,7 @@ void GenBindings::EmitMethod(Method* method) {
   }
   if ((method->modifiers & (Method::Modifier::Vertex | Method::Modifier::Fragment | Method::Modifier::Compute))) {
   } else if (emitSymbolsAndStatements_ && method->stmts) {
+    assert(method->IsDestructor());
     int id = sourcePass_.Resolve(method->stmts);
     file_ << "  m->stmts = node" << id << ";\n";
   }

@@ -315,6 +315,7 @@ struct Method {
   std::string             GetMangledName() const;
   void                    AddFormalArg(std::string id, Type* type, Expr* defaultValue);
   bool                    IsConstructor() const;
+  bool                    IsDestructor() const;
   int                     modifiers;
   Type*                   returnType;
   std::string             name;
