@@ -100,9 +100,10 @@ const uint32_t* Window_GetSize(Window* This) {
   return This->size;
 }
 
-void Window_Destroy(Window* This) {
+Window* Window_Destroy(Window* This) {
   XDestroyWindow(gDisplay, This->window);
   delete This;
+  return nullptr;
 }
 
 Device* Device_Device() {

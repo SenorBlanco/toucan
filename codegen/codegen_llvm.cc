@@ -284,10 +284,11 @@ llvm::Value* CodeGenLLVM::CreateControlBlock(Type* type) {
   builder_->CreateStore(Int(arrayLength), GetArrayLengthAddress(controlBlock));
   builder_->CreateStore(CreateTypePtr(type), GetClassTypeAddress(controlBlock));
   type = type->GetUnqualifiedType();
+  llvm::Value* destructor = llvm::ConstantPointerNull::get(voidPtrType_);
   if (type->IsClass()) {
-    llvm::Value* destructor = GetOrCreateMethodStub(static_cast<ClassType*>(type)->GetDestructor());
-    builder_->CreateStore(destructor, GetDestructorAddress(controlBlock));
+    destructor = GetOrCreateMethodStub(static_cast<ClassType*>(type)->GetDestructor());
   }
+  builder_->CreateStore(destructor, GetDestructorAddress(controlBlock));
   return controlBlock;
 }
 
@@ -362,22 +363,21 @@ void CodeGenLLVM::UnrefStrongPtr(llvm::Value* ptr, StrongPtrType* type) {
   llvm::BasicBlock* trueBlock = CreateBasicBlock("trueBlock");
   builder_->CreateCondBr(isZero, trueBlock, afterBlock);
   builder_->SetInsertPoint(trueBlock);
-  bool  isNativeClass = false;
-  Type* baseType = type->GetBaseType()->GetUnqualifiedType();
-  if (baseType->IsClass()) {
-    auto         classType = static_cast<ClassType*>(baseType);
-    llvm::Value* arg = builder_->CreateExtractValue(ptr, {0});
-    if (classType->IsUnsizedClass()) {
-      auto length = builder_->CreateLoad(intType_, GetArrayLengthAddress(controlBlock));
-      arg = CreatePointer(arg, length);
-    }
-    isNativeClass = classType->IsNative();
-    llvm::Value*    v = GetDestructorAddress(controlBlock);
-    llvm::Value*    destructor = builder_->CreateLoad(funcPtrType_, v);
-    llvm::Function* function = GetOrCreateMethodStub(classType->GetDestructor());
-    builder_->CreateCall(function->getFunctionType(), destructor, {arg});
-  }
-  if (!isNativeClass) { GenerateFree(builder_->CreateExtractValue(ptr, {0})); }
+  llvm::BasicBlock* nonNullDestructorBlock = CreateBasicBlock("nonNullDestructorBlock");
+  llvm::BasicBlock* freeBlock = CreateBasicBlock("freeBlock");
+  llvm::Value* v = GetDestructorAddress(controlBlock);
+  llvm::Value* destructor = builder_->CreateLoad(funcPtrType_, v);
+  llvm::Value* nullDestructor = llvm::ConstantPointerNull::get(controlBlockPtrType_);
+  llvm::Value* condition = builder_->CreateICmpNE(destructor, nullDestructor);
+  builder_->CreateCondBr(condition, nonNullDestructorBlock, freeBlock);
+  builder_->SetInsertPoint(nonNullDestructorBlock);
+  llvm::FunctionType* ft = llvm::FunctionType::get(voidPtrType_, {voidPtrType_}, false);
+  llvm::Value*      value = builder_->CreateExtractValue(ptr, {0});
+  value = builder_->CreateCall(ft, destructor, {value});
+  GenerateFree(value);
+  builder_->CreateBr(afterBlock);
+  builder_->SetInsertPoint(freeBlock);
+  GenerateFree(builder_->CreateExtractValue(ptr, {0}));
   builder_->CreateBr(afterBlock);
   builder_->SetInsertPoint(afterBlock);
   UnrefWeakPtr(ptr);

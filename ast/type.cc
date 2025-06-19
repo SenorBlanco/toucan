@@ -407,6 +407,22 @@ bool Method::IsDestructor() const {
   return name[0] == '~';
 }
 
+void ClassType::CreateDefaultDestructor(SymbolTable* symbols, TypeTable* types, NodeVector* nodes) {
+  if (!destructor_) {
+    std::string name = std::string("~") + name_;
+    auto ptrToThis = types->GetRawPtrType(this);
+    destructor_ = new Method(0, ptrToThis, name, this);
+    destructor_->AddFormalArg("this", ptrToThis, nullptr);
+    AddMethod(destructor_);
+  }
+  if (!destructor_->stmts) {
+    destructor_->stmts = nodes->Make<Stmts>();
+    auto thisVar = destructor_->formalArgList[0].get();
+    auto returnValue = nodes->Make<LoadExpr>(nodes->Make<VarExpr>(thisVar));
+    destructor_->stmts->Append(nodes->Make<ReturnStatement>(returnValue));
+  }
+}
+
 ClassType::ClassType(std::string name) : name_(name) {
 }
 

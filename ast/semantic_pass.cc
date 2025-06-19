@@ -865,13 +865,8 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   }
 
   symbols_->PushScope(scope);
-  Method* destructor = nullptr;
   for (const auto& mit : classType->GetMethods()) {
     Method* method = mit.get();
-    if (method->IsDestructor()) {
-      destructor = method;
-    }
-
     if (method->stmts) {
       method->stmts = Resolve(method->stmts);
       // If last statement is not a return statement,
@@ -884,7 +879,7 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
         }
       }
     }
-    if (method->returnType->ContainsRawPtr() && !method->IsConstructor()) {
+    if (method->returnType->ContainsRawPtr() && !method->IsConstructor() && !method->IsDestructor()) {
       return Error("cannot return a raw pointer");
     }
     for (int i = 0; i < method->defaultArgs.size(); ++i) {
@@ -895,18 +890,7 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
     }
   }
 
-  if (!destructor) {
-    std::string name(std::string("~") + classType->GetName());
-    destructor = new Method(0, types_->GetVoid(), name, classType);
-    destructor->AddFormalArg("this", types_->GetRawPtrType(classType), nullptr);
-    classType->AddMethod(destructor);
-  }
-
-  if (!destructor->stmts) {
-    Stmts* stmts = Make<Stmts>();
-    stmts->Append(Make<ReturnStatement>(nullptr));
-    destructor->stmts = stmts;
-  }
+  classType->CreateDefaultDestructor(symbols_, types_, nodes_);
 
   const auto& fields = classType->GetFields();
   for (const auto& field : fields) {

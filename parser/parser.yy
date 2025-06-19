@@ -71,6 +71,7 @@ static void BeginConstructor(int modifiers, Type* type, Stmts* formalArguments);
 static void BeginDestructor(int modifiers, Type* type);
 static Method* EndMethod(Stmts* stmts);
 static Method* EndConstructor(Expr* initializer, Stmts* stmts);
+static Method* EndDestructor(Stmts* stmts);
 static void BeginBlock();
 static void EndBlock(Stmts* stmts);
 static Expr* ThisExpr();
@@ -334,7 +335,7 @@ class_body_decl:
                                             { BeginConstructor($1, $2, $4); }
     opt_initializer method_body             { EndConstructor($7, $8); }
   | method_modifiers '~' T_TYPENAME '(' ')' { BeginDestructor($1, $3); }
-    method_body                             { EndMethod($7); }
+    method_body                             { EndDestructor($7); }
   | var_decl_statement ';'                  { CreateFieldsFromVarDecls($1); }
   | enum_decl ';'
   | using_decl
@@ -855,7 +856,7 @@ static void BeginDestructor(int modifiers, Type* type) {
   }
   ClassType* classType = static_cast<ClassType*>(type);
   std::string name(std::string("~") + classType->GetName());
-  Type* returnType = types_->GetVoid();
+  auto returnType = types_->GetRawPtrType(classType);
   BeginMethod(modifiers, name.c_str(), nullptr, nullptr, 0, returnType);
 }
 
@@ -896,6 +897,13 @@ static Method* EndConstructor(Expr* initializer, Stmts* stmts) {
     method->stmts->Prepend(Make<StoreStmt>(ThisExpr(), initializer));
   }
   return method;
+}
+
+static Method* EndDestructor(Stmts* stmts) {
+  if (stmts) {
+    stmts->Append(Make<ReturnStatement>(ThisExpr()));
+  }
+  return EndMethod(stmts);
 }
 
 static Method* EndMethod(Stmts* stmts) {

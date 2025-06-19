@@ -136,7 +136,7 @@ Window* Window_Window(const int32_t* position, const uint32_t* size) {
   return w;
 }
 
-void Window_Destroy(Window* This) { delete This; }
+Window* Window_Destroy(Window* This) { delete This; return nullptr; }
 
 wgpu::TextureFormat GetPreferredSwapChainFormat() {
   return wgpu::TextureFormat::BGRA8Unorm;
@@ -169,9 +169,10 @@ void SwapChain_Present(SwapChain* swapChain) {
   swapChain->pool = [[NSAutoreleasePool alloc] init];
 }
 
-void SwapChain_Destroy(SwapChain* This) {
+SwapChain* SwapChain_Destroy(SwapChain* This) {
   [static_cast<NSAutoreleasePool*>(This->pool) release];
   delete This;
+  return nullptr;
 }
 
 Device* Device_Device() {

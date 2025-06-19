@@ -102,9 +102,9 @@ void Image_Decode(Image* This, Array* dest, uint32_t bufferWidth) {
   jpeg_finish_decompress(&This->cinfo);
 }
 
-void Image_Destroy(Image* This) {
+Image* Image_Destroy(Image* This) {
   // FIXME: make wrappers create Toucan null for native null
-  if (This == nullptr) return;
+  if (This == nullptr) return nullptr;
 
   jpeg_destroy_decompress(&This->cinfo);
   This->encodedImage.controlBlock->strongRefs--;
@@ -116,6 +116,7 @@ void Image_Destroy(Image* This) {
     free(This->encodedImage.controlBlock);
   }
   delete This;
+  return nullptr;
 }
 
 };  // namespace Toucan

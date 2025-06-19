@@ -640,9 +640,9 @@ struct Queue {
 
 Queue* Device_GetQueue(Device* device) { return new Queue(device->device.GetQueue()); }
 
-void Device_Destroy(Device* This) { delete This; }
+Device* Device_Destroy(Device* This) { delete This; return nullptr; }
 
-void Queue_Destroy(Queue* This) { delete This; }
+Queue* Queue_Destroy(Queue* This) { delete This; return nullptr; }
 
 wgpu::ShaderModule createShaderModule(Device* device, Method* m) {
   wgpu::ShaderModuleDescriptor desc;
@@ -853,7 +853,7 @@ RenderPipeline* RenderPipeline_RenderPipeline(int               qualifiers,
   return new RenderPipeline(device->device.CreateRenderPipeline(&rpDesc));
 }
 
-void RenderPipeline_Destroy(RenderPipeline* This) { delete This; }
+RenderPipeline* RenderPipeline_Destroy(RenderPipeline* This) { delete This; return nullptr; }
 
 ComputePipeline* ComputePipeline_ComputePipeline(int     qualifiers,
                                                  Type*   computeLayout,
@@ -884,7 +884,7 @@ ComputePipeline* ComputePipeline_ComputePipeline(int     qualifiers,
   return new ComputePipeline(device->device.CreateComputePipeline(&cpDesc));
 }
 
-void ComputePipeline_Destroy(ComputePipeline* This) { delete This; }
+ComputePipeline* ComputePipeline_Destroy(ComputePipeline* This) { delete This; return nullptr; }
 
 BindGroup* BindGroup_BindGroup(int qualifiers, Type* type, Device* device, void* data) {
   assert(type->IsClass() && "bind group argument must be a class type");
@@ -903,24 +903,24 @@ BindGroup* BindGroup_BindGroup(int qualifiers, Type* type, Device* device, void*
   return new BindGroup(device->device.CreateBindGroup(&desc));
 }
 
-void BindGroup_Destroy(BindGroup* This) { delete This; }
+BindGroup* BindGroup_Destroy(BindGroup* This) { delete This; return nullptr; }
 
-void SampleableTexture1D_Destroy(SampleableTexture1D* This) { delete This; }
+SampleableTexture1D* SampleableTexture1D_Destroy(SampleableTexture1D* This) { delete This; return nullptr; }
 
-void SampleableTexture2D_Destroy(SampleableTexture2D* This) { delete This; }
+SampleableTexture2D* SampleableTexture2D_Destroy(SampleableTexture2D* This) { delete This; return nullptr; }
 
-void SampleableTexture2DArray_Destroy(SampleableTexture2DArray* This) { delete This; }
+SampleableTexture2DArray* SampleableTexture2DArray_Destroy(SampleableTexture2DArray* This) { delete This; return nullptr; }
 
-void SampleableTexture3D_Destroy(SampleableTexture3D* This) { delete This; }
+SampleableTexture3D* SampleableTexture3D_Destroy(SampleableTexture3D* This) { delete This; return nullptr; }
 
-void SampleableTextureCube_Destroy(SampleableTextureCube* This) { delete This; }
+SampleableTextureCube* SampleableTextureCube_Destroy(SampleableTextureCube* This) { delete This; return nullptr; }
 
 Texture1D* Texture1D_Texture1D(int qualifiers, Type* format, Device* device, uint32_t width) {
   return new Texture1D(qualifiers, format, device->device, wgpu::TextureDimension::e1D,
                        {width, 1, 1});
 }
 
-void Texture1D_Destroy(Texture1D* This) { delete This; }
+Texture1D* Texture1D_Destroy(Texture1D* This) { delete This; return nullptr; }
 
 SampleableTexture1D* Texture1D_CreateSampleableView(Texture1D* This) {
   return new SampleableTexture1D(This->texture.CreateView());
@@ -943,7 +943,7 @@ Texture2D* Texture2D_Texture2D(int qualifiers, Type* format, Device* device, con
                        {size[0], size[1], 1});
 }
 
-void Texture2D_Destroy(Texture2D* This) { delete This; }
+Texture2D* Texture2D_Destroy(Texture2D* This) { delete This; return nullptr; }
 
 SampleableTexture2D* Texture2D_CreateSampleableView(Texture2D* This) {
   return new SampleableTexture2D(This->texture.CreateView());
@@ -1006,7 +1006,8 @@ Texture2DArray* Texture2DArray_Texture2DArray(int             qualifiers,
                             {size[0], size[1], size[2]});
 }
 
-void Texture2DArray_Destroy(Texture2DArray* This) { delete This; }
+// FIXM:E should be Texture2DArray; is bindings gen broken?
+Texture2D* Texture2DArray_Destroy(Texture2DArray* This) { delete This; return nullptr; }
 
 SampleableTexture2DArray* Texture2DArray_CreateSampleableView(Texture2DArray* This) {
   wgpu::TextureViewDescriptor desc;
@@ -1042,7 +1043,7 @@ Texture3D* Texture3D_Texture3D(int qualifiers, Type* format, Device* device, con
                        {size[0], size[1], size[2]});
 }
 
-void Texture3D_Destroy(Texture3D* This) { delete This; }
+Texture3D* Texture3D_Destroy(Texture3D* This) { delete This; return nullptr; }
 
 SampleableTexture3D* Texture3D_CreateSampleableView(Texture3D* This) {
   return new SampleableTexture3D(This->texture.CreateView());
@@ -1075,7 +1076,7 @@ TextureCube* TextureCube_TextureCube(int             qualifiers,
                          {size[0], size[1], 6});
 }
 
-void TextureCube_Destroy(TextureCube* This) { delete This; }
+TextureCube* TextureCube_Destroy(TextureCube* This) { delete This; return nullptr; }
 
 SampleableTextureCube* TextureCube_CreateSampleableView(TextureCube* This) {
   wgpu::TextureViewDescriptor desc;
@@ -1121,7 +1122,7 @@ Sampler* Sampler_Sampler(Device*     device,
   return new Sampler(sampler);
 }
 
-void Sampler_Destroy(Sampler* This) { delete This; }
+Sampler* Sampler_Destroy(Sampler* This) { delete This; return nullptr; }
 
 void Buffer_CopyFromBuffer(Buffer* This, CommandEncoder* encoder, Buffer* source) {
   encoder->encoder.CopyBufferToBuffer(source->buffer, 0, This->buffer, 0, source->sizeInBytes);
@@ -1217,14 +1218,14 @@ void Buffer_SetData(Buffer* buffer, void* data) {
   queue.WriteBuffer(buffer->buffer, 0, data, type->GetSizeInBytes(length));
 }
 
-void Buffer_Destroy(Buffer* This) { delete This; }
+Buffer* Buffer_Destroy(Buffer* This) { delete This; return nullptr; }
 
 CommandEncoder* CommandEncoder_CommandEncoder(Device* device) {
   wgpu::CommandEncoderDescriptor desc;
   return new CommandEncoder(device->device.CreateCommandEncoder(&desc));
 }
 
-void CommandEncoder_Destroy(CommandEncoder* This) { delete This; }
+CommandEncoder* CommandEncoder_Destroy(CommandEncoder* This) { delete This; return nullptr; }
 
 void Queue_Submit(Queue* queue, CommandBuffer* commandBuffer) {
   queue->queue.Submit(1, &commandBuffer->commandBuffer);
@@ -1236,11 +1237,11 @@ VertexInput* VertexInput_VertexInput(int     qualifiers,
   return new VertexInput(buffer->buffer);
 }
 
-void VertexInput_Destroy(VertexInput* This) { delete This; }
+VertexInput* VertexInput_Destroy(VertexInput* This) { delete This; return nullptr; }
 
-void ColorAttachment_Destroy(ColorAttachment* This) { delete This; }
+ColorAttachment* ColorAttachment_Destroy(ColorAttachment* This) { delete This; return nullptr; }
 
-void DepthStencilAttachment_Destroy(DepthStencilAttachment* This) { delete This; }
+DepthStencilAttachment* DepthStencilAttachment_Destroy(DepthStencilAttachment* This) { delete This; return nullptr; }
 
 RenderPass* RenderPass_RenderPass_CommandEncoder_T(int             qualifiers,
                                                    Type*           type,
@@ -1293,7 +1294,7 @@ void RenderPass_DrawIndexed(RenderPass* This,
 
 void RenderPass_End(RenderPass* This) { This->encoder.End(); }
 
-void RenderPass_Destroy(RenderPass* This) { delete This; }
+RenderPass* RenderPass_Destroy(RenderPass* This) { delete This; return nullptr; }
 
 ComputePass* ComputePass_ComputePass_CommandEncoder_T(int             qualifiers,
                                                       Type*           type,
@@ -1331,13 +1332,13 @@ void ComputePass_Dispatch(ComputePass* This,
 
 void ComputePass_End(ComputePass* This) { This->encoder.End(); }
 
-void ComputePass_Destroy(ComputePass* This) { delete This; }
+ComputePass* ComputePass_Destroy(ComputePass* This) { delete This; return nullptr; }
 
 CommandBuffer* CommandEncoder_Finish(CommandEncoder* encoder) {
   return new CommandBuffer(encoder->encoder.Finish());
 }
 
-void CommandBuffer_Destroy(CommandBuffer* This) { delete This; }
+CommandBuffer* CommandBuffer_Destroy(CommandBuffer* This) { delete This; return nullptr; }
 
 Texture2D* SwapChain_GetCurrentTexture(SwapChain* swapChain) {
   wgpu::SurfaceTexture surfaceTexture;
@@ -1352,7 +1353,7 @@ Texture2D* SwapChain_GetCurrentTexture(SwapChain* swapChain) {
 void SwapChain_Present(SwapChain* swapChain) { swapChain->surface.Present(); }
 #endif
 
-void SwapChain_Destroy(SwapChain* This) { delete This; }
+SwapChain* SwapChain_Destroy(SwapChain* This) { delete This; return nullptr; }
 #endif
 
 void SwapChain_Resize(SwapChain* swapChain, const uint32_t* size) {
@@ -1369,7 +1370,7 @@ void SwapChain_Resize(SwapChain* swapChain, const uint32_t* size) {
 
 float Math_rand() { return (float)(rand() % 100) / 100.0f; }
 
-void Math_Destroy(Math* This) {}
+Math* Math_Destroy(Math* This) { return nullptr; }
 
 void System_Print(Array* buffer) {
   fwrite(buffer->ptr, 1, buffer->length, stdout);
@@ -1390,9 +1391,9 @@ void System_Abort() {
   }
 }
 
-void System_Destroy(System* This) {}
+System* System_Destroy(System* This) { return nullptr; }
 
-void Event_Destroy(Event* This) { delete This; }
+Event* Event_Destroy(Event* This) { delete This; return nullptr;  }
 
 wgpu::Device CreateDawnDevice(wgpu::BackendType type, const wgpu::DeviceDescriptor* desc) {
   if (!gInstance) {
