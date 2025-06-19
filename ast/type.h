@@ -438,11 +438,8 @@ class ClassType : public Type {
   bool        IsNative() const;
   void        SetNative(bool native) { native_ = native; }
   ClassType*  GetParent() const { return parent_; }
-  int         GetVTableSize() const { return vtable_.size(); }
-  void        SetVTable(int index, Method* method);
-  void        AppendToVTable(Method* method);
-  const std::vector<Method*>& GetVTable() { return vtable_; }
-  void                        SetVTable(const std::vector<Method*>& vtable) { vtable_ = vtable; }
+  void        SetDestructor(Method* destructor);
+  Method*                     GetDestructor() { return destructor_; }
   Type*                       FindType(const std::string& id);
   void                        SetMemoryLayout(MemoryLayout memoryLayout, TypeTable* types);
   void                        SetMemoryLayout(MemoryLayout memoryLayout) { memoryLayout_ = memoryLayout; }
@@ -461,7 +458,7 @@ class ClassType : public Type {
   EnumVector           enums_;
   ClassTemplate*       template_ = nullptr;
   TypeList             templateArgs_;
-  std::vector<Method*> vtable_;
+  Method*              destructor_;
   int                  numFields_ = 0;  // includes inherited fields
   bool                 isDefined_ = false;
   bool                 native_ = false;

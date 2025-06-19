@@ -404,7 +404,6 @@ bool Method::IsConstructor() const {
 }
 
 ClassType::ClassType(std::string name) : name_(name) {
-  vtable_.resize(1);
 }
 
 bool ClassType::IsPOD() const {
@@ -575,15 +574,8 @@ bool ClassType::IsUnsizedClass() const {
   return (fields_.back()->type->IsUnsizedArray());
 }
 
-void ClassType::SetVTable(int index, Method* method) {
-  assert(index >= 0 && index < vtable_.size());
-  method->index = index;
-  vtable_[index] = method;
-}
-
-void ClassType::AppendToVTable(Method* method) {
-  method->index = vtable_.size();
-  vtable_.push_back(method);
+void ClassType::SetDestructor(Method* method) {
+  destructor_ = method;
 }
 
 void Method::AddFormalArg(std::string name, Type* type, Expr* defaultValue) {

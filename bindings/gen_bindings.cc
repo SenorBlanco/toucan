@@ -263,7 +263,6 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
     header_ << "  uint32_t    weakRefs = 0;\n";
     header_ << "  uint32_t    arrayLength;\n";
     header_ << "  Type*       type = nullptr;\n";
-    header_ << "  void*       vtable = nullptr;\n";
     header_ << "};\n\n";
     header_ << "struct Object {\n";
     header_ << "  void*          ptr;\n";
@@ -395,8 +394,7 @@ void GenBindings::EmitMethod(Method* method) {
   }
   file_ << "  c->AddMethod(m);\n";
   if (method->modifiers & Method::Modifier::Virtual) {
-    assert(method->index == 0); // Destructors are the only supported virtual
-    file_ << "  c->SetVTable(0, m);\n";
+    file_ << "  c->SetDestructor(m);\n";
   }
   bool skipFirst = false;
   if (method->classType->IsNative()) {
