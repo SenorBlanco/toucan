@@ -959,11 +959,10 @@ Result CodeGenLLVM::Visit(ExprStmt* stmt) {
 void CodeGenLLVM::Destroy(Type* type, llvm::Value* value) {
   if (type->IsClass()) {
     auto classType = static_cast<ClassType*>(type);
-    if (auto destructor = classType->GetDestructor()) {
-      llvm::Function* function = GetOrCreateMethodStub(destructor);
-      builder_->CreateCall(function->getFunctionType(), function, {value});
-    }
-    // FIXME: destroy fields
+    auto destructor = classType->GetDestructor();
+    assert(destructor);
+    llvm::Function* function = GetOrCreateMethodStub(destructor);
+    builder_->CreateCall(function->getFunctionType(), function, {value});
   } else if (type->IsArray()) {
     // FIXME: do array deletion
   } else if (type->IsRawPtr()) {
