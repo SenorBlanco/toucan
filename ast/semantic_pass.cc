@@ -902,12 +902,9 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
     classType->AddMethod(destructor);
   }
 
-  if (!destructor->stmts) {
-    Stmts* stmts = Make<Stmts>();
-    stmts->Append(Make<ReturnStatement>(nullptr));
-    destructor->stmts = stmts;
-  }
+  if (!destructor->stmts) destructor->stmts = Make<Stmts>();
 
+  auto This = Make<LoadExpr>(Make<VarExpr>(destructor->formalArgList[0].get()));
   const auto& fields = classType->GetFields();
   for (const auto& field : fields) {
     if (field->type->IsAuto()) {
@@ -918,7 +915,11 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
         return Error("Unsized arrays are only allwed as the last field of a class");
       }
     }
+    if (field->type->NeedsDestruction()) {
+      destructor->stmts->Append(Make<DestroyStmt>(Make<FieldAccess>(This, field.get())));
+    }
   }
+  destructor->stmts->Append(Make<ReturnStatement>(nullptr));
   symbols_->PopScope();
   // FIXME:  generate class destructor here?
   return nullptr;
