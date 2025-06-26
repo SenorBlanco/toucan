@@ -427,11 +427,6 @@ void GenBindings::EmitMethod(Method* method) {
       header_ << ");\n";
     }
   }
-  if ((method->modifiers & (Method::Modifier::Vertex | Method::Modifier::Fragment | Method::Modifier::Compute))) {
-  } else if (emitSymbolsAndStatements_ && method->stmts) {
-    int id = sourcePass_.Resolve(method->stmts);
-    file_ << "  m->stmts = node" << id << ";\n";
-  }
   if (!method->spirv.empty()) {
     file_ << "  m->spirv = {\n";
     for (uint32_t op : method->spirv) {
@@ -478,6 +473,9 @@ void GenBindings::EmitClass(ClassType* classType) {
   }
   for (const auto& method : classType->GetMethods()) {
     EmitMethod(method.get());
+  }
+  if (emitSymbolsAndStatements_ && !classType->IsNative()) {
+    file_ << "  c->CreateDefaultDestructor(symbols, types, nodes);\n";
   }
   if (classType->GetScope()) {
     for (const auto& pair : classType->GetScope()->types) {

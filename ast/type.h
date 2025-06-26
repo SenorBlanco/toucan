@@ -32,6 +32,8 @@ class Expr;
 class TypeTable;
 class ClassType;
 class ListType;
+class NodeVector;
+class SymbolTable;
 struct Scope;
 
 enum class MemoryLayout { Default = 0, Storage = 1, Uniform = 2 };
@@ -440,6 +442,7 @@ class ClassType : public Type {
   void        SetNative(bool native) { native_ = native; }
   ClassType*  GetParent() const { return parent_; }
   Method*                     GetDestructor() { return destructor_; }
+  void                        CreateDefaultDestructor(SymbolTable* symbols, TypeTable* types, NodeVector* nodes);
   Type*                       FindType(const std::string& id);
   void                        SetMemoryLayout(MemoryLayout memoryLayout, TypeTable* types);
   void                        SetMemoryLayout(MemoryLayout memoryLayout) { memoryLayout_ = memoryLayout; }

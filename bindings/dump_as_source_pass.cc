@@ -58,6 +58,12 @@ Result DumpAsSourcePass::Visit(CastExpr* node) {
   return {};
 }
 
+Result DumpAsSourcePass::Visit(DestroyStmt* node) {
+  int expr = Resolve(node->GetExpr());
+  Output(node) << "Make<DestroyStmt>(node" << expr << ");\n";
+  return {};
+}
+
 Result DumpAsSourcePass::Visit(IntConstant* node) {
   Output(node) << "Make<IntConstant>(" << node->GetValue() << ", " << node->GetBits() << ");\n";
   return {};
@@ -72,6 +78,12 @@ Result DumpAsSourcePass::Visit(EnumConstant* node) {
   const EnumValue* value = node->GetValue();
   int type = genBindings_->EmitType(value->type);
   Output(node) << "Make<EnumConstant>(type" << type << "->FindValue(\"" << value->id << "\"));\n";
+  return {};
+}
+
+Result DumpAsSourcePass::Visit(FieldAccess* node) {
+  auto expr = Resolve(node->GetExpr());
+  Output(node) << "Make<FieldAccess>(node" << node->GetExpr() << ", nullptr);\n";
   return {};
 }
 

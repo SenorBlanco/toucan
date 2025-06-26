@@ -865,13 +865,11 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   }
 
   symbols_->PushScope(scope);
-  Method* destructor = nullptr;
-  for (const auto& mit : classType->GetMethods()) {
-    Method* method = mit.get();
-    if (method->IsDestructor()) {
-      destructor = method;
-    }
 
+  classType->CreateDefaultDestructor(symbols_, types_, nodes_);
+
+  for (const auto& mit : classType->GetMethods()) {
+    auto method = mit.get();
     if (method->stmts) {
       Scope* scope = method->stmts->GetScope();
       method->stmts = Resolve(method->stmts);
@@ -885,11 +883,10 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
         method->stmts->Append(Make<ReturnStatement>(This));
       }
       // If last statement is not a return statement,
-      if (!method->stmts->ContainsReturn()) {
+      if (!method->stmts->ContainsReturn() && !method->IsDestructor()) {
         if (method->returnType != types_->GetVoid()) {
-          return Error("implicit void return, in method returning non-void.");
+          return Error("implicit void return, in method returning %s.", method->returnType->ToString().c_str());
         } else {
-          UnwindStack(method->stmts->GetScope(), method->stmts);
           method->stmts->Append(Make<ReturnStatement>(nullptr));
         }
       }
@@ -905,16 +902,6 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
     }
   }
 
-  if (!destructor) {
-    std::string name(std::string("~") + classType->GetName());
-    destructor = new Method(0, types_->GetVoid(), name, classType);
-    destructor->AddFormalArg("this", types_->GetRawPtrType(classType), nullptr);
-    classType->AddMethod(destructor);
-  }
-
-  if (!destructor->stmts) destructor->stmts = Make<Stmts>();
-
-  auto This = Make<LoadExpr>(Make<VarExpr>(destructor->formalArgList[0].get()));
   const auto& fields = classType->GetFields();
   for (const auto& field : fields) {
     if (field->type->IsAuto()) {
@@ -925,13 +912,8 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
         return Error("Unsized arrays are only allwed as the last field of a class");
       }
     }
-    if (field->type->NeedsDestruction()) {
-      destructor->stmts->Append(Make<DestroyStmt>(Make<FieldAccess>(This, field.get())));
-    }
   }
-  destructor->stmts->Append(Make<ReturnStatement>(nullptr));
   symbols_->PopScope();
-  // FIXME:  generate class destructor here?
   return nullptr;
 }
 
