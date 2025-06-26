@@ -126,10 +126,15 @@ CodeGenLLVM::CodeGenLLVM(llvm::LLVMContext*                 context,
   doubleType_ = llvm::Type::getDoubleTy(*context_);
   byteType_ = llvm::Type::getInt8Ty(*context_);
   shortType_ = llvm::Type::getInt16Ty(*context_);
-  // This is used for function pointers, and void pointers.
   llvm::Type* voidType = llvm::Type::getVoidTy(*context_);
   funcPtrType_ = llvm::PointerType::get(llvm::FunctionType::get(voidType, false), 0);
   voidPtrType_ = llvm::PointerType::get(byteType_, 0);
+  llvm::FunctionType* freeFT = llvm::FunctionType::get(voidType, { voidPtrType_ }, false);
+#if TARGET_OS_IS_WIN && TARGET_CPU_IS_X86
+  freeFunc_ = module_->getOrInsertFunction("_aligned_free", freeFT);
+#else
+  freeFunc_ = module_->getOrInsertFunction("free", freeFT);
+#endif
   controlBlockType_ = ControlBlockType();
   controlBlockPtrType_ = llvm::PointerType::get(controlBlockType_, 0);
   typeListType_ = llvm::PointerType::get(llvm::PointerType::get(voidPtrType_, 0), 0);
@@ -179,7 +184,7 @@ llvm::Type* CodeGenLLVM::ControlBlockType() {
   types.push_back(intType_);      // weak refcount
   types.push_back(intType_);      // array length
   types.push_back(voidPtrType_);  // ClassType
-  types.push_back(voidPtrType_);  // destructor
+  types.push_back(voidPtrType_);  // deleter
   return llvm::StructType::get(*context_, types);
 }
 
@@ -377,7 +382,7 @@ void CodeGenLLVM::UnrefStrongPtr(llvm::Value* ptr, StrongPtrType* type) {
     llvm::Function* function = GetOrCreateMethodStub(classType->GetDestructor());
     builder_->CreateCall(function->getFunctionType(), destructor, {arg});
   }
-  if (!isNativeClass) { GenerateFree(builder_->CreateExtractValue(ptr, {0})); }
+  if (!isNativeClass) { builder_->CreateCall(freeFunc_, builder_->CreateExtractValue(ptr, {0})); }
   builder_->CreateBr(afterBlock);
   builder_->SetInsertPoint(afterBlock);
   UnrefWeakPtr(ptr);
@@ -413,7 +418,7 @@ void CodeGenLLVM::UnrefWeakPtr(llvm::Value* ptr) {
   llvm::BasicBlock* trueBlock = CreateBasicBlock("trueBlock");
   builder_->CreateCondBr(isZero, trueBlock, afterBlock);
   builder_->SetInsertPoint(trueBlock);
-  GenerateFree(controlBlock);
+  builder_->CreateCall(freeFunc_, controlBlock);
 
   builder_->CreateBr(afterBlock);
   builder_->SetInsertPoint(afterBlock);
@@ -595,20 +600,6 @@ llvm::Value* CodeGenLLVM::CreateMalloc(llvm::Type* type, llvm::Value* arraySize)
   llvm::Value*         ptr = builder_->CreateCall(malloc, sizeInt);
 #endif
   return builder_->CreateBitCast(ptr, ptrType);
-}
-
-void CodeGenLLVM::GenerateFree(llvm::Value* value) {
-  std::vector<llvm::Type*> args;
-  args.push_back(voidPtrType_);
-  llvm::Type*         voidType = llvm::Type::getVoidTy(*context_);
-  llvm::FunctionType* ft = llvm::FunctionType::get(voidType, args, false);
-#if TARGET_OS_IS_WIN && TARGET_CPU_IS_X86
-  llvm::FunctionCallee free = module_->getOrInsertFunction("_aligned_free", ft);
-#else
-  llvm::FunctionCallee free = module_->getOrInsertFunction("free", ft);
-#endif
-  value = builder_->CreateBitCast(value, voidPtrType_);
-  builder_->CreateCall(free, value);
 }
 
 llvm::Value* CodeGenLLVM::GenerateLLVM(Expr* expr) {

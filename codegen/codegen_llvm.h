@@ -96,7 +96,6 @@ class CodeGenLLVM : public Visitor {
   llvm::Value*          CreatePointer(llvm::Value* obj, llvm::Value* controlBlockOrLength);
   llvm::Value*          CreateControlBlock(Type* type);
   llvm::Value*          CreateMalloc(llvm::Type* type, llvm::Value* arraySize);
-  void                  GenerateFree(llvm::Value* value);
   llvm::Value*          GenerateLLVM(Expr* expr);
   llvm::Value*          GenerateDotProduct(llvm::Value* lhs, llvm::Value* rhs);
   llvm::Value*          GenerateCrossProduct(llvm::Value* lhs, llvm::Value* rhs);
@@ -185,6 +184,7 @@ class CodeGenLLVM : public Visitor {
   llvm::Type*                                           shortType_;
   llvm::Type*                                           funcPtrType_;
   llvm::PointerType*                                    voidPtrType_;
+  llvm::FunctionCallee                                  freeFunc_;
   llvm::Type*                                           controlBlockType_;
   llvm::PointerType*                                    controlBlockPtrType_;
   bool                                                  debugOutput_;
