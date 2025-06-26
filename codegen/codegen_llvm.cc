@@ -289,10 +289,8 @@ llvm::Value* CodeGenLLVM::CreateControlBlock(Type* type) {
   builder_->CreateStore(Int(arrayLength), GetArrayLengthAddress(controlBlock));
   builder_->CreateStore(CreateTypePtr(type), GetClassTypeAddress(controlBlock));
   type = type->GetUnqualifiedType();
-  if (type->IsClass()) {
-    llvm::Value* destructor = GetOrCreateMethodStub(static_cast<ClassType*>(type)->GetDestructor());
-    builder_->CreateStore(destructor, GetDestructorAddress(controlBlock));
-  }
+  auto deleter = type->NeedsDestruction() ? GetOrCreateDeleter(type) : freeFunc_.getCallee();
+  builder_->CreateStore(deleter, GetDeleterAddress(controlBlock));
   return controlBlock;
 }
 
@@ -323,7 +321,7 @@ llvm::Value* CodeGenLLVM::GetClassTypeAddress(llvm::Value* controlBlock) {
   return builder_->CreateGEP(controlBlockType_, controlBlock, {Int(0), Int(3)});
 }
 
-llvm::Value* CodeGenLLVM::GetDestructorAddress(llvm::Value* controlBlock) {
+llvm::Value* CodeGenLLVM::GetDeleterAddress(llvm::Value* controlBlock) {
   return builder_->CreateGEP(controlBlockType_, controlBlock, {Int(0), Int(4)});
 }
 
@@ -367,22 +365,14 @@ void CodeGenLLVM::UnrefStrongPtr(llvm::Value* ptr, StrongPtrType* type) {
   llvm::BasicBlock* trueBlock = CreateBasicBlock("trueBlock");
   builder_->CreateCondBr(isZero, trueBlock, afterBlock);
   builder_->SetInsertPoint(trueBlock);
-  bool  isNativeClass = false;
   Type* baseType = type->GetBaseType()->GetUnqualifiedType();
-  if (baseType->IsClass()) {
-    auto         classType = static_cast<ClassType*>(baseType);
-    llvm::Value* arg = builder_->CreateExtractValue(ptr, {0});
-    if (classType->IsUnsizedClass()) {
-      auto length = builder_->CreateLoad(intType_, GetArrayLengthAddress(controlBlock));
-      arg = CreatePointer(arg, length);
-    }
-    isNativeClass = classType->IsNative();
-    llvm::Value*    v = GetDestructorAddress(controlBlock);
-    llvm::Value*    destructor = builder_->CreateLoad(funcPtrType_, v);
-    llvm::Function* function = GetOrCreateMethodStub(classType->GetDestructor());
-    builder_->CreateCall(function->getFunctionType(), destructor, {arg});
-  }
-  if (!isNativeClass) { builder_->CreateCall(freeFunc_, builder_->CreateExtractValue(ptr, {0})); }
+  llvm::Value* arg = builder_->CreateExtractValue(ptr, {0});
+  llvm::Value*    v = GetDeleterAddress(controlBlock);
+  llvm::Value*    deleter = builder_->CreateLoad(funcPtrType_, v);
+  // FIXME: either store deleters w/function type, or store deleter type
+  llvm::Type* voidType = llvm::Type::getVoidTy(*context_);
+  llvm::FunctionType* functionType = llvm::FunctionType::get(voidType, {voidPtrType_}, false);
+  builder_->CreateCall(functionType, deleter, {arg});
   builder_->CreateBr(afterBlock);
   builder_->SetInsertPoint(afterBlock);
   UnrefWeakPtr(ptr);
@@ -422,6 +412,28 @@ void CodeGenLLVM::UnrefWeakPtr(llvm::Value* ptr) {
 
   builder_->CreateBr(afterBlock);
   builder_->SetInsertPoint(afterBlock);
+}
+
+llvm::Function* CodeGenLLVM::GetOrCreateDeleter(Type* type) {
+  if (auto deleter = deleters_[type]) { return deleter; }
+  llvm::Type* voidType = llvm::Type::getVoidTy(*context_);
+  llvm::FunctionType* functionType = llvm::FunctionType::get(voidType, {voidPtrType_}, false);
+  auto deleter = llvm::Function::Create(functionType, llvm::GlobalValue::InternalLinkage,
+                                        "__deleter", module_);
+  deleter->setCallingConv(llvm::CallingConv::C);
+  llvm::BasicBlock* whereWasI = builder_->GetInsertBlock();
+  llvm::BasicBlock* entry = llvm::BasicBlock::Create(*context_, "entry", deleter);
+  builder_->SetInsertPoint(entry);
+  auto arg = deleter->arg_begin();
+  arg->setName("this");
+  llvm::Value* value = &*arg;
+  Destroy(type, value);
+  builder_->CreateCall(freeFunc_, value);
+  builder_->CreateRet(nullptr);
+  builder_->SetInsertPoint(whereWasI);
+  verifyFunction(*deleter);
+  fpm_->run(*deleter);
+  return deleters_[type] = deleter;
 }
 
 llvm::Function* CodeGenLLVM::GetOrCreateMethodStub(Method* method) {
@@ -944,12 +956,17 @@ Result CodeGenLLVM::Visit(ExprStmt* stmt) {
   return nullptr;
 }
 
-Result CodeGenLLVM::Visit(DestroyStmt* node) {
-  auto type = node->GetExpr()->GetType(types_);
-  assert(type->IsRawPtr());
-  type = static_cast<RawPtrType*>(type)->GetBaseType();
-  auto value = GenerateLLVM(node->GetExpr());
-  if (type->IsRawPtr()) {
+void CodeGenLLVM::Destroy(Type* type, llvm::Value* value) {
+  if (type->IsClass()) {
+    auto classType = static_cast<ClassType*>(type);
+    if (auto destructor = classType->GetDestructor()) {
+      llvm::Function* function = GetOrCreateMethodStub(destructor);
+      builder_->CreateCall(function->getFunctionType(), function, {value});
+    }
+    // FIXME: destroy fields
+  } else if (type->IsArray()) {
+    // FIXME: do array deletion
+  } else if (type->IsRawPtr()) {
     auto temporary = scopedTemporaries_.find(value);
     if (temporary != scopedTemporaries_.end()) {
       type = temporary->second.type;
@@ -967,6 +984,14 @@ Result CodeGenLLVM::Visit(DestroyStmt* node) {
     value = builder_->CreateLoad(ConvertType(type), value);
     UnrefWeakPtr(value);
   }
+}
+
+Result CodeGenLLVM::Visit(DestroyStmt* node) {
+  auto type = node->GetExpr()->GetType(types_);
+  assert(type->IsRawPtr());
+  type = static_cast<RawPtrType*>(type)->GetBaseType();
+  auto value = GenerateLLVM(node->GetExpr());
+  Destroy(type, value);
   return nullptr;
 }
 
