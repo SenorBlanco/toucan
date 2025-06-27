@@ -888,6 +888,11 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
     auto method = mit.get();
     if (method->stmts) {
       method->stmts = Resolve(method->stmts);
+      if (method->IsConstructor()) {
+        Expr* initializer = Resolve(method->initializer);
+        auto This = Make<LoadExpr>(Make<VarExpr>(method->formalArgList[0].get()));
+        method->stmts->Prepend(Make<StoreStmt>(This, Widen(initializer, method->classType)));
+      }
       // If last statement is not a return statement,
       if (!method->stmts->ContainsReturn()) {
         if (method->returnType != types_->GetVoid()) {
