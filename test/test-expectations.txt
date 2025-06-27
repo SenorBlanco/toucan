@@ -300,8 +300,6 @@ test/mutual-recursion.t
 test/named-param-default-value.t
 test/named-param.t
 test/new.t
-test/new2.t
-foo
 test/null-ptr.t
 test/overload.t
 test/override.t
@@ -313,9 +311,8 @@ test/removable-qualifiers.t
 test/scope-test.t
 test/short-vector.t
 test/short.t
-test/simple-destructor.t
 test/simple.t
-Constructing Counter
+6
 test/spirv-call-graph.t
 test/spirv-if-stmt.t
 test/spirv-insert-element.t

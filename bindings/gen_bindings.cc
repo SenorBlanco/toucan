@@ -474,7 +474,7 @@ void GenBindings::EmitClass(ClassType* classType) {
   for (const auto& method : classType->GetMethods()) {
     EmitMethod(method.get());
   }
-  if (emitSymbolsAndStatements_ && !classType->IsNative()) {
+  if (emitSymbolsAndStatements_ && classType->NeedsDestruction() && !classType->IsNative()) {
     file_ << "  c->CreateDefaultDestructor(symbols, types, nodes);\n";
   }
   if (classType->GetScope()) {

@@ -1,7 +1,9 @@
-class String {
-  String() { System.PrintLine("String constructed"); }
- ~String() { System.PrintLine("String destructed"); }
-}
+include "include/string.t"
 
-var a = new String();
-//System.PrintLine(String.From(42).Get());
+var a = 2;
+var b : int;
+var c : int;
+b = 3;
+c = a * b;
+
+System.PrintLine(String.From(c).Get());

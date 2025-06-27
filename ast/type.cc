@@ -408,6 +408,8 @@ bool Method::IsDestructor() const {
 }
 
 void ClassType::CreateDefaultDestructor(SymbolTable* symbols, TypeTable* types, NodeVector* nodes) {
+  if (!NeedsDestruction() || IsNative()) return;
+
   if (!destructor_) {
     std::string name = std::string("~") + name_;
     auto destructor = new Method(0, types->GetVoid(), name, this);
