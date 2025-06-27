@@ -129,11 +129,11 @@ CodeGenLLVM::CodeGenLLVM(llvm::LLVMContext*                 context,
   llvm::Type* voidType = llvm::Type::getVoidTy(*context_);
   funcPtrType_ = llvm::PointerType::get(llvm::FunctionType::get(voidType, false), 0);
   voidPtrType_ = llvm::PointerType::get(byteType_, 0);
-  llvm::FunctionType* freeFT = llvm::FunctionType::get(voidType, { voidPtrType_ }, false);
+  deleterType_ = llvm::FunctionType::get(voidType, { voidPtrType_ }, false);
 #if TARGET_OS_IS_WIN && TARGET_CPU_IS_X86
-  freeFunc_ = module_->getOrInsertFunction("_aligned_free", freeFT);
+  freeFunc_ = module_->getOrInsertFunction("_aligned_free", deleterType_);
 #else
-  freeFunc_ = module_->getOrInsertFunction("free", freeFT);
+  freeFunc_ = module_->getOrInsertFunction("free", deleterType_);
 #endif
   controlBlockType_ = ControlBlockType();
   controlBlockPtrType_ = llvm::PointerType::get(controlBlockType_, 0);
@@ -366,12 +366,8 @@ void CodeGenLLVM::UnrefStrongPtr(llvm::Value* ptr, StrongPtrType* type) {
   builder_->SetInsertPoint(trueBlock);
   Type* baseType = type->GetBaseType()->GetUnqualifiedType();
   llvm::Value* arg = builder_->CreateExtractValue(ptr, {0});
-  llvm::Value*    v = GetDeleterAddress(controlBlock);
-  llvm::Value*    deleter = builder_->CreateLoad(funcPtrType_, v);
-  // FIXME: either store deleters w/function type, or store deleter type
-  llvm::Type* voidType = llvm::Type::getVoidTy(*context_);
-  llvm::FunctionType* functionType = llvm::FunctionType::get(voidType, {voidPtrType_}, false);
-  builder_->CreateCall(functionType, deleter, {arg});
+  llvm::Value* deleter = builder_->CreateLoad(funcPtrType_, GetDeleterAddress(controlBlock));
+  builder_->CreateCall(deleterType_, deleter, {arg});
   builder_->CreateBr(afterBlock);
   builder_->SetInsertPoint(afterBlock);
   UnrefWeakPtr(ptr);
