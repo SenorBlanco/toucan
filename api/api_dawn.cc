@@ -1138,6 +1138,7 @@ void Buffer_CopyFromBuffer(Buffer* This, CommandEncoder* encoder, Buffer* source
 static Object* MapSync(wgpu::MapMode mapMode, Buffer* buffer) {
   if (buffer->mappedObject.ptr != nullptr) {
     buffer->mappedObject.controlBlock->weakRefs++;
+    buffer->mappedObject.controlBlock->strongRefs++;
     return &buffer->mappedObject;
   }
 
