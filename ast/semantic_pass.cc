@@ -866,14 +866,30 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
 
   symbols_->PushScope(scope);
 
-  classType->CreateDefaultDestructor(symbols_, types_, nodes_);
+  if (classType->NeedsDestruction() && !classType->IsNative()) {
+    auto destructor = classType->GetDestructor();
+    if (!destructor) {
+      std::string name = std::string("~") + classType->GetName();
+      destructor = new Method(0, types_->GetVoid(), name, classType);
+      destructor->AddFormalArg("this", types_->GetRawPtrType(classType), nullptr);
+      destructor->stmts = Make<Stmts>();
+      classType->AddMethod(destructor);
+    }
+
+    auto This = Make<LoadExpr>(Make<VarExpr>(destructor->formalArgList[0].get()));
+    for (const auto& field : classType->GetFields()) {
+      if (field->type->NeedsDestruction()) {
+        destructor->stmts->Append(Make<DestroyStmt>(Make<FieldAccess>(This, field.get())));
+      }
+    }
+  }
 
   for (const auto& mit : classType->GetMethods()) {
     auto method = mit.get();
     if (method->stmts) {
       method->stmts = Resolve(method->stmts);
       // If last statement is not a return statement,
-      if (!method->stmts->ContainsReturn() && !method->IsDestructor()) {
+      if (!method->stmts->ContainsReturn()) {
         if (method->returnType != types_->GetVoid()) {
           return Error("implicit void return, in method returning %s.", method->returnType->ToString().c_str());
         } else {
