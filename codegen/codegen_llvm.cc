@@ -289,8 +289,7 @@ llvm::Value* CodeGenLLVM::CreateControlBlock(Type* type) {
   builder_->CreateStore(Int(arrayLength), GetArrayLengthAddress(controlBlock));
   builder_->CreateStore(CreateTypePtr(type), GetClassTypeAddress(controlBlock));
   type = type->GetUnqualifiedType();
-  auto deleter = type->NeedsDestruction() ? GetOrCreateDeleter(type) : freeFunc_.getCallee();
-  builder_->CreateStore(deleter, GetDeleterAddress(controlBlock));
+  builder_->CreateStore(GetOrCreateDeleter(type), GetDeleterAddress(controlBlock));
   return controlBlock;
 }
 
@@ -414,25 +413,23 @@ void CodeGenLLVM::UnrefWeakPtr(llvm::Value* ptr) {
   builder_->SetInsertPoint(afterBlock);
 }
 
-llvm::Function* CodeGenLLVM::GetOrCreateDeleter(Type* type) {
+llvm::Value* CodeGenLLVM::GetOrCreateDeleter(Type* type) {
   if (auto deleter = deleters_[type]) { return deleter; }
-  if (type->IsClass() && static_cast<ClassType*>(type)->IsNative()) {
+  if (type->IsClass()) {
     auto classType = static_cast<ClassType*>(type);
     if (classType->IsNative()) {
       return GetOrCreateMethodStub(classType->GetDestructor());
     }
   }
+  if (!type->NeedsDestruction()) return freeFunc_.getCallee();
   llvm::Type* voidType = llvm::Type::getVoidTy(*context_);
   llvm::FunctionType* functionType = llvm::FunctionType::get(voidType, {voidPtrType_}, false);
   auto deleter = llvm::Function::Create(functionType, llvm::GlobalValue::InternalLinkage,
                                         "__deleter", module_);
-  deleter->setCallingConv(llvm::CallingConv::C);
   llvm::BasicBlock* whereWasI = builder_->GetInsertBlock();
   llvm::BasicBlock* entry = llvm::BasicBlock::Create(*context_, "entry", deleter);
   builder_->SetInsertPoint(entry);
-  auto arg = deleter->arg_begin();
-  arg->setName("this");
-  llvm::Value* value = &*arg;
+  llvm::Value* value = &*deleter->arg_begin();
   Destroy(type, value);
   builder_->CreateCall(freeFunc_, value);
   builder_->CreateRet(nullptr);
@@ -487,7 +484,6 @@ llvm::Function* CodeGenLLVM::GetOrCreateMethodStub(Method* method) {
                                       method->GetMangledName(), module_);
   }
 
-  function->setCallingConv(llvm::CallingConv::C);
   return functions_[method] = function;
 }
 
