@@ -39,6 +39,8 @@ test/arrays.t
 test/binop-widen.t
 test/bitwise.t
 test/bool-constants.t
+test/buffer-double-map.t
+test/buffer-freed-with-mapped-data.t
 test/byte-vector.t
 test/byte.t
 test/cast-int-to-float.t
