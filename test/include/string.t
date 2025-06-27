@@ -1,5 +1,5 @@
 class String {
-  String(b : *[]ubyte) { buffer = b; System.PrintLine("String constructed"); }
+  String(b : *[]ubyte) { buffer = b; }
   static IntLog2(value : int) : int { return 31 - Math.clz(value | 1); }
   static From(value : int) : *String {
     var table = [9]int(9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999);
@@ -20,7 +20,6 @@ class String {
     if (negative) b[0] = 45ub;
     return new String(b);
   }
- ~String() { System.PrintLine("String destructed"); }
   Get() : *[]ubyte { return buffer; }
   var buffer : *[]ubyte;
 }

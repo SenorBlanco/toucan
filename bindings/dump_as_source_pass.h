@@ -34,12 +34,10 @@ class DumpAsSourcePass : public Visitor {
   Result Visit(BinOpNode* node) override;
   Result Visit(BoolConstant* constant) override;
   Result Visit(CastExpr* expr) override;
-  Result Visit(DestroyStmt* node) override;
   Result Visit(EnumConstant* node) override;
   Result Visit(ExprList* exprList) override;
   Result Visit(ExprStmt* exprStmt) override;
   Result Visit(DoubleConstant* constant) override;
-  Result Visit(FieldAccess* node) override;
   Result Visit(FloatConstant* constant) override;
   Result Visit(Initializer* node) override;
   Result Visit(IntConstant* constant) override;

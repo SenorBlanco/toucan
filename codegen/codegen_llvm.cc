@@ -416,6 +416,12 @@ void CodeGenLLVM::UnrefWeakPtr(llvm::Value* ptr) {
 
 llvm::Function* CodeGenLLVM::GetOrCreateDeleter(Type* type) {
   if (auto deleter = deleters_[type]) { return deleter; }
+  if (type->IsClass() && static_cast<ClassType*>(type)->IsNative()) {
+    auto classType = static_cast<ClassType*>(type);
+    if (classType->IsNative()) {
+      return GetOrCreateMethodStub(classType->GetDestructor());
+    }
+  }
   llvm::Type* voidType = llvm::Type::getVoidTy(*context_);
   llvm::FunctionType* functionType = llvm::FunctionType::get(voidType, {voidPtrType_}, false);
   auto deleter = llvm::Function::Create(functionType, llvm::GlobalValue::InternalLinkage,
