@@ -65,11 +65,7 @@ test/control-flow.t
 test/decl-test.t
 test/dereference.t
 test/destructor-set-null.t
-  Y__Y
---\__(x)==     (pining for the fjords)
 test/destructor.t
-  Y__Y
---\__(x)==     (pining for the fjords)
 test/do-test.t
 test/double.t
 test/duplicate-method.t
