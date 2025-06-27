@@ -407,26 +407,6 @@ bool Method::IsDestructor() const {
   return name[0] == '~';
 }
 
-void ClassType::CreateDefaultDestructor(SymbolTable* symbols, TypeTable* types, NodeVector* nodes) {
-  if (!NeedsDestruction() || IsNative()) return;
-
-  if (!destructor_) {
-    std::string name = std::string("~") + name_;
-    auto destructor = new Method(0, types->GetVoid(), name, this);
-    destructor->AddFormalArg("this", types->GetRawPtrType(this), nullptr);
-    AddMethod(destructor);
-  }
-  if (!destructor_->stmts) destructor_->stmts = nodes->Make<Stmts>();
-
-  auto This = nodes->Make<LoadExpr>(nodes->Make<VarExpr>(destructor_->formalArgList[0].get()));
-  for (const auto& field : fields_) {
-    if (field->type->NeedsDestruction()) {
-      destructor_->stmts->Append(nodes->Make<DestroyStmt>(nodes->Make<FieldAccess>(This, field.get())));
-    }
-  }
-  destructor_->stmts->Append(nodes->Make<ReturnStatement>(nullptr));
-}
-
 ClassType::ClassType(std::string name) : name_(name) {
 }
 

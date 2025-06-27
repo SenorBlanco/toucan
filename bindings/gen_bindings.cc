@@ -427,6 +427,7 @@ void GenBindings::EmitMethod(Method* method) {
       header_ << ");\n";
     }
   }
+  if (emitSymbolsAndStatements_) assert(!method->stmts);
   if (!method->spirv.empty()) {
     file_ << "  m->spirv = {\n";
     for (uint32_t op : method->spirv) {
@@ -473,9 +474,6 @@ void GenBindings::EmitClass(ClassType* classType) {
   }
   for (const auto& method : classType->GetMethods()) {
     EmitMethod(method.get());
-  }
-  if (emitSymbolsAndStatements_ && classType->NeedsDestruction() && !classType->IsNative()) {
-    file_ << "  c->CreateDefaultDestructor(symbols, types, nodes);\n";
   }
   if (classType->GetScope()) {
     for (const auto& pair : classType->GetScope()->types) {
