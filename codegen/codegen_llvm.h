@@ -186,6 +186,7 @@ class CodeGenLLVM : public Visitor {
   llvm::Type*                                           shortType_;
   llvm::Type*                                           funcPtrType_;
   llvm::PointerType*                                    voidPtrType_;
+  llvm::FunctionType*                                   deleterType_;
   llvm::FunctionCallee                                  freeFunc_;
   llvm::Type*                                           controlBlockType_;
   llvm::PointerType*                                    controlBlockPtrType_;
