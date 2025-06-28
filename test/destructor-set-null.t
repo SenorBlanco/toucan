@@ -7,7 +7,7 @@ class Foo {
     bar.count++;
   }
  ~Foo() {
-    if (bar != null) bar.count--;
+    bar.count--;
   }
 
   var bar : ^Bar;

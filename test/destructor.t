@@ -8,7 +8,7 @@ class Bar {
     foo = f;
   }
  ~Bar() {
-    if (foo != null) foo.r = 1234.0;
+    foo.r = 1234.0;
   }
   var foo : *Foo;
 };
