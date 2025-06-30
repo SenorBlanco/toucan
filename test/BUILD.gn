@@ -22,6 +22,10 @@ group("tests") {
   ]
 }
 
+toucan_executable("texture1d") {
+  sources = [ "interactive/texture1d.t" ]
+}
+
 toucan_executable("empty") {
   sources = [ "empty.t" ]
 }
