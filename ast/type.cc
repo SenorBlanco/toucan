@@ -369,7 +369,7 @@ std::string Method::GetMangledName() const {
   }
   for (auto& m : classType->GetMethods()) {
     if (m.get() != this && m->name == name) {
-      bool skipFirst = classType->IsNative() && m->IsConstructor();
+      bool skipFirst = !m->stmts && m->IsConstructor();
       for (auto arg : formalArgList) {
         if (skipFirst) { skipFirst = false; continue; }
         result += "_";

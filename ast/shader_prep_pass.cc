@@ -398,7 +398,7 @@ Method* ShaderPrepPass::Run(Method* entryPoint) {
 }
 
 Method* ShaderPrepPass::PrepMethod(Method* method, std::vector<Var*> globalVars) {
-  if (method->classType->IsNative()) { return method; }
+  if (!method->stmts) { return method; }
 
   MethodKey key{method, globalVars};
   if (methodMap_[key]) { return methodMap_[key].get(); }
@@ -461,7 +461,7 @@ Result ShaderPrepPass::ResolveNativeMethodCall(MethodCall* node) {
 }
 
 Result ShaderPrepPass::Visit(MethodCall* node) {
-  if (node->GetMethod()->classType->IsNative()) { return ResolveNativeMethodCall(node); }
+  if (!node->GetMethod()->stmts) { return ResolveNativeMethodCall(node); }
   const std::vector<Expr*>& args = node->GetArgList()->Get();
   auto*                     newArgs = Make<ExprList>();
   Stmts*                    writeStmts = nullptr;
