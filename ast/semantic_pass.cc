@@ -860,15 +860,10 @@ Result SemanticPass::Visit(ForStatement* node) {
 Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   Scope*     scope = defn->GetScope();
   ClassType* classType = scope->classType;
-  // Non-native template classes don't need semantic analysis, since
-  // their code won't be directly generated.
-  if (!classType->IsNative() && classType->IsClassTemplate()) {
-    return nullptr;
-  }
 
   symbols_->PushScope(scope);
 
-  if (classType->NeedsDestruction() && !classType->IsNative()) {
+  if (classType->NeedsDestruction()) {
     auto destructor = classType->GetDestructor();
     if (!destructor) {
       std::string name = std::string("~") + classType->GetName();
@@ -878,17 +873,19 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
       classType->AddMethod(destructor);
     }
 
-    auto This = Make<LoadExpr>(Make<VarExpr>(destructor->formalArgList[0].get()));
-    for (const auto& field : classType->GetFields()) {
-      if (field->type->NeedsDestruction()) {
-        destructor->stmts->Append(Make<DestroyStmt>(Make<FieldAccess>(This, field.get())));
+    if (destructor->stmts) {
+      auto This = Make<LoadExpr>(Make<VarExpr>(destructor->formalArgList[0].get()));
+      for (const auto& field : classType->GetFields()) {
+        if (field->type->NeedsDestruction()) {
+          destructor->stmts->Append(Make<DestroyStmt>(Make<FieldAccess>(This, field.get())));
+        }
       }
     }
   }
 
   for (const auto& mit : classType->GetMethods()) {
     auto method = mit.get();
-    if (method->stmts) {
+    if (method->stmts && !classType->IsClassTemplate()) {
       Scope* scope = method->stmts->GetScope();
       method->stmts = Resolve(method->stmts);
       if (method->IsConstructor()) {
