@@ -706,7 +706,6 @@ static Expr* MakeStaticMethodCall(Type* type, const char* id, ArgList* arguments
 static ClassType* DeclareClass(int native, const char *id) {
   assert(!symbols_->FindType(id));
   ClassType* c = types_->Make<ClassType>(id);
-  c->SetNative(native != 0);
   symbols_->DefineType(id, c);
   return c;
 }
@@ -740,7 +739,6 @@ static ClassType* BeginClassTemplate(int native, TypeList* templateArgs, const c
   ClassTemplate* t = types_->Make<ClassTemplate>(id, *templateArgs);
   symbols_->DefineType(id, t);
   t->SetDefined(true);
-  t->SetNative(native != 0);
   Scope* scope = symbols_->PushNewScope();
   scope->classType = t;
   t->SetScope(scope);

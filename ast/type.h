@@ -436,8 +436,7 @@ class ClassType : public Type {
   std::string GetName() const { return name_; }
   bool        IsDefined() const { return isDefined_; }
   void        SetDefined(bool defined) { isDefined_ = defined; }
-  bool        IsNative() const;
-  void        SetNative(bool native) { native_ = native; }
+  bool        HasNativeMethods() const;
   ClassType*  GetParent() const { return parent_; }
   Method*                     GetDestructor() { return destructor_; }
   Type*                       FindType(const std::string& id);
@@ -461,7 +460,6 @@ class ClassType : public Type {
   Method*              destructor_ = nullptr;
   int                  numFields_ = 0;  // includes inherited fields
   bool                 isDefined_ = false;
-  bool                 native_ = false;
   MemoryLayout         memoryLayout_ = MemoryLayout::Default;
   int                  padding_ = 0;
 };

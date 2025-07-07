@@ -438,9 +438,8 @@ void GenBindings::EmitMethod(Method* method) {
 void GenBindings::EmitClass(ClassType* classType) {
   auto id = EmitType(classType);
   file_ << "\n  c = type" << id << ";\n";
-  if (classType->IsNative() && !classType->GetTemplate()) {
-    file_ << "  c->SetNative(true);\n"
-          << "  NativeClass::" << classType->GetName() << " = c;\n";
+  if (classType->HasNativeMethods() && !classType->GetTemplate()) {
+    file_ << "  NativeClass::" << classType->GetName() << " = c;\n";
   }
   file_ << "  c->SetMemoryLayout(MemoryLayout::" <<
     MemoryLayoutToString(classType->GetMemoryLayout()) << ");\n";

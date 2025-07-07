@@ -570,9 +570,11 @@ bool ClassType::CanInitFrom(const ListType* listType) const {
   return true;
 }
 
-bool ClassType::IsNative() const {
-  if (template_) { return template_->IsNative(); }
-  return native_;
+bool ClassType::HasNativeMethods() const {
+  for (const auto& method : methods_) {
+    if (!method->stmts) return true;
+  }
+  return false;
 }
 
 bool ClassType::IsUnsizedClass() const {
