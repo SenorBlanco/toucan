@@ -32,6 +32,7 @@ class Expr;
 class TypeTable;
 class ClassType;
 class ListType;
+class NodeVector;
 struct Scope;
 
 enum class MemoryLayout { Default = 0, Storage = 1, Uniform = 2 };
@@ -448,7 +449,7 @@ class ClassType : public Type {
   bool                        IsFullySpecified() const override;
   bool                        NeedsDestruction() const override;
   bool                        ContainsRawPtr() const override;
-
+  void                        CreateDefaultDestructor(NodeVector* nodes, TypeTable* types);
  private:
   std::string          name_;
   Scope*               scope_ = nullptr;

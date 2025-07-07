@@ -428,6 +428,31 @@ bool ClassType::NeedsDestruction() const {
   return false;
 }
 
+void ClassType::CreateDefaultDestructor(NodeVector* nodes, TypeTable* types) {
+  if (!NeedsDestruction()) return;
+
+  auto destructor = destructor_;
+
+  if (!destructor) {
+    std::string name = std::string("~") + name_;
+    destructor = new Method(0, types->GetVoid(), name, this);
+    destructor->AddFormalArg("this", types->GetRawPtrType(this), nullptr);
+    destructor->stmts = nodes->Make<Stmts>();
+    AddMethod(destructor);
+    printf("created missing destructor for %s\n", ToString().c_str());
+  }
+
+  if (destructor->stmts) {
+    auto This = nodes->Make<LoadExpr>(nodes->Make<VarExpr>(destructor->formalArgList[0].get()));
+    for (const auto& field : fields_) {
+      if (field->type->NeedsDestruction()) {
+        printf("destructing %s in %s destructor\n", field->type->ToString().c_str(), ToString().c_str());
+        destructor->stmts->Append(nodes->Make<DestroyStmt>(nodes->Make<FieldAccess>(This, field.get())));
+      }
+    }
+  }
+}
+
 bool ClassType::ContainsRawPtr() const {
   if (parent_ && parent_->ContainsRawPtr()) { return true; }
   for (const auto& field : fields_) {

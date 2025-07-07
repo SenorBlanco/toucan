@@ -460,13 +460,13 @@ void GenBindings::EmitClass(ClassType* classType) {
     file_ << "  NativeClass::" << classType->GetName() << " = c;\n";
   }
   file_ << "  c->SetMemoryLayout(MemoryLayout::" <<
-    MemoryLayoutToString(classType->GetMemoryLayout()) << ");\n";
-    if (emitSymbolsAndStatements_) {
-      file_ << "  scope = symbols->PushNewScope();\n"
-            << "  symbols->PopScope();\n"
-            << "  scope->classType = c;\n"
-            << "  c->SetScope(scope);\n";
-    }
+  MemoryLayoutToString(classType->GetMemoryLayout()) << ");\n";
+  if (emitSymbolsAndStatements_) {
+    file_ << "  scope = symbols->PushNewScope();\n"
+          << "  symbols->PopScope();\n"
+          << "  scope->classType = c;\n"
+          << "  c->SetScope(scope);\n";
+  }
   if (ClassType* parent = classType->GetParent()) {
     int parentID = EmitType(classType->GetParent());
     file_ << "  c->SetParent(type" << parentID << ");\n";
@@ -487,6 +487,9 @@ void GenBindings::EmitClass(ClassType* classType) {
   }
   for (const auto& method : classType->GetMethods()) {
     EmitMethod(method.get());
+  }
+  if (emitSymbolsAndStatements_) {
+    file_ << "  c->CreateDefaultDestructor(nodes, types);\n";
   }
   if (classType->GetScope()) {
     for (const auto& pair : classType->GetScope()->types) {

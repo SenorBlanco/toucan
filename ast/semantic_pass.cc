@@ -863,25 +863,7 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
 
   symbols_->PushScope(scope);
 
-  if (classType->NeedsDestruction()) {
-    auto destructor = classType->GetDestructor();
-    if (!destructor) {
-      std::string name = std::string("~") + classType->GetName();
-      destructor = new Method(0, types_->GetVoid(), name, classType);
-      destructor->AddFormalArg("this", types_->GetRawPtrType(classType), nullptr);
-      destructor->stmts = Make<Stmts>();
-      classType->AddMethod(destructor);
-    }
-
-    if (destructor->stmts) {
-      auto This = Make<LoadExpr>(Make<VarExpr>(destructor->formalArgList[0].get()));
-      for (const auto& field : classType->GetFields()) {
-        if (field->type->NeedsDestruction()) {
-          destructor->stmts->Append(Make<DestroyStmt>(Make<FieldAccess>(This, field.get())));
-        }
-      }
-    }
-  }
+  classType->CreateDefaultDestructor(nodes_, types_);
 
   for (const auto& mit : classType->GetMethods()) {
     auto method = mit.get();
