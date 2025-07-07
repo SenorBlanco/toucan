@@ -632,8 +632,7 @@ llvm::Value* CodeGenLLVM::ConvertFromNative(Type* type, llvm::Value* value) {
   if (type->IsStrongPtr() || type->IsWeakPtr()) {
     Type* baseType = static_cast<PtrType*>(type)->GetBaseType();
     Type* unqualifiedType = baseType->GetUnqualifiedType();
-    // FIXME: when do we actually need to dereference Object*?
-    if (unqualifiedType->IsClass() && static_cast<ClassType*>(unqualifiedType)->HasNativeMethods()) {
+    if (unqualifiedType->IsClass()) {
       return CreatePointer(value, CreateControlBlock(baseType));
     } else {
       // Dereference Object*.
