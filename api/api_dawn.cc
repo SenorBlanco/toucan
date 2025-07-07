@@ -1191,10 +1191,6 @@ void CommandEncoder_Destroy(CommandEncoder* This) { delete This; }
 void Queue_Submit(Queue* queue, CommandBuffer* commandBuffer) {
   queue->queue.Submit(1, &commandBuffer->commandBuffer);
 }
-void VertexInput_Destroy(VertexInput* This) { delete This; }
-
-void ColorAttachment_Destroy(ColorAttachment* This) { delete This; }
-
 void DepthStencilAttachment_Destroy(DepthStencilAttachment* This) { delete This; }
 
 RenderPass* RenderPass_RenderPass_CommandEncoder_T(int             qualifiers,
