@@ -47,7 +47,6 @@ bool NeedsUnfolding(Type* type) {
   if (type->IsClass()) {
     auto classType = static_cast<ClassType*>(type);
     // If this is a non-native class with no fields, unfold it into nothing.
-    // FIXME: do it for all classes with zero fields?
     if (classType->GetTotalFields() == 0 && !classType->HasNativeMethods()) {
       return true;
     }
@@ -399,7 +398,7 @@ Method* ShaderPrepPass::Run(Method* entryPoint) {
 }
 
 Method* ShaderPrepPass::PrepMethod(Method* method, std::vector<Var*> globalVars) {
-  if (!method->stmts) { return method; }
+  if (method->IsNative()) { return method; }
 
   MethodKey key{method, globalVars};
   if (methodMap_[key]) { return methodMap_[key].get(); }
@@ -462,7 +461,7 @@ Result ShaderPrepPass::ResolveNativeMethodCall(MethodCall* node) {
 }
 
 Result ShaderPrepPass::Visit(MethodCall* node) {
-  if (!node->GetMethod()->stmts) { return ResolveNativeMethodCall(node); }
+  if (node->GetMethod()->IsNative()) { return ResolveNativeMethodCall(node); }
   const std::vector<Expr*>& args = node->GetArgList()->Get();
   auto*                     newArgs = Make<ExprList>();
   Stmts*                    writeStmts = nullptr;

@@ -390,7 +390,7 @@ void GenBindings::EmitMethod(Method* method) {
   }
   file_ << "  c->AddMethod(m);\n";
   bool skipFirst = false;
-  if (!method->stmts) {
+  if (method->IsNative()) {
     if (header_ && !(method->modifiers & Method::Modifier::DeviceOnly)) {
 #if TARGET_OS_IS_WIN
       header_ << "__declspec(dllexport) ";

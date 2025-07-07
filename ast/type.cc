@@ -369,7 +369,7 @@ std::string Method::GetMangledName() const {
   }
   for (auto& m : classType->GetMethods()) {
     if (m.get() != this && m->name == name) {
-      bool skipFirst = !m->stmts && m->IsConstructor();
+      bool skipFirst = m->IsNative() && m->IsConstructor();
       for (auto arg : formalArgList) {
         if (skipFirst) { skipFirst = false; continue; }
         result += "_";
@@ -572,7 +572,7 @@ bool ClassType::CanInitFrom(const ListType* listType) const {
 
 bool ClassType::HasNativeMethods() const {
   for (const auto& method : methods_) {
-    if (!method->stmts) return true;
+    if (method->IsNative()) return true;
   }
   return false;
 }

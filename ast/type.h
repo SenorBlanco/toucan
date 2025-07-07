@@ -314,6 +314,7 @@ struct Method {
   std::string             ToString() const;
   std::string             GetMangledName() const;
   void                    AddFormalArg(std::string id, Type* type, Expr* defaultValue);
+  bool                    IsNative() const { return !stmts; }
   bool                    IsConstructor() const;
   bool                    IsDestructor() const;
   int                     modifiers;
