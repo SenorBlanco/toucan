@@ -19,11 +19,11 @@
 
 namespace Toucan {
 
-class SymbolTable;
+class SemanticPass;
 
 class APIValidationPass : public Visitor {
  public:
-                    APIValidationPass(NodeVector* nodes, TypeTable* types);
+                    APIValidationPass(SemanticPass* semanticPass, NodeVector* nodes, TypeTable* types);
   Result            Visit(ArgList* node) override;
   Result            Visit(ArrayAccess* node) override;
   Result            Visit(BinOpNode* node) override;
@@ -47,24 +47,23 @@ class APIValidationPass : public Visitor {
   Result            Visit(UnaryOp* node) override;
   Result            Visit(VarDeclaration* decl) override;
   Result            Visit(WhileStatement* stmt) override;
-  void              Error(ASTNode* node, const char* fmt, ...);
   Result            Default(ASTNode* node) override;
   int               Run();
-  void              Error(const char* str);
 
  private:
-  void         ValidateDeviceClass(ClassType* classType);
-  void         ValidateVertexAttribute(Type* type);
-  void         ValidateVertexClass(ClassType* classType);
-  void         ValidateBuffer(ClassType* classType);
-  void         ValidateBindGroup(ClassType* classType);
-  void         ValidateRenderPipelineField(Type* type);
-  void         ValidateRenderPipeline(ClassType* classType);
-  void         ValidateComputePipeline(ClassType* classType);
-  Result       Resolve(ASTNode* node);
-  NodeVector*  nodes_;
-  TypeTable*   types_;
-  int          numErrors_ = 0;
+  void              ValidateDeviceClass(ClassType* classType);
+  void              ValidateVertexAttribute(Type* type);
+  void              ValidateVertexClass(ClassType* classType);
+  void              ValidateBuffer(ClassType* classType);
+  void              ValidateBindGroup(ClassType* classType);
+  bool              ValidateRenderPipelineField(Type* type);
+  void              ValidateRenderPipeline(ClassType* classType);
+  void              ValidateComputePipeline(ClassType* classType);
+  Result            Resolve(ASTNode* node);
+
+  SemanticPass*     semanticPass_;
+  NodeVector*       nodes_;
+  TypeTable*        types_;
 };
 
 };  // namespace Toucan

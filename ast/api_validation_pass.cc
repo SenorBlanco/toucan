@@ -20,12 +20,15 @@
 
 #include <filesystem>
 
-#include <ast/native_class.h>
+#include "native_class.h"
+#include "semantic_pass.h"
 
 namespace Toucan {
 
-APIValidationPass::APIValidationPass(NodeVector* nodes, TypeTable* types)
-    : nodes_(nodes), types_(types) {}
+APIValidationPass::APIValidationPass(SemanticPass* semanticPass,
+                                     NodeVector* nodes,
+                                     TypeTable* types)
+    : semanticPass_(semanticPass), nodes_(nodes), types_(types) {}
 
 void APIValidationPass::ValidateDeviceClass(ClassType* classType) {
   // Must only contain (recursively) int, uint, float, vectors (<=4), arrays or classes of same.
@@ -64,25 +67,32 @@ void APIValidationPass::ValidateBindGroup(ClassType* classType) {
   // *SampleableTextureCube<T> for ValidSampleType(T)
 }
 
-void APIValidationPass::ValidateRenderPipelineField(Type* type) {
-  // Must be one of:
-  // *VertexInput<T>
-  // *index Buffer<T>
-  // *ColorAttachment<T>
-  // *DepthStencilAttachment<T>
-  // *BindGroup<T>
+bool APIValidationPass::ValidateRenderPipelineField(Type* type) {
+  if (!type->IsStrongPtr()) return false;
+
+  type = static_cast<StrongPtrType*>(type)->GetBaseType();
+  int qualifiers;
+  type = type->GetUnqualifiedType(&qualifiers);
+  if (!type->IsClass()) return false;
+  auto classType = static_cast<ClassType*>(type);
+  auto templ = classType->GetTemplate();
+  if (templ == NativeClass::VertexInput) return true;
+  if (templ == NativeClass::Buffer) return qualifiers == Type::Qualifier::Index;
+  if (templ == NativeClass::ColorAttachment) return true; // FIXME check PixelFormat
+  if (templ == NativeClass::DepthStencilAttachment) return true; // Ibid.
+  if (templ == NativeClass::BindGroup) return true; // FIXME check bind group
+  return false;
 }
 
 void APIValidationPass::ValidateRenderPipeline(ClassType* renderPipeline) {
   auto templateArgs = renderPipeline->GetTemplateArgs();
   assert(templateArgs.size() == 1);
-  if (!templateArgs[0]->IsClass()) {
-    Error("RenderPipeline template argument must be of class type");
-    return;
-  }
+  assert(templateArgs[0]->IsClass());
   auto classType = static_cast<ClassType*>(templateArgs[0]);
   for (const auto& field : classType->GetFields()) {
-    ValidateRenderPipelineField(field->type);
+    if (!ValidateRenderPipelineField(field->type)) {
+      semanticPass_->Error("%s is not a valid pipeline field type", field->type->ToString().c_str());
+    }
   }
   // Must have (or parent must have) fragment & vertex entry points.
   // All functions called from entry points must be valid device functions.
@@ -113,12 +123,7 @@ int APIValidationPass::Run() {
       }
     }
   }
-  return numErrors_;
-}
-
-void APIValidationPass::Error(const char* str) {
-  fprintf(stderr, "%s\n", str);
-  numErrors_++;
+  return semanticPass_->GetNumErrors();
 }
 
 Result APIValidationPass::Visit(ArrayAccess* node) {
@@ -227,22 +232,10 @@ Result APIValidationPass::Visit(FieldAccess* fieldAccess) {
 }
 
 Result APIValidationPass::Default(ASTNode* node) {
-  Error(node, "Internal compiler error");
+  assert(!"unknown node type");
   return {};
 }
 
 Result APIValidationPass::Resolve(ASTNode* node) { return node->Accept(this); }
-
-void APIValidationPass::Error(ASTNode* node, const char* fmt, ...) {
-  const FileLocation& location = node->GetFileLocation();
-  std::string         filename =
-      location.filename ? std::filesystem::path(*location.filename).filename().string() : "";
-  va_list argp;
-  va_start(argp, fmt);
-  fprintf(stderr, "%s:%d:  ", filename.c_str(), location.lineNum);
-  vfprintf(stderr, fmt, argp);
-  fprintf(stderr, "\n");
-  numErrors_++;
-}
 
 };  // namespace Toucan
