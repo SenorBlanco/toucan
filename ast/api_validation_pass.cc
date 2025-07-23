@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "shader_validation_pass.h"
+#include "api_validation_pass.h"
 
 #include <assert.h>
 #include <stdarg.h>
@@ -20,113 +20,118 @@
 
 #include <filesystem>
 
-#include "symbol.h"
+#include <ast/native_class.h>
 
 namespace Toucan {
 
-ShaderValidationPass::ShaderValidationPass(SymbolTable* symbols,
-                                           TypeTable*   types,
-                                           Type*        thisPtrType)
-    : symbols_(symbols), types_(types), thisPtrType_(thisPtrType), returnValue_(0), numErrors_(0) {}
+APIValidationPass::APIValidationPass(NodeVector* nodes, TypeTable* types)
+    : nodes_(nodes), types_(types) {}
 
-Result ShaderValidationPass::Visit(ArrayAccess* node) {
+int APIValidationPass::Run() {
+  for (auto type : types_->GetTypes()) {
+    if (type->IsClass()) {
+      ClassType* classType = static_cast<ClassType*>(type);
+      auto classTemplate = classType->GetTemplate();
+      if (classTemplate == NativeClass::Buffer) {
+      }
+    }
+  }
+  return numErrors_;
+}
+
+Result APIValidationPass::Visit(ArrayAccess* node) {
   Resolve(node->GetExpr());
   Resolve(node->GetIndex());
   return {};
 }
 
-Result ShaderValidationPass::Visit(CastExpr* node) {
+Result APIValidationPass::Visit(CastExpr* node) {
   Resolve(node->GetExpr());
   return {};
 }
 
-Result ShaderValidationPass::Visit(IntConstant* node) { return {}; }
+Result APIValidationPass::Visit(IntConstant* node) { return {}; }
 
-Result ShaderValidationPass::Visit(UIntConstant* node) { return {}; }
+Result APIValidationPass::Visit(UIntConstant* node) { return {}; }
 
-Result ShaderValidationPass::Visit(EnumConstant* node) { return {}; }
+Result APIValidationPass::Visit(EnumConstant* node) { return {}; }
 
-Result ShaderValidationPass::Visit(DoubleConstant* node) { return {}; }
+Result APIValidationPass::Visit(DoubleConstant* node) { return {}; }
 
-Result ShaderValidationPass::Visit(FloatConstant* node) { return {}; }
+Result APIValidationPass::Visit(FloatConstant* node) { return {}; }
 
-Result ShaderValidationPass::Visit(BoolConstant* node) { return {}; }
+Result APIValidationPass::Visit(BoolConstant* node) { return {}; }
 
-Result ShaderValidationPass::Visit(NullConstant* node) { return {}; }
+Result APIValidationPass::Visit(NullConstant* node) { return {}; }
 
-Result ShaderValidationPass::Visit(Stmts* stmts) {
+Result APIValidationPass::Visit(Stmts* stmts) {
   for (Stmt* const& it : stmts->GetStmts()) {
     Resolve(it);
   }
   return {};
 }
 
-Result ShaderValidationPass::Visit(ArgList* a) {
+Result APIValidationPass::Visit(ArgList* a) {
   for (Arg* const& i : a->GetArgs()) {
     Resolve(i);
   }
   return {};
 }
 
-Result ShaderValidationPass::Visit(ExprStmt* stmt) {
+Result APIValidationPass::Visit(ExprStmt* stmt) {
   Resolve(stmt->GetExpr());
   return {};
 }
 
-Result ShaderValidationPass::Visit(UnresolvedInitializer* node) {
-  Resolve(node->GetArgList());
-  return {};
-}
+Result APIValidationPass::Visit(VarDeclaration* decl) { return {}; }
 
-Result ShaderValidationPass::Visit(VarDeclaration* decl) { return {}; }
-
-Result ShaderValidationPass::Visit(LoadExpr* node) {
+Result APIValidationPass::Visit(LoadExpr* node) {
   Resolve(node->GetExpr());
   return {};
 }
 
-Result ShaderValidationPass::Visit(StoreStmt* node) {
+Result APIValidationPass::Visit(StoreStmt* node) {
   Resolve(node->GetLHS());
   Resolve(node->GetRHS());
   return {};
 }
 
-Result ShaderValidationPass::Visit(BinOpNode* node) {
+Result APIValidationPass::Visit(BinOpNode* node) {
   Resolve(node->GetRHS());
   Resolve(node->GetLHS());
   return {};
 }
 
-Result ShaderValidationPass::Visit(UnaryOp* node) {
+Result APIValidationPass::Visit(UnaryOp* node) {
   Resolve(node->GetRHS());
   return {};
 }
 
-Result ShaderValidationPass::Visit(ReturnStatement* stmt) {
+Result APIValidationPass::Visit(ReturnStatement* stmt) {
   Resolve(stmt->GetExpr());
   return {};
 }
 
-Result ShaderValidationPass::Visit(IfStatement* s) {
+Result APIValidationPass::Visit(IfStatement* s) {
   Resolve(s->GetExpr());
   Resolve(s->GetStmt());
   Resolve(s->GetOptElse());
   return {};
 }
 
-Result ShaderValidationPass::Visit(WhileStatement* s) {
+Result APIValidationPass::Visit(WhileStatement* s) {
   Resolve(s->GetCond());
   Resolve(s->GetBody());
   return {};
 }
 
-Result ShaderValidationPass::Visit(DoStatement* s) {
+Result APIValidationPass::Visit(DoStatement* s) {
   Resolve(s->GetBody());
   Resolve(s->GetCond());
   return {};
 }
 
-Result ShaderValidationPass::Visit(ForStatement* node) {
+Result APIValidationPass::Visit(ForStatement* node) {
   Resolve(node->GetInitStmt());
   Resolve(node->GetCond());
   Resolve(node->GetLoopStmt());
@@ -134,19 +139,19 @@ Result ShaderValidationPass::Visit(ForStatement* node) {
   return {};
 }
 
-Result ShaderValidationPass::Visit(FieldAccess* fieldAccess) {
+Result APIValidationPass::Visit(FieldAccess* fieldAccess) {
   Resolve(fieldAccess->GetExpr());
   return {};
 }
 
-Result ShaderValidationPass::Default(ASTNode* node) {
+Result APIValidationPass::Default(ASTNode* node) {
   Error(node, "Internal compiler error");
   return {};
 }
 
-Result ShaderValidationPass::Resolve(ASTNode* node) { return node->Accept(this); }
+Result APIValidationPass::Resolve(ASTNode* node) { return node->Accept(this); }
 
-void ShaderValidationPass::Error(ASTNode* node, const char* fmt, ...) {
+void APIValidationPass::Error(ASTNode* node, const char* fmt, ...) {
   const FileLocation& location = node->GetFileLocation();
   std::string         filename =
       location.filename ? std::filesystem::path(*location.filename).filename().string() : "";

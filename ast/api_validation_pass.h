@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef _AST_AST_SHADER_VALIDATION_PASS_H_
-#define _AST_AST_SHADER_VALIDATION_PASS_H_
+#ifndef _AST_AST_API_VALIDATION_PASS_H_
+#define _AST_AST_API_VALIDATION_PASS_H_
 
 #include "ast.h"
 
@@ -21,15 +21,14 @@ namespace Toucan {
 
 class SymbolTable;
 
-class ShaderValidationPass : public Visitor {
+class APIValidationPass : public Visitor {
  public:
-  ShaderValidationPass(SymbolTable* symbols, TypeTable* types, Type* thisPtrType);
+                    APIValidationPass(NodeVector* nodes, TypeTable* types);
   Result            Visit(ArgList* node) override;
   Result            Visit(ArrayAccess* node) override;
   Result            Visit(BinOpNode* node) override;
   Result            Visit(BoolConstant* constant) override;
   Result            Visit(CastExpr* expr) override;
-  Result            Visit(UnresolvedClassDefinition* defn) override;
   Result            Visit(DoStatement* stmt) override;
   Result            Visit(DoubleConstant* constant) override;
   Result            Visit(EnumConstant* node) override;
@@ -46,26 +45,17 @@ class ShaderValidationPass : public Visitor {
   Result            Visit(StoreStmt* node) override;
   Result            Visit(UIntConstant* constant) override;
   Result            Visit(UnaryOp* node) override;
-  Result            Visit(UnresolvedInitializer* node) override;
-  Result            Visit(UnresolvedDot* node) override;
-  Result            Visit(UnresolvedIdentifier* node) override;
-  Result            Visit(UnresolvedMethodCall* node) override;
-  Result            Visit(UnresolvedStaticMethodCall* node) override;
   Result            Visit(VarDeclaration* decl) override;
   Result            Visit(WhileStatement* stmt) override;
   void              Error(ASTNode* node, const char* fmt, ...);
   Result            Default(ASTNode* node) override;
-  const NodeVector& nodes() { return nodes_; }
-  int               GetNumErrors() const { return numErrors_; }
+  int               Run();
 
  private:
   Result       Resolve(ASTNode* node);
-  SymbolTable* symbols_;
+  NodeVector*  nodes_;
   TypeTable*   types_;
-  NodeVector   nodes_;
-  ASTNode*     returnValue_;
-  int          numErrors_;
-  Type*        thisPtrType_;
+  int          numErrors_ = 0;
 };
 
 };  // namespace Toucan
