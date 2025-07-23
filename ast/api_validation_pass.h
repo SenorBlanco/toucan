@@ -50,8 +50,17 @@ class APIValidationPass : public Visitor {
   void              Error(ASTNode* node, const char* fmt, ...);
   Result            Default(ASTNode* node) override;
   int               Run();
+  void              Error(const char* str);
 
  private:
+  void         ValidateDeviceClass(ClassType* classType);
+  void         ValidateVertexAttribute(Type* type);
+  void         ValidateVertexClass(ClassType* classType);
+  void         ValidateBuffer(ClassType* classType);
+  void         ValidateBindGroup(ClassType* classType);
+  void         ValidateRenderPipelineField(Type* type);
+  void         ValidateRenderPipeline(ClassType* classType);
+  void         ValidateComputePipeline(ClassType* classType);
   Result       Resolve(ASTNode* node);
   NodeVector*  nodes_;
   TypeTable*   types_;

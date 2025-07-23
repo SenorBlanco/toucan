@@ -73,10 +73,19 @@ void APIValidationPass::ValidateRenderPipelineField(Type* type) {
   // *BindGroup<T>
 }
 
-void APIValidationPass::ValidateRenderPipeline(ClassType* classType) {
+void APIValidationPass::ValidateRenderPipeline(ClassType* renderPipeline) {
+  auto templateArgs = renderPipeline->GetTemplateArgs();
+  assert(templateArgs.size() == 1);
+  if (!templateArgs[0]->IsClass()) {
+    Error("RenderPipeline template argument must be of class type");
+    return;
+  }
+  auto classType = static_cast<ClassType*>(templateArgs[0]);
+  for (const auto& field : classType->GetFields()) {
+    ValidateRenderPipelineField(field->type);
+  }
   // Must have (or parent must have) fragment & vertex entry points.
-  // Fields must be valid render pipeline member variables.
-  // All functions called from entry points must be valid device functxions.
+  // All functions called from entry points must be valid device functions.
 }
 
 void APIValidationPass::ValidateComputePipeline(ClassType* classType) {
@@ -87,23 +96,29 @@ void APIValidationPass::ValidateComputePipeline(ClassType* classType) {
 
 int APIValidationPass::Run() {
   for (auto type : types_->GetTypes()) {
-    if (type->IsClass()) {
+    if (type->IsClass() && type->IsFullySpecified()) {  // FIXME: remove fully specified when called from semantic pass
       ClassType* classType = static_cast<ClassType*>(type);
       auto classTemplate = classType->GetTemplate();
+      auto templateArgs = classType->GetTemplateArgs();
       if (classTemplate == NativeClass::Buffer) {
         ValidateBuffer(classType);
       } else if (classTemplate == NativeClass::BindGroup) {
-        ValidateBindGroup(classType->GetTemplateArgs());
+        ValidateBindGroup(classType);
       } else if (classTemplate == NativeClass::RenderPipeline ||
                  classTemplate == NativeClass::RenderPass) {
-        ValidateRenderPipeline(classType->GetTemplateArgs());
+        ValidateRenderPipeline(classType);
       } else if (classTemplate == NativeClass::ComputePipeline ||
                  classTemplate == NativeClass::ComputePass) {
-        ValidateComputePipeline(classType->GetTemplateArgs());
+        ValidateComputePipeline(classType);
       }
     }
   }
   return numErrors_;
+}
+
+void APIValidationPass::Error(const char* str) {
+  fprintf(stderr, "%s\n", str);
+  numErrors_++;
 }
 
 Result APIValidationPass::Visit(ArrayAccess* node) {
