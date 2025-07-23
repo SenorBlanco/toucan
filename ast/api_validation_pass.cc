@@ -27,12 +27,79 @@ namespace Toucan {
 APIValidationPass::APIValidationPass(NodeVector* nodes, TypeTable* types)
     : nodes_(nodes), types_(types) {}
 
+void APIValidationPass::ValidateDeviceClass(ClassType* classType) {
+  // Must only contain (recursively) int, uint, float, vectors (<=4), arrays or classes of same.
+}
+
+void APIValidationPass::ValidateVertexAttribute(Type* type) {
+  // For now, must be one of:
+  // int, int<2>, int<3>, int<4>
+  // uint, uint<2>, uint<3>, uint<4>
+  // float, float<2>, float<3>, float<4>
+}
+
+void APIValidationPass::ValidateVertexClass(ClassType* classType) {
+  // Each field must be valid vertex attribute
+}
+
+void APIValidationPass::ValidateBuffer(ClassType* classType) {
+  // If has uniform qualifier, must be valid device-side class, with padded layout.
+  // If has storage qualifier, must be valid device-side class.
+  // If has vertex qualifier, must be unsized array of valid vertex class.
+  // If has index qualifier, must be unsized array of uint or ushort.
+  // Can only have hostreadable or hostwriteable, not both.
+    // If has either, cannot have GPU-side qualifiers (uniform, storage, vertex, index).
+  // Cannot have sampleable, renderable, readonly, writeonly, unfilterable, coherent.
+}
+
+void APIValidationPass::ValidateBindGroup(ClassType* classType) {
+  // Each field must be one of:
+  //
+  // *Sampler
+  // *[uniform | storage | readonly storage ] Buffer<T>
+  // *SampleableTexture1D<T> for ValidSampleType(T)
+  // *SampleableTexture2D<T> for ValidSampleType(T)
+  // *SampleableTexture2DArray<T> for ValidSampleType(T)
+  // *SampleableTexture3D<T> for ValidSampleType(T)
+  // *SampleableTextureCube<T> for ValidSampleType(T)
+}
+
+void APIValidationPass::ValidateRenderPipelineField(Type* type) {
+  // Must be one of:
+  // *VertexInput<T>
+  // *index Buffer<T>
+  // *ColorAttachment<T>
+  // *DepthStencilAttachment<T>
+  // *BindGroup<T>
+}
+
+void APIValidationPass::ValidateRenderPipeline(ClassType* classType) {
+  // Must have (or parent must have) fragment & vertex entry points.
+  // Fields must be valid render pipeline member variables.
+  // All functions called from entry points must be valid device functxions.
+}
+
+void APIValidationPass::ValidateComputePipeline(ClassType* classType) {
+  // Must have (or parent must have) compute entry point.
+  // Fields must be valid compute pipeline member variables (*BindGroup<T>).
+  // All functions called from entry point must be valid device functxions.
+}
+
 int APIValidationPass::Run() {
   for (auto type : types_->GetTypes()) {
     if (type->IsClass()) {
       ClassType* classType = static_cast<ClassType*>(type);
       auto classTemplate = classType->GetTemplate();
       if (classTemplate == NativeClass::Buffer) {
+        ValidateBuffer(classType);
+      } else if (classTemplate == NativeClass::BindGroup) {
+        ValidateBindGroup(classType->GetTemplateArgs());
+      } else if (classTemplate == NativeClass::RenderPipeline ||
+                 classTemplate == NativeClass::RenderPass) {
+        ValidateRenderPipeline(classType->GetTemplateArgs());
+      } else if (classTemplate == NativeClass::ComputePipeline ||
+                 classTemplate == NativeClass::ComputePass) {
+        ValidateComputePipeline(classType->GetTemplateArgs());
       }
     }
   }
