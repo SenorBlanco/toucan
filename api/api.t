@@ -46,8 +46,8 @@ class Buffer<T> {
   deviceonly MapRead() uniform : *readonly uniform T;
   deviceonly MapWrite() writeonly storage : *writeonly storage T;
   deviceonly Map() storage : *storage T;
-  MapRead() hostreadable : *readonly T;
-  MapWrite() hostwriteable : *writeonly T;
+  hostonly MapRead() hostreadable : *readonly T;
+  hostonly MapWrite() hostwriteable : *writeonly T;
 }
 
 class DepthStencilState {
@@ -183,51 +183,51 @@ class SampleableTextureCube<ST> {
 class Texture1D<PF> {
   Texture1D(device : &Device, width : uint);
  ~Texture1D();
-  CreateSampleableView() sampleable : *SampleableTexture1D<PF:DeviceType>;
-  CreateStorageView(mipLevel = 0u) : *storage Texture1D<PF>;
-  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, width : uint, origin : uint = 0);
+  hostonly CreateSampleableView() sampleable : *SampleableTexture1D<PF:DeviceType>;
+  hostonly CreateStorageView(mipLevel = 0u) : *storage Texture1D<PF>;
+  hostonly CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, width : uint, origin : uint = 0);
 }
 
 class Texture2D<PF> {
   Texture2D(device : &Device, size : uint<2>);
  ~Texture2D();
-  CreateSampleableView() sampleable : *SampleableTexture2D<PF:DeviceType>;
-  CreateRenderableView(mipLevel = 0u) : *renderable Texture2D<PF>;
-  CreateStorageView(mipLevel = 0u) : *storage Texture2D<PF>;
-  CreateColorAttachment(loadOp = LoadOp.Load, storeOp = StoreOp.Store, clearValue = float<4>(0.0, 0.0, 0.0, 0.0)) renderable : *ColorAttachment<PF>;
-  CreateDepthStencilAttachment(depthLoadOp = LoadOp.Load, depthStoreOp = StoreOp.Store, depthClearValue = 1.0, stencilLoadOp = LoadOp.Undefined, stencilStoreOp = StoreOp.Undefined, stencilClearValue = 0) renderable : *DepthStencilAttachment<PF>;
-  MinBufferWidth() : uint;
-  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<2>, origin : uint<2> = uint<2>(0, 0));
+  hostonly CreateSampleableView() sampleable : *SampleableTexture2D<PF:DeviceType>;
+  hostonly CreateRenderableView(mipLevel = 0u) : *renderable Texture2D<PF>;
+  hostonly CreateStorageView(mipLevel = 0u) : *storage Texture2D<PF>;
+  hostonly CreateColorAttachment(loadOp = LoadOp.Load, storeOp = StoreOp.Store, clearValue = float<4>(0.0, 0.0, 0.0, 0.0)) renderable : *ColorAttachment<PF>;
+  hostonly CreateDepthStencilAttachment(depthLoadOp = LoadOp.Load, depthStoreOp = StoreOp.Store, depthClearValue = 1.0, stencilLoadOp = LoadOp.Undefined, stencilStoreOp = StoreOp.Undefined, stencilClearValue = 0) renderable : *DepthStencilAttachment<PF>;
+  hostonly MinBufferWidth() : uint;
+  hostonly CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<2>, origin : uint<2> = uint<2>(0, 0));
 }
 
 class Texture2DArray<PF> {
   Texture2DArray(device : &Device, size : uint<3>);
  ~Texture2D();
-  CreateSampleableView() sampleable : *SampleableTexture2DArray<PF:DeviceType>;
-  CreateRenderableView(layee : uint, mipLevel = 0u) : *renderable Texture2D<PF>;
-  CreateStorageView(layer : uint, mipLevel = 0u) : *storage Texture2DArray<PF>;
-  MinBufferWidth() : uint;
-  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<3>, origin = uint<3>(0, 0, 0));
+  hostonly CreateSampleableView() sampleable : *SampleableTexture2DArray<PF:DeviceType>;
+  hostonly CreateRenderableView(layee : uint, mipLevel = 0u) : *renderable Texture2D<PF>;
+  hostonly CreateStorageView(layer : uint, mipLevel = 0u) : *storage Texture2DArray<PF>;
+  hostonly MinBufferWidth() : uint;
+  hostonly CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<3>, origin = uint<3>(0, 0, 0));
 }
 
 class Texture3D<PF> {
   Texture3D(device : &Device, size : uint<3>);
  ~Texture3D();
-  CreateSampleableView() sampleable : *SampleableTexture3D<PF:DeviceType>;
-  CreateRenderableView(depth : uint, mipLevel = 0u) : *renderable Texture2D<PF>;
-  CreateStorageView(depth : uint, mipLevel = 0u) : *storage Texture3D<PF>;
-  MinBufferWidth() : uint;
-  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<3>, origin = uint<3>(0, 0, 0));
+  hostonly CreateSampleableView() sampleable : *SampleableTexture3D<PF:DeviceType>;
+  hostonly CreateRenderableView(depth : uint, mipLevel = 0u) : *renderable Texture2D<PF>;
+  hostonly CreateStorageView(depth : uint, mipLevel = 0u) : *storage Texture3D<PF>;
+  hostonly MinBufferWidth() : uint;
+  hostonly CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<3>, origin = uint<3>(0, 0, 0));
 }
 
 class TextureCube<PF> {
   TextureCube(device : &Device, size : uint<2>);
  ~TextureCube();
-  CreateSampleableView() sampleable : *SampleableTextureCube<PF:DeviceType>;
-  CreateRenderableView(face : uint, mipLevel = 0u) : *renderable Texture2D<PF>;
-  CreateStorageView(face : uint, mipLevel = 0u) : *storage Texture2D<PF>;
-  MinBufferWidth() : uint;
-  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<3>, origin = uint<3>(0, 0, 0));
+  hostonly CreateSampleableView() sampleable : *SampleableTextureCube<PF:DeviceType>;
+  hostonly CreateRenderableView(face : uint, mipLevel = 0u) : *renderable Texture2D<PF>;
+  hostonly CreateStorageView(face : uint, mipLevel = 0u) : *storage Texture2D<PF>;
+  hostonly MinBufferWidth() : uint;
+  hostonly CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<3>, origin = uint<3>(0, 0, 0));
 }
 
 class CommandEncoder {
@@ -328,7 +328,7 @@ class Math {
   static pow(v1 : float<3>, v2 : float<3>) : float<3>;
   static pow(v1 : float<4>, v2 : float<4>) : float<4>;
   static clz(value : int)   : int;
-  static rand()             : float;
+  hostonly static rand()    : float;
   static normalize(v : float<3>) : float<3>;
   static reflect(incident : float<3>, normal : float<3>) : float<3>;
   static refract(incident : float<3>, normal : float<3>, eta : float) : float<3>;

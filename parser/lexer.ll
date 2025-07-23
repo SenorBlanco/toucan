@@ -110,6 +110,7 @@ this    { return T_THIS; }
 readonly { return T_READONLY; }
 writeonly { return T_WRITEONLY; }
 deviceonly { return T_DEVICEONLY; }
+hostonly { return T_HOSTONLY; }
 coherent { return T_COHERENT; }
 hostreadable { return T_HOSTREADABLE; }
 hostwriteable { return T_HOSTWRITEABLE; }

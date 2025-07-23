@@ -334,9 +334,10 @@ struct Method {
   enum Modifier {
     Static =     1<<0,
     DeviceOnly = 1<<1,
-    Vertex =     1<<2,
-    Fragment =   1<<3,
-    Compute =    1<<4
+    HostOnly   = 1<<2,
+    Vertex =     1<<3,
+    Fragment =   1<<4,
+    Compute =    1<<5
   };
 };
 

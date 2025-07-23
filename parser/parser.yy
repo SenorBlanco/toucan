@@ -144,7 +144,7 @@ Type* FindType(const char* str) {
 %token <d> T_DOUBLE_LITERAL
 %token T_TRUE T_FALSE T_NULL T_IF T_ELSE T_FOR T_WHILE T_DO T_RETURN T_NEW
 %token T_CLASS T_ENUM T_VAR
-%token T_READONLY T_WRITEONLY T_COHERENT T_DEVICEONLY T_HOSTREADABLE T_HOSTWRITEABLE
+%token T_READONLY T_WRITEONLY T_COHERENT T_DEVICEONLY T_HOSTONLY T_HOSTREADABLE T_HOSTWRITEABLE
 %token T_INT T_UINT T_FLOAT T_DOUBLE T_BOOL T_BYTE T_UBYTE T_SHORT T_USHORT
 %token T_HALF
 %token T_STATIC T_VERTEX T_FRAGMENT T_COMPUTE T_THIS
@@ -349,6 +349,7 @@ template_formal_arguments:
 method_modifier:
     T_STATIC                                { $$ = Method::Modifier::Static; }
   | T_DEVICEONLY                            { $$ = Method::Modifier::DeviceOnly; }
+  | T_HOSTONLY                              { $$ = Method::Modifier::HostOnly; }
   | T_VERTEX                                { $$ = Method::Modifier::Vertex; }
   | T_FRAGMENT                              { $$ = Method::Modifier::Fragment; }
   | T_COMPUTE                               { $$ = Method::Modifier::Compute; }

@@ -367,6 +367,7 @@ void GenBindings::EmitMethod(Method* method) {
   file_ << "  m = new Method(0";
   if (method->modifiers & Method::Modifier::Static) { file_ << " | Method::Modifier::Static"; }
   if (method->modifiers & Method::Modifier::DeviceOnly) { file_ << " | Method::Modifier::DeviceOnly"; }
+  if (method->modifiers & Method::Modifier::HostOnly) { file_ << " | Method::Modifier::HostOnly"; }
   if (method->modifiers & Method::Modifier::Vertex) { file_ << " | Method::Modifier::Vertex"; }
   if (method->modifiers & Method::Modifier::Fragment) { file_ << " | Method::Modifier::Fragment"; }
   if (method->modifiers & Method::Modifier::Compute) { file_ << " | Method::Modifier::Compute"; }
