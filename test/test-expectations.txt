@@ -194,6 +194,9 @@ error-return-raw-ptr.t:10:  cannot return a raw pointer
 error-return-raw-ptr.t:13:  cannot allocate a type containing a raw pointer
 error-return-raw-ptr.t:13:  cannot allocate a type containing a raw pointer
 error-return-raw-ptr.t:14:  cannot return a raw pointer
+test/error-shader-validation.t
+error-shader-validation.t:2:  "new" operator is prohibited in shader methods
+error-shader-validation.t:2:  "new" operator is prohibited in shader methods
 test/error-stack-allocate-raw-ptr-aggregate.t
 error-stack-allocate-raw-ptr-aggregate.t:11:  cannot allocate a type containing a raw pointer
 error-stack-allocate-raw-ptr-aggregate.t:12:  cannot allocate a type containing a raw pointer
@@ -227,7 +230,16 @@ error-unknown-param-type.t:2: syntax error
 test/error-unknown-return-type.t
 error-unknown-return-type.t:2: syntax error
 test/error-unsized-array-not-last-in-class.t
-error-unsized-array-not-last-in-class.t:4:  unsized arrays are only allwed as the last field of a class
+error-unsized-array-not-last-in-class.t:4:  unsized arrays are only allowed as the last field of a class
+test/error-validate.t
+error-validate.t:32:  while instantiating RenderPipeline<BadPipelineField>: int is not a valid render pipeline field type
+error-validate.t:33:  while instantiating RenderPass<BadPipelineField>: int is not a valid render pipeline field type
+error-validate.t:34:  while instantiating RenderPipeline<NoVertexShader>: no vertex shader found
+error-validate.t:35:  while instantiating RenderPipeline<NoFragmentShader>: no fragment shader found
+error-validate.t:36:  while instantiating RenderPipeline<NoShaders>: no vertex shader found
+error-validate.t:36:  while instantiating RenderPipeline<NoShaders>: no fragment shader found
+error-validate.t:37:  while instantiating RenderPipeline<NoShaders2>: no vertex shader found
+error-validate.t:37:  while instantiating RenderPipeline<NoShaders2>: no fragment shader found
 test/error-widen-null-to-raw-ptr.t
 error-widen-null-to-raw-ptr.t:1:  cannot store a value of type "null" to a location of type "&int"
 test/error-widen-weak-ptr-short-to-weak-ptr-int.t

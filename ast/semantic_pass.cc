@@ -26,6 +26,7 @@
 
 #include "native_class.h"
 #include "symbol.h"
+#include "shader_validation_pass.h"
 
 namespace Toucan {
 
@@ -1193,19 +1194,43 @@ bool SemanticPass::ValidateRenderPipelineField(Type* type) {
   return false;
 }
 
-void SemanticPass::ValidateRenderPipeline(ClassType* renderPipeline) {
-  auto templateArgs = renderPipeline->GetTemplateArgs();
-  assert(templateArgs.size() == 1);
-  assert(templateArgs[0]->IsClass());
-  auto classType = static_cast<ClassType*>(templateArgs[0]);
-  for (const auto& field : classType->GetFields()) {
+bool SemanticPass::ValidateComputePipelineField(Type* type) {
+  if (!type->IsStrongPtr()) return false;
+
+  type = static_cast<StrongPtrType*>(type)->GetBaseType();
+  int qualifiers;
+  type = type->GetUnqualifiedType(&qualifiers);
+  if (!type->IsClass()) return false;
+  auto classType = static_cast<ClassType*>(type);
+  auto templ = classType->GetTemplate();
+  if (templ == NativeClass::BindGroup) return true; // FIXME check bind group
+  return false;
+}
+
+void SemanticPass::ValidateRenderPipelineFields(ClassType* renderPipeline) {
+  auto pipelineClass = static_cast<ClassType*>(renderPipeline->GetTemplateArgs()[0]);
+  for (const auto& field : pipelineClass->GetFields()) {
     if (!ValidateRenderPipelineField(field->type)) {
-      Error("while instantiating %s: %s is not a valid pipeline field type", renderPipeline->ToString().c_str(), field->type->ToString().c_str());
+      Error("while instantiating %s: %s is not a valid render pipeline field type", renderPipeline->ToString().c_str(), field->type->ToString().c_str());
     }
   }
+}
+
+void SemanticPass::ValidateComputePipelineFields(ClassType* computePipeline) {
+  auto pipelineClass = static_cast<ClassType*>(computePipeline->GetTemplateArgs()[0]);
+  for (const auto& field : pipelineClass->GetFields()) {
+    if (!ValidateComputePipelineField(field->type)) {
+      Error("while instantiating %s: %s is not a valid compute pipeline field type", computePipeline->ToString().c_str(), field->type->ToString().c_str());
+    }
+  }
+}
+
+void SemanticPass::ValidateRenderPipeline(ClassType* renderPipeline) {
+  ValidateRenderPipelineFields(renderPipeline);
   Method* vertexShader = nullptr;
   Method* fragmentShader = nullptr;
-  for (ClassType* c = classType; c != nullptr && (!vertexShader || !fragmentShader);
+  auto pipelineClass = static_cast<ClassType*>(renderPipeline->GetTemplateArgs()[0]);
+  for (ClassType* c = pipelineClass; c != nullptr && (!vertexShader || !fragmentShader);
        c = c->GetParent()) {
     for (auto& method : c->GetMethods()) {
       if (method->modifiers & Method::Modifier::Vertex) {
@@ -1218,17 +1243,45 @@ void SemanticPass::ValidateRenderPipeline(ClassType* renderPipeline) {
   if (!vertexShader) Error("while instantiating %s: no vertex shader found", renderPipeline->ToString().c_str());
   if (!fragmentShader) Error("while instantiating %s: no fragment shader found", renderPipeline->ToString().c_str());
 
-  // All functions called from entry points must be valid device functions.
+  ShaderValidationPass shaderValidationPass;
+  if (vertexShader) {
+    shaderValidationPass.Run(vertexShader);
+    numErrors_ += shaderValidationPass.GetNumErrors();
+  }
+  if (fragmentShader) {
+    shaderValidationPass.Run(fragmentShader);
+    numErrors_ += shaderValidationPass.GetNumErrors();
+  }
 }
 
-void SemanticPass::ValidateComputePipeline(ClassType* classType) {
-  // Must have (or parent must have) compute entry point.
-  // Fields must be valid compute pipeline member variables (*BindGroup<T>).
-  // All functions called from entry point must be valid device functxions.
+void SemanticPass::ValidateComputePipeline(ClassType* computePipeline) {
+  ValidateComputePipelineFields(computePipeline);
+  Method* shader = nullptr;
+  auto pipelineClass = static_cast<ClassType*>(computePipeline->GetTemplateArgs()[0]);
+  for (ClassType* c = pipelineClass; c != nullptr && !shader; c = c->GetParent()) {
+    for (auto& method : c->GetMethods()) {
+      if (method->modifiers & Method::Modifier::Compute) {
+        shader = method.get();
+      }
+    }
+  }
+  if (!shader) {
+    Error("while instantiating %s: no compute shader found", computePipeline->ToString().c_str());
+    return;
+  }
+
+  ShaderValidationPass shaderValidationPass;
+  shaderValidationPass.Run(shader);
+  numErrors_ += shaderValidationPass.GetNumErrors();
 }
 
 Type* SemanticPass::ResolveType(Type* type) {
   if (validatedTypes_.contains(type)) return type;
+
+  if (type->IsPtr()) {
+    ResolveType(static_cast<PtrType*>(type)->GetBaseType());
+    return type;
+  }
 
   if (type->IsClass() && type->IsFullySpecified()) {
     ClassType* classType = static_cast<ClassType*>(type);
@@ -1238,12 +1291,14 @@ Type* SemanticPass::ResolveType(Type* type) {
       ValidateBuffer(classType);
     } else if (classTemplate == NativeClass::BindGroup) {
       ValidateBindGroup(classType);
-    } else if (classTemplate == NativeClass::RenderPipeline ||
-               classTemplate == NativeClass::RenderPass) {
+    } else if (classTemplate == NativeClass::RenderPipeline) {
       ValidateRenderPipeline(classType);
-    } else if (classTemplate == NativeClass::ComputePipeline ||
-               classTemplate == NativeClass::ComputePass) {
+    } else if (classTemplate == NativeClass::RenderPass) {
+      ValidateRenderPipelineFields(classType);
+    } else if (classTemplate == NativeClass::ComputePipeline) {
       ValidateComputePipeline(classType);
+    } else if (classTemplate == NativeClass::ComputePass) {
+      ValidateComputePipelineFields(classType);
     }
   }
   validatedTypes_.insert(type);

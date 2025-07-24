@@ -92,8 +92,11 @@ class SemanticPass : public CopyVisitor {
   void    ValidateBuffer(ClassType* classType);
   void    ValidateBindGroup(ClassType* classType);
   bool    ValidateRenderPipelineField(Type* type);
-  void    ValidateRenderPipeline(ClassType* classType);
-  void    ValidateComputePipeline(ClassType* classType);
+  bool    ValidateComputePipelineField(Type* type);
+  void    ValidateRenderPipelineFields(ClassType* renderPipeline);
+  void    ValidateComputePipelineFields(ClassType* computePipeline);
+  void    ValidateRenderPipeline(ClassType* renderPipeline);
+  void    ValidateComputePipeline(ClassType* renderPipeline);
 
  private:
   SymbolTable* symbols_;
