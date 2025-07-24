@@ -1200,10 +1200,24 @@ void SemanticPass::ValidateRenderPipeline(ClassType* renderPipeline) {
   auto classType = static_cast<ClassType*>(templateArgs[0]);
   for (const auto& field : classType->GetFields()) {
     if (!ValidateRenderPipelineField(field->type)) {
-      Error("%s is not a valid pipeline field type", field->type->ToString().c_str());
+      Error("while instantiating %s: %s is not a valid pipeline field type", renderPipeline->ToString().c_str(), field->type->ToString().c_str());
     }
   }
-  // Must have (or parent must have) fragment & vertex entry points.
+  Method* vertexShader = nullptr;
+  Method* fragmentShader = nullptr;
+  for (ClassType* c = classType; c != nullptr && (!vertexShader || !fragmentShader);
+       c = c->GetParent()) {
+    for (auto& method : c->GetMethods()) {
+      if (method->modifiers & Method::Modifier::Vertex) {
+        if (!vertexShader) vertexShader = method.get();
+      } else if (method->modifiers & Method::Modifier::Fragment) {
+        if (!fragmentShader) fragmentShader = method.get();
+      }
+    }
+  }
+  if (!vertexShader) Error("while instantiating %s: no vertex shader found", renderPipeline->ToString().c_str());
+  if (!fragmentShader) Error("while instantiating %s: no fragment shader found", renderPipeline->ToString().c_str());
+
   // All functions called from entry points must be valid device functions.
 }
 
