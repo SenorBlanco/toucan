@@ -38,7 +38,6 @@
 #include <llvm/Transforms/Utils.h>
 
 #include <api/init_api.h>
-#include <ast/api_validation_pass.h>
 #include <ast/ast.h>
 #include <ast/semantic_pass.h>
 #include <ast/symbol.h>
@@ -108,9 +107,6 @@ int main(int argc, char** argv) {
   SemanticPass semanticPass(&nodes, &symbols, &types);
   rootStmts = semanticPass.Run(rootStmts);
   if (semanticPass.GetNumErrors() > 0) { exit(2); }
-  // FIXME: semantic pass should invoke this
-  APIValidationPass validationPass(&semanticPass, &nodes, &types);
-  if (validationPass.Run()) { exit(3); }
   types.ComputeFieldOffsets();
   if (dumpSymbolTable) {
     symbols.Dump();

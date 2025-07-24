@@ -24,8 +24,8 @@
 #include <unordered_map>
 #include <ranges>
 
+#include "native_class.h"
 #include "symbol.h"
-#include "type_replacement_pass.h"
 
 namespace Toucan {
 
@@ -124,7 +124,7 @@ Result SemanticPass::Visit(CastExpr* node) {
   if (!expr) { return nullptr; }
 
   Type* srcType = expr->GetType(types_);
-  Type* dstType = node->GetType();
+  Type* dstType = ResolveType(node->GetType());
   if (srcType == dstType) {
     return expr;
   } else if (srcType->CanWidenTo(dstType) || srcType->CanNarrowTo(dstType)) {
@@ -193,7 +193,7 @@ Result SemanticPass::Visit(ArgList* node) {
 }
 
 Result SemanticPass::Visit(UnresolvedInitializer* node) {
-  Type*              type = node->GetType();
+  Type*              type = ResolveType(node->GetType());
   ArgList*           argList = Resolve(node->GetArgList());
   if (!argList) return nullptr;
 
@@ -209,7 +209,7 @@ Result SemanticPass::Visit(UnresolvedInitializer* node) {
       return Error("constructor for class \"%s\" with those arguments not found",
                    classType->GetName().c_str());
     }
-    constructorArgs[0] = Make<TempVarExpr>(node->GetType());
+    constructorArgs[0] = Make<TempVarExpr>(type);
     WidenArgList(constructorArgs, constructor->formalArgList);
     auto* exprList = Make<ExprList>(std::move(constructorArgs));
     Expr* result = Make<MethodCall>(constructor, exprList);
@@ -278,7 +278,7 @@ Stmts* SemanticPass::InitializeArray(Expr* dest, Type* elementType, Expr* length
 
 Result SemanticPass::Visit(VarDeclaration* decl) {
   std::string id = decl->GetID();
-  Type*       type = decl->GetType();
+  Type*       type = ResolveType(decl->GetType());
   if (symbols_->FindVarInScope(id)) {
     return Error("variable \"%s\" already defined in this scope", id.c_str());
   }
@@ -789,7 +789,7 @@ void SemanticPass::WidenArgList(std::vector<Expr*>& argList, const VarVector& fo
 }
 
 Result SemanticPass::Visit(UnresolvedNewExpr* node) {
-  Type* type = node->GetType();
+  Type* type = ResolveType(node->GetType());
   if (!type) return nullptr;
   if (type->IsUnsizedArray()) { return Error("cannot allocate unsized array"); }
   if (type->ContainsRawPtr()) { return Error("cannot allocate a type containing raw pointer"); }
@@ -975,7 +975,7 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   const auto& fields = classType->GetFields();
   for (const auto& field : fields) {
     if (field->type->IsUnsizedArray() && field != fields.back()) {
-      Error("unsized arrays are only allwed as the last field of a class");
+      Error("unsized arrays are only allowed as the last field of a class");
     }
   }
   symbols_->PopScope();
@@ -1137,6 +1137,103 @@ Expr* SemanticPass::AutoDereference(Expr* expr) {
     return Make<SmartToRawPtr>(expr);
   }
   return expr;
+}
+
+void SemanticPass::ValidateDeviceClass(ClassType* classType) {
+  // Must only contain (recursively) int, uint, float, vectors (<=4), arrays or classes of same.
+}
+
+void SemanticPass::ValidateVertexAttribute(Type* type) {
+  // For now, must be one of:
+  // int, int<2>, int<3>, int<4>
+  // uint, uint<2>, uint<3>, uint<4>
+  // float, float<2>, float<3>, float<4>
+}
+
+void SemanticPass::ValidateVertexClass(ClassType* classType) {
+  // Each field must be valid vertex attribute
+}
+
+void SemanticPass::ValidateBuffer(ClassType* classType) {
+  // If has uniform qualifier, must be valid device-side class, with padded layout.
+  // If has storage qualifier, must be valid device-side class.
+  // If has vertex qualifier, must be unsized array of valid vertex class.
+  // If has index qualifier, must be unsized array of uint or ushort.
+  // Can only have hostreadable or hostwriteable, not both.
+    // If has either, cannot have GPU-side qualifiers (uniform, storage, vertex, index).
+  // Cannot have sampleable, renderable, readonly, writeonly, unfilterable, coherent.
+}
+
+void SemanticPass::ValidateBindGroup(ClassType* classType) {
+  // Each field must be one of:
+  //
+  // *Sampler
+  // *[uniform | storage | readonly storage ] Buffer<T>
+  // *SampleableTexture1D<T> for ValidSampleType(T)
+  // *SampleableTexture2D<T> for ValidSampleType(T)
+  // *SampleableTexture2DArray<T> for ValidSampleType(T)
+  // *SampleableTexture3D<T> for ValidSampleType(T)
+  // *SampleableTextureCube<T> for ValidSampleType(T)
+}
+
+bool SemanticPass::ValidateRenderPipelineField(Type* type) {
+  if (!type->IsStrongPtr()) return false;
+
+  type = static_cast<StrongPtrType*>(type)->GetBaseType();
+  int qualifiers;
+  type = type->GetUnqualifiedType(&qualifiers);
+  if (!type->IsClass()) return false;
+  auto classType = static_cast<ClassType*>(type);
+  auto templ = classType->GetTemplate();
+  if (templ == NativeClass::VertexInput) return true;
+  if (templ == NativeClass::Buffer) return qualifiers == Type::Qualifier::Index;
+  if (templ == NativeClass::ColorAttachment) return true; // FIXME check PixelFormat
+  if (templ == NativeClass::DepthStencilAttachment) return true; // Ibid.
+  if (templ == NativeClass::BindGroup) return true; // FIXME check bind group
+  return false;
+}
+
+void SemanticPass::ValidateRenderPipeline(ClassType* renderPipeline) {
+  auto templateArgs = renderPipeline->GetTemplateArgs();
+  assert(templateArgs.size() == 1);
+  assert(templateArgs[0]->IsClass());
+  auto classType = static_cast<ClassType*>(templateArgs[0]);
+  for (const auto& field : classType->GetFields()) {
+    if (!ValidateRenderPipelineField(field->type)) {
+      Error("%s is not a valid pipeline field type", field->type->ToString().c_str());
+    }
+  }
+  // Must have (or parent must have) fragment & vertex entry points.
+  // All functions called from entry points must be valid device functions.
+}
+
+void SemanticPass::ValidateComputePipeline(ClassType* classType) {
+  // Must have (or parent must have) compute entry point.
+  // Fields must be valid compute pipeline member variables (*BindGroup<T>).
+  // All functions called from entry point must be valid device functxions.
+}
+
+Type* SemanticPass::ResolveType(Type* type) {
+  if (validatedTypes_.contains(type)) return type;
+
+  if (type->IsClass() && type->IsFullySpecified()) {
+    ClassType* classType = static_cast<ClassType*>(type);
+    auto classTemplate = classType->GetTemplate();
+    auto templateArgs = classType->GetTemplateArgs();
+    if (classTemplate == NativeClass::Buffer) {
+      ValidateBuffer(classType);
+    } else if (classTemplate == NativeClass::BindGroup) {
+      ValidateBindGroup(classType);
+    } else if (classTemplate == NativeClass::RenderPipeline ||
+               classTemplate == NativeClass::RenderPass) {
+      ValidateRenderPipeline(classType);
+    } else if (classTemplate == NativeClass::ComputePipeline ||
+               classTemplate == NativeClass::ComputePass) {
+      ValidateComputePipeline(classType);
+    }
+  }
+  validatedTypes_.insert(type);
+  return type;
 }
 
 };  // namespace Toucan

@@ -27,8 +27,6 @@
 
 #include <utils/hash_pair.h>
 
-#include "file_location.h"
-
 namespace Toucan {
 
 class Expr;
@@ -42,7 +40,6 @@ enum class MemoryLayout { Default = 0, Storage = 1, Uniform = 2 };
 class Type {
  public:
   virtual ~Type(){};
-  void          SetFileLocation(const FileLocation& fileLocation) { fileLocation_ = fileLocation; }
   virtual bool  IsArray() const { return false; }
   virtual bool  IsArrayLike() const { return false; }
   virtual bool  IsQualified() const { return false; }
@@ -109,8 +106,6 @@ class Type {
     Unfilterable = 0x0400,
     Coherent = 0x0800,
   };
- private:
-  FileLocation        fileLocation_;
 };
 
 using TypeList = std::vector<Type*>;
