@@ -27,6 +27,8 @@
 
 #include <utils/hash_pair.h>
 
+#include "file_location.h"
+
 namespace Toucan {
 
 class Expr;
@@ -435,6 +437,8 @@ class ClassType : public Type {
   void                SetScope(Scope* scope) { scope_ = scope; }
   Scope*              GetScope() const { return scope_; }
   void                SetTemplate(ClassTemplate* t) { template_ = t; }
+  const FileLocation& GetFileLocation() const { return fileLocation_; }
+  void                SetFileLocation(const FileLocation& location) { fileLocation_ = location; }
   void        SetTemplateArgs(const TypeList& templateArgs) { templateArgs_ = templateArgs; }
   std::string GetName() const { return name_; }
   bool        IsDefined() const { return isDefined_; }
@@ -465,6 +469,7 @@ class ClassType : public Type {
   bool                 isDefined_ = false;
   MemoryLayout         memoryLayout_ = MemoryLayout::Default;
   int                  padding_ = 0;
+  FileLocation         fileLocation_;
 };
 
 class ClassTemplate : public ClassType {
