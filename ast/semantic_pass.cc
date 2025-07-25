@@ -24,9 +24,8 @@
 #include <unordered_map>
 #include <ranges>
 
-#include "native_class.h"
+#include "api_validation_pass.h"
 #include "symbol.h"
-#include "shader_validation_pass.h"
 
 namespace Toucan {
 
@@ -92,7 +91,12 @@ Stmts* SemanticPass::Run(Stmts* stmts) {
   UnresolvedClassVisitor ucv(this);
   stmts->Accept(&ucv);
 
-  return Resolve(stmts);
+  stmts = Resolve(stmts);
+
+  APIValidationPass apiValidationPass(types_);
+  numErrors_ += apiValidationPass.Run();
+
+  return stmts;
 }
 
 Result SemanticPass::Visit(SmartToRawPtr* node) {
@@ -125,7 +129,7 @@ Result SemanticPass::Visit(CastExpr* node) {
   if (!expr) { return nullptr; }
 
   Type* srcType = expr->GetType(types_);
-  Type* dstType = ResolveType(node->GetType());
+  Type* dstType = node->GetType();
   if (srcType == dstType) {
     return expr;
   } else if (srcType->CanWidenTo(dstType) || srcType->CanNarrowTo(dstType)) {
@@ -194,7 +198,7 @@ Result SemanticPass::Visit(ArgList* node) {
 }
 
 Result SemanticPass::Visit(UnresolvedInitializer* node) {
-  Type*              type = ResolveType(node->GetType());
+  Type*              type = node->GetType();
   ArgList*           argList = Resolve(node->GetArgList());
   if (!argList) return nullptr;
 
@@ -279,7 +283,7 @@ Stmts* SemanticPass::InitializeArray(Expr* dest, Type* elementType, Expr* length
 
 Result SemanticPass::Visit(VarDeclaration* decl) {
   std::string id = decl->GetID();
-  Type*       type = ResolveType(decl->GetType());
+  Type*       type = decl->GetType();
   if (symbols_->FindVarInScope(id)) {
     return Error("variable \"%s\" already defined in this scope", id.c_str());
   }
@@ -790,7 +794,7 @@ void SemanticPass::WidenArgList(std::vector<Expr*>& argList, const VarVector& fo
 }
 
 Result SemanticPass::Visit(UnresolvedNewExpr* node) {
-  Type* type = ResolveType(node->GetType());
+  Type* type = node->GetType();
   if (!type) return nullptr;
   if (type->IsUnsizedArray()) { return Error("cannot allocate unsized array"); }
   if (type->ContainsRawPtr()) { return Error("cannot allocate a type containing raw pointer"); }
@@ -1138,171 +1142,6 @@ Expr* SemanticPass::AutoDereference(Expr* expr) {
     return Make<SmartToRawPtr>(expr);
   }
   return expr;
-}
-
-void SemanticPass::ValidateDeviceClass(ClassType* classType) {
-  // Must only contain (recursively) int, uint, float, vectors (<=4), arrays or classes of same.
-}
-
-void SemanticPass::ValidateVertexAttribute(Type* type) {
-  // For now, must be one of:
-  // int, int<2>, int<3>, int<4>
-  // uint, uint<2>, uint<3>, uint<4>
-  // float, float<2>, float<3>, float<4>
-}
-
-void SemanticPass::ValidateVertexClass(ClassType* classType) {
-  // Each field must be valid vertex attribute
-}
-
-void SemanticPass::ValidateBuffer(ClassType* classType) {
-  // If has uniform qualifier, must be valid device-side class, with padded layout.
-  // If has storage qualifier, must be valid device-side class.
-  // If has vertex qualifier, must be unsized array of valid vertex class.
-  // If has index qualifier, must be unsized array of uint or ushort.
-  // Can only have hostreadable or hostwriteable, not both.
-    // If has either, cannot have GPU-side qualifiers (uniform, storage, vertex, index).
-  // Cannot have sampleable, renderable, readonly, writeonly, unfilterable, coherent.
-}
-
-void SemanticPass::ValidateBindGroup(ClassType* classType) {
-  // Each field must be one of:
-  //
-  // *Sampler
-  // *[uniform | storage | readonly storage ] Buffer<T>
-  // *SampleableTexture1D<T> for ValidSampleType(T)
-  // *SampleableTexture2D<T> for ValidSampleType(T)
-  // *SampleableTexture2DArray<T> for ValidSampleType(T)
-  // *SampleableTexture3D<T> for ValidSampleType(T)
-  // *SampleableTextureCube<T> for ValidSampleType(T)
-}
-
-bool SemanticPass::ValidateRenderPipelineField(Type* type) {
-  if (!type->IsStrongPtr()) return false;
-
-  type = static_cast<StrongPtrType*>(type)->GetBaseType();
-  int qualifiers;
-  type = type->GetUnqualifiedType(&qualifiers);
-  if (!type->IsClass()) return false;
-  auto classType = static_cast<ClassType*>(type);
-  auto templ = classType->GetTemplate();
-  if (templ == NativeClass::VertexInput) return true;
-  if (templ == NativeClass::Buffer) return qualifiers == Type::Qualifier::Index;
-  if (templ == NativeClass::ColorAttachment) return true; // FIXME check PixelFormat
-  if (templ == NativeClass::DepthStencilAttachment) return true; // Ibid.
-  if (templ == NativeClass::BindGroup) return true; // FIXME check bind group
-  return false;
-}
-
-bool SemanticPass::ValidateComputePipelineField(Type* type) {
-  if (!type->IsStrongPtr()) return false;
-
-  type = static_cast<StrongPtrType*>(type)->GetBaseType();
-  int qualifiers;
-  type = type->GetUnqualifiedType(&qualifiers);
-  if (!type->IsClass()) return false;
-  auto classType = static_cast<ClassType*>(type);
-  auto templ = classType->GetTemplate();
-  if (templ == NativeClass::BindGroup) return true; // FIXME check bind group
-  return false;
-}
-
-void SemanticPass::ValidateRenderPipelineFields(ClassType* renderPipeline) {
-  auto pipelineClass = static_cast<ClassType*>(renderPipeline->GetTemplateArgs()[0]);
-  for (const auto& field : pipelineClass->GetFields()) {
-    if (!ValidateRenderPipelineField(field->type)) {
-      Error("while instantiating %s: %s is not a valid render pipeline field type", renderPipeline->ToString().c_str(), field->type->ToString().c_str());
-    }
-  }
-}
-
-void SemanticPass::ValidateComputePipelineFields(ClassType* computePipeline) {
-  auto pipelineClass = static_cast<ClassType*>(computePipeline->GetTemplateArgs()[0]);
-  for (const auto& field : pipelineClass->GetFields()) {
-    if (!ValidateComputePipelineField(field->type)) {
-      Error("while instantiating %s: %s is not a valid compute pipeline field type", computePipeline->ToString().c_str(), field->type->ToString().c_str());
-    }
-  }
-}
-
-void SemanticPass::ValidateRenderPipeline(ClassType* renderPipeline) {
-  ValidateRenderPipelineFields(renderPipeline);
-  Method* vertexShader = nullptr;
-  Method* fragmentShader = nullptr;
-  auto pipelineClass = static_cast<ClassType*>(renderPipeline->GetTemplateArgs()[0]);
-  for (ClassType* c = pipelineClass; c != nullptr && (!vertexShader || !fragmentShader);
-       c = c->GetParent()) {
-    for (auto& method : c->GetMethods()) {
-      if (method->modifiers & Method::Modifier::Vertex) {
-        if (!vertexShader) vertexShader = method.get();
-      } else if (method->modifiers & Method::Modifier::Fragment) {
-        if (!fragmentShader) fragmentShader = method.get();
-      }
-    }
-  }
-  if (!vertexShader) Error("while instantiating %s: no vertex shader found", renderPipeline->ToString().c_str());
-  if (!fragmentShader) Error("while instantiating %s: no fragment shader found", renderPipeline->ToString().c_str());
-
-  ShaderValidationPass shaderValidationPass;
-  if (vertexShader) {
-    shaderValidationPass.Run(vertexShader);
-    numErrors_ += shaderValidationPass.GetNumErrors();
-  }
-  if (fragmentShader) {
-    shaderValidationPass.Run(fragmentShader);
-    numErrors_ += shaderValidationPass.GetNumErrors();
-  }
-}
-
-void SemanticPass::ValidateComputePipeline(ClassType* computePipeline) {
-  ValidateComputePipelineFields(computePipeline);
-  Method* shader = nullptr;
-  auto pipelineClass = static_cast<ClassType*>(computePipeline->GetTemplateArgs()[0]);
-  for (ClassType* c = pipelineClass; c != nullptr && !shader; c = c->GetParent()) {
-    for (auto& method : c->GetMethods()) {
-      if (method->modifiers & Method::Modifier::Compute) {
-        shader = method.get();
-      }
-    }
-  }
-  if (!shader) {
-    Error("while instantiating %s: no compute shader found", computePipeline->ToString().c_str());
-    return;
-  }
-
-  ShaderValidationPass shaderValidationPass;
-  shaderValidationPass.Run(shader);
-  numErrors_ += shaderValidationPass.GetNumErrors();
-}
-
-Type* SemanticPass::ResolveType(Type* type) {
-  if (validatedTypes_.contains(type)) return type;
-
-  if (type->IsPtr()) {
-    ResolveType(static_cast<PtrType*>(type)->GetBaseType());
-    return type;
-  }
-
-  if (type->IsClass() && type->IsFullySpecified()) {
-    ClassType* classType = static_cast<ClassType*>(type);
-    auto classTemplate = classType->GetTemplate();
-    auto templateArgs = classType->GetTemplateArgs();
-    if (classTemplate == NativeClass::Buffer) {
-      ValidateBuffer(classType);
-    } else if (classTemplate == NativeClass::BindGroup) {
-      ValidateBindGroup(classType);
-    } else if (classTemplate == NativeClass::RenderPipeline) {
-      ValidateRenderPipeline(classType);
-    } else if (classTemplate == NativeClass::RenderPass) {
-      ValidateRenderPipelineFields(classType);
-    } else if (classTemplate == NativeClass::ComputePipeline) {
-      ValidateComputePipeline(classType);
-    } else if (classTemplate == NativeClass::ComputePass) {
-      ValidateComputePipelineFields(classType);
-    }
-  }
-  validatedTypes_.insert(type);
-  return type;
 }
 
 };  // namespace Toucan

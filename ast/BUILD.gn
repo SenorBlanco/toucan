@@ -14,6 +14,7 @@
 
 source_set("ast") {
   sources = [
+    "api_validation_pass.cc",
     "ast.cc",
     "constant_folder.cc",
     "file_location.cc",

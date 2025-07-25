@@ -15,8 +15,6 @@
 #ifndef _AST_AST_SEMANTIC_PASS_H_
 #define _AST_AST_SEMANTIC_PASS_H_
 
-#include <unordered_set>
-
 #include "copy_visitor.h"
 
 namespace Toucan {
@@ -85,24 +83,9 @@ class SemanticPass : public CopyVisitor {
                      ArgList*            args,
                      std::vector<Expr*>* newArgList);
   Method* FindOverriddenMethod(ClassType* classType, Method* method);
-  Type*   ResolveType(Type*) override;
-  void    ValidateDeviceClass(ClassType* classType);
-  void    ValidateVertexAttribute(Type* type);
-  void    ValidateVertexClass(ClassType* classType);
-  void    ValidateBuffer(ClassType* classType);
-  void    ValidateBindGroup(ClassType* classType);
-  bool    ValidateRenderPipelineField(Type* type);
-  bool    ValidateComputePipelineField(Type* type);
-  void    ValidateRenderPipelineFields(ClassType* renderPipeline);
-  void    ValidateComputePipelineFields(ClassType* computePipeline);
-  void    ValidateRenderPipeline(ClassType* renderPipeline);
-  void    ValidateComputePipeline(ClassType* renderPipeline);
-
- private:
   SymbolTable* symbols_;
   TypeTable*   types_;
   int          numErrors_;
-  std::unordered_set<Type*> validatedTypes_;
 };
 
 };  // namespace Toucan
