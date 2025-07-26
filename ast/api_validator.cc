@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "api_validation_pass.h"
+#include "api_validator.h"
 
 #include <filesystem>
 #include <stdarg.h>
@@ -22,51 +22,49 @@
 
 namespace Toucan {
 
-APIValidationPass::APIValidationPass(TypeTable* types)
-    : types_(types), numErrors_(0) {}
+APIValidator::APIValidator() : numErrors_(0) {}
 
-int APIValidationPass::Run() {
-  for (auto type : types_->GetTypes()) {
-    if (!type->IsClass() || !type->IsFullySpecified()) continue;
+void APIValidator::ValidateType(Type* type, const FileLocation& fileLocation) {
+  if (type->IsPtr()) type = static_cast<PtrType*>(type)->GetBaseType();
+  if (!type->IsClass() || !type->IsFullySpecified()) return;
 
-    auto classType = static_cast<ClassType*>(type);
-    auto classTemplate = classType->GetTemplate();
-    if (!classTemplate) continue;
+  ScopedFileLocation scopedFile(&fileLocation_, fileLocation);
 
-    if (classTemplate == NativeClass::Buffer) {
-      ValidateBuffer(classType);
-    } else if (classTemplate == NativeClass::BindGroup) {
-      ValidateBindGroup(classType);
-    } else if (classTemplate == NativeClass::RenderPipeline) {
-      ValidateRenderPipeline(classType);
-    } else if (classTemplate == NativeClass::RenderPass) {
-      ValidateRenderPipelineFields(classType);
-    } else if (classTemplate == NativeClass::ComputePipeline) {
-      ValidateComputePipeline(classType);
-    } else if (classTemplate == NativeClass::ComputePass) {
-      ValidateComputePipelineFields(classType);
-    }
+  auto classType = static_cast<ClassType*>(type);
+  auto classTemplate = classType->GetTemplate();
+  if (!classTemplate) return;
+
+  if (classTemplate == NativeClass::Buffer) {
+    ValidateBuffer(classType);
+  } else if (classTemplate == NativeClass::BindGroup) {
+    ValidateBindGroup(classType);
+  } else if (classTemplate == NativeClass::RenderPipeline) {
+    ValidateRenderPipeline(classType);
+  } else if (classTemplate == NativeClass::RenderPass) {
+    ValidateRenderPipelineFields(classType);
+  } else if (classTemplate == NativeClass::ComputePipeline) {
+    ValidateComputePipeline(classType);
+  } else if (classTemplate == NativeClass::ComputePass) {
+    ValidateComputePipelineFields(classType);
   }
-
-  return numErrors_;
 }
 
-void APIValidationPass::ValidateDeviceClass(ClassType* classType) {
+void APIValidator::ValidateDeviceClass(ClassType* classType) {
   // Must only contain (recursively) int, uint, float, vectors (<=4), arrays or classes of same.
 }
 
-void APIValidationPass::ValidateVertexAttribute(Type* type) {
+void APIValidator::ValidateVertexAttribute(Type* type) {
   // For now, must be one of:
   // int, int<2>, int<3>, int<4>
   // uint, uint<2>, uint<3>, uint<4>
   // float, float<2>, float<3>, float<4>
 }
 
-void APIValidationPass::ValidateVertexClass(ClassType* classType) {
+void APIValidator::ValidateVertexClass(ClassType* classType) {
   // Each field must be valid vertex attribute
 }
 
-void APIValidationPass::ValidateBuffer(ClassType* classType) {
+void APIValidator::ValidateBuffer(ClassType* classType) {
   // If has uniform qualifier, must be valid device-side class, with padded layout.
   // If has storage qualifier, must be valid device-side class.
   // If has vertex qualifier, must be unsized array of valid vertex class.
@@ -76,7 +74,7 @@ void APIValidationPass::ValidateBuffer(ClassType* classType) {
   // Cannot have sampleable, renderable, readonly, writeonly, unfilterable, coherent.
 }
 
-void APIValidationPass::ValidateBindGroup(ClassType* classType) {
+void APIValidator::ValidateBindGroup(ClassType* classType) {
   // Each field must be one of:
   //
   // *Sampler
@@ -88,7 +86,7 @@ void APIValidationPass::ValidateBindGroup(ClassType* classType) {
   // *SampleableTextureCube<T> for ValidSampleType(T)
 }
 
-bool APIValidationPass::ValidateRenderPipelineField(Type* type) {
+bool APIValidator::ValidateRenderPipelineField(Type* type) {
   if (!type->IsStrongPtr()) return false;
 
   type = static_cast<StrongPtrType*>(type)->GetBaseType();
@@ -105,7 +103,7 @@ bool APIValidationPass::ValidateRenderPipelineField(Type* type) {
   return false;
 }
 
-bool APIValidationPass::ValidateComputePipelineField(Type* type) {
+bool APIValidator::ValidateComputePipelineField(Type* type) {
   if (!type->IsStrongPtr()) return false;
 
   type = static_cast<StrongPtrType*>(type)->GetBaseType();
@@ -118,7 +116,7 @@ bool APIValidationPass::ValidateComputePipelineField(Type* type) {
   return false;
 }
 
-void APIValidationPass::ValidateRenderPipelineFields(ClassType* renderPipeline) {
+void APIValidator::ValidateRenderPipelineFields(ClassType* renderPipeline) {
   auto pipelineClass = static_cast<ClassType*>(renderPipeline->GetTemplateArgs()[0]);
   for (const auto& field : pipelineClass->GetFields()) {
     if (!ValidateRenderPipelineField(field->type)) {
@@ -127,7 +125,7 @@ void APIValidationPass::ValidateRenderPipelineFields(ClassType* renderPipeline) 
   }
 }
 
-void APIValidationPass::ValidateComputePipelineFields(ClassType* computePipeline) {
+void APIValidator::ValidateComputePipelineFields(ClassType* computePipeline) {
   auto pipelineClass = static_cast<ClassType*>(computePipeline->GetTemplateArgs()[0]);
   for (const auto& field : pipelineClass->GetFields()) {
     if (!ValidateComputePipelineField(field->type)) {
@@ -136,7 +134,7 @@ void APIValidationPass::ValidateComputePipelineFields(ClassType* computePipeline
   }
 }
 
-void APIValidationPass::ValidateRenderPipeline(ClassType* renderPipeline) {
+void APIValidator::ValidateRenderPipeline(ClassType* renderPipeline) {
   ValidateRenderPipelineFields(renderPipeline);
   Method* vertexShader = nullptr;
   Method* fragmentShader = nullptr;
@@ -165,7 +163,7 @@ void APIValidationPass::ValidateRenderPipeline(ClassType* renderPipeline) {
   }
 }
 
-void APIValidationPass::ValidateComputePipeline(ClassType* computePipeline) {
+void APIValidator::ValidateComputePipeline(ClassType* computePipeline) {
   ValidateComputePipelineFields(computePipeline);
   Method* shader = nullptr;
   auto pipelineClass = static_cast<ClassType*>(computePipeline->GetTemplateArgs()[0]);
@@ -186,7 +184,7 @@ void APIValidationPass::ValidateComputePipeline(ClassType* computePipeline) {
   numErrors_ += shaderValidationPass.GetNumErrors();
 }
 
-void APIValidationPass::Error(ClassType* instance, const char* fmt, ...) {
+void APIValidator::Error(ClassType* instance, const char* fmt, ...) {
   const FileLocation& location = instance->GetFileLocation();
   std::string         filename = location.filename
                                      ? std::filesystem::path(*location.filename).filename().string()
