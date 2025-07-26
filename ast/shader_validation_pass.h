@@ -68,7 +68,7 @@ class ShaderValidationPass : public Visitor {
 
  private:
   Result       Resolve(ASTNode* node);
-  int          numErrors_;
+  int          numErrors_ = 0;
 };
 
 };  // namespace Toucan

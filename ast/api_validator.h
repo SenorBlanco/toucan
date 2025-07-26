@@ -42,7 +42,7 @@ class APIValidator {
   void          Error(ClassType* instance, const char* fmt, ...);
 
  private:
-  int           numErrors_;
+  int           numErrors_ = 0;
   FileLocation  fileLocation_;
 };
 

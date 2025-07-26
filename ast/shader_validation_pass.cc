@@ -24,7 +24,7 @@
 
 namespace Toucan {
 
-ShaderValidationPass::ShaderValidationPass() : numErrors_(0) {}
+ShaderValidationPass::ShaderValidationPass() {}
 
 void ShaderValidationPass::Run(Method* method) {
   if (method->stmts) Visit(method->stmts);

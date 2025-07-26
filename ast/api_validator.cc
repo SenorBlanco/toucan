@@ -22,7 +22,7 @@
 
 namespace Toucan {
 
-APIValidator::APIValidator() : numErrors_(0) {}
+APIValidator::APIValidator() {}
 
 void APIValidator::ValidateType(Type* type, const FileLocation& fileLocation) {
   if (type->IsPtr()) type = static_cast<PtrType*>(type)->GetBaseType();
@@ -185,13 +185,13 @@ void APIValidator::ValidateComputePipeline(ClassType* computePipeline) {
 }
 
 void APIValidator::Error(ClassType* instance, const char* fmt, ...) {
-  const FileLocation& location = instance->GetFileLocation();
-  std::string         filename = location.filename
-                                     ? std::filesystem::path(*location.filename).filename().string()
-                                     : "";
+  std::string         filename = fileLocation_.filename
+                               ? std::filesystem::path(*fileLocation_.filename).filename().string()
+                               : "";
   va_list             argp;
   va_start(argp, fmt);
-  fprintf(stderr, "%s:%d:  while instantiating %s: ", filename.c_str(), location.lineNum, instance->ToString().c_str());
+  fprintf(stderr, "%s:%d:  while instantiating %s: ", filename.c_str(), fileLocation_.lineNum,
+          instance->ToString().c_str());
   vfprintf(stderr, fmt, argp);
   fprintf(stderr, "\n");
   numErrors_++;

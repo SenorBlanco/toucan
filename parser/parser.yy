@@ -897,9 +897,7 @@ static TypeList* AddIDToTypeList(const char* id, TypeList* list) {
 }
 
 static ClassType* GetClassTemplateInstance(Type* type, const TypeList& templateArgs) {
-  ClassType* result = types_->GetClassTemplateInstance(AsClassTemplate(type), templateArgs, &instanceQueue_);
-  if (!result->GetFileLocation().filename) result->SetFileLocation(fileStack_.top());
-  return result;
+  return types_->GetClassTemplateInstance(AsClassTemplate(type), templateArgs, &instanceQueue_);
 }
 
 static ClassType* PopInstanceQueue() {
