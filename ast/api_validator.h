@@ -29,9 +29,9 @@ class APIValidator {
   int           GetNumErrors() const { return numErrors_; }
  private:
   void          ValidateDeviceClass(ClassType* classType);
-  void          ValidateVertexAttribute(Type* type);
-  void          ValidateVertexClass(ClassType* classType);
-  void          ValidateBuffer(ClassType* classType);
+  void          ValidateVertexAttributeType(ClassType* buffer, Type* type);
+  void          ValidateVertexBufferType(ClassType* buffer, Type* type);
+  void          ValidateBuffer(ClassType* classType, int qualifiers);
   void          ValidateBindGroup(ClassType* classType);
   bool          ValidateRenderPipelineField(Type* type);
   bool          ValidateComputePipelineField(Type* type);

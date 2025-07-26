@@ -22,10 +22,24 @@
 
 namespace Toucan {
 
+namespace {
+
+bool IsValidVertexAttributeType(Type* type) {
+  if (type->IsVector()) {
+    return IsValidVertexAttributeType(static_cast<VectorType*>(type)->GetElementType());
+  }
+
+  return type->IsFloat() || type->IsInt() || type->IsUInt();
+}
+
+}
+
 APIValidator::APIValidator() {}
 
 void APIValidator::ValidateType(Type* type, const FileLocation& fileLocation) {
   if (type->IsPtr()) type = static_cast<PtrType*>(type)->GetBaseType();
+  int qualifiers;
+  type = type->GetUnqualifiedType(&qualifiers);
   if (!type->IsClass() || !type->IsFullySpecified()) return;
 
   ScopedFileLocation scopedFile(&fileLocation_, fileLocation);
@@ -35,7 +49,7 @@ void APIValidator::ValidateType(Type* type, const FileLocation& fileLocation) {
   if (!classTemplate) return;
 
   if (classTemplate == NativeClass::Buffer) {
-    ValidateBuffer(classType);
+    ValidateBuffer(classType, qualifiers);
   } else if (classTemplate == NativeClass::BindGroup) {
     ValidateBindGroup(classType);
   } else if (classTemplate == NativeClass::RenderPipeline) {
@@ -53,21 +67,35 @@ void APIValidator::ValidateDeviceClass(ClassType* classType) {
   // Must only contain (recursively) int, uint, float, vectors (<=4), arrays or classes of same.
 }
 
-void APIValidator::ValidateVertexAttribute(Type* type) {
-  // For now, must be one of:
-  // int, int<2>, int<3>, int<4>
-  // uint, uint<2>, uint<3>, uint<4>
-  // float, float<2>, float<3>, float<4>
+void APIValidator::ValidateVertexAttributeType(ClassType* buffer, Type* type) {
+  if (!IsValidVertexAttributeType(type)) {
+    Error(buffer, "%s is not a valid vertex attribute type", type->ToString().c_str());
+  }
 }
 
-void APIValidator::ValidateVertexClass(ClassType* classType) {
-  // Each field must be valid vertex attribute
+void APIValidator::ValidateVertexBufferType(ClassType* buffer, Type* type) {
+  if (!type->IsUnsizedArray()) {
+    Error(buffer, "vertex type is not a runtime-sized array");
+    return;
+  }
+  type = static_cast<ArrayType*>(type)->GetElementType();
+  if (type->IsClass()) {
+    for (const auto& field : static_cast<ClassType*>(type)->GetFields()) {
+      ValidateVertexAttributeType(buffer, field->type);
+    }
+  } else {
+    ValidateVertexAttributeType(buffer, type);
+  }
 }
 
-void APIValidator::ValidateBuffer(ClassType* classType) {
+void APIValidator::ValidateBuffer(ClassType* buffer, int qualifiers) {
+  auto classType = static_cast<ClassType*>(buffer->GetTemplateArgs()[0]);
+  if (qualifiers & Type::Qualifier::Vertex) {
+    ValidateVertexBufferType(buffer, classType);
+  }
+  // If has vertex qualifier, must be unsized array of valid vertex class.
   // If has uniform qualifier, must be valid device-side class, with padded layout.
   // If has storage qualifier, must be valid device-side class.
-  // If has vertex qualifier, must be unsized array of valid vertex class.
   // If has index qualifier, must be unsized array of uint or ushort.
   // Can only have hostreadable or hostwriteable, not both.
     // If has either, cannot have GPU-side qualifiers (uniform, storage, vertex, index).

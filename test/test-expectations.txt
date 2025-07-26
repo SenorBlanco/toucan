@@ -162,6 +162,7 @@ error-new-with-missing-constructor.t:5:  matching constructor not found
 test/error-non-addable-qualifiers.t
 error-non-addable-qualifiers.t:3:  cannot store a value of type "*Buffer<float>" to a location of type "*uniform Buffer<float>"
 error-non-addable-qualifiers.t:4:  cannot store a value of type "*Buffer<float>" to a location of type "*storage Buffer<float>"
+error-non-addable-qualifiers.t:5:  while instantiating Buffer<float>: vertex type is not a runtime-sized array
 error-non-addable-qualifiers.t:5:  cannot store a value of type "*Buffer<float>" to a location of type "*vertex Buffer<float>"
 error-non-addable-qualifiers.t:6:  cannot store a value of type "*Buffer<float>" to a location of type "*index Buffer<float>"
 error-non-addable-qualifiers.t:7:  cannot store a value of type "*Buffer<float>" to a location of type "*uniform storage Buffer<float>"
@@ -231,6 +232,21 @@ test/error-unknown-return-type.t
 error-unknown-return-type.t:2: syntax error
 test/error-unsized-array-not-last-in-class.t
 error-unsized-array-not-last-in-class.t:4:  unsized arrays are only allowed as the last field of a class
+test/error-validate-buffer.t
+error-validate-buffer.t:2:  while instantiating Buffer<int>: vertex type is not a runtime-sized array
+error-validate-buffer.t:4:  while instantiating Buffer<[]byte>: byte is not a valid vertex attribute type
+error-validate-buffer.t:5:  while instantiating Buffer<[]ubyte>: ubyte is not a valid vertex attribute type
+error-validate-buffer.t:6:  while instantiating Buffer<[]short>: short is not a valid vertex attribute type
+error-validate-buffer.t:7:  while instantiating Buffer<[]short<2>>: short<2> is not a valid vertex attribute type
+error-validate-buffer.t:8:  while instantiating Buffer<[]ushort>: ushort is not a valid vertex attribute type
+error-validate-buffer.t:9:  while instantiating Buffer<[]ushort<2>>: ushort<2> is not a valid vertex attribute type
+error-validate-buffer.t:10:  while instantiating Buffer<[]double>: double is not a valid vertex attribute type
+error-validate-buffer.t:11:  while instantiating Buffer<[]double<2>>: double<2> is not a valid vertex attribute type
+error-validate-buffer.t:21:  while instantiating Buffer<[]Vertex>: byte is not a valid vertex attribute type
+error-validate-buffer.t:21:  while instantiating Buffer<[]Vertex>: ubyte is not a valid vertex attribute type
+error-validate-buffer.t:21:  while instantiating Buffer<[]Vertex>: short is not a valid vertex attribute type
+error-validate-buffer.t:21:  while instantiating Buffer<[]Vertex>: ushort is not a valid vertex attribute type
+error-validate-buffer.t:21:  while instantiating Buffer<[]Vertex>: double is not a valid vertex attribute type
 test/error-validate.t
 error-validate.t:32:  while instantiating RenderPipeline<BadPipelineField>: int is not a valid render pipeline field type
 error-validate.t:33:  while instantiating RenderPass<BadPipelineField>: int is not a valid render pipeline field type
@@ -322,6 +338,7 @@ test/really-simple.t
 test/recursive-template-instantiation.t
 test/recursive-type.t
 test/removable-qualifiers.t
+removable-qualifiers.t:5:  while instantiating Buffer<float>: vertex type is not a runtime-sized array
 test/scope-test.t
 test/short-vector.t
 test/short.t
