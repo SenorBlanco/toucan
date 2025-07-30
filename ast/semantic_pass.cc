@@ -37,6 +37,9 @@ class UnresolvedClassVisitor : public Visitor {
 
  private:
   Result Visit(UnresolvedClassDefinition* node) override {
+    class_ = node->GetScope()->classType;
+    Visit(node->GetBody());
+    class_ = nullptr;
     semanticPass_->PreVisit(node);
     return {};
   }
@@ -46,9 +49,17 @@ class UnresolvedClassVisitor : public Visitor {
     return {};
   }
 
+  Result Visit(VarDeclaration* node) override {
+    if (class_) {
+      class_->AddField(node->GetID(), node->GetType(), node->GetInitExpr());
+    }
+    return {};
+  }
+
   Result Default(ASTNode* node) override { return {}; }
 
   SemanticPass* semanticPass_;
+  ClassType*    class_;
 };
 
 // Returns in the index corresponding to a given swizzle char, or -1 if invalid.
@@ -896,6 +907,7 @@ Result SemanticPass::Visit(ForStatement* node) {
 
 void SemanticPass::PreVisit(UnresolvedClassDefinition* defn) {
   Scope*     scope = defn->GetScope();
+  Stmts*     body = defn->GetBody();
   ClassType* classType = scope->classType;
 
   // Non-native template classes don't need inferred type resolution

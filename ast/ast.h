@@ -730,12 +730,14 @@ class UnresolvedNewExpr : public Expr {
 
 class UnresolvedClassDefinition : public Stmt {
  public:
-  UnresolvedClassDefinition(Scope* scope);
+  UnresolvedClassDefinition(Scope* scope, Stmts* body);
   Result Accept(Visitor* visitor) override;
   Scope* GetScope() { return scope_; }
+  Stmts* GetBody() { return body_; }
 
  private:
   Scope* scope_;
+  Stmts* body_;
 };
 
 class UnaryOp : public Expr {
