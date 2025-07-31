@@ -185,7 +185,7 @@ class Texture1D<PF> {
  ~Texture1D();
   CreateSampleableView() sampleable : *SampleableTexture1D<PF:DeviceType>;
   CreateStorageView(mipLevel = 0u) : *storage Texture1D<PF>;
-  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, width : uint, origin : uint = 0);
+  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, width : uint, origin : uint = 0, mipLevel = 0u);
 }
 
 class Texture2D<PF> {
@@ -197,7 +197,7 @@ class Texture2D<PF> {
   CreateColorOutput(loadOp = LoadOp.Load, storeOp = StoreOp.Store, clearValue = float<4>(0.0, 0.0, 0.0, 0.0)) renderable : *ColorOutput<PF>;
   CreateDepthStencilOutput(depthLoadOp = LoadOp.Load, depthStoreOp = StoreOp.Store, depthClearValue = 1.0, stencilLoadOp = LoadOp.Undefined, stencilStoreOp = StoreOp.Undefined, stencilClearValue = 0) renderable : *DepthStencilOutput<PF>;
   MinBufferWidth() : uint;
-  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<2>, origin : uint<2> = uint<2>(0, 0));
+  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<2>, origin : uint<2> = uint<2>(0, 0), mipLevel = 0u);
 }
 
 class Texture2DArray<PF> {
@@ -207,7 +207,7 @@ class Texture2DArray<PF> {
   CreateRenderableView(layee : uint, mipLevel = 0u) : *renderable Texture2D<PF>;
   CreateStorageView(layer : uint, mipLevel = 0u) : *storage Texture2DArray<PF>;
   MinBufferWidth() : uint;
-  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<3>, origin = uint<3>(0, 0, 0));
+  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<3>, origin = uint<3>(0, 0, 0), mipLevel = 0u);
 }
 
 class Texture3D<PF> {
@@ -217,7 +217,7 @@ class Texture3D<PF> {
   CreateRenderableView(depth : uint, mipLevel = 0u) : *renderable Texture2D<PF>;
   CreateStorageView(depth : uint, mipLevel = 0u) : *storage Texture3D<PF>;
   MinBufferWidth() : uint;
-  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<3>, origin = uint<3>(0, 0, 0));
+  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<3>, origin = uint<3>(0, 0, 0), mipLevel = 0u);
 }
 
 class TextureCube<PF> {
@@ -227,7 +227,7 @@ class TextureCube<PF> {
   CreateRenderableView(face : uint, mipLevel = 0u) : *renderable Texture2D<PF>;
   CreateStorageView(face : uint, mipLevel = 0u) : *storage Texture2D<PF>;
   MinBufferWidth() : uint;
-  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<3>, origin = uint<3>(0, 0, 0));
+  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<3>, origin = uint<3>(0, 0, 0), mipLevel = 0u);
 }
 
 class CommandEncoder {
