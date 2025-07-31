@@ -181,7 +181,7 @@ class SampleableTextureCube<ST> {
 }
 
 class Texture1D<PF> {
-  Texture1D(device : &Device, width : uint);
+  Texture1D(device : &Device, width : uint, mipLevelCount = 1u);
  ~Texture1D();
   CreateSampleableView() sampleable : *SampleableTexture1D<PF:DeviceType>;
   CreateStorageView(mipLevel = 0u) : *storage Texture1D<PF>;
@@ -189,7 +189,7 @@ class Texture1D<PF> {
 }
 
 class Texture2D<PF> {
-  Texture2D(device : &Device, size : uint<2>);
+  Texture2D(device : &Device, size : uint<2>, mipLevelCount = 1u);
  ~Texture2D();
   CreateSampleableView() sampleable : *SampleableTexture2D<PF:DeviceType>;
   CreateRenderableView(mipLevel = 0u) : *renderable Texture2D<PF>;
@@ -201,7 +201,7 @@ class Texture2D<PF> {
 }
 
 class Texture2DArray<PF> {
-  Texture2DArray(device : &Device, size : uint<3>);
+  Texture2DArray(device : &Device, size : uint<3>, mipLevelCount = 1u);
  ~Texture2D();
   CreateSampleableView() sampleable : *SampleableTexture2DArray<PF:DeviceType>;
   CreateRenderableView(layee : uint, mipLevel = 0u) : *renderable Texture2D<PF>;
@@ -211,7 +211,7 @@ class Texture2DArray<PF> {
 }
 
 class Texture3D<PF> {
-  Texture3D(device : &Device, size : uint<3>);
+  Texture3D(device : &Device, size : uint<3>, mipLevelCount = 1u);
  ~Texture3D();
   CreateSampleableView() sampleable : *SampleableTexture3D<PF:DeviceType>;
   CreateRenderableView(depth : uint, mipLevel = 0u) : *renderable Texture2D<PF>;
@@ -221,7 +221,7 @@ class Texture3D<PF> {
 }
 
 class TextureCube<PF> {
-  TextureCube(device : &Device, size : uint<2>);
+  TextureCube(device : &Device, size : uint<2>, mipLevelCount = 1u);
  ~TextureCube();
   CreateSampleableView() sampleable : *SampleableTextureCube<PF:DeviceType>;
   CreateRenderableView(face : uint, mipLevel = 0u) : *renderable Texture2D<PF>;
