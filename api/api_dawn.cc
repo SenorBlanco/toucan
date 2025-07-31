@@ -116,14 +116,16 @@ struct Texture {
   Texture(int                    qualifiers,
           Type*                  pixelFormat,
           wgpu::Device           device,
-          wgpu::TextureDimension d,
-          wgpu::Extent3D         s)
+          wgpu::TextureDimension dimension,
+          wgpu::Extent3D         s,
+          uint32_t               mipLevelCount)
       : size(s), format(ToDawnTextureFormat(pixelFormat)) {
     wgpu::TextureDescriptor desc;
     desc.usage = ToDawnTextureUsage(qualifiers);
     desc.size = s;
+    desc.mipLevelCount = mipLevelCount;
     desc.format = format;
-    desc.dimension = d;
+    desc.dimension = dimension;
     texture = device.CreateTexture(&desc);
     view = texture.CreateView();
   }
@@ -912,9 +914,9 @@ void SampleableTexture3D_Destroy(SampleableTexture3D* This) { delete This; }
 
 void SampleableTextureCube_Destroy(SampleableTextureCube* This) { delete This; }
 
-Texture1D* Texture1D_Texture1D(int qualifiers, Type* format, Device* device, uint32_t width) {
+Texture1D* Texture1D_Texture1D(int qualifiers, Type* format, Device* device, uint32_t width, uint32_t mipLevelCount) {
   return new Texture1D(qualifiers, format, device->device, wgpu::TextureDimension::e1D,
-                       {width, 1, 1});
+                       {width, 1, 1}, mipLevelCount);
 }
 
 void Texture1D_Destroy(Texture1D* This) { delete This; }
@@ -935,9 +937,9 @@ void Texture1D_CopyFromBuffer(Texture1D*      dest,
   dest->CopyFromBuffer(encoder->encoder, source->buffer, {width, 1, 1}, {origin, 0, 0});
 }
 
-Texture2D* Texture2D_Texture2D(int qualifiers, Type* format, Device* device, const uint32_t* size) {
+Texture2D* Texture2D_Texture2D(int qualifiers, Type* format, Device* device, const uint32_t* size, uint32_t mipLevelCount) {
   return new Texture2D(qualifiers, format, device->device, wgpu::TextureDimension::e2D,
-                       {size[0], size[1], 1});
+                       {size[0], size[1], 1}, mipLevelCount);
 }
 
 void Texture2D_Destroy(Texture2D* This) { delete This; }
@@ -998,9 +1000,10 @@ void Texture2D_CopyFromBuffer(Texture2D*      dest,
 Texture2DArray* Texture2DArray_Texture2DArray(int             qualifiers,
                                               Type*           format,
                                               Device*         device,
-                                              const uint32_t* size) {
+                                              const uint32_t* size,
+                                              uint32_t        mipLevelCount) {
   return new Texture2DArray(qualifiers, format, device->device, wgpu::TextureDimension::e2D,
-                            {size[0], size[1], size[2]});
+                            {size[0], size[1], size[2]}, mipLevelCount);
 }
 
 void Texture2DArray_Destroy(Texture2DArray* This) { delete This; }
@@ -1034,9 +1037,9 @@ void Texture2DArray_CopyFromBuffer(Texture2DArray* dest,
                        {origin[0], origin[1], origin[2]});
 }
 
-Texture3D* Texture3D_Texture3D(int qualifiers, Type* format, Device* device, const uint32_t* size) {
+Texture3D* Texture3D_Texture3D(int qualifiers, Type* format, Device* device, const uint32_t* size, uint32_t mipLevelCount) {
   return new Texture3D(qualifiers, format, device->device, wgpu::TextureDimension::e3D,
-                       {size[0], size[1], size[2]});
+                       {size[0], size[1], size[2]}, mipLevelCount);
 }
 
 void Texture3D_Destroy(Texture3D* This) { delete This; }
@@ -1067,9 +1070,10 @@ void Texture3D_CopyFromBuffer(Texture3D*      dest,
 TextureCube* TextureCube_TextureCube(int             qualifiers,
                                      Type*           format,
                                      Device*         device,
-                                     const uint32_t* size) {
+                                     const uint32_t* size,
+                                     uint32_t        mipLevelCount) {
   return new TextureCube(qualifiers, format, device->device, wgpu::TextureDimension::e2D,
-                         {size[0], size[1], 6});
+                         {size[0], size[1], 6}, mipLevelCount);
 }
 
 void TextureCube_Destroy(TextureCube* This) { delete This; }
