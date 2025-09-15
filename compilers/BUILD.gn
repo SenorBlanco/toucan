@@ -119,7 +119,7 @@ executable("tc") {
     libs = [ "LLVM" ]
     if (is_linux) {
       ldflags += [ "-Wl,-rpath=" + rebase_path(llvm_lib_dir) ]
-    } else if (is_mac) {
+    } else if (is_apple) {
       ldflags += [ "-rpath", rebase_path(llvm_lib_dir) ]
     }
   } else {

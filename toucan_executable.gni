@@ -76,7 +76,7 @@ template("toucan_executable") {
       ]
     }
 
-    if (is_mac) {
+    if (is_apple) {
       frameworks = [
         "AppKit.framework",
         "Metal.framework",

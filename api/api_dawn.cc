@@ -1332,7 +1332,7 @@ Texture2D* SwapChain_GetCurrentTexture(SwapChain* swapChain) {
   return new Texture2D(texture, texture.CreateView(), swapChain->extent, swapChain->format);
 }
 
-#if !TARGET_OS_IS_MAC
+#if !TARGET_OS_IS_MAC && !TARGET_OS_IS_IOS
 #if !TARGET_OS_IS_WASM
 void SwapChain_Present(SwapChain* swapChain) { swapChain->surface.Present(); }
 #endif

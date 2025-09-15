@@ -68,6 +68,11 @@ config("default") {
   } else {
     defines += [ "TARGET_OS_IS_MAC=0" ]
   }
+  if (target_os == "ios") {
+    defines += [ "TARGET_OS_IS_IOS=1" ]
+  } else {
+    defines += [ "TARGET_OS_IS_IOS=0" ]
+  }
   if (target_os == "win") {
     defines += [ "TARGET_OS_IS_WIN=1" ]
   } else {

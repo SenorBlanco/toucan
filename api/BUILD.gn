@@ -69,7 +69,7 @@ source_set("api") {
     sources += [ "api_x11.cc" ]
     deps += [ "//third_party/Vulkan-Headers:vulkan_headers" ]
   }
-  if (is_mac) {
+  if (is_apple) {
     sources += [ "api_mac.mm" ]
   }
   if (is_wasm) {
