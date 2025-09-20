@@ -89,7 +89,9 @@ template("toucan_executable") {
     }
     if (is_ios) {
       frameworks += [
+        "Foundation.framework",
         "UIKit.framework",
+        "MetalKit.framework",
       ]
     }
     if (is_win) {

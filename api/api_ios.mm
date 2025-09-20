@@ -16,82 +16,52 @@
 
 #include <sys/time.h>
 
+#include <list>
 #include <memory>
 
 #include <webgpu/webgpu_cpp.h>
 
-//#import <AppKit/AppKit.h>
 #import <UIKit/UIKit.h>
 #import <Metal/Metal.h>
-#import <QuartzCore/CAMetalLayer.h>
+#import <MetalKit/MetalKit.h>
 
 #include "api_internal.h"
 
-@interface ToucanWindowDelegate : NSObject {
-  Toucan::Window* window;
-}
-- (instancetype)initWithWindow:(Toucan::Window*)w;
+@interface ToucanViewController : UIViewController
 @end
 
-@interface ToucanAppDelegate : NSObject <UIApplicationDelegate>
+@interface ToucanSceneDelegate : UIResponder <UIWindowSceneDelegate>
+@property (strong, nonatomic) UIWindow* window;
 @end
 
-static bool gIsRunning = true;
-static uint32_t gScreenSize[2];
+static int                        gNumWindows = 0;
+static std::list<Toucan::Event*>  gEventQueue;
 
 namespace Toucan {
 
 static bool                                    gInitialized = false;
 
 struct Window {
-  Window(NSWindow*     nsw,
-         NSView*       v,
-         CAMetalLayer* l,
+  Window(UIView*       v,
          id<MTLDevice> md,
          const uint32_t      sz[2])
-      : window(nsw), view(v), layer(l), mtlDevice(md) { size[0] = sz[0]; size[1] = sz[1]; }
-  NSWindow*     window;
-  NSView*       view;
-  CAMetalLayer* layer;
+      : view(v), mtlDevice(md) { size[0] = sz[0]; size[1] = sz[1]; }
+  UIView*       view;
   id<MTLDevice> mtlDevice;
   uint32_t      size[2];
 };
 
 namespace {
 
-uint32_t ToToucanEventModifiers(NSEventModifierFlags modifiers) {
+uint32_t ToToucanEventModifiers(UIKeyModifierFlags modifiers) {
   uint32_t result = 0;
-  if (modifiers & NSEventModifierFlagShift) { result |= static_cast<uint32_t>(EventModifiers::Shift); }
-  if (modifiers & NSEventModifierFlagControl) { result |= static_cast<uint32_t>(EventModifiers::Control); }
+  if (modifiers & UIKeyModifierShift) { result |= static_cast<uint32_t>(EventModifiers::Shift); }
+  if (modifiers & UIKeyModifierControl) { result |= static_cast<uint32_t>(EventModifiers::Control); }
   return result;
 }
 
 void Initialize() {
-  NSApplication* app = [NSApplication sharedApplication];
-  [app setActivationPolicy:NSApplicationActivationPolicyRegular];
-
-  NSMenu* menuBar = [[NSMenu alloc] init];
-  [NSApp setMainMenu:menuBar];
-
-  NSMenuItem* menu = [[NSMenuItem alloc] init];
-  [menuBar addItem:menu];
-
-  NSMenu* subMenu = [[NSMenu alloc] init];
-  [menuBar setSubmenu:subMenu forItem:menu];
-  [menu release];
-
-  NSMenuItem* item = [[NSMenuItem alloc] initWithTitle:@"Quit"
-                                                action:@selector(terminate:)
-                                         keyEquivalent:@"q"];
-  [subMenu addItem:item];
-  [item release];
-  [subMenu release];
-  [menuBar release];
-
-  ToucanAppDelegate* delegate = [[ToucanAppDelegate alloc] init];
-  [NSApp setDelegate:delegate];
-
-  if (![[NSRunningApplication currentApplication] isFinishedLaunching]) { [NSApp run]; }
+  UIApplication* app = [UIApplication sharedApplication];
 }
 
 }  // namespace
@@ -101,39 +71,16 @@ const uint32_t* Window_GetSize(Window* This) {
 }
 
 Window* Window_Window(const uint32_t* size, const int32_t* position) {
-  NSApplication* app = [NSApplication sharedApplication];
-  NSRect         rect = NSMakeRect(position[0], position[1], size[0], size[1]);
-  int mask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable |
-             NSWindowStyleMaskResizable;
-  NSWindow* window = [[NSWindow alloc] initWithContentRect:rect
-                                                 styleMask:mask
-                                                   backing:NSBackingStoreBuffered
-                                                     defer:NO];
-  [window setAcceptsMouseMovedEvents:YES];
-  // FIXME: we assume Dawn is using the system default device.
-  // this could be wrong on multi-GPU systems.
+  if (gNumWindows == 0) {
+  }
+  UIApplication* app = [UIApplication sharedApplication];
+
   id<MTLDevice> mtlDevice = MTLCreateSystemDefaultDevice();
 
-  CGSize cgSize;
-  cgSize.width = size[0];
-  cgSize.height = size[1];
-  [window makeKeyAndOrderFront:NSApp];
-
-  CAMetalLayer* layer = [CAMetalLayer layer];
-  [layer setDevice:mtlDevice];
-  [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
-  [layer setFramebufferOnly:YES];
-  [layer setDrawableSize:cgSize];
-  [layer setColorspace:CGColorSpaceCreateDeviceRGB()];
-
-  NSView* view = [[NSView alloc] initWithFrame:rect];
-  [view setWantsLayer:YES];
-  [view setLayer:layer];
-
-  [window setContentView:view];
-  Window*       w = new Window(window, view, layer, mtlDevice, size);
-  id            delegate = [[ToucanWindowDelegate alloc] initWithWindow:w];
-  [window setDelegate:delegate];
+  MTKView* view = [[MTKView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+  [view setDevice:mtlDevice];
+  [view setBackgroundColor:[UIColor blackColor]];
+  Window*       w = new Window(view, mtlDevice, size);
   return w;
 }
 
@@ -153,7 +100,7 @@ SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Win
   config.presentMode = wgpu::PresentMode::Fifo;
 
   wgpu::SurfaceDescriptorFromMetalLayer metalLayerDesc;
-  metalLayerDesc.layer = window->layer;
+//  metalLayerDesc.layer = window->layer;
   wgpu::SurfaceDescriptor desc;
   desc.nextInChain = &metalLayerDesc;
   static wgpu::Instance instance = wgpu::CreateInstance({});
@@ -188,15 +135,10 @@ Device* Device_Device() {
   return new Device(device);
 }
 
-bool System_IsRunning() { return gIsRunning; }
+bool System_IsRunning() { return gNumWindows > 0; }
 
 bool System_HasPendingEvents() {
-  NSApplication* app = [NSApplication sharedApplication];
-  NSEvent*       nsEvent = [app nextEventMatchingMask:NSEventMaskAny
-                                      untilDate:nil
-                                         inMode:NSDefaultRunLoopMode
-                                        dequeue:NO];
-  return nsEvent != nullptr;
+  return !gEventQueue.empty();
 }
 
 Event* System_GetNextEvent() {
@@ -204,13 +146,11 @@ Event* System_GetNextEvent() {
     Initialize();
     gInitialized = true;
   }
-  NSApplication* app = [NSApplication sharedApplication];
-  NSEvent*       nsEvent = [app nextEventMatchingMask:NSEventMaskAny
-                                      untilDate:[NSDate distantFuture]
-                                         inMode:NSDefaultRunLoopMode
-                                        dequeue:YES];
-  [NSApp sendEvent:nsEvent];
-  Event* event = new Event();
+  // FIXME: block until there's an event in gEventQueue
+  Event* event = gEventQueue.back();
+  gEventQueue.pop_back();
+  return event;
+#if 0
   int    height = [[nsEvent.window contentView] frame].size.height;
   event->position[0] = nsEvent.locationInWindow.x;
   event->position[1] = height - nsEvent.locationInWindow.y;
@@ -219,63 +159,65 @@ Event* System_GetNextEvent() {
   event->type = EventType::Unknown;
 
   switch (nsEvent.type) {
-    case NSEventTypeLeftMouseDown:
+    case UIEventTypeLeftMouseDown:
       event->type = EventType::MouseDown;
       event->button = 0;
       break;
-    case NSEventTypeRightMouseDown:
+    case UIEventTypeRightMouseDown:
       event->type = EventType::MouseDown;
       event->button = 2;
       break;
-    case NSEventTypeMouseEntered: break;
-    case NSEventTypeMouseExited: break;
-    case NSEventTypeLeftMouseUp:
+    case UIEventTypeMouseEntered: break;
+    case UIEventTypeMouseExited: break;
+    case UIEventTypeLeftMouseUp:
       event->type = EventType::MouseUp;
       event->button = 0;
       break;
-    case NSEventTypeRightMouseUp:
+    case UIEventTypeRightMouseUp:
       event->type = EventType::MouseUp;
       event->button = 2;
       break;
-    case NSEventTypeOtherMouseDown:
+    case UIEventTypeOtherMouseDown:
       event->type = EventType::MouseDown;
       event->button = 1;
       break;
-    case NSEventTypeOtherMouseUp:
+    case UIEventTypeOtherMouseUp:
       event->type = EventType::MouseUp;
       event->button = 1;
       break;
-    case NSEventTypeKeyDown: break;
-    case NSEventTypeKeyUp: break;
-    case NSEventTypeMouseMoved:
-    case NSEventTypeLeftMouseDragged:
-    case NSEventTypeRightMouseDragged:
+    case UIEventTypeKeyDown: break;
+    case UIEventTypeKeyUp: break;
+    case UIEventTypeMouseMoved:
+    case UIEventTypeLeftMouseDragged:
+    case UIEventTypeRightMouseDragged:
       if (nsEvent.window) { event->type = EventType::MouseMove; }
       break;
-    case NSEventTypeAppKitDefined:
+    case UIEventTypeAppKitDefined:
       switch ([nsEvent subtype]) {
-        case NSEventSubtypeWindowExposed: break;
-        case NSEventSubtypeApplicationActivated: break;
-        case NSEventSubtypeScreenChanged: break;
-        case NSEventSubtypeWindowMoved: break;
+        case UIEventSubtypeWindowExposed: break;
+        case UIEventSubtypeApplicationActivated: break;
+        case UIEventSubtypeScreenChanged: break;
+        case UIEventSubtypeWindowMoved: break;
         default: break;
       }
       break;
-    case NSEventTypeApplicationDefined: break;
-    case NSEventTypeCursorUpdate: break;
-    case NSEventTypeSystemDefined: break;
-    case NSEventTypeFlagsChanged: break;
-    case NSEventTypePeriodic: break;
-    case NSEventTypeQuickLook: break;
+    case UIEventTypeApplicationDefined: break;
+    case UIEventTypeCursorUpdate: break;
+    case UIEventTypeSystemDefined: break;
+    case UIEventTypeFlagsChanged: break;
+    case UIEventTypePeriodic: break;
+    case UIEventTypeQuickLook: break;
     default: event->type = EventType::Unknown;
   }
   return event;
+  #endif
 }
 
 const uint32_t* System_GetScreenSize() {
-  gScreenSize[0] = [[NSScreen mainScreen] frame].size.width;
-  gScreenSize[1] = [[NSScreen mainScreen] frame].size.height;
-  return gScreenSize;
+  static uint32_t screenSize[2];
+  screenSize[0] = [[UIScreen mainScreen] bounds].size.width;
+  screenSize[1] = [[UIScreen mainScreen] bounds].size.height;
+  return screenSize;
 }
 
 double System_GetCurrentTime() {
@@ -287,43 +229,43 @@ double System_GetCurrentTime() {
 
 };  // namespace Toucan
 
-@implementation ToucanWindowDelegate
-- (instancetype)initWithWindow:(Toucan::Window*)w {
-  self = [super init];
-  if (self != nil) window = w;
+@implementation ToucanSceneDelegate
 
-  return self;
+- (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)connectionOptions {
+
+    // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
+    // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
+    // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
 }
-
-- (BOOL)windowShouldClose:(id)sender {
-  return YES;
-}
-
-- (void)windowDidResize:(NSNotification*)notification {
-  const NSRect contentRect = [window->view frame];
-  const NSRect fbRect = [window->view convertRectToBacking:contentRect];
-
-  if (fbRect.size.width != window->size[0] || fbRect.size.height != window->size[1]) {
-    window->size[0] = fbRect.size.width;
-    window->size[1] = fbRect.size.height;
-  }
-}
-
 @end
 
-@implementation ToucanAppDelegate : NSObject
-- (id)init {
-  self = [super init];
-  gIsRunning = true;
-  return self;
+@implementation ToucanViewController
+
+- (void)viewDidLoad {
+  [super viewDidLoad];
+  auto metalDevice = MTLCreateSystemDefaultDevice();
+  if (![self view] || !metalDevice) {
+    assert(!"Metal is not supported on this device");
+    self.view = [[UIView alloc] initWithFrame:self.view.frame];
+    return;
+  }
+  MTKView* mtkView = (MTKView*)[self view];
+  [mtkView setDevice:metalDevice];
+  [mtkView setBackgroundColor:[UIColor blackColor]];
 }
 
-- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*)sender {
-  gIsRunning = false;
-  return NSTerminateCancel;
+- (void)touchesBegan:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)e {
+  auto event = new Toucan::Event();
+  event->type = Toucan::EventType::TouchStart;
+  event->numTouches = -1;
+  int i = 0;
+  for (UITouch* touch in touches) {
+    auto position = [touch locationInView:self.view];
+    event->touches[i][0] = position.x;
+    event->touches[i][1] = position.y;
+    i++;
+  }
+  gEventQueue.push_back(event);
 }
 
-- (void)applicationDidFinishLaunching:(NSNotification*)notification {
-  [NSApp stop:nil];
-}
 @end

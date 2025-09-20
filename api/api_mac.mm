@@ -36,7 +36,7 @@
 @end
 
 static bool gIsRunning = true;
-static uint32_t gScreenSize[2];
+static uint32_t gScreenSize[2]; // FIXME: move to function-static?
 
 namespace Toucan {
 
