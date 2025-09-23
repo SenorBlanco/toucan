@@ -146,7 +146,7 @@ template("toucan_android_main_lib") {
   }
 }
 
-template("toucan_apk") {
+template("toucan_android_apk") {
   toucan_android_main_lib(target_name) {
     sources = invoker.sources
   }
@@ -168,9 +168,32 @@ template("toucan_apk") {
   }
 }
 
+template("toucan_apple_app") {
+  toucan_executable(target_name) {
+    sources = invoker.sources
+  }
+  make_action = "make_apple_app_" + target_name
+  outer_target = target_name
+  action(make_action) {
+    script = "../tools/make-app.py"
+    outfile = "${root_out_dir}/${outer_target}.app"
+    deps = [ ":${outer_target}" ]
+    args = [
+      "--target-name", outer_target,
+      "--out-dir", rebase_path(root_build_dir),
+      "--target-os", target_os,
+    ]
+    outputs = [ outfile ]
+  }
+}
+
 template("toucan_app") {
   if (is_android) {
-    toucan_apk(target_name) {
+    toucan_android_apk(target_name) {
+      sources = invoker.sources
+    }
+  } else if (is_apple) {
+    toucan_apple_app(target_name) {
       sources = invoker.sources
     }
   } else {
