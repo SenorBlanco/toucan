@@ -161,9 +161,9 @@ int main(int argc, char** argv) {
 #endif
 #elif TARGET_OS_IS_IOS
 #if TARGET_CPU_IS_ARM64
-    std::string targetTripleStr = "arm64-apple-ios";
+    std::string targetTripleStr = "arm64-apple-ios15.0";
 #elif TARGET_CPU_IS_ARM32
-    std::string targetTripleStr = "armv7-apple-ios";
+    std::string targetTripleStr = "armv7-apple-ios15.0";
 #else
 #error unsupported iOS CPU
 #endif
