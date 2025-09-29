@@ -75,7 +75,7 @@ for dylib in dylibs:
   dest_lib = dest_os_path + dylib
   os.symlink(source_lib, dest_lib)
 
-os.symlink(source_path + target_name, dest_os_path + target_name)
+shutil.copy2(source_path + target_name, dest_os_path + target_name)
 
 info_plist_file = dest_contents_path + "Info.plist"
 with open(info_plist_file, "w") as f:
