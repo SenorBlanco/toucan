@@ -48,7 +48,7 @@ info_plist = '''<?xml version="1.0" encoding="UTF-8"?>
     <key>CFBundleDisplayName</key>
     <string>''' + target_name + '''</string>
     <key>CFBundleName</key>
-    <string>''' + target_name + '''y</string>
+    <string>''' + target_name + '''</string>
 </dict>
 </plist>
 '''
@@ -61,10 +61,11 @@ dylibs = [
 ]
 source_path = out_dir + "/"
 dest_app_path = source_path + target_name + ".app/"
-dest_contents_path = dest_app_path + "Contents/"
-dest_os_path = dest_contents_path
 if target_os == "mac":
-  dest_os_path += "MacOS/"
+  dest_contents_path = dest_app_path + "Contents/"
+  dest_os_path = dest_contents_path + "MacOS/"
+else:
+  dest_os_path = dest_contents_path = dest_app_path
 
 if os.path.exists(dest_app_path):
   shutil.rmtree(dest_app_path)
