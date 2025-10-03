@@ -25,6 +25,7 @@ argparser = argparse.ArgumentParser(description="Create an App")
 argparser.add_argument('--target-name')
 argparser.add_argument('--target-os')
 argparser.add_argument('--out-dir')
+argparser.add_argument('--mobile-provision')
 args = vars(argparser.parse_args())
 
 target_name = args['target_name']
@@ -44,7 +45,7 @@ info_plist = '''<?xml version="1.0" encoding="UTF-8"?>
     <key>CFBundleVersion</key>
     <string>1.0.0</string>
     <key>CFBundleIdentifier</key>
-    <string>org.toucanlang.''' + target_name + '''</string>
+    <string>org.toucanlang.sample.''' + target_name + '''</string>
     <key>CFBundleDisplayName</key>
     <string>''' + target_name + '''</string>
     <key>CFBundleName</key>
@@ -74,7 +75,7 @@ os.makedirs(dest_os_path)
 for dylib in dylibs:
   source_lib = source_path + dylib
   dest_lib = dest_os_path + dylib
-  os.symlink(source_lib, dest_lib)
+  shutil.copy2(source_lib, dest_lib)
 
 shutil.copy2(source_path + target_name, dest_os_path + target_name)
 
@@ -82,3 +83,7 @@ info_plist_file = dest_contents_path + "Info.plist"
 with open(info_plist_file, "w") as f:
   f.write(info_plist)
   f.close()
+
+if target_os == "ios":
+  mobile_provision = os.path.abspath(args['mobile_provision'])
+  shutil.copy2(mobile_provision, dest_app_path + '/' + 'embedded.mobileprovision')

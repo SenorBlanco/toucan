@@ -183,6 +183,9 @@ template("toucan_apple_app") {
       "--out-dir", rebase_path(root_build_dir),
       "--target-os", target_os,
     ]
+    if (is_ios) {
+      args += [ "--mobile-provision", mobile_provision_prefix + outer_target + ".mobileprovision", ]
+    }
     outputs = [ outfile ]
   }
 }
