@@ -55,7 +55,12 @@ template("toucan_executable") {
       "//third_party/build/libjpeg-turbo",
       "//third_party/dawn/include/dawn:cpp_headers",
     ]
-    if (!is_wasm) {
+    if (is_ios) {
+      deps += [
+        "//third_party/dawn/src/dawn:proc",
+        "//third_party/dawn/src/dawn/native",
+      ]
+    } else if (!is_wasm) {
       deps += [
         "//third_party/dawn/src/dawn:proc_shared",
         "//third_party/dawn/src/dawn/native:shared",
