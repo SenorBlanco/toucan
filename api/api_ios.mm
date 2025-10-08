@@ -32,7 +32,7 @@
 @end
 
 @interface ToucanSceneDelegate : UIResponder <UIWindowSceneDelegate>
-@property (strong, nonatomic) UIWindow* window;
+//@property (strong, nonatomic) UIWindow* window;
 @end
 
 static int                        gNumWindows = 0;
@@ -90,11 +90,10 @@ Window* Window_Window(const uint32_t* size, const int32_t* position) {
   [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
   [layer setFramebufferOnly:YES];
 //  [layer setDrawableSize:cgSize];
-  [layer setColorspace:CGColorSpaceCreateDeviceRGB()];
+//  [layer setColorspace:CGColorSpaceCreateDeviceRGB()];
 
-  UIView* view = [[UIView alloc] initWithFrame:rect];
 //  [view setWantsLayer:YES];
-  [view setLayer:layer];
+//  [view setLayer:layer];
 
   Window*       w = new Window(nullptr, layer, mtlDevice, size);
   gNumWindows++;
@@ -271,11 +270,16 @@ void System_PrintLine(Array* buffer) {
 @implementation ToucanSceneDelegate
 
 - (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)connectionOptions {
+  self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+  self.window.windowScene = (UIWindowScene *)scene;
 
-    // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
-    // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
-    // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
+  UIViewController *rootViewController = [[UIViewController alloc] init];
+  rootViewController.view.backgroundColor = [UIColor blackColor];
+
+  self.window.rootViewController = rootViewController;
+  [self.window makeKeyAndVisible];
 }
+
 @end
 
 @implementation ToucanViewController
