@@ -1356,6 +1356,7 @@ float Math_rand() { return (float)(rand() % 100) / 100.0f; }
 
 void Math_Destroy(Math* This) {}
 
+#if !TARGET_OS_IS_IOS
 void System_Print(Array* buffer) {
   fwrite(buffer->ptr, 1, buffer->length, stdout);
 }
@@ -1364,6 +1365,7 @@ void System_PrintLine(Array* buffer) {
   fwrite(buffer->ptr, 1, buffer->length, stdout);
   fwrite("\n", 1, 1, stdout);
 }
+#endif
 
 void System_Abort() {
   printf("  Y__Y\n");

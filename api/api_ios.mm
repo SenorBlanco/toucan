@@ -18,6 +18,7 @@
 
 #include <list>
 #include <memory>
+#include <os/log.h>
 
 #include <webgpu/webgpu_cpp.h>
 
@@ -87,7 +88,7 @@ Window* Window_Window(const uint32_t* size, const int32_t* position) {
 void Window_Destroy(Window* This) { delete This; }
 
 wgpu::TextureFormat GetPreferredPixelFormat() {
-  return wgpu::TextureFormat::BGRA8Unorm;
+  return wgpu::TextureFormat::RGBA8Unorm;
 }
 
 SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Window* window) {
@@ -225,6 +226,26 @@ double System_GetCurrentTime() {
 
   gettimeofday(&now, NULL);
   return static_cast<double>(now.tv_sec) + static_cast<double>(now.tv_usec) / 1000000.0;
+}
+
+void System_Print(Array* buffer) {
+  NSString* str = [[NSString alloc] initWithBytes:buffer->ptr
+                                           length:buffer->length
+                                         encoding:NSUTF8StringEncoding];
+
+  os_log_t customLog = os_log_create("org.toucanlang.sample.window", "silly");
+
+  os_log(customLog, "%{public}@", str);
+}
+
+void System_PrintLine(Array* buffer) {
+  NSString* str = [[NSString alloc] initWithBytes:buffer->ptr
+                                           length:buffer->length
+                                         encoding:NSUTF8StringEncoding];
+
+  os_log_t customLog = os_log_create("org.toucanlang.sample.window", "silly");
+
+  os_log(customLog, "%{public}@\n", str);
 }
 
 };  // namespace Toucan
