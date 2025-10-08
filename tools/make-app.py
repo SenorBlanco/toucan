@@ -38,28 +38,14 @@ info_plist = '''<?xml version="1.0" encoding="UTF-8"?>
 <dict>
     <key>CFBundleExecutable</key>
     <string>''' + target_name + '''</string>
-    <key>CFBundleSignature</key>
-    <string>TUCN</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>CFBundleVersion</key>
-    <string>1.0.0</string>
     <key>CFBundleIdentifier</key>
     <string>org.toucanlang.sample.''' + target_name + '''</string>
-    <key>CFBundleDisplayName</key>
-    <string>''' + target_name + '''</string>
     <key>CFBundleName</key>
     <string>''' + target_name + '''</string>
 </dict>
 </plist>
 '''
 
-dylibs = [
-  "libdawn_native.dylib",
-  "libdawn_platform.dylib",
-  "libdawn_proc.dylib",
-  "libwebgpu_dawn.dylib",
-]
 source_path = out_dir + "/"
 dest_app_path = source_path + target_name + ".app/"
 if target_os == "mac":
@@ -72,10 +58,17 @@ if os.path.exists(dest_app_path):
   shutil.rmtree(dest_app_path)
 os.makedirs(dest_os_path)
 
-for dylib in dylibs:
-  source_lib = source_path + dylib
-  dest_lib = dest_os_path + dylib
-  shutil.copy2(source_lib, dest_lib)
+if target_os == "mac":
+  dylibs = [
+    "libdawn_native.dylib",
+    "libdawn_platform.dylib",
+    "libdawn_proc.dylib",
+    "libwebgpu_dawn.dylib",
+  ]
+  for dylib in dylibs:
+    source_lib = source_path + dylib
+    dest_lib = dest_os_path + dylib
+    shutil.copy2(source_lib, dest_lib)
 
 shutil.copy2(source_path + target_name, dest_os_path + target_name)
 
