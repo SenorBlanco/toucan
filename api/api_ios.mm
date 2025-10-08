@@ -43,11 +43,13 @@ namespace Toucan {
 static bool                                    gInitialized = false;
 
 struct Window {
-  Window(UIView*       v,
+  Window(UIWindow*     w,
+         CAMetalLayer* l,
          id<MTLDevice> md,
          const uint32_t      sz[2])
-      : view(v), mtlDevice(md) { size[0] = sz[0]; size[1] = sz[1]; }
-  UIView*       view;
+      : window(w), layer(l), mtlDevice(md) { size[0] = sz[0]; size[1] = sz[1]; }
+  UIWindow*     window;
+  CAMetalLayer* layer;
   id<MTLDevice> mtlDevice;
   uint32_t      size[2];
 };
@@ -72,23 +74,37 @@ const uint32_t* Window_GetSize(Window* This) {
 }
 
 Window* Window_Window(const uint32_t* size, const int32_t* position) {
-  if (gNumWindows == 0) {
-  }
   UIApplication* app = [UIApplication sharedApplication];
+  assert(gNumWindows == 0);
+  auto window = [[[UIApplication sharedApplication] windows] firstObject];
+  auto customLog = os_log_create("org.toucanlang.sample.window", "WebGPUError");
+
+  os_log(customLog, "UIWindow is %p\n", window);
+
+  auto cgSize = [window size];
 
   id<MTLDevice> mtlDevice = MTLCreateSystemDefaultDevice();
 
-  MTKView* view = [[MTKView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-  [view setDevice:mtlDevice];
-  [view setBackgroundColor:[UIColor blackColor]];
-  Window*       w = new Window(view, mtlDevice, size);
+  CAMetalLayer* layer = [CAMetalLayer layer];
+  [layer setDevice:mtlDevice];
+  [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
+  [layer setFramebufferOnly:YES];
+//  [layer setDrawableSize:cgSize];
+  [layer setColorspace:CGColorSpaceCreateDeviceRGB()];
+
+  UIView* view = [[UIView alloc] initWithFrame:rect];
+//  [view setWantsLayer:YES];
+  [view setLayer:layer];
+
+  Window*       w = new Window(nullptr, layer, mtlDevice, size);
+  gNumWindows++;
   return w;
 }
 
-void Window_Destroy(Window* This) { delete This; }
+void Window_Destroy(Window* This) { delete This; gNumWindows--; }
 
 wgpu::TextureFormat GetPreferredPixelFormat() {
-  return wgpu::TextureFormat::RGBA8Unorm;
+  return wgpu::TextureFormat::BGRA8Unorm;
 }
 
 SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Window* window) {
@@ -101,7 +117,7 @@ SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Win
   config.presentMode = wgpu::PresentMode::Fifo;
 
   wgpu::SurfaceDescriptorFromMetalLayer metalLayerDesc;
-//  metalLayerDesc.layer = window->layer;
+  metalLayerDesc.layer = window->layer;
   wgpu::SurfaceDescriptor desc;
   desc.nextInChain = &metalLayerDesc;
   static wgpu::Instance instance = wgpu::CreateInstance({});
@@ -127,7 +143,9 @@ Device* Device_Device() {
   wgpu::DeviceDescriptor desc;
   desc.SetUncapturedErrorCallback(
     [](const wgpu::Device&, wgpu::ErrorType type, wgpu::StringView message) {
-      fprintf(stderr, "WebGPU Error:\n%s\n", message.data);
+      auto customLog = os_log_create("org.toucanlang.sample.window", "WebGPUError");
+
+      os_log(customLog, "WebGPU Error:\n%{public}s\n", message.data);
     }
   );
 
@@ -233,7 +251,7 @@ void System_Print(Array* buffer) {
                                            length:buffer->length
                                          encoding:NSUTF8StringEncoding];
 
-  os_log_t customLog = os_log_create("org.toucanlang.sample.window", "silly");
+  auto customLog = os_log_create("org.toucanlang.sample.window", "Print");
 
   os_log(customLog, "%{public}@", str);
 }
@@ -243,7 +261,7 @@ void System_PrintLine(Array* buffer) {
                                            length:buffer->length
                                          encoding:NSUTF8StringEncoding];
 
-  os_log_t customLog = os_log_create("org.toucanlang.sample.window", "silly");
+  auto customLog = os_log_create("org.toucanlang.sample.window", "PrintLine");
 
   os_log(customLog, "%{public}@\n", str);
 }
@@ -263,16 +281,6 @@ void System_PrintLine(Array* buffer) {
 @implementation ToucanViewController
 
 - (void)viewDidLoad {
-  [super viewDidLoad];
-  auto metalDevice = MTLCreateSystemDefaultDevice();
-  if (![self view] || !metalDevice) {
-    assert(!"Metal is not supported on this device");
-    self.view = [[UIView alloc] initWithFrame:self.view.frame];
-    return;
-  }
-  MTKView* mtkView = (MTKView*)[self view];
-  [mtkView setDevice:metalDevice];
-  [mtkView setBackgroundColor:[UIColor blackColor]];
 }
 
 - (void)touchesBegan:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)e {

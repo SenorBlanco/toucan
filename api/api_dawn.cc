@@ -35,6 +35,10 @@
 #include <ast/type.h>
 #include "api_internal.h"
 
+#if TARGET_OS_IS_IOS
+#include <os/log.h>
+#endif
+
 namespace Toucan {
 
 bool exitOnAbort;
@@ -1325,9 +1329,12 @@ CommandBuffer* CommandEncoder_Finish(CommandEncoder* encoder) {
 void CommandBuffer_Destroy(CommandBuffer* This) { delete This; }
 
 Texture2D* SwapChain_GetCurrentTexture(SwapChain* swapChain) {
+  auto log = os_log_create("org.toucanlang", "debugging");
+  os_log(log, "GetCurrentTexgture, swapChain is %p, surface is %p\n", swapChain, swapChain->surface.Get());
   wgpu::SurfaceTexture surfaceTexture;
   swapChain->surface.GetCurrentTexture(&surfaceTexture);
   wgpu::Texture texture = surfaceTexture.texture;
+  os_log(log, "texture is %p\n", texture.Get());
 
   return new Texture2D(texture, texture.CreateView(), swapChain->extent, swapChain->format);
 }
