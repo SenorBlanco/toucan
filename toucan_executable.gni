@@ -185,12 +185,35 @@ template("toucan_apple_app") {
     deps = [ ":${outer_target}" ]
     args = [
       "--target-name", outer_target,
-      "--out-dir", rebase_path(root_build_dir),
       "--target-os", target_os,
     ]
     if (is_ios) {
-      args += [ "--mobile-provision", mobile_provision_prefix + outer_target + ".mobileprovision", ]
+      args += [
+        "--mobile-provision", mobile_provision_prefix + outer_target + ".mobileprovision",
+        "--codesign-identity", codesign_identity,
+        "--team-identifier", team_identifier,
+      ]
     }
+    outputs = [ outfile ]
+  }
+}
+
+template("toucan_apple_ipa") {
+  outer_target = target_name
+  toucan_apple_app(target_name) {
+    sources = invoker.sources
+  }
+  make_action = "make_apple_ipa_" + target_name
+  outer_target = target_name
+  action(make_action) {
+    script = "../tools/make-ipa.py"
+    outfile = "${root_out_dir}/${outer_target}.ipa"
+    app_file = "${root_out_dir}/${outer_target}.app"
+    deps = [ ":make_apple_app_${outer_target}" ]
+    args = [
+      "--app-file", rebase_path(app_file),
+      "--ipa-file", rebase_path(outfile),
+    ]
     outputs = [ outfile ]
   }
 }
@@ -200,7 +223,11 @@ template("toucan_app") {
     toucan_android_apk(target_name) {
       sources = invoker.sources
     }
-  } else if (is_apple) {
+  } else if (is_ios) {
+    toucan_apple_ipa(target_name) {
+      sources = invoker.sources
+    }
+  } else if (is_mac) {
     toucan_apple_app(target_name) {
       sources = invoker.sources
     }

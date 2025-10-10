@@ -42,6 +42,8 @@ declare_args() {
 
   # ios-specific args
   mobile_provision_prefix = ""
+  codesign_identity = ""
+  team_identifier = ""
 }
 
 if (target_os == "") {
