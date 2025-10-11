@@ -28,11 +28,13 @@
 
 #include "api_internal.h"
 
+@interface ToucanAppDelegate: UIResponder <UIApplicationDelegate>
+@end
+
 @interface ToucanViewController : UIViewController
 @end
 
 @interface ToucanSceneDelegate : UIResponder <UIWindowSceneDelegate>
-//@property (strong, nonatomic) UIWindow* window;
 @end
 
 static int                        gNumWindows = 0;
@@ -148,7 +150,7 @@ Device* Device_Device() {
   return new Device(device);
 }
 
-bool System_IsRunning() { return gNumWindows > 0; }
+bool System_IsRunning() { return true; }
 
 bool System_HasPendingEvents() {
   return !gEventQueue.empty();
@@ -159,6 +161,10 @@ Event* System_GetNextEvent() {
     Initialize();
     gInitialized = true;
   }
+  // FIXME: this will block, so needs to be on another thread
+  char* argv[1];
+  UIApplicationMain(0, argv, nil, NSStringFromClass(ToucanAppDelegate.class));
+
   // FIXME: block until there's an event in gEventQueue
   Event* event = gEventQueue.back();
   gEventQueue.pop_back();
@@ -264,20 +270,17 @@ void System_PrintLine(Array* buffer) {
 
 @implementation ToucanSceneDelegate
 
+@synthesize window = _window;
+
 - (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)connectionOptions {
   auto customLog = os_log_create("org.toucanlang.sample.window", "debugging");
   os_log(customLog, "willConnectToSession\n");
-
-  id<MTLDevice> mtlDevice = MTLCreateSystemDefaultDevice();
-
-  self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-  self.window.windowScene = (UIWindowScene *)scene;
-
-  UIViewController *rootViewController = [[UIViewController alloc] init];
-  rootViewController.view.backgroundColor = [UIColor blackColor];
-
-  self.window.rootViewController = rootViewController;
+  self.window = [[UIWindow alloc] initWithWindowScene:(UIWindowScene*) scene];
+  self.window.rootViewController = [[UIViewController alloc] init];
+  self.window.rootViewController.view.backgroundColor = [UIColor blueColor];
   [self.window makeKeyAndVisible];
+
+//  id<MTLDevice> mtlDevice = MTLCreateSystemDefaultDevice();
 }
 
 @end
@@ -299,6 +302,18 @@ void System_PrintLine(Array* buffer) {
     i++;
   }
   gEventQueue.push_back(event);
+}
+
+@end
+
+@implementation ToucanAppDelegate
+
+- (UISceneConfiguration *)application:(UIApplication *)application configurationForConnectingSceneSession:(UISceneSession *)connectingSceneSession options:(UISceneConnectionOptions *)options {
+    auto customLog = os_log_create("org.toucanlang", "debugging");
+    os_log(customLog, "configurationForConnectingSceneSession\n");
+    UISceneConfiguration *configuration = [[UISceneConfiguration alloc] initWithName:nil sessionRole:connectingSceneSession.role];
+    configuration.delegateClass = ToucanSceneDelegate.class;
+    return configuration;
 }
 
 @end
