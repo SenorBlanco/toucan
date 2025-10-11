@@ -32,20 +32,6 @@ args = vars(argparser.parse_args())
 target_name = args['target_name']
 target_os = args['target_os']
 
-info_plist = '''<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleExecutable</key>
-    <string>''' + target_name + '''</string>
-    <key>CFBundleIdentifier</key>
-    <string>org.toucanlang.sample.''' + target_name + '''</string>
-    <key>CFBundleName</key>
-    <string>''' + target_name + '''</string>
-</dict>
-</plist>
-'''
-
 dest_app_path = target_name + ".app/"
 if target_os == "mac":
   dest_contents_path = dest_app_path + "Contents/"
@@ -70,9 +56,16 @@ if target_os == "mac":
 shutil.copy2(target_name, dest_os_path + target_name)
 
 info_plist_file = dest_contents_path + "Info.plist"
-with open(info_plist_file, "w") as f:
-  f.write(info_plist)
-  f.close()
+
+info = dict([
+  ('CFBundleExecutable', target_name),
+  ('CFBundleIdentifier', 'org.toucanlang.sample.' + target_name),
+  ('CFBundleName', target_name),
+])
+
+with open(info_plist_file, "wb") as fp:
+  plistlib.dump(info, fp)
+  fp.close()
 
 if target_os == "ios":
   team_identifier = args['team_identifier']
@@ -87,7 +80,7 @@ if target_os == "ios":
   ])
 
   with open(entitlements_filename, "wb") as fp:
-    plistlib.dump(entitlements, fp, fmt=plistlib.FMT_XML)
+    plistlib.dump(entitlements, fp)
     fp.close()
 
   subprocess.check_call(["codesign", "-s", codesign_identity, "--entitlements", entitlements_filename, dest_os_path])
