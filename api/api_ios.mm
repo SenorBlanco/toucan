@@ -268,15 +268,27 @@ void System_PrintLine(Array* buffer) {
 
 };  // namespace Toucan
 
+@implementation ToucanAppDelegate
+
+- (UISceneConfiguration *)application:(UIApplication *)application configurationForConnectingSceneSession:(UISceneSession *)connectingSceneSession options:(UISceneConnectionOptions *)options {
+    auto customLog = os_log_create("org.toucanlang", "debugging");
+    os_log(customLog, "*** configurationForConnectingSceneSession\n");
+    UISceneConfiguration *configuration = [[UISceneConfiguration alloc] initWithName:nil sessionRole:connectingSceneSession.role];
+    configuration.delegateClass = ToucanSceneDelegate.class;
+    return configuration;
+}
+
+@end
+
 @implementation ToucanSceneDelegate
 
 @synthesize window = _window;
 
 - (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)connectionOptions {
   auto customLog = os_log_create("org.toucanlang.sample.window", "debugging");
-  os_log(customLog, "willConnectToSession\n");
+  os_log(customLog, "*** willConnectToSession\n");
   self.window = [[UIWindow alloc] initWithWindowScene:(UIWindowScene*) scene];
-  self.window.rootViewController = [[UIViewController alloc] init];
+  self.window.rootViewController = [[ToucanViewController alloc] init];
   self.window.rootViewController.view.backgroundColor = [UIColor blueColor];
   [self.window makeKeyAndVisible];
 
@@ -288,6 +300,17 @@ void System_PrintLine(Array* buffer) {
 @implementation ToucanViewController
 
 - (void)viewDidLoad {
+  [super viewDidLoad];
+
+  CGRect viewFrame = self.view.bounds;
+  id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+
+  MTKView* mtkView = [[MTKView alloc] initWithFrame:viewFrame device:device];
+
+//  mtkView.delegate = self;
+  mtkView.colorPixelFormat = MTLPixelFormatBGRA8Unorm;
+
+  [self.view addSubview:mtkView];
 }
 
 - (void)touchesBegan:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)e {
@@ -302,18 +325,6 @@ void System_PrintLine(Array* buffer) {
     i++;
   }
   gEventQueue.push_back(event);
-}
-
-@end
-
-@implementation ToucanAppDelegate
-
-- (UISceneConfiguration *)application:(UIApplication *)application configurationForConnectingSceneSession:(UISceneSession *)connectingSceneSession options:(UISceneConnectionOptions *)options {
-    auto customLog = os_log_create("org.toucanlang", "debugging");
-    os_log(customLog, "configurationForConnectingSceneSession\n");
-    UISceneConfiguration *configuration = [[UISceneConfiguration alloc] initWithName:nil sessionRole:connectingSceneSession.role];
-    configuration.delegateClass = ToucanSceneDelegate.class;
-    return configuration;
 }
 
 @end
