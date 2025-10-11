@@ -76,12 +76,7 @@ const uint32_t* Window_GetSize(Window* This) {
 Window* Window_Window(const uint32_t* size, const int32_t* position) {
   UIApplication* app = [UIApplication sharedApplication];
   assert(gNumWindows == 0);
-  auto window = [[[UIApplication sharedApplication] windows] firstObject];
   auto customLog = os_log_create("org.toucanlang.sample.window", "WebGPUError");
-
-  os_log(customLog, "UIWindow is %p\n", window);
-
-  auto cgSize = [window size];
 
   id<MTLDevice> mtlDevice = MTLCreateSystemDefaultDevice();
 
@@ -270,6 +265,11 @@ void System_PrintLine(Array* buffer) {
 @implementation ToucanSceneDelegate
 
 - (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)connectionOptions {
+  auto customLog = os_log_create("org.toucanlang.sample.window", "debugging");
+  os_log(customLog, "willConnectToSession\n");
+
+  id<MTLDevice> mtlDevice = MTLCreateSystemDefaultDevice();
+
   self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
   self.window.windowScene = (UIWindowScene *)scene;
 

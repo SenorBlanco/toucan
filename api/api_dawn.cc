@@ -1329,12 +1329,16 @@ CommandBuffer* CommandEncoder_Finish(CommandEncoder* encoder) {
 void CommandBuffer_Destroy(CommandBuffer* This) { delete This; }
 
 Texture2D* SwapChain_GetCurrentTexture(SwapChain* swapChain) {
+#if TARGET_OS_IS_IOS
   auto log = os_log_create("org.toucanlang", "debugging");
   os_log(log, "GetCurrentTexgture, swapChain is %p, surface is %p\n", swapChain, swapChain->surface.Get());
+#endif
   wgpu::SurfaceTexture surfaceTexture;
   swapChain->surface.GetCurrentTexture(&surfaceTexture);
   wgpu::Texture texture = surfaceTexture.texture;
+#if TARGET_OS_IS_IOS
   os_log(log, "texture is %p\n", texture.Get());
+#endif
 
   return new Texture2D(texture, texture.CreateView(), swapChain->extent, swapChain->format);
 }
