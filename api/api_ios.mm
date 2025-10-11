@@ -37,12 +37,17 @@
 @interface ToucanSceneDelegate : UIResponder <UIWindowSceneDelegate>
 @end
 
+@interface ToucanMetalView : UIView
+@property (nonatomic, strong, readonly) CAMetalLayer *metalLayer;
+@end
+
 static int                        gNumWindows = 0;
 static std::list<Toucan::Event*>  gEventQueue;
+static ToucanMetalView*           gView;
 
 namespace Toucan {
 
-static bool                                    gInitialized = false;
+static bool                       gInitialized = false;
 
 struct Window {
   Window(UIWindow*     w,
@@ -82,15 +87,17 @@ Window* Window_Window(const uint32_t* size, const int32_t* position) {
 
   id<MTLDevice> mtlDevice = MTLCreateSystemDefaultDevice();
 
-  CAMetalLayer* layer = [CAMetalLayer layer];
+  CGPoint cgPosition(position[0], position[1]);
+  CGSize cgSize(size[0], size[1]);
+  CGRect viewFrame(cgPosition, cgSize);
+
+  gView = [[ToucanMetalView alloc] initWithFrame:viewFrame];
+
+  CAMetalLayer* layer = (CAMetalLayer*) gView.layer;
   [layer setDevice:mtlDevice];
   [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
   [layer setFramebufferOnly:YES];
-//  [layer setDrawableSize:cgSize];
-//  [layer setColorspace:CGColorSpaceCreateDeviceRGB()];
-
-//  [view setWantsLayer:YES];
-//  [view setLayer:layer];
+  [layer setDrawableSize:cgSize];
 
   Window*       w = new Window(nullptr, layer, mtlDevice, size);
   gNumWindows++;
@@ -289,10 +296,7 @@ void System_PrintLine(Array* buffer) {
   os_log(customLog, "*** willConnectToSession\n");
   self.window = [[UIWindow alloc] initWithWindowScene:(UIWindowScene*) scene];
   self.window.rootViewController = [[ToucanViewController alloc] init];
-  self.window.rootViewController.view.backgroundColor = [UIColor blueColor];
   [self.window makeKeyAndVisible];
-
-//  id<MTLDevice> mtlDevice = MTLCreateSystemDefaultDevice();
 }
 
 @end
@@ -305,12 +309,10 @@ void System_PrintLine(Array* buffer) {
   CGRect viewFrame = self.view.bounds;
   id<MTLDevice> device = MTLCreateSystemDefaultDevice();
 
-  MTKView* mtkView = [[MTKView alloc] initWithFrame:viewFrame device:device];
+  auto customLog = os_log_create("org.toucanlang", "debugging");
+  os_log(customLog, "gView %p\n", gView);
 
-//  mtkView.delegate = self;
-  mtkView.colorPixelFormat = MTLPixelFormatBGRA8Unorm;
-
-  [self.view addSubview:mtkView];
+  [self.view addSubview:gView];
 }
 
 - (void)touchesBegan:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)e {
@@ -325,6 +327,29 @@ void System_PrintLine(Array* buffer) {
     i++;
   }
   gEventQueue.push_back(event);
+}
+
+@end
+
+@implementation ToucanMetalView
+
++ (Class)layerClass {
+    return [CAMetalLayer class];
+}
+
+// Initialize the view and configure the metal layer
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        // Access the CAMetalLayer
+        _metalLayer = (CAMetalLayer *)self.layer;
+
+        // Configure the metal layer (optional, but common)
+        _metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm; // Example pixel format
+        _metalLayer.framebufferOnly = YES; // Recommended for performance
+        // Add other CAMetalLayer configurations as needed
+    }
+    return self;
 }
 
 @end
