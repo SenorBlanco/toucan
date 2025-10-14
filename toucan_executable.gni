@@ -119,7 +119,7 @@ template("toucan_executable") {
         "-msimd128",
       ]
       deps += [
-        "//emscripten:images",
+        "//emscripten:toucan-logo-and-name",
       ]
       inputs = [
         "//emscripten/shell.html"
