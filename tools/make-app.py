@@ -29,20 +29,23 @@ argparser.add_argument('--mobile-provision')
 argparser.add_argument('--team-identifier')
 argparser.add_argument('--codesign-identity')
 argparser.add_argument('--app-icon')
+argparser.add_argument('--minimum-deployment-target')
 args = vars(argparser.parse_args())
 
 target_name = args['target_name']
 target_os = args['target_os']
 
 dest_app_path = target_name + ".app/"
+if os.path.exists(dest_app_path):
+  shutil.rmtree(dest_app_path)
+
 if target_os == "mac":
   dest_contents_path = dest_app_path + "Contents/"
   dest_os_path = dest_contents_path + "MacOS/"
+  dest_resources_path = dest_contents_path + "Resources/"
 else:
-  dest_os_path = dest_contents_path = dest_app_path
+  dest_os_path = dest_contents_path = dest_resources_path = dest_app_path
 
-if os.path.exists(dest_app_path):
-  shutil.rmtree(dest_app_path)
 os.makedirs(dest_os_path)
 
 if target_os == "mac":
@@ -57,19 +60,30 @@ if target_os == "mac":
 
 shutil.copy2(target_name, dest_os_path + target_name)
 
-assets_dir_name = tempfile.mkdtemp() # FIXME: use TemporaryDirectory
-print('assets_dir_name is ' + assets_dir_name)
+assets_dir_name = tempfile.mkdtemp()
 
-appiconset_contents = {
-  "images" : [
-    {
-      "filename" : "AppIcon.png",
-      "idiom" : "universal",
-      "platform" : "ios",
-      "size" : "1024x1024"
-    },
-  ],
-}
+if target_os == "ios":
+  appiconset_contents = {
+    "images" : [
+      {
+        "filename" : "AppIcon.png",
+        "idiom" : "universal",
+        "platform" : "ios",
+        "size" : "1024x1024",
+      },
+    ],
+  }
+else:
+  appiconset_contents = {
+    "images" : [
+      {
+        "filename" : "AppIcon.png",
+        "idiom" : "mac",
+        "scale" : "2x",
+        "size" : "512x512",
+      },
+    ],
+  }
 
 app_icon_dir_name = assets_dir_name + '/AppIcon.appiconset'
 os.mkdir(app_icon_dir_name)
@@ -80,11 +94,13 @@ with open(app_icon_dir_name + '/Contents.json', 'w') as f:
   json.dump(appiconset_contents, f, indent=2)
 
 subprocess.check_call(['sips', app_icon_svg, '-o', app_icon_png,  '-s', 'format', 'png', '--resampleHeightWidth', '1024', '1024'])
-partial_info_plist = tempfile.mkstemp()[1] # FIXME: use TemporaryFile
-minimum_deployment_target = '15.0' # FIXME: use an arg
+partial_info_plist = tempfile.mkstemp()[1]
+minimum_deployment_target = args['minimum_deployment_target']
 
 platform = 'iphoneos' if target_os == 'ios' else 'macosx'
-subprocess.check_call(['actool', assets_dir_name, '--compile', dest_contents_path, '--output-format', 'human-readable-text', '--app-icon', 'AppIcon', '--output-partial-info-plist', partial_info_plist, '--platform', platform, '--minimum-deployment-target', minimum_deployment_target])
+if not os.path.exists(dest_resources_path):
+  os.mkdir(dest_resources_path)
+subprocess.check_call(['actool', assets_dir_name, '--compile', dest_resources_path, '--output-format', 'human-readable-text', '--app-icon', 'AppIcon', '--output-partial-info-plist', partial_info_plist, '--platform', platform, '--minimum-deployment-target', minimum_deployment_target])
 
 info_plist_file = dest_contents_path + "Info.plist"
 
@@ -120,3 +136,6 @@ if target_os == "ios":
 
   subprocess.check_call(["codesign", "-s", codesign_identity, "--entitlements", entitlements_filename, dest_os_path])
   os.remove(entitlements_filename)
+
+shutil.rmtree(assets_dir_name)
+os.remove(partial_info_plist)

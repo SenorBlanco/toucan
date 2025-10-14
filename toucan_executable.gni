@@ -189,7 +189,8 @@ template("toucan_apple_app") {
     args = [
       "--target-name", outer_target,
       "--target-os", target_os,
-      "--app-icon", rebase_path("${root_out_dir}/images/toucan-logo.svg")
+      "--app-icon", rebase_path("${root_out_dir}/images/toucan-logo.svg"),
+      "--minimum-deployment-target", "15.0",
     ]
     if (is_ios) {
       args += [
