@@ -51,9 +51,7 @@ os.makedirs(dest_os_path)
 if target_os == "mac":
   dylibs = [
     "libdawn_native.dylib",
-    "libdawn_platform.dylib",
     "libdawn_proc.dylib",
-    "libwebgpu_dawn.dylib",
   ]
   for dylib in dylibs:
     shutil.copy2(dylib, dest_os_path + dylib)
