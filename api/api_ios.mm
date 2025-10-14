@@ -83,7 +83,7 @@ const uint32_t* Window_GetSize(Window* This) {
 Window* Window_Window(const uint32_t* size, const int32_t* position) {
   UIApplication* app = [UIApplication sharedApplication];
   assert(gNumWindows == 0);
-  auto customLog = os_log_create("org.toucanlang.sample.window", "WebGPUError");
+  auto customLog = os_log_create("org.toucanlang", "WebGPUError");
 
   id<MTLDevice> mtlDevice = MTLCreateSystemDefaultDevice();
 
@@ -146,7 +146,7 @@ Device* Device_Device() {
   wgpu::DeviceDescriptor desc;
   desc.SetUncapturedErrorCallback(
     [](const wgpu::Device&, wgpu::ErrorType type, wgpu::StringView message) {
-      auto customLog = os_log_create("org.toucanlang.sample.window", "WebGPUError");
+      auto customLog = os_log_create("org.toucanlang", "WebGPUError");
 
       os_log(customLog, "WebGPU Error:\n%{public}s\n", message.data);
     }
@@ -262,7 +262,7 @@ void System_Print(Array* buffer) {
                                            length:buffer->length
                                          encoding:NSUTF8StringEncoding];
 
-  auto customLog = os_log_create("org.toucanlang.sample.window", "Print");
+  auto customLog = os_log_create("org.toucanlang", "Print");
 
   os_log(customLog, "%{public}@", str);
 }
@@ -272,7 +272,7 @@ void System_PrintLine(Array* buffer) {
                                            length:buffer->length
                                          encoding:NSUTF8StringEncoding];
 
-  auto customLog = os_log_create("org.toucanlang.sample.window", "PrintLine");
+  auto customLog = os_log_create("org.toucanlang", "PrintLine");
 
   os_log(customLog, "%{public}@\n", str);
 }
@@ -296,7 +296,7 @@ void System_PrintLine(Array* buffer) {
 @synthesize window = _window;
 
 - (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)connectionOptions {
-  auto customLog = os_log_create("org.toucanlang.sample.window", "debugging");
+  auto customLog = os_log_create("org.toucanlang", "debugging");
   os_log(customLog, "*** willConnectToSession\n");
   self.window = [[UIWindow alloc] initWithWindowScene:(UIWindowScene*) scene];
   self.window.rootViewController = [[ToucanViewController alloc] init];
