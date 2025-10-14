@@ -15,6 +15,7 @@
 # limitations under the License.
 
 import argparse
+import json
 import os
 import plistlib
 import shutil
@@ -27,6 +28,7 @@ argparser.add_argument('--target-os')
 argparser.add_argument('--mobile-provision')
 argparser.add_argument('--team-identifier')
 argparser.add_argument('--codesign-identity')
+argparser.add_argument('--app-icon')
 args = vars(argparser.parse_args())
 
 target_name = args['target_name']
@@ -55,13 +57,46 @@ if target_os == "mac":
 
 shutil.copy2(target_name, dest_os_path + target_name)
 
+assets_dir_name = tempfile.mkdtemp() # FIXME: use TemporaryDirectory
+print('assets_dir_name is ' + assets_dir_name)
+
+appiconset_contents = {
+  "images" : [
+    {
+      "filename" : "AppIcon.png",
+      "idiom" : "universal",
+      "platform" : "ios",
+      "size" : "1024x1024"
+    },
+  ],
+}
+
+app_icon_dir_name = assets_dir_name + '/AppIcon.appiconset'
+os.mkdir(app_icon_dir_name)
+app_icon_png = app_icon_dir_name + '/AppIcon.png'
+app_icon_svg = args['app_icon']
+
+with open(app_icon_dir_name + '/Contents.json', 'w') as f:
+  json.dump(appiconset_contents, f, indent=2)
+
+subprocess.check_call(['sips', app_icon_svg, '-o', app_icon_png,  '-s', 'format', 'png', '--resampleHeightWidth', '1024', '1024'])
+partial_info_plist = tempfile.mkstemp()[1] # FIXME: use TemporaryFile
+minimum_deployment_target = '15.0' # FIXME: use an arg
+
+platform = 'iphoneos' if target_os == 'ios' else 'macosx'
+subprocess.check_call(['actool', assets_dir_name, '--compile', dest_contents_path, '--output-format', 'human-readable-text', '--app-icon', 'AppIcon', '--output-partial-info-plist', partial_info_plist, '--platform', platform, '--minimum-deployment-target', minimum_deployment_target])
+
 info_plist_file = dest_contents_path + "Info.plist"
 
-info = dict([
-  ('CFBundleExecutable', target_name),
-  ('CFBundleIdentifier', 'org.toucanlang.sample.' + target_name),
-  ('CFBundleName', target_name),
-])
+info = {
+  'CFBundleExecutable': target_name,
+  'CFBundleIdentifier': 'org.toucanlang.sample.' + target_name,
+  'CFBundleName': target_name,
+}
+
+with open(partial_info_plist, "rb") as fp:
+  partial_info = plistlib.load(fp)
+  info.update(partial_info)
 
 with open(info_plist_file, "wb") as fp:
   plistlib.dump(info, fp)
@@ -75,7 +110,7 @@ if target_os == "ios":
 
   (entitlements_file, entitlements_filename) = tempfile.mkstemp()
   entitlements = dict([
-    ('application-identifier', team_identifier + ".org.toucanlang.sample.window"),
+    ('application-identifier', team_identifier + ".org.toucanlang.sample." + target_name),
     ('com.apple.developer.team-identifier', team_identifier),
   ])
 

@@ -243,6 +243,10 @@ const uint32_t* System_GetScreenSize() {
   static uint32_t screenSize[2];
   screenSize[0] = [[UIScreen mainScreen] bounds].size.width;
   screenSize[1] = [[UIScreen mainScreen] bounds].size.height;
+  auto customLog = os_log_create("org.toucanlang", "debugging");
+
+  os_log(customLog, "mainScreen %dx%d\n", screenSize[0], screenSize[1]);
+
   return screenSize;
 }
 

@@ -182,10 +182,14 @@ template("toucan_apple_app") {
   action(make_action) {
     script = "../tools/make-app.py"
     outfile = "${root_out_dir}/${outer_target}.app"
-    deps = [ ":${outer_target}" ]
+    deps = [
+      ":${outer_target}",
+      "//emscripten:toucan-logo",
+    ]
     args = [
       "--target-name", outer_target,
       "--target-os", target_os,
+      "--app-icon", rebase_path("${root_out_dir}/images/toucan-logo.svg")
     ]
     if (is_ios) {
       args += [
