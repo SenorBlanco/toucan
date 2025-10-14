@@ -41,7 +41,7 @@ declare_args() {
   win_sdk_version = ""
 
   # ios-specific args
-  mobile_provision_prefix = ""
+  mobile_provision = ""
   codesign_identity = ""
   team_identifier = ""
 }

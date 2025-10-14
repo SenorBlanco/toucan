@@ -194,7 +194,7 @@ template("toucan_apple_app") {
     ]
     if (is_ios) {
       args += [
-        "--mobile-provision", mobile_provision_prefix + outer_target + ".mobileprovision",
+        "--mobile-provision", mobile_provision,
         "--codesign-identity", codesign_identity,
         "--team-identifier", team_identifier,
       ]
