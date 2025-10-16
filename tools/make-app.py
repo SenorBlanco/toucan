@@ -22,7 +22,7 @@ import shutil
 import subprocess
 import tempfile
 
-argparser = argparse.ArgumentParser(description="Create an App")
+argparser = argparse.ArgumentParser(description="Create an iOS or MacOS .app")
 argparser.add_argument('--target-name')
 argparser.add_argument('--target-os')
 argparser.add_argument('--mobile-provision')
