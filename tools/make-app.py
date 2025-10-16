@@ -106,6 +106,18 @@ info = {
   'CFBundleExecutable': target_name,
   'CFBundleIdentifier': 'org.toucanlang.sample.' + target_name,
   'CFBundleName': target_name,
+  'UIDeviceFamily': [ 1, 2, ],
+  'UISupportedInterfaceOrientations~ipad': [
+    'UIInterfaceOrientationPortrait',
+    'UIInterfaceOrientationPortraitUpsideDown',
+    'UIInterfaceOrientationLandscapeLeft',
+    'UIInterfaceOrientationLandscapeRight',
+  ],
+  'UISupportedInterfaceOrientations~iphone': [
+    'UIInterfaceOrientationPortrait',
+    'UIInterfaceOrientationLandscapeLeft',
+    'UIInterfaceOrientationLandscapeRight',
+  ],
 }
 
 with open(partial_info_plist, "rb") as fp:
