@@ -17,6 +17,7 @@
 #include <os/log.h>
 #include <sys/time.h>
 
+#include <list>
 #include <queue>
 
 #include <webgpu/webgpu_cpp.h>
@@ -28,17 +29,9 @@
 #include <api/init_types.h>
 #include <ast/ast.h>
 
-@interface ToucanAppDelegate: UIResponder <UIApplicationDelegate>
-@end
-
-@interface ToucanViewController : UIViewController
-@end
-
-@interface ToucanSceneDelegate : UIResponder <UIWindowSceneDelegate>
-@end
-
 @interface ToucanMetalView : UIView
 @property (nonatomic, strong, readonly) CAMetalLayer *metalLayer;
+@property (nonatomic, readonly) std::list<UITouch*> currentTouches;
 @end
 
 namespace Toucan {
@@ -213,6 +206,15 @@ void System_PrintLine(Array* buffer) {
 
 };  // namespace Toucan
 
+@interface ToucanAppDelegate: UIResponder <UIApplicationDelegate>
+@end
+
+@interface ToucanViewController : UIViewController
+@end
+
+@interface ToucanSceneDelegate : UIResponder <UIWindowSceneDelegate>
+@end
+
 using namespace Toucan;
 
 extern "C" {
@@ -232,10 +234,11 @@ int main(int argc, char** argv) {
   pthread_cond_init(&gViewExists, nullptr);
   pthread_cond_init(&gEventQueueNonEmpty, nullptr);
   auto toucan_main_wrapper = [](void*) -> void* { toucan_main(); return nullptr; };
-  pthread_create(&toucan_thread, &attr, toucan_main_wrapper, nullptr);
+  pthread_create(&toucan_thread, nullptr, toucan_main_wrapper, nullptr);
   @autoreleasepool {
     return UIApplicationMain(argc, argv, nil, NSStringFromClass(ToucanAppDelegate.class));
   }
+  pthread_join(toucan_thread, nullptr);
   pthread_cond_destroy(&gViewExists);
   pthread_cond_destroy(&gEventQueueNonEmpty);
   return 0;
@@ -273,7 +276,6 @@ int main(int argc, char** argv) {
 
   pthread_mutex_lock(&gViewLock);
   gMetalView = [[ToucanMetalView alloc] initWithFrame:self.view.frame];
-  gMetalView.multipleTouchEnabled = true;
 
   id<MTLDevice> mtlDevice = MTLCreateSystemDefaultDevice();
   CAMetalLayer* layer = (CAMetalLayer*) gMetalView.layer;
@@ -296,19 +298,18 @@ int main(int argc, char** argv) {
 
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
-    if (self) {
-        _metalLayer = (CAMetalLayer *)self.layer;
-        _metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
-        _metalLayer.framebufferOnly = YES;
-    }
+    _metalLayer = (CAMetalLayer *)self.layer;
+    _metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+    _metalLayer.framebufferOnly = YES;
+    self.multipleTouchEnabled = true;
     return self;
 }
 
-- (void) touchEvent:(NSSet<UITouch*>*) touches withType:(EventType) type {
+- (void) touchEvent:(EventType) type {
   auto event = new Event();
   event->type = type;
   int i = 0;
-  for (UITouch* touch in touches) {
+  for (UITouch* touch : self.currentTouches) {
     auto position = [touch locationInView:self];
     event->touches[i][0] = position.x;
     event->touches[i][1] = position.y;
@@ -322,15 +323,21 @@ int main(int argc, char** argv) {
 }
 
 - (void) touchesBegan:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)e {
-  [self touchEvent:touches withType:EventType::TouchStart];
+  for (UITouch* touch in touches) {
+    self.currentTouches.push_back(touch);
+  }
+  [self touchEvent:EventType::TouchStart];
 }
 
 - (void) touchesMoved:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)e {
-  [self touchEvent:touches withType:EventType::TouchMove];
+  [self touchEvent:EventType::TouchMove];
 }
 
 - (void)touchesEnded:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)e {
-  [self touchEvent:touches withType:EventType::TouchEnd];
+  [self touchEvent:EventType::TouchEnd];
+  for (UITouch* touch in touches) {
+    self.currentTouches.remove(touch);
+  }
 }
 
 @end
