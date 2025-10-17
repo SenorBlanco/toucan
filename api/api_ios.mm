@@ -44,31 +44,26 @@
 @property (nonatomic, strong, readonly) CAMetalLayer *metalLayer;
 @end
 
-static int                        gNumWindows = 0;
-static UIView*                    gView;
-static ToucanMetalView*           gMetalView; // FIXME: get rid of this and wait for main view first
-
-std::queue<Toucan::Event*> gEventQueue;
-
-pthread_mutex_t    gEventQueueLock;
-pthread_cond_t*    gEventQueueNonEmpty;
-
-pthread_mutex_t    gViewLock;
-pthread_cond_t*    gViewExists;
+static int                        gNumWindows = 0;  // FIXME: remove this?
+static ToucanMetalView           *gMetalView;
 
 namespace Toucan {
+
+std::queue<Event*> gEventQueue;
+
+pthread_mutex_t    gEventQueueLock;
+pthread_cond_t     gEventQueueNonEmpty;
+
+pthread_mutex_t    gViewLock;
+pthread_cond_t     gViewExists;
 
 static bool                       gInitialized = false;
 
 struct Window {
-  Window(UIWindow*     w,
-         CAMetalLayer* l,
-         id<MTLDevice> md,
+  Window(CAMetalLayer* l,
          const uint32_t      sz[2])
-      : window(w), layer(l), mtlDevice(md) { size[0] = sz[0]; size[1] = sz[1]; }
-  UIWindow*     window;
+      : layer(l) { size[0] = sz[0]; size[1] = sz[1]; }
   CAMetalLayer* layer;
-  id<MTLDevice> mtlDevice;
   uint32_t      size[2];
 };
 
@@ -85,6 +80,14 @@ void Initialize() {
   UIApplication* app = [UIApplication sharedApplication];
 }
 
+void WaitForView() {
+  pthread_mutex_lock(&gViewLock);
+  while (!gMetalView) {
+    pthread_cond_wait(&gViewExists, &gViewLock);
+  }
+  pthread_mutex_unlock(&gViewLock);
+}
+
 }  // namespace
 
 const uint32_t* Window_GetSize(Window* This) {
@@ -92,27 +95,12 @@ const uint32_t* Window_GetSize(Window* This) {
 }
 
 Window* Window_Window(const uint32_t* size, const int32_t* position) {
-  UIApplication* app = [UIApplication sharedApplication];
   assert(gNumWindows == 0);
-  auto customLog = os_log_create("org.toucanlang", "WebGPUError");
 
-  id<MTLDevice> mtlDevice = MTLCreateSystemDefaultDevice();
+  WaitForView();
 
-  CGPoint cgPosition(position[0], position[1]);
-  CGSize cgSize(size[0], size[1]);
-  CGRect viewFrame(cgPosition, cgSize);
-
-  gMetalView = [[ToucanMetalView alloc] initWithFrame:viewFrame];
-
-  CAMetalLayer* layer = (CAMetalLayer*) gMetalView.layer;
-  [layer setDevice:mtlDevice];
-  [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
-  [layer setFramebufferOnly:YES];
-  [layer setDrawableSize:cgSize];
-
-  Window*       w = new Window(nullptr, layer, mtlDevice, size);
   gNumWindows++;
-  return w;
+  return new Window((CAMetalLayer*) [gMetalView layer], size);
 }
 
 void Window_Destroy(Window* This) { delete This; gNumWindows--; }
@@ -182,7 +170,7 @@ Event* System_GetNextEvent() {
 
   pthread_mutex_lock(&gEventQueueLock);
   while (gEventQueue.empty()) {
-    pthread_cond_wait(gEventQueueNonEmpty, &gEventQueueLock);
+    pthread_cond_wait(&gEventQueueNonEmpty, &gEventQueueLock);
   }
   Event* event = gEventQueue.back();
   gEventQueue.pop();
@@ -252,14 +240,11 @@ Event* System_GetNextEvent() {
 }
 
 const uint32_t* System_GetScreenSize() {
-  pthread_mutex_lock(&gViewLock);
-  while (gView == nullptr) {
-    pthread_cond_wait(gViewExists, &gViewLock);
-  }
-  pthread_mutex_unlock(&gViewLock);
+  WaitForView();
+  auto size = [gMetalView bounds].size;
   static uint32_t screenSize[2];
-  screenSize[0] = [gView bounds].size.width;
-  screenSize[1] = [gView bounds].size.height;
+  screenSize[0] = size.width;
+  screenSize[1] = size.height;
   auto customLog = os_log_create("org.toucanlang", "debugging");
 
   os_log(customLog, "gView bounds %dx%d\n", screenSize[0], screenSize[1]);
@@ -310,11 +295,15 @@ int main(int argc, char** argv) {
   pthread_attr_t attr;
   pthread_attr_init(&attr);
   pthread_t toucan_thread;
+  pthread_cond_init(&gViewExists, nullptr);
+  pthread_cond_init(&gEventQueueNonEmpty, nullptr);
   auto toucan_main_wrapper = [](void*) -> void* { toucan_main(); return nullptr; };
   pthread_create(&toucan_thread, &attr, toucan_main_wrapper, nullptr);
   @autoreleasepool {
     return UIApplicationMain(argc, argv, nil, NSStringFromClass(ToucanAppDelegate.class));
   }
+  pthread_cond_destroy(&gViewExists);
+  pthread_cond_destroy(&gEventQueueNonEmpty);
   return 0;
 }
 
@@ -339,10 +328,8 @@ int main(int argc, char** argv) {
   os_log(customLog, "*** willConnectToSession\n");
   self.window = [[UIWindow alloc] initWithWindowScene:(UIWindowScene*) scene];
   self.window.rootViewController = [[ToucanViewController alloc] init];
-  self.window.rootViewController.view.backgroundColor = [UIColor blueColor];
+  self.window.rootViewController.view.backgroundColor = [UIColor purpleColor];
   [self.window makeKeyAndVisible];
-
-//  id<MTLDevice> mtlDevice = MTLCreateSystemDefaultDevice();
 }
 
 @end
@@ -353,21 +340,29 @@ int main(int argc, char** argv) {
   [super viewDidLoad];
 
   CGRect viewFrame = self.view.bounds;
-  id<MTLDevice> device = MTLCreateSystemDefaultDevice();
 
-  auto customLog = os_log_create("org.toucanlang", "debugging");
-  os_log(customLog, "gMetalView %p\n", gMetalView);
-
-  [self.view addSubview:gMetalView];
+  auto customLog = os_log_create("org.toucanlang.sample.window", "debugging");
+  os_log(customLog, "*** viewDidLoad, bounds %g,%g %gx%g\n", viewFrame.origin.x, viewFrame.origin.y, viewFrame.size.width, viewFrame.size.height);
 
   pthread_mutex_lock(&gViewLock);
-  gView = self.view;
+
+  id<MTLDevice> mtlDevice = MTLCreateSystemDefaultDevice();
+
+  gMetalView = [[ToucanMetalView alloc] initWithFrame:self.view.frame];
+
+  CAMetalLayer* layer = (CAMetalLayer*) gMetalView.layer;
+  [layer setDevice:mtlDevice];
+  [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
+  [layer setFramebufferOnly:YES];
+
+  [self.view addSubview:gMetalView];
   pthread_mutex_unlock(&gViewLock);
+  pthread_cond_signal(&gViewExists);
 }
 
 - (void)touchesBegan:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)e {
-  auto event = new Toucan::Event();
-  event->type = Toucan::EventType::TouchStart;
+  auto event = new Event();
+  event->type = EventType::TouchStart;
   event->numTouches = -1;
   int i = 0;
   for (UITouch* touch in touches) {
@@ -379,7 +374,7 @@ int main(int argc, char** argv) {
   pthread_mutex_lock(&gEventQueueLock);
   gEventQueue.push(event);
   pthread_mutex_unlock(&gEventQueueLock);
-  pthread_cond_signal(gEventQueueNonEmpty);
+  pthread_cond_signal(&gEventQueueNonEmpty);
 }
 
 @end
