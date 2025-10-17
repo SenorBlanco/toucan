@@ -349,6 +349,7 @@ int main(int argc, char** argv) {
   id<MTLDevice> mtlDevice = MTLCreateSystemDefaultDevice();
 
   gMetalView = [[ToucanMetalView alloc] initWithFrame:self.view.frame];
+  gMetalView.multipleTouchEnabled = true;
 
   CAMetalLayer* layer = (CAMetalLayer*) gMetalView.layer;
   [layer setDevice:mtlDevice];
@@ -358,23 +359,6 @@ int main(int argc, char** argv) {
   [self.view addSubview:gMetalView];
   pthread_mutex_unlock(&gViewLock);
   pthread_cond_signal(&gViewExists);
-}
-
-- (void)touchesBegan:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)e {
-  auto event = new Event();
-  event->type = EventType::TouchStart;
-  event->numTouches = -1;
-  int i = 0;
-  for (UITouch* touch in touches) {
-    auto position = [touch locationInView:self.view];
-    event->touches[i][0] = position.x;
-    event->touches[i][1] = position.y;
-    i++;
-  }
-  pthread_mutex_lock(&gEventQueueLock);
-  gEventQueue.push(event);
-  pthread_mutex_unlock(&gEventQueueLock);
-  pthread_cond_signal(&gEventQueueNonEmpty);
 }
 
 @end
@@ -398,6 +382,57 @@ int main(int argc, char** argv) {
         // Add other CAMetalLayer configurations as needed
     }
     return self;
+}
+
+- (void)touchesBegan:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)e {
+  auto event = new Event();
+  event->type = EventType::TouchStart;
+  int i = 0;
+  for (UITouch* touch in touches) {
+    auto position = [touch locationInView:self];
+    event->touches[i][0] = position.x;
+    event->touches[i][1] = position.y;
+    i++;
+  }
+  event->numTouches = i;
+  pthread_mutex_lock(&gEventQueueLock);
+  gEventQueue.push(event);
+  pthread_mutex_unlock(&gEventQueueLock);
+  pthread_cond_signal(&gEventQueueNonEmpty);
+}
+
+- (void)touchesMoved:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)e {
+  auto event = new Event();
+  event->type = EventType::TouchMove;
+  int i = 0;
+  for (UITouch* touch in touches) {
+    auto position = [touch locationInView:self];
+    event->touches[i][0] = position.x;
+    event->touches[i][1] = position.y;
+    i++;
+  }
+  event->numTouches = i;
+  pthread_mutex_lock(&gEventQueueLock);
+  gEventQueue.push(event);
+  pthread_mutex_unlock(&gEventQueueLock);
+  pthread_cond_signal(&gEventQueueNonEmpty);
+}
+
+- (void)touchesEnded:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)e {
+  auto event = new Event();
+  event->type = EventType::TouchEnd;
+  int i = 0;
+  for (UITouch* touch in touches) {
+    auto position = [touch locationInView:self];
+    event->touches[i][0] = position.x;
+    event->touches[i][1] = position.y;
+    i++;
+  }
+  event->numTouches = i;
+  pthread_mutex_lock(&gEventQueueLock);
+  gEventQueue.push(event);
+  pthread_mutex_unlock(&gEventQueueLock);
+  pthread_cond_signal(&gEventQueueNonEmpty);
 }
 
 @end
