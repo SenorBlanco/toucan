@@ -29,9 +29,10 @@
 #include <api/init_types.h>
 #include <ast/ast.h>
 
-@interface ToucanMetalView : UIView
+@interface ToucanMetalView : UIView {
+std::list<UITouch*> currentTouches;
+}
 @property (nonatomic, strong, readonly) CAMetalLayer *metalLayer;
-@property (nonatomic, readonly) std::list<UITouch*> currentTouches;
 @end
 
 namespace Toucan {
@@ -298,7 +299,7 @@ int main(int argc, char** argv) {
 
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
-    _metalLayer = (CAMetalLayer *)self.layer;
+    _metalLayer = (CAMetalLayer *) self.layer;
     _metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
     _metalLayer.framebufferOnly = YES;
     self.multipleTouchEnabled = true;
@@ -309,7 +310,7 @@ int main(int argc, char** argv) {
   auto event = new Event();
   event->type = type;
   int i = 0;
-  for (UITouch* touch : self.currentTouches) {
+  for (UITouch* touch : currentTouches) {
     auto position = [touch locationInView:self];
     event->touches[i][0] = position.x;
     event->touches[i][1] = position.y;
@@ -322,21 +323,21 @@ int main(int argc, char** argv) {
   pthread_cond_signal(&gEventQueueNonEmpty);
 }
 
-- (void) touchesBegan:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)e {
+- (void) touchesBegan:(NSSet<UITouch*>*) touches withEvent:(UIEvent*) e {
   for (UITouch* touch in touches) {
-    self.currentTouches.push_back(touch);
+    currentTouches.push_back(touch);
   }
   [self touchEvent:EventType::TouchStart];
 }
 
-- (void) touchesMoved:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)e {
+- (void) touchesMoved:(NSSet<UITouch*>*) touches withEvent:(UIEvent*) e {
   [self touchEvent:EventType::TouchMove];
 }
 
-- (void)touchesEnded:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)e {
+- (void)touchesEnded:(NSSet<UITouch*>*) touches withEvent:(UIEvent*) e {
   [self touchEvent:EventType::TouchEnd];
   for (UITouch* touch in touches) {
-    self.currentTouches.remove(touch);
+    self->currentTouches.remove(touch);
   }
 }
 
