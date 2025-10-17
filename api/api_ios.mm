@@ -159,7 +159,7 @@ Event* System_GetNextEvent() {
   while (gEventQueue.empty()) {
     pthread_cond_wait(&gEventQueueNonEmpty, &gEventQueueLock);
   }
-  Event* event = gEventQueue.back();
+  Event* event = gEventQueue.front();
   gEventQueue.pop();
   pthread_mutex_unlock(&gEventQueueLock);
   return event;
@@ -171,9 +171,6 @@ const uint32_t* System_GetScreenSize() {
   static uint32_t screenSize[2];
   screenSize[0] = size.width;
   screenSize[1] = size.height;
-  auto customLog = os_log_create("org.toucanlang", "debugging");
-
-  os_log(customLog, "gView bounds %dx%d\n", screenSize[0], screenSize[1]);
 
   return screenSize;
 }
@@ -248,8 +245,6 @@ int main(int argc, char** argv) {
 @implementation ToucanAppDelegate
 
 - (UISceneConfiguration *)application:(UIApplication *)application configurationForConnectingSceneSession:(UISceneSession *)connectingSceneSession options:(UISceneConnectionOptions *)options {
-    auto customLog = os_log_create("org.toucanlang", "debugging");
-    os_log(customLog, "*** configurationForConnectingSceneSession\n");
     UISceneConfiguration *configuration = [[UISceneConfiguration alloc] initWithName:nil sessionRole:connectingSceneSession.role];
     configuration.delegateClass = ToucanSceneDelegate.class;
     return configuration;
