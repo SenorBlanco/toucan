@@ -138,6 +138,7 @@ if target_os == "ios":
   entitlements = dict([
     ('application-identifier', team_identifier + ".org.toucanlang.sample." + target_name),
     ('com.apple.developer.team-identifier', team_identifier),
+    ('get-task-allow', True),
   ])
 
   with open(entitlements_filename, "wb") as fp:

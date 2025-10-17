@@ -30,7 +30,7 @@
 #include <ast/ast.h>
 
 @interface ToucanMetalView : UIView {
-std::list<UITouch*> currentTouches;
+std::list<UITouch*> activeTouches;
 }
 @property (nonatomic, strong, readonly) CAMetalLayer *metalLayer;
 @end
@@ -310,11 +310,12 @@ int main(int argc, char** argv) {
   auto event = new Event();
   event->type = type;
   int i = 0;
-  for (UITouch* touch : currentTouches) {
+  for (UITouch* touch : activeTouches) {
     auto position = [touch locationInView:self];
     event->touches[i][0] = position.x;
     event->touches[i][1] = position.y;
     i++;
+    if (i == 10) break;
   }
   event->numTouches = i;
   pthread_mutex_lock(&gEventQueueLock);
@@ -325,7 +326,7 @@ int main(int argc, char** argv) {
 
 - (void) touchesBegan:(NSSet<UITouch*>*) touches withEvent:(UIEvent*) e {
   for (UITouch* touch in touches) {
-    currentTouches.push_back(touch);
+    activeTouches.push_back(touch);
   }
   [self touchEvent:EventType::TouchStart];
 }
@@ -335,10 +336,10 @@ int main(int argc, char** argv) {
 }
 
 - (void)touchesEnded:(NSSet<UITouch*>*) touches withEvent:(UIEvent*) e {
-  [self touchEvent:EventType::TouchEnd];
   for (UITouch* touch in touches) {
-    self->currentTouches.remove(touch);
+    activeTouches.remove(touch);
   }
+  [self touchEvent:EventType::TouchEnd];
 }
 
 @end
