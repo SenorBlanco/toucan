@@ -17,15 +17,12 @@
 #include <os/log.h>
 #include <sys/time.h>
 
-#include <list>
-#include <memory>
 #include <queue>
 
 #include <webgpu/webgpu_cpp.h>
 
 #import <UIKit/UIKit.h>
 #import <Metal/Metal.h>
-#import <MetalKit/MetalKit.h>
 
 #include "api_internal.h"
 #include <api/init_types.h>
@@ -44,10 +41,12 @@
 @property (nonatomic, strong, readonly) CAMetalLayer *metalLayer;
 @end
 
-static int                        gNumWindows = 0;  // FIXME: remove this?
-static ToucanMetalView           *gMetalView;
-
 namespace Toucan {
+
+namespace {
+
+int                gNumWindows = 0;  // FIXME: remove this?
+ToucanMetalView   *gMetalView;
 
 std::queue<Event*> gEventQueue;
 
@@ -57,7 +56,7 @@ pthread_cond_t     gEventQueueNonEmpty;
 pthread_mutex_t    gViewLock;
 pthread_cond_t     gViewExists;
 
-static bool                       gInitialized = false;
+}
 
 struct Window {
   Window(CAMetalLayer* l,
@@ -74,10 +73,6 @@ uint32_t ToToucanEventModifiers(UIKeyModifierFlags modifiers) {
   if (modifiers & UIKeyModifierShift) { result |= static_cast<uint32_t>(EventModifiers::Shift); }
   if (modifiers & UIKeyModifierControl) { result |= static_cast<uint32_t>(EventModifiers::Control); }
   return result;
-}
-
-void Initialize() {
-  UIApplication* app = [UIApplication sharedApplication];
 }
 
 void WaitForView() {
@@ -100,7 +95,7 @@ Window* Window_Window(const uint32_t* size, const int32_t* position) {
   WaitForView();
 
   gNumWindows++;
-  return new Window((CAMetalLayer*) [gMetalView layer], size);
+  return new Window([gMetalView metalLayer], size);
 }
 
 void Window_Destroy(Window* This) { delete This; gNumWindows--; }
@@ -159,15 +154,13 @@ Device* Device_Device() {
 bool System_IsRunning() { return true; }
 
 bool System_HasPendingEvents() {
-  return !gEventQueue.empty();
+  pthread_mutex_lock(&gEventQueueLock);
+  bool result = !gEventQueue.empty();
+  pthread_mutex_unlock(&gEventQueueLock);
+  return result;
 }
 
 Event* System_GetNextEvent() {
-  if (!gInitialized) {
-    Initialize();
-    gInitialized = true;
-  }
-
   pthread_mutex_lock(&gEventQueueLock);
   while (gEventQueue.empty()) {
     pthread_cond_wait(&gEventQueueNonEmpty, &gEventQueueLock);
@@ -176,67 +169,6 @@ Event* System_GetNextEvent() {
   gEventQueue.pop();
   pthread_mutex_unlock(&gEventQueueLock);
   return event;
-#if 0
-  int    height = [[nsEvent.window contentView] frame].size.height;
-  event->position[0] = nsEvent.locationInWindow.x;
-  event->position[1] = height - nsEvent.locationInWindow.y;
-  event->modifiers = ToToucanEventModifiers(nsEvent.modifierFlags);
-  event->button = 0;
-  event->type = EventType::Unknown;
-
-  switch (nsEvent.type) {
-    case UIEventTypeLeftMouseDown:
-      event->type = EventType::MouseDown;
-      event->button = 0;
-      break;
-    case UIEventTypeRightMouseDown:
-      event->type = EventType::MouseDown;
-      event->button = 2;
-      break;
-    case UIEventTypeMouseEntered: break;
-    case UIEventTypeMouseExited: break;
-    case UIEventTypeLeftMouseUp:
-      event->type = EventType::MouseUp;
-      event->button = 0;
-      break;
-    case UIEventTypeRightMouseUp:
-      event->type = EventType::MouseUp;
-      event->button = 2;
-      break;
-    case UIEventTypeOtherMouseDown:
-      event->type = EventType::MouseDown;
-      event->button = 1;
-      break;
-    case UIEventTypeOtherMouseUp:
-      event->type = EventType::MouseUp;
-      event->button = 1;
-      break;
-    case UIEventTypeKeyDown: break;
-    case UIEventTypeKeyUp: break;
-    case UIEventTypeMouseMoved:
-    case UIEventTypeLeftMouseDragged:
-    case UIEventTypeRightMouseDragged:
-      if (nsEvent.window) { event->type = EventType::MouseMove; }
-      break;
-    case UIEventTypeAppKitDefined:
-      switch ([nsEvent subtype]) {
-        case UIEventSubtypeWindowExposed: break;
-        case UIEventSubtypeApplicationActivated: break;
-        case UIEventSubtypeScreenChanged: break;
-        case UIEventSubtypeWindowMoved: break;
-        default: break;
-      }
-      break;
-    case UIEventTypeApplicationDefined: break;
-    case UIEventTypeCursorUpdate: break;
-    case UIEventTypeSystemDefined: break;
-    case UIEventTypeFlagsChanged: break;
-    case UIEventTypePeriodic: break;
-    case UIEventTypeQuickLook: break;
-    default: event->type = EventType::Unknown;
-  }
-  return event;
-  #endif
 }
 
 const uint32_t* System_GetScreenSize() {
@@ -295,6 +227,8 @@ int main(int argc, char** argv) {
   pthread_attr_t attr;
   pthread_attr_init(&attr);
   pthread_t toucan_thread;
+  pthread_mutex_init(&gViewLock, nullptr);
+  pthread_mutex_init(&gEventQueueLock, nullptr);
   pthread_cond_init(&gViewExists, nullptr);
   pthread_cond_init(&gEventQueueNonEmpty, nullptr);
   auto toucan_main_wrapper = [](void*) -> void* { toucan_main(); return nullptr; };
@@ -324,8 +258,6 @@ int main(int argc, char** argv) {
 @synthesize window = _window;
 
 - (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)connectionOptions {
-  auto customLog = os_log_create("org.toucanlang.sample.window", "debugging");
-  os_log(customLog, "*** willConnectToSession\n");
   self.window = [[UIWindow alloc] initWithWindowScene:(UIWindowScene*) scene];
   self.window.rootViewController = [[ToucanViewController alloc] init];
   self.window.rootViewController.view.backgroundColor = [UIColor purpleColor];
@@ -339,18 +271,11 @@ int main(int argc, char** argv) {
 - (void)viewDidLoad {
   [super viewDidLoad];
 
-  CGRect viewFrame = self.view.bounds;
-
-  auto customLog = os_log_create("org.toucanlang.sample.window", "debugging");
-  os_log(customLog, "*** viewDidLoad, bounds %g,%g %gx%g\n", viewFrame.origin.x, viewFrame.origin.y, viewFrame.size.width, viewFrame.size.height);
-
   pthread_mutex_lock(&gViewLock);
-
-  id<MTLDevice> mtlDevice = MTLCreateSystemDefaultDevice();
-
   gMetalView = [[ToucanMetalView alloc] initWithFrame:self.view.frame];
   gMetalView.multipleTouchEnabled = true;
 
+  id<MTLDevice> mtlDevice = MTLCreateSystemDefaultDevice();
   CAMetalLayer* layer = (CAMetalLayer*) gMetalView.layer;
   [layer setDevice:mtlDevice];
   [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
@@ -369,24 +294,19 @@ int main(int argc, char** argv) {
     return [CAMetalLayer class];
 }
 
-// Initialize the view and configure the metal layer
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        // Access the CAMetalLayer
         _metalLayer = (CAMetalLayer *)self.layer;
-
-        // Configure the metal layer (optional, but common)
-        _metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm; // Example pixel format
-        _metalLayer.framebufferOnly = YES; // Recommended for performance
-        // Add other CAMetalLayer configurations as needed
+        _metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+        _metalLayer.framebufferOnly = YES;
     }
     return self;
 }
 
-- (void)touchesBegan:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)e {
+- (void) touchEvent:(NSSet<UITouch*>*) touches withType:(EventType) type {
   auto event = new Event();
-  event->type = EventType::TouchStart;
+  event->type = type;
   int i = 0;
   for (UITouch* touch in touches) {
     auto position = [touch locationInView:self];
@@ -401,38 +321,16 @@ int main(int argc, char** argv) {
   pthread_cond_signal(&gEventQueueNonEmpty);
 }
 
-- (void)touchesMoved:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)e {
-  auto event = new Event();
-  event->type = EventType::TouchMove;
-  int i = 0;
-  for (UITouch* touch in touches) {
-    auto position = [touch locationInView:self];
-    event->touches[i][0] = position.x;
-    event->touches[i][1] = position.y;
-    i++;
-  }
-  event->numTouches = i;
-  pthread_mutex_lock(&gEventQueueLock);
-  gEventQueue.push(event);
-  pthread_mutex_unlock(&gEventQueueLock);
-  pthread_cond_signal(&gEventQueueNonEmpty);
+- (void) touchesBegan:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)e {
+  [self touchEvent:touches withType:EventType::TouchStart];
+}
+
+- (void) touchesMoved:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)e {
+  [self touchEvent:touches withType:EventType::TouchMove];
 }
 
 - (void)touchesEnded:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)e {
-  auto event = new Event();
-  event->type = EventType::TouchEnd;
-  int i = 0;
-  for (UITouch* touch in touches) {
-    auto position = [touch locationInView:self];
-    event->touches[i][0] = position.x;
-    event->touches[i][1] = position.y;
-    i++;
-  }
-  event->numTouches = i;
-  pthread_mutex_lock(&gEventQueueLock);
-  gEventQueue.push(event);
-  pthread_mutex_unlock(&gEventQueueLock);
-  pthread_cond_signal(&gEventQueueNonEmpty);
+  [self touchEvent:touches withType:EventType::TouchEnd];
 }
 
 @end

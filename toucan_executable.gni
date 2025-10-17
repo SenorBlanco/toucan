@@ -97,7 +97,6 @@ template("toucan_executable") {
       frameworks += [
         "Foundation.framework",
         "UIKit.framework",
-        "MetalKit.framework",
       ]
     }
     if (is_win) {
