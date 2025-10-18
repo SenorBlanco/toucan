@@ -53,11 +53,7 @@ pthread_cond_t     gViewExists;
 }
 
 struct Window {
-  Window(CAMetalLayer* l,
-         const uint32_t      sz[2])
-      : layer(l) { size[0] = sz[0]; size[1] = sz[1]; }
-  CAMetalLayer* layer;
-  uint32_t      size[2];
+  CAMetalLayer* layer = nullptr;
 };
 
 namespace {
@@ -80,7 +76,11 @@ void WaitForView() {
 }  // namespace
 
 const uint32_t* Window_GetSize(Window* This) {
-  return This->size;
+  auto size = [gMetalView bounds].size;
+  static uint32_t screenSize[2];
+  screenSize[0] = size.width;
+  screenSize[1] = size.height;
+  return screenSize;
 }
 
 Window* Window_Window(const uint32_t* size, const int32_t* position) {
@@ -89,7 +89,7 @@ Window* Window_Window(const uint32_t* size, const int32_t* position) {
   WaitForView();
 
   gNumWindows++;
-  return new Window([gMetalView metalLayer], size);
+  return new Window{[gMetalView metalLayer]};
 }
 
 void Window_Destroy(Window* This) { delete This; gNumWindows--; }
@@ -103,8 +103,9 @@ SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Win
   config.device = device->device;
   config.format = ToDawnTextureFormat(format);
 
-  config.width = window->size[0];
-  config.height = window->size[1];
+  auto size = [gMetalView bounds].size;
+  config.width = size.width;
+  config.height = size.height;
   config.presentMode = wgpu::PresentMode::Fifo;
 
   wgpu::SurfaceDescriptorFromMetalLayer metalLayerDesc;
@@ -134,9 +135,7 @@ Device* Device_Device() {
   wgpu::DeviceDescriptor desc;
   desc.SetUncapturedErrorCallback(
     [](const wgpu::Device&, wgpu::ErrorType type, wgpu::StringView message) {
-      auto customLog = os_log_create("org.toucanlang", "WebGPUError");
-
-      os_log(customLog, "WebGPU Error:\n%{public}s\n", message.data);
+      os_log(OS_LOG_DEFAULT, "WebGPU Error:\n%{public}s\n", message.data);
     }
   );
 
@@ -187,9 +186,7 @@ void System_Print(Array* buffer) {
                                            length:buffer->length
                                          encoding:NSUTF8StringEncoding];
 
-  auto customLog = os_log_create("org.toucanlang", "Print");
-
-  os_log(customLog, "%{public}@", str);
+  os_log(OS_LOG_DEFAULT, "%{public}@", str);
 }
 
 void System_PrintLine(Array* buffer) {
@@ -197,9 +194,7 @@ void System_PrintLine(Array* buffer) {
                                            length:buffer->length
                                          encoding:NSUTF8StringEncoding];
 
-  auto customLog = os_log_create("org.toucanlang", "PrintLine");
-
-  os_log(customLog, "%{public}@\n", str);
+  os_log(OS_LOG_DEFAULT, "%{public}@\n", str);
 }
 
 };  // namespace Toucan
@@ -298,7 +293,19 @@ int main(int argc, char** argv) {
     _metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
     _metalLayer.framebufferOnly = YES;
     self.multipleTouchEnabled = true;
+    self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     return self;
+}
+
+- (void) layoutSubviews {
+  [super layoutSubviews];
+
+  auto event = new Event();
+  event->type = EventType::Unknown;
+  pthread_mutex_lock(&gEventQueueLock);
+  gEventQueue.push(event);
+  pthread_mutex_unlock(&gEventQueueLock);
+  pthread_cond_signal(&gEventQueueNonEmpty);
 }
 
 - (void) touchEvent:(EventType) type {
