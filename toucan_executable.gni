@@ -200,6 +200,9 @@ template("toucan_apple_app") {
         "--codesign-identity", codesign_identity,
         "--team-identifier", team_identifier,
       ]
+      if (is_debug) {
+        args += [ "--enable-debugging" ]
+      }
     }
     outputs = [ outfile ]
   }

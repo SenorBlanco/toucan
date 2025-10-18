@@ -30,6 +30,7 @@ argparser.add_argument('--team-identifier')
 argparser.add_argument('--codesign-identity')
 argparser.add_argument('--app-icon')
 argparser.add_argument('--minimum-deployment-target')
+argparser.add_argument('--enable-debugging', action='store_true')
 args = vars(argparser.parse_args())
 
 target_name = args['target_name']
@@ -138,8 +139,9 @@ if target_os == "ios":
   entitlements = dict([
     ('application-identifier', team_identifier + ".org.toucanlang.sample." + target_name),
     ('com.apple.developer.team-identifier', team_identifier),
-    ('get-task-allow', True),
   ])
+  if args['enable_debugging']:
+    entitlements['get-task-allow'] = True
 
   with open(entitlements_filename, "wb") as fp:
     plistlib.dump(entitlements, fp)
