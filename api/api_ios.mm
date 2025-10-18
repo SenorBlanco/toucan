@@ -39,7 +39,6 @@ namespace Toucan {
 
 namespace {
 
-int                gNumWindows = 0;  // FIXME: remove this?
 ToucanMetalView   *gPrimaryView;
 
 std::queue<Event*> gEventQueue;
@@ -49,14 +48,6 @@ pthread_cond_t     gEventQueueNonEmpty;
 
 pthread_mutex_t    gViewLock;
 pthread_cond_t     gViewExists;
-
-}
-
-struct Window {
-  ToucanMetalView*  view = nullptr;
-};
-
-namespace {
 
 uint32_t ToToucanEventModifiers(UIKeyModifierFlags modifiers) {
   uint32_t result = 0;
@@ -75,6 +66,10 @@ void WaitForPrimaryView() {
 
 }  // namespace
 
+struct Window {
+  ToucanMetalView*  view = nullptr;
+};
+
 const uint32_t* Window_GetSize(Window* This) {
   auto size = [This->view bounds].size;
   static uint32_t screenSize[2];
@@ -84,15 +79,12 @@ const uint32_t* Window_GetSize(Window* This) {
 }
 
 Window* Window_Window(const uint32_t* size, const int32_t* position) {
-  assert(gNumWindows == 0);
-
   WaitForPrimaryView();
 
-  gNumWindows++;
   return new Window{gPrimaryView};
 }
 
-void Window_Destroy(Window* This) { delete This; gNumWindows--; }
+void Window_Destroy(Window* This) { delete This; }
 
 wgpu::TextureFormat GetPreferredPixelFormat() {
   return wgpu::TextureFormat::BGRA8Unorm;
