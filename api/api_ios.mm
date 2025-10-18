@@ -40,7 +40,7 @@ namespace Toucan {
 namespace {
 
 int                gNumWindows = 0;  // FIXME: remove this?
-ToucanMetalView   *gMetalView;
+ToucanMetalView   *gPrimaryView;
 
 std::queue<Event*> gEventQueue;
 
@@ -53,7 +53,7 @@ pthread_cond_t     gViewExists;
 }
 
 struct Window {
-  CAMetalLayer* layer = nullptr;
+  ToucanMetalView*  view = nullptr;
 };
 
 namespace {
@@ -65,9 +65,9 @@ uint32_t ToToucanEventModifiers(UIKeyModifierFlags modifiers) {
   return result;
 }
 
-void WaitForView() {
+void WaitForPrimaryView() {
   pthread_mutex_lock(&gViewLock);
-  while (!gMetalView) {
+  while (!gPrimaryView) {
     pthread_cond_wait(&gViewExists, &gViewLock);
   }
   pthread_mutex_unlock(&gViewLock);
@@ -76,7 +76,7 @@ void WaitForView() {
 }  // namespace
 
 const uint32_t* Window_GetSize(Window* This) {
-  auto size = [gMetalView bounds].size;
+  auto size = [This->view bounds].size;
   static uint32_t screenSize[2];
   screenSize[0] = size.width;
   screenSize[1] = size.height;
@@ -86,10 +86,10 @@ const uint32_t* Window_GetSize(Window* This) {
 Window* Window_Window(const uint32_t* size, const int32_t* position) {
   assert(gNumWindows == 0);
 
-  WaitForView();
+  WaitForPrimaryView();
 
   gNumWindows++;
-  return new Window{[gMetalView metalLayer]};
+  return new Window{gPrimaryView};
 }
 
 void Window_Destroy(Window* This) { delete This; gNumWindows--; }
@@ -103,13 +103,13 @@ SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Win
   config.device = device->device;
   config.format = ToDawnTextureFormat(format);
 
-  auto size = [gMetalView bounds].size;
+  auto size = [window->view bounds].size;
   config.width = size.width;
   config.height = size.height;
   config.presentMode = wgpu::PresentMode::Fifo;
 
   wgpu::SurfaceDescriptorFromMetalLayer metalLayerDesc;
-  metalLayerDesc.layer = window->layer;
+  metalLayerDesc.layer = [window->view metalLayer];
   wgpu::SurfaceDescriptor desc;
   desc.nextInChain = &metalLayerDesc;
   static wgpu::Instance instance = wgpu::CreateInstance({});
@@ -165,8 +165,8 @@ Event* System_GetNextEvent() {
 }
 
 const uint32_t* System_GetScreenSize() {
-  WaitForView();
-  auto size = [gMetalView bounds].size;
+  WaitForPrimaryView();
+  auto size = [gPrimaryView bounds].size;
   static uint32_t screenSize[2];
   screenSize[0] = size.width;
   screenSize[1] = size.height;
@@ -266,15 +266,14 @@ int main(int argc, char** argv) {
   [super viewDidLoad];
 
   pthread_mutex_lock(&gViewLock);
-  gMetalView = [[ToucanMetalView alloc] initWithFrame:self.view.frame];
+  gPrimaryView = [[ToucanMetalView alloc] initWithFrame:self.view.frame];
 
-  id<MTLDevice> mtlDevice = MTLCreateSystemDefaultDevice();
-  CAMetalLayer* layer = (CAMetalLayer*) gMetalView.layer;
-  [layer setDevice:mtlDevice];
+  CAMetalLayer* layer = (CAMetalLayer*) gPrimaryView.layer;
+  [layer setDevice:MTLCreateSystemDefaultDevice()];
   [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
   [layer setFramebufferOnly:YES];
 
-  [self.view addSubview:gMetalView];
+  [self.view addSubview:gPrimaryView];
   pthread_mutex_unlock(&gViewLock);
   pthread_cond_signal(&gViewExists);
 }
