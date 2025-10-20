@@ -18,6 +18,7 @@
 #include <sys/time.h>
 
 #include <list>
+#include <mutex>
 #include <queue>
 
 #include <webgpu/webgpu_cpp.h>
@@ -35,33 +36,68 @@ std::list<UITouch*> activeTouches;
 @property (nonatomic, strong, readonly) CAMetalLayer *metalLayer;
 @end
 
+using namespace Toucan;
+
+class IOSApp {
+ public:
+  void SetPrimaryView(ToucanMetalView* view) {
+    std::lock_guard<std::mutex> lock(primaryViewMutex_);
+    primaryView_ = view;
+    primaryViewExists_.notify_one();
+  }
+
+  void PushEvent(Event* event) {
+    std::lock_guard<std::mutex> lock(eventQueueMutex_);
+    eventQueue_.push(event);
+    eventQueueNonEmpty_.notify_one();
+  }
+
+  ToucanMetalView* WaitForPrimaryView() {
+    std::unique_lock<std::mutex> lock(primaryViewMutex_);
+    while (!primaryView_) {
+      primaryViewExists_.wait(lock);
+    }
+    return primaryView_;
+  }
+
+  bool HasPendingEvents() {
+    std::lock_guard<std::mutex> lock(eventQueueMutex_);
+    return !eventQueue_.empty();
+  }
+
+  Event* GetNextEvent() {
+    std::unique_lock<std::mutex> lock(eventQueueMutex_);
+    while (eventQueue_.empty()) {
+      eventQueueNonEmpty_.wait(lock);
+    }
+    Event* event = eventQueue_.front();
+    eventQueue_.pop();
+    return event;
+  }
+
+private:
+  ToucanMetalView        *primaryView_ = nullptr;
+
+  std::queue<Event*>      eventQueue_;
+
+  std::mutex              eventQueueMutex_;
+  std::condition_variable eventQueueNonEmpty_;
+
+  std::mutex              primaryViewMutex_;
+  std::condition_variable primaryViewExists_;
+};
+
 namespace Toucan {
 
 namespace {
 
-ToucanMetalView   *gPrimaryView;
-
-std::queue<Event*> gEventQueue;
-
-pthread_mutex_t    gEventQueueLock;
-pthread_cond_t     gEventQueueNonEmpty;
-
-pthread_mutex_t    gViewLock;
-pthread_cond_t     gViewExists;
+IOSApp* gApp;
 
 uint32_t ToToucanEventModifiers(UIKeyModifierFlags modifiers) {
   uint32_t result = 0;
   if (modifiers & UIKeyModifierShift) { result |= static_cast<uint32_t>(EventModifiers::Shift); }
   if (modifiers & UIKeyModifierControl) { result |= static_cast<uint32_t>(EventModifiers::Control); }
   return result;
-}
-
-void WaitForPrimaryView() {
-  pthread_mutex_lock(&gViewLock);
-  while (!gPrimaryView) {
-    pthread_cond_wait(&gViewExists, &gViewLock);
-  }
-  pthread_mutex_unlock(&gViewLock);
 }
 
 }  // namespace
@@ -79,9 +115,7 @@ const uint32_t* Window_GetSize(Window* This) {
 }
 
 Window* Window_Window(const uint32_t* size, const int32_t* position) {
-  WaitForPrimaryView();
-
-  return new Window{gPrimaryView};
+  return new Window{gApp->WaitForPrimaryView()};
 }
 
 void Window_Destroy(Window* This) { delete This; }
@@ -139,26 +173,16 @@ Device* Device_Device() {
 bool System_IsRunning() { return true; }
 
 bool System_HasPendingEvents() {
-  pthread_mutex_lock(&gEventQueueLock);
-  bool result = !gEventQueue.empty();
-  pthread_mutex_unlock(&gEventQueueLock);
-  return result;
+  return gApp->HasPendingEvents();
 }
 
 Event* System_GetNextEvent() {
-  pthread_mutex_lock(&gEventQueueLock);
-  while (gEventQueue.empty()) {
-    pthread_cond_wait(&gEventQueueNonEmpty, &gEventQueueLock);
-  }
-  Event* event = gEventQueue.front();
-  gEventQueue.pop();
-  pthread_mutex_unlock(&gEventQueueLock);
-  return event;
+  return gApp->GetNextEvent();
 }
 
 const uint32_t* System_GetScreenSize() {
-  WaitForPrimaryView();
-  auto size = [gPrimaryView bounds].size;
+  auto primaryView = gApp->WaitForPrimaryView();
+  auto size = [primaryView bounds].size;
   static uint32_t screenSize[2];
   screenSize[0] = size.width;
   screenSize[1] = size.height;
@@ -214,18 +238,14 @@ int main(int argc, char** argv) {
   pthread_attr_t attr;
   pthread_attr_init(&attr);
   pthread_t toucan_thread;
-  pthread_mutex_init(&gViewLock, nullptr);
-  pthread_mutex_init(&gEventQueueLock, nullptr);
-  pthread_cond_init(&gViewExists, nullptr);
-  pthread_cond_init(&gEventQueueNonEmpty, nullptr);
+  IOSApp app;
+  gApp = &app;
   auto toucan_main_wrapper = [](void*) -> void* { toucan_main(); return nullptr; };
   pthread_create(&toucan_thread, nullptr, toucan_main_wrapper, nullptr);
   @autoreleasepool {
     return UIApplicationMain(argc, argv, nil, NSStringFromClass(ToucanAppDelegate.class));
   }
   pthread_join(toucan_thread, nullptr);
-  pthread_cond_destroy(&gViewExists);
-  pthread_cond_destroy(&gEventQueueNonEmpty);
   return 0;
 }
 
@@ -257,17 +277,15 @@ int main(int argc, char** argv) {
 - (void)viewDidLoad {
   [super viewDidLoad];
 
-  pthread_mutex_lock(&gViewLock);
-  gPrimaryView = [[ToucanMetalView alloc] initWithFrame:self.view.frame];
+  auto primaryView = [[ToucanMetalView alloc] initWithFrame:self.view.frame];
 
-  CAMetalLayer* layer = (CAMetalLayer*) gPrimaryView.layer;
+  CAMetalLayer* layer = (CAMetalLayer*) primaryView.layer;
   [layer setDevice:MTLCreateSystemDefaultDevice()];
   [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
   [layer setFramebufferOnly:YES];
 
-  [self.view addSubview:gPrimaryView];
-  pthread_mutex_unlock(&gViewLock);
-  pthread_cond_signal(&gViewExists);
+  [self.view addSubview:primaryView];
+  gApp->SetPrimaryView(primaryView);
 }
 
 @end
@@ -291,12 +309,7 @@ int main(int argc, char** argv) {
 - (void) layoutSubviews {
   [super layoutSubviews];
 
-  auto event = new Event();
-  event->type = EventType::Unknown;
-  pthread_mutex_lock(&gEventQueueLock);
-  gEventQueue.push(event);
-  pthread_mutex_unlock(&gEventQueueLock);
-  pthread_cond_signal(&gEventQueueNonEmpty);
+  gApp->PushEvent(new Event{.type = EventType::Unknown});
 }
 
 - (void) touchEvent:(EventType) type {
@@ -311,10 +324,7 @@ int main(int argc, char** argv) {
     if (i == 10) break;
   }
   event->numTouches = i;
-  pthread_mutex_lock(&gEventQueueLock);
-  gEventQueue.push(event);
-  pthread_mutex_unlock(&gEventQueueLock);
-  pthread_cond_signal(&gEventQueueNonEmpty);
+  gApp->PushEvent(event);
 }
 
 - (void) touchesBegan:(NSSet<UITouch*>*) touches withEvent:(UIEvent*) e {
