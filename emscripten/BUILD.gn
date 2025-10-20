@@ -12,20 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-copy("toucan-logo") {
-  sources = [
-    "toucan-logo.svg",
-  ]
-  outputs = [
-    "$root_out_dir/images/toucan-logo.svg",
-  ]
-}
-
-copy("toucan-logo-and-name") {
+# Copy handwritten `.proto` file to build directory
+copy("images") {
   sources = [
     "toucan-logo-and-name.svg",
   ]
-  outputs = [
-    "$root_out_dir/images/toucan-logo-and-name.svg"
-  ]
+  outputs = [ "$root_out_dir/images/toucan-logo-and-name.svg" ]
 }
