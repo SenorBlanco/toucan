@@ -1394,9 +1394,7 @@ wgpu::Device CreateDawnDevice(wgpu::BackendType type, const wgpu::DeviceDescript
 
   wgpu::Adapter adapter;
   wgpu::RequestAdapterOptions adapterOptions;
-#if !TARGET_IS_WASM
   adapterOptions.backendType = type;
-#endif
   auto adapterFuture = gInstance.RequestAdapter(&adapterOptions, wgpu::CallbackMode::WaitAnyOnly,
       [&adapter](wgpu::RequestAdapterStatus status, wgpu::Adapter a, const char *msg) {
     adapter = a;
