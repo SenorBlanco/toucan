@@ -45,7 +45,8 @@ template("toucan_executable") {
   make_action = "make_" + target_name
   toucan_objects(target_name) {
     sources = invoker.sources
-  } executable("${target_name}") {
+  }
+  executable("${target_name}") {
     deps = [
       ":${make_action}",
       "../api:api",
