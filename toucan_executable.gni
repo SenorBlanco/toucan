@@ -83,21 +83,19 @@ template("toucan_executable") {
       ]
     }
 
-    if (is_apple) {
+    if (is_mac) {
       frameworks = [
+        "AppKit.framework",
         "Metal.framework",
         "QuartzCore.framework",
       ]
     }
-    if (is_mac) {
-      frameworks += [
-        "AppKit.framework",
-      ]
-    }
     if (is_ios) {
-      frameworks += [
-        "Foundation.framework",
+      frameworks = [
         "UIKit.framework",
+        "Metal.framework",
+        "QuartzCore.framework",
+        "Foundation.framework",
       ]
     }
     if (is_win) {
