@@ -1199,6 +1199,25 @@ Result CodeGenLLVM::Visit(ArrayAccess* node) {
   }
 }
 
+Result CodeGenLLVM::Visit(SliceExpr* node) {
+  auto expr = GenerateLLVM(node->GetExpr());
+  auto lowerBound = GenerateLLVM(node->GetLowerBound());
+  auto upperBound = GenerateLLVM(node->GetUpperBound());
+
+  auto type = node->GetExpr()->GetType(types_);
+  assert(type->IsRawPtr());
+  type = static_cast<RawPtrType*>(type)->GetBaseType();
+  assert(type->IsUnsizedArray());
+
+  auto ptr = builder_->CreateExtractValue(expr, {0});
+  auto size = builder_->CreateExtractValue(expr, {1});
+
+  // FIXME: add bounds checking
+  auto newPtr = builder_->CreateGEP(ConvertType(type), ptr, { Int(0), lowerBound });
+  auto newSize = builder_->CreateSub(upperBound, lowerBound, "sub");
+  return CreatePointer(newPtr, newSize);
+}
+
 Result CodeGenLLVM::Visit(SmartToRawPtr* node) {
   llvm::Value* expr = GenerateLLVM(node->GetExpr());
   auto type = node->GetExpr()->GetType(types_);
