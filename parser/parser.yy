@@ -518,7 +518,8 @@ assignable:
     T_IDENTIFIER                            { $$ = Identifier($1); }
   | T_THIS                                  { $$ = Make<UnresolvedIdentifier>("this"); }
   | assignable '[' expr ']'                 { $$ = MakeArrayAccess($1, $3); }
-  | assignable '[' expr T_DOTDOT expr ']'   { $$ = Make<SliceExpr>($1, $3, $5); }
+  | assignable '[' opt_expr T_DOTDOT opt_expr ']'
+                                            { $$ = Make<SliceExpr>($1, $3, $5); }
   | assignable '.' T_IDENTIFIER             { $$ = Make<UnresolvedDot>($1, $3); }
   | simple_type '.' T_IDENTIFIER            { $$ = Make<UnresolvedStaticDot>($1, $3); }
   | assignable '.' T_IDENTIFIER '(' arguments ')'

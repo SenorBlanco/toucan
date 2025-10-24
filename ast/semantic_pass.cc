@@ -125,15 +125,15 @@ Result SemanticPass::Visit(ArrayAccess* node) {
 Result SemanticPass::Visit(SliceExpr* node) {
   auto expr = Resolve(node->GetExpr());
   if (!expr) return nullptr;
-  auto lowerBound = Resolve(node->GetLowerBound());
-  auto upperBound = Resolve(node->GetUpperBound());
+  auto start = Resolve(node->GetStart());
+  auto end = Resolve(node->GetEnd());
 
   expr = MakeIndexable(expr);
   if (!expr) {
     return Error("expression is not of indexable type");
   }
 
-  return Make<SliceExpr>(expr, lowerBound, upperBound);
+  return Make<SliceExpr>(expr, start, end);
 }
 
 Result SemanticPass::Visit(CastExpr* node) {

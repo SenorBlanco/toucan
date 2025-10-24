@@ -1201,8 +1201,6 @@ Result CodeGenLLVM::Visit(ArrayAccess* node) {
 
 Result CodeGenLLVM::Visit(SliceExpr* node) {
   auto expr = GenerateLLVM(node->GetExpr());
-  auto lowerBound = GenerateLLVM(node->GetLowerBound());
-  auto upperBound = GenerateLLVM(node->GetUpperBound());
 
   auto type = node->GetExpr()->GetType(types_);
   assert(type->IsRawPtr());
@@ -1212,9 +1210,12 @@ Result CodeGenLLVM::Visit(SliceExpr* node) {
   auto ptr = builder_->CreateExtractValue(expr, {0});
   auto size = builder_->CreateExtractValue(expr, {1});
 
+  auto start = node->GetStart() ? GenerateLLVM(node->GetStart()) : Int(0);
+  auto end = node->GetEnd() ? GenerateLLVM(node->GetEnd()) : size;
+
   // FIXME: add bounds checking
-  auto newPtr = builder_->CreateGEP(ConvertType(type), ptr, { Int(0), lowerBound });
-  auto newSize = builder_->CreateSub(upperBound, lowerBound, "sub");
+  auto newPtr = builder_->CreateGEP(ConvertType(type), ptr, { Int(0), start });
+  auto newSize = builder_->CreateSub(end, start, "sub");
   return CreatePointer(newPtr, newSize);
 }
 

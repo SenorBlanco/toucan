@@ -623,17 +623,17 @@ class IncDecExpr : public Expr {
 
 class SliceExpr : public Expr {
  public:
-  SliceExpr(Expr* expr, Expr* lowerBound, Expr* upperBound);
+  SliceExpr(Expr* expr, Expr* start, Expr* end);
   Type*  GetType(TypeTable* types) override;
   Result Accept(Visitor* visitor) override;
   Expr*  GetExpr() { return expr_; }
-  Expr*  GetLowerBound() { return lowerBound_; }
-  Expr*  GetUpperBound() { return upperBound_; }
+  Expr*  GetStart() { return start_; }
+  Expr*  GetEnd() { return end_; }
 
  private:
   Expr* expr_;
-  Expr* lowerBound_;
-  Expr* upperBound_;
+  Expr* start_;
+  Expr* end_;
 };
 
 class ZeroInitStmt : public Stmt {

@@ -186,7 +186,7 @@ DestroyStmt::DestroyStmt(Expr* expr) : expr_(expr) {}
 IncDecExpr::IncDecExpr(Op op, Expr* expr, bool returnOrigValue)
     : op_(op), expr_(expr), returnOrigValue_(returnOrigValue) {}
 
-SliceExpr::SliceExpr(Expr* expr, Expr* lowerBound, Expr* upperBound) : expr_(expr), lowerBound_(lowerBound), upperBound_(upperBound) {}
+SliceExpr::SliceExpr(Expr* expr, Expr* start, Expr* end) : expr_(expr), start_(start), end_(end) {}
 
 Type* SliceExpr::GetType(TypeTable* types) {
   return expr_->GetType(types);
