@@ -1217,7 +1217,9 @@ Result CodeGenLLVM::Visit(SliceExpr* node) {
   auto start = node->GetStart() ? GenerateLLVM(node->GetStart()) : Int(0);
   auto end = node->GetEnd() ? GenerateLLVM(node->GetEnd()) : size;
 
-  // FIXME: add bounds checking
+  CreateBoundsCheck(start, BinOpNode::Op::GE, size);
+  CreateBoundsCheck(end, BinOpNode::Op::GT, size);
+
   auto newPtr = builder_->CreateGEP(ConvertType(type), ptr, { Int(0), start });
   auto newSize = builder_->CreateSub(end, start, "sub");
   return CreatePointer(newPtr, newSize);
