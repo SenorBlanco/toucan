@@ -97,6 +97,7 @@ class CodeGenLLVM : public Visitor {
   llvm::Value*          CreatePointer(llvm::Value* obj, llvm::Value* controlBlockOrLength);
   llvm::Value*          CreateControlBlock(Type* type);
   llvm::Value*          CreateMalloc(llvm::Type* type, llvm::Value* arraySize);
+  void                  CreateBoundsCheck(llvm::Value* lhs, BinOpNode::Op op, llvm::Value* rhs);
   llvm::Value*          GenerateLLVM(Expr* expr);
   llvm::Value*          GenerateDotProduct(llvm::Value* lhs, llvm::Value* rhs);
   llvm::Value*          GenerateCrossProduct(llvm::Value* lhs, llvm::Value* rhs);

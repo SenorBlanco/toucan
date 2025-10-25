@@ -1173,6 +1173,17 @@ void CodeGenLLVM::CallSystemAbort() {
   builder_->CreateCall(systemAbort, {});
 }
 
+void CodeGenLLVM::CreateBoundsCheck(llvm::Value* lhs, BinOpNode::Op op, llvm::Value* rhs) {
+  llvm::Value*      condition = GenerateBinOpUInt(builder_, op, lhs, rhs);
+  llvm::BasicBlock* outOfBounds = CreateBasicBlock("outOfBounds");
+  llvm::BasicBlock* okBlock = CreateBasicBlock("ok");
+  builder_->CreateCondBr(condition, outOfBounds, okBlock);
+  builder_->SetInsertPoint(outOfBounds);
+  CallSystemAbort();
+  builder_->CreateBr(okBlock);
+  builder_->SetInsertPoint(okBlock);
+}
+
 Result CodeGenLLVM::Visit(ArrayAccess* node) {
   llvm::Value* expr = GenerateLLVM(node->GetExpr());
   llvm::Value* index = GenerateLLVM(node->GetIndex());
@@ -1184,14 +1195,7 @@ Result CodeGenLLVM::Visit(ArrayAccess* node) {
   llvm::Type* llvmType = ConvertType(type);
   auto value = builder_->CreateExtractValue(expr, {0});
   auto length = builder_->CreateExtractValue(expr, {1});
-  llvm::Value*      condition = GenerateBinOpUInt(builder_, BinOpNode::Op::GE, index, length);
-  llvm::BasicBlock* outOfBounds = CreateBasicBlock("outOfBounds");
-  llvm::BasicBlock* okBlock = CreateBasicBlock("ok");
-  builder_->CreateCondBr(condition, outOfBounds, okBlock);
-  builder_->SetInsertPoint(outOfBounds);
-  CallSystemAbort();
-  builder_->CreateBr(okBlock);
-  builder_->SetInsertPoint(okBlock);
+  CreateBoundsCheck(index, BinOpNode::Op::GE, length);
   if (arrayType->GetElementPadding() > 0) {
     return builder_->CreateGEP(llvmType, value, {Int(0), index, Int(0)});
   } else {
