@@ -204,8 +204,9 @@ error-return-raw-ptr.t:13:  cannot allocate a type containing a raw pointer
 error-return-raw-ptr.t:13:  cannot allocate a type containing a raw pointer
 error-return-raw-ptr.t:14:  cannot return a raw pointer
 test/error-shader-validation.t
-error-shader-validation.t:2:  "new" operator is prohibited in shader methods
-error-shader-validation.t:2:  "new" operator is prohibited in shader methods
+error-shader-validation.t:3:  "new" operator is prohibited in shader methods
+error-shader-validation.t:3:  "new" operator is prohibited in shader methods
+error-shader-validation.t:5:  slice operator is prohibited in shader methods
 test/error-stack-allocate-raw-ptr-aggregate.t
 error-stack-allocate-raw-ptr-aggregate.t:11:  cannot allocate a type containing a raw pointer
 error-stack-allocate-raw-ptr-aggregate.t:12:  cannot allocate a type containing a raw pointer
