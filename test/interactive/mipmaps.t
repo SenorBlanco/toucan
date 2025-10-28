@@ -1,22 +1,15 @@
-include "../include/string.t"
-
 class Vertex {
   var position : float<2>;
   var texCoord : float<2>;
 }
 
 class Transform3 {
-  static identity() : float<3,3> {
-    return float<3,3>{float<3>{1.0, 0.0, 0.0},
-                      float<3>{0.0, 1.0, 0.0},
-                      float<3>{0.0, 0.0, 1.0}};
-  }
-  static scale(v : float<2>) : float<3,3> {
+  static Scale(v : float<2>) : float<3,3> {
     return float<3,3>{float<3>{v.x, 0.0, 0.0},
                       float<3>{0.0, v.y, 0.0},
                       float<3>{0.0, 0.0, 1.0}};
   }
-  static translation(v : float<2>) : float<3,3> {
+  static Translation(v : float<2>) : float<3,3> {
     return float<3,3>{float<3>{1.0, 0.0, 0.0},
                       float<3>{0.0, 1.0, 0.0},
                       float<3>{v.x, v.y, 1.0}};
@@ -25,16 +18,11 @@ class Transform3 {
 
 class Uniforms {
   var matrix : float<3,3>;
-  SetRect(position : float<2>, size : float<2>) {
-    matrix[0] = {size.x, 0.0,    0.0};
-    matrix[1] = {0.0,    size.y, 0.0};
-    matrix[2] = {@position - float<2>{1.0},      1.0};
-  }
 }
 
 class Bindings {
   var sampler : *Sampler;
-  var textureView : *SampleableTexture2D<float>;
+  var texture : *SampleableTexture2D<float>;
   var uniforms : *uniform Buffer<Uniforms>;
 }
 
@@ -48,7 +36,7 @@ class Pipeline {
     }
     fragment main(fb : &FragmentBuiltins, texCoord : float<2>) {
       var b = bindings.Get();
-      fragColor.Set(b.textureView.Sample(b.sampler, texCoord));
+      fragColor.Set(b.texture.Sample(b.sampler, texCoord));
     }
     var vertices : *VertexInput<Vertex>;
     var indices : *index Buffer<[]uint>;
@@ -104,45 +92,42 @@ for (var mipLevel = 0; mipLevel < mipCount; ++mipLevel) {
 }
 device.GetQueue().Submit(encoder.Finish());
 
-var bindings = Bindings{
-  sampler = new Sampler(device),
-  textureView = texture.CreateSampleableView(baseMipLevel = 0, mipLevelCount = 1),
-  uniforms = new uniform Buffer<Uniforms>(device)
-};
+var bindings : Bindings;
 
 var vb = new vertex Buffer<[]Vertex>(device, &verts);
-var pipelineData = Pipeline{
-  vertices = new VertexInput<Vertex>(vb),
-  indices = new index Buffer<[]uint>(device, &indices),
-  bindings = new BindGroup<Bindings>(device, &bindings)
-};
 
-var viewMatrix = Transform3.translation({-1.0, -1.0});
-viewMatrix *= Transform3.scale(2.0 / (float<2>)window.GetSize());
+var viewMatrix = Transform3.Translation({-1.0, -1.0});
+viewMatrix *= Transform3.Scale(2.0 / (float<2>)window.GetSize());
+
+var indexBuffer = new index Buffer<[]uint>(device, &indices);
+bindings.sampler = new Sampler(device);
+
 while (System.IsRunning()) {
   var encoder = new CommandEncoder(device);
-  var fb = swapChain.GetCurrentTexture().CreateColorOutput(LoadOp.Clear);
-  var renderPass = new RenderPass<Pipeline>(encoder, { fragColor = fb });
-
-  renderPass.SetPipeline(pipeline);
+  var fb = swapChain.GetCurrentTexture().CreateColorOutput(LoadOp.Load);
 
   var position = int<2>{0, 0};
   var size = texSize;
   for (var mipLevel = 0; mipLevel < mipCount; ++mipLevel) {
-    bindings.textureView = texture.CreateSampleableView(baseMipLevel = mipLevel, mipLevelCount = 1);
-    var modelMatrix = Transform3.translation((float<2>) position);
-    modelMatrix *= Transform3.scale((float<2>) size);
+    bindings.texture = texture.CreateSampleableView(baseMipLevel = mipLevel, mipLevelCount = 1);
+    var modelMatrix = Transform3.Translation((float<2>) position);
+    modelMatrix *= Transform3.Scale((float<2>) size);
     bindings.uniforms = new uniform Buffer<Uniforms>(device, { matrix = viewMatrix * modelMatrix });
-    pipelineData.bindings = new BindGroup<Bindings>(device, &bindings);
-    renderPass.Set(&pipelineData);
+
+    var renderPass = new RenderPass<Pipeline>(encoder, {
+      fragColor = fb,
+      vertices = new VertexInput<Vertex>(vb),
+      indices = indexBuffer,
+      bindings = new BindGroup<Bindings>(device, &bindings)
+    });
+    renderPass.SetPipeline(pipeline);
     renderPass.DrawIndexed(indices.length, 1, 0, 0, 0);
+    renderPass.End();
 
     position.x += size.x + 1;
-    size /= int<2>(2);
+    size /= int<2>{2};
   }
   
-  renderPass.End();
-
   var cb = encoder.Finish();
   device.GetQueue().Submit(cb);
   swapChain.Present();
