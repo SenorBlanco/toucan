@@ -163,6 +163,10 @@ struct Texture {
     desc.arrayLayerCount = 1;
     return texture.CreateView(&desc);
   }
+  void AdjustTextureViewDefaults(wgpu::TextureViewDescriptor* desc) {
+    if (desc->mipLevelCount == 0) desc->mipLevelCount = wgpu::kMipLevelCountUndefined;
+    if (desc->arrayLayerCount == 0) desc->arrayLayerCount = wgpu::kArrayLayerCountUndefined;
+  }
   wgpu::Texture       texture;
   wgpu::TextureView   view;
   wgpu::Extent3D      size;
@@ -923,8 +927,10 @@ Texture1D* Texture1D_Texture1D(int qualifiers, Type* format, Device* device, uin
 
 void Texture1D_Destroy(Texture1D* This) { delete This; }
 
-SampleableTexture1D* Texture1D_CreateSampleableView(Texture1D* This) {
-  return new SampleableTexture1D(This->texture.CreateView());
+SampleableTexture1D* Texture1D_CreateSampleableView(Texture1D* This, uint32_t baseMipLevel, uint32_t mipLevelCount) {
+  wgpu::TextureViewDescriptor desc{.baseMipLevel = baseMipLevel, .mipLevelCount = mipLevelCount};
+  This->AdjustTextureViewDefaults(&desc);
+  return new SampleableTexture1D(This->texture.CreateView(&desc));
 }
 
 Texture1D* Texture1D_CreateStorageView(Texture1D* This, uint32_t mipLevel) {
@@ -947,8 +953,10 @@ Texture2D* Texture2D_Texture2D(int qualifiers, Type* format, Device* device, con
 
 void Texture2D_Destroy(Texture2D* This) { delete This; }
 
-SampleableTexture2D* Texture2D_CreateSampleableView(Texture2D* This) {
-  return new SampleableTexture2D(This->texture.CreateView());
+SampleableTexture2D* Texture2D_CreateSampleableView(Texture2D* This, uint32_t baseMipLevel, uint32_t mipLevelCount) {
+  wgpu::TextureViewDescriptor desc{.baseMipLevel = baseMipLevel, .mipLevelCount = mipLevelCount};
+  This->AdjustTextureViewDefaults(&desc);
+  return new SampleableTexture2D(This->texture.CreateView(&desc));
 }
 
 Texture2D* Texture2D_CreateRenderableView(Texture2D* This, uint32_t mipLevel) {
@@ -1012,9 +1020,16 @@ Texture2DArray* Texture2DArray_Texture2DArray(int             qualifiers,
 
 void Texture2DArray_Destroy(Texture2DArray* This) { delete This; }
 
-SampleableTexture2DArray* Texture2DArray_CreateSampleableView(Texture2DArray* This) {
-  wgpu::TextureViewDescriptor desc;
-  desc.dimension = wgpu::TextureViewDimension::e2DArray;
+SampleableTexture2DArray* Texture2DArray_CreateSampleableView(Texture2DArray* This, uint32_t baseMipLevel,
+    uint32_t mipLevelCount, uint32_t baseArrayLayer, uint32_t arrayLayerCount) {
+  wgpu::TextureViewDescriptor desc {
+    .dimension = wgpu::TextureViewDimension::e2DArray,
+    .baseMipLevel = baseMipLevel,
+    .mipLevelCount = mipLevelCount,
+    .baseArrayLayer = baseArrayLayer,
+    .arrayLayerCount = arrayLayerCount
+  };
+  This->AdjustTextureViewDefaults(&desc);
   return new SampleableTexture2DArray(This->texture.CreateView(&desc));
 }
 
@@ -1049,8 +1064,14 @@ Texture3D* Texture3D_Texture3D(int qualifiers, Type* format, Device* device, con
 
 void Texture3D_Destroy(Texture3D* This) { delete This; }
 
-SampleableTexture3D* Texture3D_CreateSampleableView(Texture3D* This) {
-  return new SampleableTexture3D(This->texture.CreateView());
+SampleableTexture3D* Texture3D_CreateSampleableView(Texture3D* This, uint32_t baseMipLevel, uint32_t mipLevelCount) {
+  wgpu::TextureViewDescriptor desc {
+    .dimension = wgpu::TextureViewDimension::e3D,
+    .baseMipLevel = baseMipLevel,
+    .mipLevelCount = mipLevelCount,
+  };
+  This->AdjustTextureViewDefaults(&desc);
+  return new SampleableTexture3D(This->texture.CreateView(&desc));
 }
 
 Texture2D* Texture3D_CreateRenderableView(Texture3D* This, uint32_t depth, uint32_t mipLevel) {
@@ -1084,9 +1105,13 @@ TextureCube* TextureCube_TextureCube(int             qualifiers,
 
 void TextureCube_Destroy(TextureCube* This) { delete This; }
 
-SampleableTextureCube* TextureCube_CreateSampleableView(TextureCube* This) {
-  wgpu::TextureViewDescriptor desc;
-  desc.dimension = wgpu::TextureViewDimension::Cube;
+SampleableTextureCube* TextureCube_CreateSampleableView(TextureCube* This, uint32_t baseMipLevel, uint32_t mipLevelCount) {
+  wgpu::TextureViewDescriptor desc = {
+    .dimension = wgpu::TextureViewDimension::Cube,
+    .baseMipLevel = baseMipLevel,
+    .mipLevelCount = mipLevelCount
+  };
+  This->AdjustTextureViewDefaults(&desc);
   return new SampleableTextureCube(This->texture.CreateView(&desc));
 }
 
