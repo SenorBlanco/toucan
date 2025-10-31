@@ -14,7 +14,7 @@ class Vertex {
 
 var device = new Device();
 
-var texture = new sampleable renderable TextureCube<RGBA8unorm>(device, {2176, 2176});
+var texture = new sampleable renderable TextureCube<RGBA8unorm>(device, {2176, 2176}, 12);
 CubeLoader.Load(device, inline("third_party/home-cube/right.jpg"), texture, 0);
 CubeLoader.Load(device, inline("third_party/home-cube/left.jpg"), texture, 1);
 CubeLoader.Load(device, inline("third_party/home-cube/top.jpg"), texture, 2);

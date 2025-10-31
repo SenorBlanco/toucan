@@ -1145,7 +1145,7 @@ SampleableTextureCube* TextureCube_CreateSampleableView(TextureCube* This, uint3
 }
 
 Texture2D* TextureCube_CreateRenderableView(TextureCube* This, uint32_t face, uint32_t mipLevel) {
-  return new Texture2D(This, This->CreateView(mipLevel, face));
+  return new Texture2D(This, This->Create2DView(mipLevel, face));
 }
 
 TextureCube* TextureCube_CreateStorageView(TextureCube* This, uint32_t face, uint32_t mipLevel) {
