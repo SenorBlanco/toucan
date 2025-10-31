@@ -46,7 +46,7 @@ class Pipeline {
 
 var device = new Device();
 
-var window = new Window(System.GetScreenSize());
+var window = new Window({1023 + 11, 512});
 var swapChain = new SwapChain<PreferredPixelFormat>(device, window);
 
 var verts = [4]Vertex{
