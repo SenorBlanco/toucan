@@ -29,20 +29,27 @@ class Bindings {
 class Pipeline {
     vertex main(vb : &VertexBuiltins) : float<2> {
         var u = bindings.Get().uniforms.MapRead();
-        var v = vertices.Get();
-        var pos = u.matrix * float<3>{@v.position, 1.0};
-        vb.position = {@pos, 1.0};
-        return v.texCoord;
+        var verts = [6]float<2>{
+          { 0.0, 0.0 }, { 1.0, 0.0 }, { 0.0, 1.0 },
+          { 0.0, 1.0 }, { 1.0, 0.0 }, { 1.0, 1.0 }
+        };
+        var v = verts[vb.vertexIndex];
+        vb.position = {@(u.matrix * float<3>{@v, 1.0}), 1.0};
+        return float<2>{v.x, 1.0 - v.y};
     }
     fragment main(fb : &FragmentBuiltins, texCoord : float<2>) {
       var b = bindings.Get();
       fragColor.Set(b.texture.Sample(b.sampler, texCoord));
     }
-    var vertices : *VertexInput<Vertex>;
-    var indices : *index Buffer<[]uint>;
     var fragColor : *ColorOutput<BGRA8unorm>;
     var bindings : *BindGroup<Bindings>;
 };
+
+class ResamplingBindings {
+  var sampler : *Sampler;
+  var texture : *SampleableTexture2D<float>;
+  var uniforms : *uniform Buffer<Uniforms>;
+}
 
 class ResamplingPipeline {
     vertex main(vb : &VertexBuiltins) : float<2> {
@@ -59,7 +66,7 @@ class ResamplingPipeline {
       fragColor.Set(b.texture.Sample(b.sampler, texCoord));
     }
     var fragColor : *ColorOutput<BGRA8unorm>;
-    var bindings : *BindGroup<Bindings>;
+    var bindings : *BindGroup<ResamplingBindings>;
 };
 
 var device = new Device();
@@ -76,8 +83,6 @@ var verts = [4]Vertex{
   { position = { 1.0,  0.0}, texCoord = {1.0, 1.0} }
 };
 
-var indices = [6]uint{ 0, 1, 2, 1, 2, 3 };
-
 var pipeline = new RenderPipeline<Pipeline>(device);
 var resamplingPipeline = new RenderPipeline<ResamplingPipeline>(device);
 var encoder = new CommandEncoder(device);
@@ -90,10 +95,7 @@ var copyEncoder = new CommandEncoder(device);
 texture.CopyFromBuffer(copyEncoder, buffer, imageSize);
 device.GetQueue().Submit(copyEncoder.Finish());
 
-var vb = new vertex Buffer<[]Vertex>(device, &verts);
-var indexBuffer = new index Buffer<[]uint>(device, &indices);
-
-var resamplingBindings : Bindings;
+var resamplingBindings : ResamplingBindings;
 resamplingBindings.sampler = new Sampler(device);
 
 var mipSize = uint<2>{ texSize.x, texSize.y };
@@ -107,7 +109,7 @@ for (var mipLevel = 0u; mipLevel < mipCount - 1; ++mipLevel) {
   dummy.fragColor = fb.CreateColorOutput(LoadOp.Clear);
   var renderPass = new RenderPass<ResamplingPipeline>(encoder, {
     fragColor = fb.CreateColorOutput(LoadOp.Clear),
-    bindings = new BindGroup<Bindings>(device, &resamplingBindings)
+    bindings = new BindGroup<ResamplingBindings>(device, &resamplingBindings)
   });
   renderPass.SetPipeline(resamplingPipeline);
   renderPass.Draw(6, 1, 0, 0);
@@ -140,12 +142,10 @@ while (System.IsRunning()) {
 
     var renderPass = new RenderPass<Pipeline>(encoder, {
       fragColor = fb,
-      vertices = new VertexInput<Vertex>(vb),
-      indices = indexBuffer,
       bindings = new BindGroup<Bindings>(device, &bindings)
     });
     renderPass.SetPipeline(pipeline);
-    renderPass.DrawIndexed(indices.length, 1, 0, 0, 0);
+    renderPass.Draw(6, 1, 0, 0);
     renderPass.End();
 
     position.x += size.x + 1;
