@@ -1144,10 +1144,6 @@ SampleableTextureCube* TextureCube_CreateSampleableView(TextureCube* This, uint3
   return new SampleableTextureCube(This->CreateView(baseMipLevel, mipLevelCount));
 }
 
-SampleableTexture2D* TextureCube_CreateSampleable2DView(TextureCube* This, uint32_t baseMipLevel, uint32_t face) {
-  return new SampleableTexture2D(This->Create2DView(baseMipLevel, face));
-}
-
 Texture2D* TextureCube_CreateRenderableView(TextureCube* This, int32_t face, int32_t mipLevel) {
   return new Texture2D(This, This->CreateView(mipLevel, face));
 }
