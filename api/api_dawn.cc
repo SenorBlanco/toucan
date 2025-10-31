@@ -111,28 +111,26 @@ struct SampleableTextureCube : public TextureView {
 };
 
 struct Texture {
-  Texture(wgpu::Texture t, wgpu::TextureView v, const wgpu::Extent3D& s, wgpu::TextureFormat f)
-      : texture(t), view(v), size(s), format(f) {}
+  Texture(wgpu::Texture t, wgpu::TextureView v) : texture(t), view(v) {}
   Texture(int                    qualifiers,
           Type*                  pixelFormat,
           wgpu::Device           device,
           wgpu::TextureDimension dimension,
-          wgpu::Extent3D         s,
-          uint32_t               mipLevelCount)
-      : size(s), format(ToDawnTextureFormat(pixelFormat)) {
+          wgpu::Extent3D         size,
+          uint32_t               mipLevelCount) {
     wgpu::TextureDescriptor desc;
     desc.usage = ToDawnTextureUsage(qualifiers);
-    desc.size = s;
+    desc.size = size;
     desc.mipLevelCount = mipLevelCount;
-    desc.format = format;
+    desc.format = ToDawnTextureFormat(pixelFormat);
     desc.dimension = dimension;
     texture = device.CreateTexture(&desc);
     view = texture.CreateView();
   }
-  Texture(Texture* t, wgpu::TextureView view) : Texture(t->texture, view, t->size, t->format) {}
+  Texture(Texture* t, wgpu::TextureView view) : Texture(t->texture, view) {}
   uint32_t MinBufferWidth() {
-    uint32_t bytesPerPixel = BytesPerPixel(format);
-    return (((size.width * bytesPerPixel + 255) >> 8) << 8) / bytesPerPixel;
+    uint32_t bytesPerPixel = BytesPerPixel(texture.GetFormat());
+    return (((texture.GetWidth() * bytesPerPixel + 255) >> 8) << 8) / bytesPerPixel;
   }
 
   void CopyFromBuffer(wgpu::CommandEncoder encoder,
@@ -142,8 +140,8 @@ struct Texture {
                       uint32_t             mipLevel) {
     wgpu::TexelCopyBufferInfo sourceInfo;
     sourceInfo.buffer = source;
-    sourceInfo.layout.bytesPerRow = MinBufferWidth() * BytesPerPixel(format);
-    sourceInfo.layout.rowsPerImage = size.height;
+    sourceInfo.layout.bytesPerRow = MinBufferWidth() * BytesPerPixel(texture.GetFormat());
+    sourceInfo.layout.rowsPerImage = texture.GetHeight();
     wgpu::TexelCopyTextureInfo destInfo;
     destInfo.texture = texture;
     destInfo.origin = origin;
@@ -161,7 +159,7 @@ struct Texture {
     if (arrayLayerCount == 0) arrayLayerCount = wgpu::kArrayLayerCountUndefined;
     if (dimension == wgpu::TextureViewDimension::Undefined) dimension = GetViewDimension();
     wgpu::TextureViewDescriptor desc;
-    desc.format = format;
+    desc.format = texture.GetFormat();
     desc.dimension = dimension;
     desc.baseMipLevel = baseMipLevel;
     desc.mipLevelCount = mipLevelCount;
@@ -175,8 +173,6 @@ struct Texture {
   }
   wgpu::Texture       texture;
   wgpu::TextureView   view;
-  wgpu::Extent3D      size;
-  wgpu::TextureFormat format;
 };
 
 struct Texture1D : public Texture {
@@ -1364,7 +1360,7 @@ Texture2D* SwapChain_GetCurrentTexture(SwapChain* swapChain) {
   swapChain->surface.GetCurrentTexture(&surfaceTexture);
   wgpu::Texture texture = surfaceTexture.texture;
 
-  return new Texture2D(texture, texture.CreateView(), swapChain->extent, swapChain->format);
+  return new Texture2D(texture, texture.CreateView());
 }
 
 #if !TARGET_OS_IS_MAC && !TARGET_OS_IS_IOS
