@@ -225,7 +225,7 @@ class TextureCube<PF> {
  ~TextureCube();
   CreateSampleableView(baseMipLevel = 0u, mipLevelCount = 0u) sampleable : *SampleableTextureCube<PF:DeviceType>;
   CreateRenderableView(face : uint, mipLevel = 0u) : *renderable Texture2D<PF>;
-  CreateStorageView(face : uint, mipLevel = 0u) : *storage Texture2D<PF>;
+  CreateStorageView(face : uint, mipLevel = 0u) : *storage TextureCube<PF>;
   MinBufferWidth() : uint;
   CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<3>, origin = uint<3>(0, 0, 0), mipLevel = 0u);
 }

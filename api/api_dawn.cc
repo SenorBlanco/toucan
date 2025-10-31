@@ -1049,7 +1049,7 @@ Texture2D* Texture2DArray_CreateRenderableView(Texture2DArray* This,
 Texture2DArray* Texture2DArray_CreateStorageView(Texture2DArray* This,
                                                  uint32_t        baseArrayLayer,
                                                  uint32_t        mipLevel) {
-  return new Texture2DArray(This, This->CreateView(mipLevel, baseArrayLayer));
+  return new Texture2DArray(This, This->CreateView(mipLevel, 0, baseArrayLayer, 0));
 }
 
 uint32_t Texture2DArray_MinBufferWidth(Texture2DArray* This) { return This->MinBufferWidth(); }
@@ -1114,9 +1114,8 @@ Texture2D* TextureCube_CreateRenderableView(TextureCube* This, int32_t face, int
   return new Texture2D(This, This->CreateView(mipLevel, face));
 }
 
-Texture2D* TextureCube_CreateStorageView(TextureCube* This, int32_t face, int32_t mipLevel) {
-  assert(!"unimplemented");
-  return nullptr;
+TextureCube* TextureCube_CreateStorageView(TextureCube* This, int32_t face, int32_t mipLevel) {
+  return new TextureCube(This, This->CreateView(mipLevel, 0, face, 0));
 }
 
 uint32_t TextureCube_MinBufferWidth(TextureCube* This) { return This->MinBufferWidth(); }
