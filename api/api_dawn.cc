@@ -129,8 +129,7 @@ struct Texture {
     texture = device.CreateTexture(&desc);
     view = texture.CreateView();
   }
-  Texture(Texture* t, wgpu::TextureViewDimension dimension, uint32_t arrayLayer, uint32_t mipLevel)
-      : Texture(t->texture, t->CreateView(dimension, mipLevel, 1, arrayLayer, 1), t->size, t->format) {}
+  Texture(Texture* t, wgpu::TextureView view) : Texture(t->texture, view, t->size, t->format) {}
   uint32_t MinBufferWidth() {
     uint32_t bytesPerPixel = BytesPerPixel(format);
     return (((size.width * bytesPerPixel + 255) >> 8) << 8) / bytesPerPixel;
@@ -151,13 +150,16 @@ struct Texture {
     destInfo.mipLevel = mipLevel;
     encoder.CopyBufferToTexture(&sourceInfo, &destInfo, &extent);
   }
-  wgpu::TextureView CreateView(wgpu::TextureViewDimension dimension,
-                               uint32_t                   baseMipLevel = 0,
-                               uint32_t                   mipLevelCount = 0,
-                               uint32_t                   baseArrayLayer = 0,
-                               uint32_t                   arrayLayerCount = 0) {
+  virtual wgpu::TextureViewDimension GetViewDimension() const = 0;
+  wgpu::TextureView CreateView(
+      uint32_t                   baseMipLevel = 0,
+      uint32_t                   mipLevelCount = 0,
+      uint32_t                   baseArrayLayer = 0,
+      uint32_t                   arrayLayerCount = 0,
+      wgpu::TextureViewDimension dimension = wgpu::TextureViewDimension::Undefined) {
     if (mipLevelCount == 0) mipLevelCount = wgpu::kMipLevelCountUndefined;
     if (arrayLayerCount == 0) arrayLayerCount = wgpu::kArrayLayerCountUndefined;
+    if (dimension == wgpu::TextureViewDimension::Undefined) dimension = GetViewDimension();
     wgpu::TextureViewDescriptor desc;
     desc.format = format;
     desc.dimension = dimension;
@@ -167,6 +169,10 @@ struct Texture {
     desc.arrayLayerCount = arrayLayerCount;
     return texture.CreateView(&desc);
   }
+  wgpu::TextureView Create2DView(uint32_t                   baseMipLevel = 0,
+                                 uint32_t                   baseArrayLayer = 0) {
+    return CreateView(baseMipLevel, 1, baseArrayLayer, 1, wgpu::TextureViewDimension::e2D);
+  }
   wgpu::Texture       texture;
   wgpu::TextureView   view;
   wgpu::Extent3D      size;
@@ -175,18 +181,33 @@ struct Texture {
 
 struct Texture1D : public Texture {
   using Texture::Texture;
+  wgpu::TextureViewDimension GetViewDimension() const override {
+    return wgpu::TextureViewDimension::e1D;
+  }
 };
 struct Texture2D : public Texture {
   using Texture::Texture;
+  wgpu::TextureViewDimension GetViewDimension() const override {
+    return wgpu::TextureViewDimension::e2D;
+  }
 };
 struct Texture2DArray : public Texture {
   using Texture::Texture;
+  wgpu::TextureViewDimension GetViewDimension() const override {
+    return wgpu::TextureViewDimension::e2DArray;
+  }
 };
 struct Texture3D : public Texture {
   using Texture::Texture;
+  wgpu::TextureViewDimension GetViewDimension() const override {
+    return wgpu::TextureViewDimension::e3D;
+  }
 };
 struct TextureCube : public Texture {
   using Texture::Texture;
+  wgpu::TextureViewDimension GetViewDimension() const override {
+    return wgpu::TextureViewDimension::Cube;
+  }
 };
 
 struct Sampler {
@@ -928,12 +949,11 @@ Texture1D* Texture1D_Texture1D(int qualifiers, Type* format, Device* device, uin
 void Texture1D_Destroy(Texture1D* This) { delete This; }
 
 SampleableTexture1D* Texture1D_CreateSampleableView(Texture1D* This, uint32_t baseMipLevel, uint32_t mipLevelCount) {
-  auto view = This->CreateView(wgpu::TextureViewDimension::e1D, baseMipLevel, mipLevelCount);
-  return new SampleableTexture1D(view);
+  return new SampleableTexture1D(This->CreateView(baseMipLevel, mipLevelCount));
 }
 
 Texture1D* Texture1D_CreateStorageView(Texture1D* This, uint32_t mipLevel) {
-  return new Texture1D(This, wgpu::TextureViewDimension::e1D, 0, mipLevel);
+  return new Texture1D(This, This->CreateView(mipLevel));
 }
 
 void Texture1D_CopyFromBuffer(Texture1D*      dest,
@@ -953,16 +973,15 @@ Texture2D* Texture2D_Texture2D(int qualifiers, Type* format, Device* device, con
 void Texture2D_Destroy(Texture2D* This) { delete This; }
 
 SampleableTexture2D* Texture2D_CreateSampleableView(Texture2D* This, uint32_t baseMipLevel, uint32_t mipLevelCount) {
-  auto view = This->CreateView(wgpu::TextureViewDimension::e2D, baseMipLevel, mipLevelCount);
-  return new SampleableTexture2D(view);
+  return new SampleableTexture2D(This->CreateView(baseMipLevel, mipLevelCount));
 }
 
 Texture2D* Texture2D_CreateRenderableView(Texture2D* This, uint32_t mipLevel) {
-  return new Texture2D(This, wgpu::TextureViewDimension::e2D, 0, mipLevel);
+  return new Texture2D(This, This->Create2DView(mipLevel));
 }
 
 Texture2D* Texture2D_CreateStorageView(Texture2D* This, uint32_t mipLevel) {
-  return new Texture2D(This, wgpu::TextureViewDimension::e2D, 0, mipLevel);
+  return new Texture2D(This, This->CreateView(mipLevel));
 }
 
 ColorOutput* Texture2D_CreateColorOutput(Texture2D*   This,
@@ -1021,21 +1040,20 @@ void Texture2DArray_Destroy(Texture2DArray* This) { delete This; }
 SampleableTexture2DArray* Texture2DArray_CreateSampleableView(
     Texture2DArray* This, uint32_t baseMipLevel, uint32_t mipLevelCount, uint32_t baseArrayLayer,
     uint32_t arrayLayerCount) {
-  auto view = This->CreateView(wgpu::TextureViewDimension::e2DArray, baseMipLevel, mipLevelCount,
-                               baseArrayLayer, arrayLayerCount);
-  return new SampleableTexture2DArray(view);
+  return new SampleableTexture2DArray(This->CreateView(baseMipLevel, mipLevelCount,
+                                                       baseArrayLayer, arrayLayerCount));
 }
 
 Texture2D* Texture2DArray_CreateRenderableView(Texture2DArray* This,
                                                uint32_t        layer,
                                                uint32_t        mipLevel) {
-  return new Texture2D(This, wgpu::TextureViewDimension::e2D, layer, mipLevel);
+  return new Texture2D(This, This->Create2DView(mipLevel, layer));
 }
 
 Texture2DArray* Texture2DArray_CreateStorageView(Texture2DArray* This,
                                                  uint32_t        baseArrayLayer,
                                                  uint32_t        mipLevel) {
-  return new Texture2DArray(This, wgpu::TextureViewDimension::e2DArray, baseArrayLayer, mipLevel);
+  return new Texture2DArray(This, This->CreateView(mipLevel, baseArrayLayer));
 }
 
 uint32_t Texture2DArray_MinBufferWidth(Texture2DArray* This) { return This->MinBufferWidth(); }
@@ -1058,16 +1076,15 @@ Texture3D* Texture3D_Texture3D(int qualifiers, Type* format, Device* device, con
 void Texture3D_Destroy(Texture3D* This) { delete This; }
 
 SampleableTexture3D* Texture3D_CreateSampleableView(Texture3D* This, uint32_t baseMipLevel, uint32_t mipLevelCount) {
-  auto view = This->CreateView(wgpu::TextureViewDimension::e3D, baseMipLevel, mipLevelCount);
-  return new SampleableTexture3D(view);
+  return new SampleableTexture3D(This->CreateView(baseMipLevel, mipLevelCount));
 }
 
 Texture2D* Texture3D_CreateRenderableView(Texture3D* This, uint32_t depth, uint32_t mipLevel) {
-  return new Texture2D(This, wgpu::TextureViewDimension::e2D, depth, mipLevel);
+  return new Texture2D(This, This->Create2DView(mipLevel, depth));
 }
 
 Texture3D* Texture3D_CreateStorageView(Texture2D* This, uint32_t baseDepth, uint32_t mipLevel) {
-  return new Texture3D(This, wgpu::TextureViewDimension::e3D, baseDepth, mipLevel);
+  return new Texture3D(This, This->CreateView(mipLevel, 0, baseDepth, 0));
 }
 
 uint32_t Texture3D_MinBufferWidth(Texture3D* This) { return This->MinBufferWidth(); }
@@ -1094,12 +1111,11 @@ TextureCube* TextureCube_TextureCube(int             qualifiers,
 void TextureCube_Destroy(TextureCube* This) { delete This; }
 
 SampleableTextureCube* TextureCube_CreateSampleableView(TextureCube* This, uint32_t baseMipLevel, uint32_t mipLevelCount) {
-  auto view = This->CreateView(wgpu::TextureViewDimension::Cube, baseMipLevel, mipLevelCount);
-  return new SampleableTextureCube(view);
+  return new SampleableTextureCube(This->CreateView(baseMipLevel, mipLevelCount));
 }
 
 Texture2D* TextureCube_CreateRenderableView(TextureCube* This, int32_t face, int32_t mipLevel) {
-  return new Texture2D(This, wgpu::TextureViewDimension::e2D, face, mipLevel);
+  return new Texture2D(This, This->CreateView(mipLevel, face));
 }
 
 Texture2D* TextureCube_CreateStorageView(TextureCube* This, int32_t face, int32_t mipLevel) {
