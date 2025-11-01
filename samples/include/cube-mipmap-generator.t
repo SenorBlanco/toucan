@@ -1,5 +1,5 @@
 class CubeResamplingUniforms {
-  var targetSize : uint<2>;
+  var face : uint;
 }
 
 class CubeResamplingBindings {
@@ -7,15 +7,6 @@ class CubeResamplingBindings {
   var texture : *SampleableTextureCube<float>;
   var uniforms : *uniform Buffer<CubeResamplingUniforms>;
 }
-
-var faceRotations = [6]float<3,3>{
-  float<3,3>{ { 0.0,  0.0, -2.0 }, { 0.0, -2.0,  0.0 }, {  1.0,  1.0,   1.0 } },
-  float<3,3>{ { 0.0,  0.0,  2.0 }, { 0.0, -2.0,  0.0 }, { -1.0,  1.0,  -1.0 } },   // neg-x
-  float<3,3>{ { 2.0,  0.0,  0.0 }, { 0.0,  0.0,  2.0 }, { -1.0,  1.0,  -1.0 } },   // pos-y
-  float<3,3>{ { 2.0,  0.0,  0.0 }, { 0.0,  0.0, -2.0 }, { -1.0, -1.0,   1.0 } },   // neg-y
-  float<3,3>{ { 2.0,  0.0,  0.0 }, { 0.0, -2.0,  0.0 }, { -1.0,  1.0,   1.0 } },   // pos-z
-  float<3,3>{ {-2.0,  0.0,  0.0 }, { 0.0, -2.0,  0.0 }, {  1.0,  1.0,  -1.0 } }    // neg-z
-};
 
 class CubeResamplingPipeline {
   vertex main(vb : &VertexBuiltins) : float<2> {
@@ -25,11 +16,21 @@ class CubeResamplingPipeline {
     };
     var v = verts[vb.vertexIndex];
     vb.position = {@v, 0.0, 1.0};
-    return float<2>{1.0, 0.0} * float<2>{0.5, -0.5} + float<2>{0.5}; // FIXME
+    return v * float<2>{0.5, -0.5} + float<2>{0.5, 0.5};
   }
   fragment main(fb : &FragmentBuiltins, texCoord : float<2>) {
+    var faceMatrices = [6]float<3,3>{
+      { { 0.0, 0.0, -2.0 }, { 0.0, -2.0,  0.0 }, {  1.0,  1.0,  1.0 } },
+      { { 0.0, 0.0,  2.0 }, { 0.0, -2.0,  0.0 }, { -1.0,  1.0, -1.0 } },
+      { { 2.0, 0.0,  0.0 }, { 0.0,  0.0,  2.0 }, { -1.0,  1.0, -1.0 } },
+      { { 2.0, 0.0,  0.0 }, { 0.0,  0.0, -2.0 }, { -1.0, -1.0,  1.0 } },
+      { { 2.0, 0.0,  0.0 }, { 0.0, -2.0,  0.0 }, { -1.0,  1.0,  1.0 } },
+      { {-2.0, 0.0,  0.0 }, { 0.0, -2.0,  0.0 }, {  1.0,  1.0, -1.0 } }
+    };
     var b = bindings.Get();
-    fragColor.Set(b.texture.Sample(b.sampler, float<3>{@texCoord, 1.0}));
+    var face = b.uniforms.MapRead().face;
+    var coord = faceMatrices[face] * float<3>{@texCoord, 1.0};
+    fragColor.Set(b.texture.Sample(b.sampler, coord));
   }
   var fragColor : *ColorOutput<RGBA8unorm>;
   var bindings : *BindGroup<CubeResamplingBindings>;
@@ -47,7 +48,7 @@ class CubeMipmapGenerator {
     for (var face = 0u; face < 6u; ++face) {
       for (var mipLevel = 1u; mipLevel < mipCount; ++mipLevel) {
         resamplingBindings.texture = texture.CreateSampleableView(mipLevel - 1, 1u);
-        resamplingBindings.uniforms.SetData({ targetSize = texture.GetSize(mipLevel) });
+        resamplingBindings.uniforms.SetData({ face });
         var fb = texture.CreateRenderableView(face, mipLevel);
         var encoder = new CommandEncoder(device);
         var renderPass = new RenderPass<CubeResamplingPipeline>(encoder, {

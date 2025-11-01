@@ -1,25 +1,21 @@
-class ResamplingUniforms {
-  var targetSize : uint<2>;
-}
-
 class ResamplingBindings {
   var sampler : *Sampler;
   var texture : *SampleableTexture2D<float>;
-  var uniforms : *uniform Buffer<ResamplingUniforms>;
 }
 
 class ResamplingPipeline {
-  vertex main(vb : &VertexBuiltins) {
+  vertex main(vb : &VertexBuiltins) : float<2> {
     var verts = [6]float<2>{
       { -1.0, -1.0 }, { 1.0, -1.0 }, { -1.0, 1.0 },
       { -1.0,  1.0 }, { 1.0, -1.0 }, {  1.0, 1.0 }
     };
-    vb.position = {@verts[vb.vertexIndex], 0.0, 1.0};
+    var v = verts[vb.vertexIndex];
+    vb.position = {@v, 0.0, 1.0};
+    return v * float<2>{0.5, -0.5} + float<2>{0.5};
   }
-  fragment main(fb : &FragmentBuiltins) {
+  fragment main(fb : &FragmentBuiltins, texCoord : float<2>) {
     var b = bindings.Get();
-    var coord = fb.fragCoord.xy / (float<2>) b.uniforms.MapRead().targetSize;
-    fragColor.Set(b.texture.Sample(b.sampler, coord));
+    fragColor.Set(b.texture.Sample(b.sampler, texCoord));
   }
   var fragColor : *ColorOutput<RGBA8unorm>;
   var bindings : *BindGroup<ResamplingBindings>;
@@ -32,11 +28,9 @@ class MipmapGenerator {
 
     var resamplingBindings : ResamplingBindings;
     resamplingBindings.sampler = new Sampler(device);
-    resamplingBindings.uniforms = new uniform Buffer<ResamplingUniforms>(device);
 
     for (var mipLevel = 1u; mipLevel < mipCount; ++mipLevel) {
       resamplingBindings.texture = texture.CreateSampleableView(mipLevel - 1, 1u);
-      resamplingBindings.uniforms.SetData({ targetSize = texture.GetSize(mipLevel) });
       var fb = texture.CreateRenderableView(mipLevel);
       var encoder = new CommandEncoder(device);
       var renderPass = new RenderPass<ResamplingPipeline>(encoder, {
