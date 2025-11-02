@@ -1,11 +1,7 @@
-class CubeResamplingUniforms {
-  var face : uint;
-}
-
 class CubeResamplingBindings {
   var sampler : *Sampler;
   var texture : *SampleableTextureCube<float>;
-  var uniforms : *uniform Buffer<CubeResamplingUniforms>;
+  var uniforms : *uniform Buffer<uint>;
 }
 
 class CubeResamplingPipeline {
@@ -28,7 +24,7 @@ class CubeResamplingPipeline {
       { {-2.0, 0.0,  0.0 }, { 0.0, -2.0,  0.0 }, {  1.0,  1.0, -1.0 } }
     };
     var b = bindings.Get();
-    var face = b.uniforms.MapRead().face;
+    var face = b.uniforms.MapRead():;
     var coord = faceMatrices[face] * float<3>{@texCoord, 1.0};
     fragColor.Set(b.texture.Sample(b.sampler, coord));
   }
@@ -43,12 +39,12 @@ class CubeMipmapGenerator {
 
     var resamplingBindings : CubeResamplingBindings;
     resamplingBindings.sampler = new Sampler(device);
-    resamplingBindings.uniforms = new uniform Buffer<CubeResamplingUniforms>(device);
+    resamplingBindings.uniforms = new uniform Buffer<uint>(device);
 
     for (var face = 0u; face < 6u; ++face) {
       for (var mipLevel = 1u; mipLevel < mipCount; ++mipLevel) {
         resamplingBindings.texture = texture.CreateSampleableView(mipLevel - 1, 1u);
-        resamplingBindings.uniforms.SetData({ face });
+        resamplingBindings.uniforms.SetData(&face);
         var fb = texture.CreateRenderableView(face, mipLevel);
         var encoder = new CommandEncoder(device);
         var renderPass = new RenderPass<CubeResamplingPipeline>(encoder, {
