@@ -1,8 +1,8 @@
 include "cube.t"
 include "cube-loader.t"
-include "cube-mipmap-generator.t"
 include "cubic.t"
 include "event-handler.t"
+include "mipmap-generator.t"
 include "quaternion.t"
 include "transform.t"
 include "teapot.t"
@@ -22,7 +22,7 @@ CubeLoader.Load(device, inline("third_party/home-cube/bottom.jpg"), texture, 3);
 CubeLoader.Load(device, inline("third_party/home-cube/front.jpg"), texture, 4);
 CubeLoader.Load(device, inline("third_party/home-cube/back.jpg"), texture, 5);
 
-CubeMipmapGenerator.Generate(device, texture);
+MipmapGenerator.Generate(device, texture);
 
 var window = new Window(System.GetScreenSize());
 var swapChain = new SwapChain<PreferredPixelFormat>(device, window);
