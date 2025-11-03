@@ -1,6 +1,6 @@
-class CubeLoader {
-  static Load(device : *Device, data : *[]ubyte, texture : &TextureCube<RGBA8unorm>, face : uint) {
-    var image = new Image<RGBA8unorm>(data);
+class CubeLoader<PF> {
+  static Load(device : *Device, data : *[]ubyte, texture : &TextureCube<PF>, face : uint) {
+    var image = new Image<PF>(data);
     var size = image.GetSize();
     var buffer = new hostwriteable Buffer<[]ubyte<4>>(device, texture.MinBufferWidth() * size.y);
     image.Decode(buffer.MapWrite(), texture.MinBufferWidth());
