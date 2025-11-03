@@ -22,7 +22,7 @@ CubeLoader.Load(device, inline("third_party/home-cube/bottom.jpg"), texture, 3);
 CubeLoader.Load(device, inline("third_party/home-cube/front.jpg"), texture, 4);
 CubeLoader.Load(device, inline("third_party/home-cube/back.jpg"), texture, 5);
 
-MipmapGenerator.Generate(device, texture);
+MipmapGenerator<RGBA8unorm>.Generate(device, texture);
 
 var window = new Window(System.GetScreenSize());
 var swapChain = new SwapChain<PreferredPixelFormat>(device, window);
