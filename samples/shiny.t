@@ -14,8 +14,8 @@ class Vertex {
 
 var device = new Device();
 
-var texture = new sampleable renderable TextureCube<BGRA8unorm>(device, {2176, 2176}, 12);
-var loader = CubeLoader<BGRA8unorm>{device, texture};
+var texture = new sampleable renderable TextureCube<RGBA8unorm>(device, {2176, 2176}, 12);
+var loader = CubeLoader<RGBA8unorm>{device, texture};
 loader.Load(inline("third_party/home-cube/right.jpg"), 0);
 loader.Load(inline("third_party/home-cube/left.jpg"), 1);
 loader.Load(inline("third_party/home-cube/top.jpg"), 2);
@@ -23,7 +23,7 @@ loader.Load(inline("third_party/home-cube/bottom.jpg"), 3);
 loader.Load(inline("third_party/home-cube/front.jpg"), 4);
 loader.Load(inline("third_party/home-cube/back.jpg"), 5);
 
-MipmapGenerator<BGRA8unorm>.Generate(device, texture);
+MipmapGenerator<RGBA8unorm>.Generate(device, texture);
 
 var window = new Window(System.GetScreenSize());
 var swapChain = new SwapChain<PreferredPixelFormat>(device, window);
