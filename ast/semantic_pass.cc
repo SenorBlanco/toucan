@@ -912,6 +912,24 @@ Result SemanticPass::Visit(ForStatement* node) {
   return Make<ForStatement>(initStmt, cond, loopStmt, body);
 }
 
+Result SemanticPass::Visit(ForInStatement* node) {
+  Expr* expr = Resolve(node->GetExpr());
+  Stmt* body = Resolve(node->GetBody());
+
+  expr = MakeIndexable(expr);
+  if (!expr) {
+    return Error("expression is not of indexable type");
+  }
+  Type* type = expr->GetType(types_);
+  assert(type->IsRawPtr());
+  type = static_cast<RawPtrType*>(type)->GetBaseType();
+  assert(type->IsArray());
+  type = static_cast<ArrayType*>(type)->GetElementType();
+  type = types_->GetRawPtr(type);
+  Var*  var = symbols_->DefineVar(id, type);
+  return Make<ForInStatement>(nullptr, var, expr, body);
+}
+
 void SemanticPass::PreVisit(UnresolvedClassDefinition* defn) {
   Scope*     scope = defn->GetScope();
   ClassType* classType = scope->classType;

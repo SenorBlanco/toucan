@@ -99,6 +99,7 @@ class   { return T_CLASS; }
 enum    { return T_ENUM; }
 static  { return T_STATIC; }
 vertex  { return T_VERTEX; }
+in      { return T_IN; }
 index   { return T_INDEX; }
 fragment { return T_FRAGMENT; }
 compute { return T_COMPUTE; }

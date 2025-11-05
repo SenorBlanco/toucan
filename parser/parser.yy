@@ -126,7 +126,7 @@ Type* FindType(const char* str) {
 %type <arg> argument
 %type <stmt> statement expr_statement for_loop_stmt
 %type <stmt> assignment
-%type <stmt> if_statement for_statement while_statement do_statement
+%type <stmt> if_statement for_statement for_body while_statement do_statement
 %type <stmt> opt_else var_decl class_decl
 %type <stmt> class_forward_decl
 %type <stmts> statements var_decl_list var_decl_statement formal_arguments non_empty_formal_arguments method_body
@@ -148,7 +148,7 @@ Type* FindType(const char* str) {
 %token T_INT T_UINT T_FLOAT T_DOUBLE T_BOOL T_BYTE T_UBYTE T_SHORT T_USHORT
 %token T_HALF
 %token T_STATIC T_VERTEX T_FRAGMENT T_COMPUTE T_THIS
-%token T_INDEX T_UNIFORM T_STORAGE T_SAMPLEABLE T_RENDERABLE
+%token T_IN T_INDEX T_UNIFORM T_STORAGE T_SAMPLEABLE T_RENDERABLE
 %token T_USING T_INLINE T_UNFILTERABLE
 %right '=' T_ADD_EQUALS T_SUB_EQUALS T_MUL_EQUALS T_DIV_EQUALS
 %left T_LOGICAL_OR
@@ -207,15 +207,25 @@ opt_else:
     T_ELSE statement                        { $$ = $2; }
   | /* nothing */                           { $$ = 0; }
   ;
-for_statement:
-    T_FOR '(' { symbols_->PushNewScope(); }
-    for_loop_stmt ';' opt_expr ';' for_loop_stmt ')' statement
+for_body:
+    '(' for_loop_stmt ';' opt_expr ';' for_loop_stmt ')' statement
       {
         Stmts* stmts = Make<Stmts>();
-        stmts->Append(Make<ForStatement>($4, $6, $8, $10));
+        stmts->Append(Make<ForStatement>($2, $4, $6, $8));
         stmts->SetScope(symbols_->PopScope());
         $$ = stmts;
       }
+    | '(' T_IDENTIFIER T_IN expr ')' statement
+      {
+        Stmts* stmts = Make<Stmts>();
+        stmts->Append(Make<ForInStatement>($2, $4, $6));
+        stmts->SetScope(symbols_->PopScope());
+        $$ = stmts;
+      }
+  ;
+
+for_statement:
+    T_FOR { symbols_->PushNewScope(); } for_body { $$ = $3; }
   ;
 opt_expr:
     expr

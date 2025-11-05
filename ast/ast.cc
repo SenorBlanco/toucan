@@ -317,6 +317,9 @@ WhileStatement::WhileStatement(Expr* cond, Stmt* body) : cond_(cond), body_(body
 
 DoStatement::DoStatement(Stmt* body, Expr* cond) : body_(body), cond_(cond) {}
 
+ForInStatement::ForInStatement(std::string id, Expr* expr, Stmt* body)
+    : id_(id), expr_(expr), body_(body) {}
+
 ForStatement::ForStatement(Stmt* initStmt, Expr* cond, Stmt* loopStmt, Stmt* body)
     : initStmt_(initStmt), cond_(cond), loopStmt_(loopStmt), body_(body) {}
 
@@ -350,6 +353,7 @@ Result ExprStmt::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ExtractElementExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result FieldAccess::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result FloatConstant::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result ForInStatement::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ForStatement::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result HeapAllocation::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result IfStatement::Accept(Visitor* visitor) { return visitor->Visit(this); }
