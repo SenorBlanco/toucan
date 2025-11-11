@@ -218,7 +218,7 @@ for_body:
     | '(' T_IDENTIFIER T_IN expr ')' statement
       {
         Stmts* stmts = Make<Stmts>();
-        stmts->Append(Make<ForInStatement>($2, $4, $6));
+        stmts->Append(Make<ForRangeStatement>($2, $4, $6));
         stmts->SetScope(symbols_->PopScope());
         $$ = stmts;
       }

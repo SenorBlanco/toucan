@@ -912,7 +912,7 @@ Result SemanticPass::Visit(ForStatement* node) {
   return Make<ForStatement>(initStmt, cond, loopStmt, body);
 }
 
-Result SemanticPass::Visit(ForInStatement* node) {
+Result SemanticPass::Visit(ForRangeStatement* node) {
   Expr* expr = Resolve(node->GetExpr());
   Stmt* body = Resolve(node->GetBody());
 
@@ -925,9 +925,9 @@ Result SemanticPass::Visit(ForInStatement* node) {
   type = static_cast<RawPtrType*>(type)->GetBaseType();
   assert(type->IsArray());
   type = static_cast<ArrayType*>(type)->GetElementType();
-  type = types_->GetRawPtr(type);
-  Var*  var = symbols_->DefineVar(id, type);
-  return Make<ForInStatement>(nullptr, var, expr, body);
+  type = types_->GetRawPtrType(type);
+  Var*  var = symbols_->DefineVar(node->GetID(), type);
+  return Make<ForRangeStatement>(nullptr, expr, body);
 }
 
 void SemanticPass::PreVisit(UnresolvedClassDefinition* defn) {

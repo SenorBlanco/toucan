@@ -699,9 +699,9 @@ class DoStatement : public Stmt {
   Expr* cond_;
 };
 
-class ForInStatement : public Stmt {
+class ForRangeStatement : public Stmt {
  public:
-  ForInStatement(const std::string id, Expr* expr, Stmt* body);
+  ForRangeStatement(const std::string id, Expr* expr, Stmt* body);
   Result       Accept(Visitor* visitor) override;
   std::string  GetID() { return id_; }
   Expr*        GetExpr() { return expr_; }
@@ -816,7 +816,7 @@ class Visitor {
   virtual Result Visit(ExtractElementExpr* node) { return Default(node); }
   virtual Result Visit(FieldAccess* node) { return Default(node); }
   virtual Result Visit(FloatConstant* node) { return Default(node); }
-  virtual Result Visit(ForInStatement* node) { return Default(node); }
+  virtual Result Visit(ForRangeStatement* node) { return Default(node); }
   virtual Result Visit(ForStatement* node) { return Default(node); }
   virtual Result Visit(HeapAllocation* node) { return Default(node); }
   virtual Result Visit(IfStatement* node) { return Default(node); }
