@@ -675,21 +675,6 @@ Result CodeGenSPIRV::Visit(DoStatement* doStmt) {
   return 0u;
 }
 
-Result CodeGenSPIRV::Visit(LoopStatement* node) {
-  uint32_t loopBody = NextId();
-  uint32_t next = NextId();
-  uint32_t exitLoop = NextId();
-  AppendCode(spv::Op::OpBranch, {loopBody});
-  AppendCode(spv::Op::OpLabel, {loopBody});
-  AppendCode(spv::Op::OpLoopMerge, {exitLoop, next, 0});
-  AppendCode(spv::Op::OpBranch, {next});
-  AppendCode(spv::Op::OpLabel, {next});
-  GenerateSPIRV(node->GetBody());
-  AppendCode(spv::Op::OpBranch, {loopBody});
-  AppendCode(spv::Op::OpLabel, {exitLoop});
-  return 0u;
-}
-
 Result CodeGenSPIRV::Visit(ExprStmt* exprStmt) {
   GenerateSPIRV(exprStmt->GetExpr());
   return 0u;
