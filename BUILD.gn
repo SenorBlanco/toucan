@@ -16,6 +16,7 @@ group("all") {
   deps = [
     "//samples:samples",
     "//test:tests",
+    "//bench:bench",
   ]
   if (!is_wasm && !is_android && !is_ios) {
     deps += [
