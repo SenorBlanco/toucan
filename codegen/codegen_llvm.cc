@@ -523,7 +523,7 @@ llvm::Intrinsic::ID CodeGenLLVM::FindIntrinsic(Method* method) {
     return llvm::Intrinsic::not_intrinsic;
   };
 
-  if (argType->IsFloat() || argType->IsFloatVector()) {
+  if (argType->IsFloatingPoint() || argType->IsFloatingPointVector()) {
     if (auto id = findIntrinsic(method, floatIntrinsics)) return id;
   } else if (argType->IsBool() || argType->IsBoolVector()) {
     if (auto id = findIntrinsic(method, boolIntrinsics)) return id;
@@ -788,7 +788,7 @@ llvm::Value* CodeGenLLVM::GenerateBinOp(BinOpNode*   node,
     } else {
       return GenerateBinOpInt(builder_, node->GetOp(), lhs, rhs);
     }
-  } else if (type->IsFloatingPoint() || type->IsFloatVector()) {
+  } else if (type->IsFloatingPoint() || type->IsFloatingPointVector()) {
     return GenerateBinOpFloat(builder_, node->GetOp(), lhs, rhs);
   } else if (type->IsMatrix() && node->GetOp() == BinOpNode::MUL) {
     auto matrixType = static_cast<MatrixType*>(type);
@@ -1496,7 +1496,7 @@ Result CodeGenLLVM::Visit(UnaryOp* node) {
   if (node->GetOp() == UnaryOp::Op::Minus) {
     if (type->IsInteger() || type->IsIntegerVector()) {
       ret = builder_->CreateNeg(rhs, "neg");
-    } else if (type->IsFloatingPoint() || type->IsFloatVector()) {
+    } else if (type->IsFloatingPoint() || type->IsFloatingPointVector()) {
       ret = builder_->CreateFNeg(rhs, "fneg");
     } else {
       assert(false);

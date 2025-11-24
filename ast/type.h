@@ -54,7 +54,7 @@ class Type {
   virtual bool  IsInteger() const { return false; }
   virtual bool  IsIntegerVector() const { return false; }
   virtual bool  IsFloatingPoint() const { return false; }
-  virtual bool  IsFloatVector() const { return false; }
+  virtual bool  IsFloatingPointVector() const { return false; }
   virtual bool  IsMatrix() const { return false; }
   virtual bool  IsBool() const { return false; }
   virtual bool  IsBoolVector() const { return false; }
@@ -127,7 +127,7 @@ class VectorType : public ArrayLikeType {
   bool         IsVector() const override { return true; }
   bool         IsUnsigned() const override { return elementType_->IsUnsigned(); }
   bool         IsIntegerVector() const override { return elementType_->IsInteger(); }
-  bool         IsFloatVector() const override { return elementType_->IsFloat(); }
+  bool         IsFloatingPointVector() const override { return elementType_->IsFloatingPoint(); }
   bool         IsBoolVector() const override { return elementType_->IsBool(); }
   bool         CanWidenTo(Type* type) const override;
   bool         CanNarrowTo(Type* type) const override;

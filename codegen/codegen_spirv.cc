@@ -104,7 +104,7 @@ spv::Op binOpToOpcode(BinOpNode::Op op,
                       Type*         rhsType,
                       uint32_t*     lhs,
                       uint32_t*     rhs) {
-  bool isFloat = lhsType->IsFloat() || lhsType->IsFloatVector();
+  bool isFloat = lhsType->IsFloatingPoint() || lhsType->IsFloatingPointVector();
   bool isBool = lhsType->IsBool();
   switch (op) {
     case BinOpNode::ADD: return isFloat ? spv::OpFAdd : spv::OpIAdd;
@@ -583,7 +583,7 @@ Result CodeGenSPIRV::Visit(UnaryOp* node) {
   uint32_t rhs = GenerateSPIRV(node->GetRHS());
   Type*    rhsType = node->GetRHS()->GetType(types_);
   spv::Op  opCode = spv::OpNop;
-  bool     isFloat = rhsType->IsFloat() || rhsType->IsFloatVector();
+  bool     isFloat = rhsType->IsFloatingPoint() || rhsType->IsFloatingPointVector();
   switch (node->GetOp()) {
     case UnaryOp::Op::Minus: opCode = isFloat ? spv::OpFNegate : spv::OpSNegate; break;
     case UnaryOp::Op::Negate: opCode = spv::OpLogicalNot; break;
