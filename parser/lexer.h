@@ -24,6 +24,7 @@ namespace Toucan {
 class Arg;
 class ArgList;
 class Expr;
+class MethodDecl;
 class Stmt;
 class UnresolvedInitializer;
 };  // namespace Toucan
