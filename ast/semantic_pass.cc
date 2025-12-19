@@ -907,8 +907,8 @@ Result SemanticPass::Visit(ForStatement* node) {
 }
 
 void SemanticPass::PreVisit(UnresolvedClassDefinition* defn) {
-  Scope*     scope = defn->GetScope();
-  ClassType* classType = scope->classType;
+  ClassType* classType = defn->GetClass();
+  Scope* scope = classType->GetScope();
 
   // Non-native template classes don't need inferred type resolution
   if (!classType->HasNativeMethods() && classType->IsClassTemplate()) return;
@@ -937,8 +937,8 @@ void SemanticPass::PreVisit(UnresolvedClassDefinition* defn) {
 }
 
 Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
-  Scope*     scope = defn->GetScope();
-  ClassType* classType = scope->classType;
+  ClassType* classType = defn->GetClass();
+  Scope*     scope = classType->GetScope();
 
   // Template classes don't need semantic analysis, since their code won't be directly generated.
   if (classType->IsClassTemplate()) return nullptr;

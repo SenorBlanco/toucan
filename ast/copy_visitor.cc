@@ -257,7 +257,7 @@ Result CopyVisitor::Visit(MethodCall* node) {
 }
 
 Result CopyVisitor::Visit(UnresolvedClassDefinition* defn) {
-  return Make<UnresolvedClassDefinition>(defn->GetScope());
+  return Make<UnresolvedClassDefinition>(defn->GetClass());
 }
 
 Result CopyVisitor::Visit(UnresolvedDot* node) {

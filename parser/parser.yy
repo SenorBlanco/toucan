@@ -750,8 +750,7 @@ static ClassType* BeginClassTemplate(TypeList* templateArgs, const char* id) {
 static Stmt* EndClass() {
   Scope* scope = symbols_->PopScope();
   assert(scope->classType);
-  ClassType* classType = scope->classType;
-  return Make<UnresolvedClassDefinition>(scope);
+  return Make<UnresolvedClassDefinition>(scope->classType);
 }
 
 static void BeginEnum(Type* t) {
@@ -914,7 +913,7 @@ static void InstantiateClassTemplates() {
     TypeReplacementPass pass(nodes_, symbols_, types_, classTemplate->GetFormalTemplateArgs(), instance->GetTemplateArgs(), &instanceQueue_);
     pass.ResolveClassInstance(classTemplate, instance);
     numSyntaxErrors += pass.NumErrors();
-    (*rootStmts_)->Append(Make<UnresolvedClassDefinition>(instance->GetScope()));
+    (*rootStmts_)->Append(Make<UnresolvedClassDefinition>(instance));
   }
 }
 

@@ -745,12 +745,12 @@ class UnresolvedNewExpr : public Expr {
 
 class UnresolvedClassDefinition : public Stmt {
  public:
-  UnresolvedClassDefinition(Scope* scope);
+  UnresolvedClassDefinition(ClassType* classType);
   Result Accept(Visitor* visitor) override;
-  Scope* GetScope() { return scope_; }
+  ClassType* GetClass() { return class_; }
 
  private:
-  Scope* scope_;
+  ClassType* class_;
 };
 
 class UnaryOp : public Expr {
