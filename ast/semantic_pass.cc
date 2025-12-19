@@ -301,7 +301,7 @@ Stmts* SemanticPass::InitializeArray(Expr* dest, Type* elementType, Expr* length
 Result SemanticPass::Visit(VarDeclaration* decl) {
   std::string id = decl->GetID();
   Type*       type = decl->GetType();
-  if (symbols_->FindVarInScope(id)) {
+  if (symbols_->PeekScope()->ids.contains(id)) {
     return Error("variable \"%s\" already defined in this scope", id.c_str());
   }
   if (!type) return nullptr;
@@ -325,8 +325,12 @@ Result SemanticPass::Visit(VarDeclaration* decl) {
   if (!type->IsRawPtr() && type->ContainsRawPtr()) {
     return Error("cannot allocate a type containing a raw pointer");
   }
+  // FIXME: have StmtScope own its own vars.
   Var*  var = symbols_->DefineVar(id, type);
   Expr* varExpr = Make<VarExpr>(var);
+  Expr* expr = Make<VarExpr>(var);
+  if (var->type->IsRawPtr()) expr = Make<LoadExpr>(expr);
+  symbols_->DefineID(id, expr);
   return Initialize(varExpr, initExpr);
 }
 
@@ -541,21 +545,11 @@ Result SemanticPass::Visit(LoadExpr* node) {
 
 Result SemanticPass::Visit(UnresolvedIdentifier* node) {
   std::string id = node->GetID();
-  if (Var* var = symbols_->FindVar(id)) {
-    if (var->type->IsRawPtr()) {
-      return Make<LoadExpr>(Make<VarExpr>(var));
-    } else {
-      return Make<VarExpr>(var);
-    }
-  } else if (Field* field = symbols_->FindField(id)) {
-    Var* thisPtr = symbols_->FindVar("this");
-    if (!thisPtr) {
-      // TODO:  Implement static field access
-      return Error("attempt to access non-static field in static method");
-    } else {
-      Expr* base = Make<LoadExpr>(Make<VarExpr>(thisPtr));
-      return Make<FieldAccess>(base, field);
-    }
+  if (Expr* expr = symbols_->FindID(id)) {
+    copyFileLocation_ = false;
+    expr = Resolve(expr);
+    copyFileLocation_ = true;
+    return expr;
   } else {
     return Error("unknown symbol \"%s\"", id.c_str());
   }
@@ -934,6 +928,12 @@ void SemanticPass::PreVisit(UnresolvedClassDefinition* defn) {
       field->type = field->defaultValue->GetType(types_);
     }
   }
+  for (auto c = classType; c != nullptr; c = c->GetParent()) {
+    for (const auto& field : c->GetFields()) {
+      Expr* thisPtr = Make<UnresolvedIdentifier>("this");
+      scope->ids[field->name] = Make<FieldAccess>(thisPtr, field.get());
+    }
+  }
 }
 
 Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
@@ -969,6 +969,14 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
     if (!method->stmts) continue;
 
     Scope* scope = method->stmts->GetScope();
+    if (scope) {
+      for (const auto& var : method->formalArgList) {
+        Expr* expr = Make<VarExpr>(var.get());
+        if (var->type->IsRawPtr()) expr = Make<LoadExpr>(expr);
+        scope->ids[var->name] = expr;
+      }
+    }
+
     method->stmts = Resolve(method->stmts);
     if (method->IsConstructor()) {
       symbols_->PushScope(scope);

@@ -42,35 +42,11 @@ Scope* SymbolTable::PopScope() {
 
 Scope* SymbolTable::PeekScope() { return currentScope_; }
 
-Var* SymbolTable::FindVar(const std::string& identifier) const {
-  Scope* scope = currentScope_;
-  for (scope = currentScope_; scope != nullptr; scope = scope->parent) {
-    VarMap::const_iterator j = scope->varMap.find(identifier);
-    if (j != scope->varMap.end()) { return j->second; }
-    if (scope->method) {
-      for (const auto& it : scope->method->formalArgList) {
-        Var* var = it.get();
-        if (var->name == identifier) { return var; }
-      }
-      return nullptr;
-    }
+Expr* SymbolTable::FindID(const std::string& identifier) const {
+  for (Scope* scope = currentScope_; scope != nullptr; scope = scope->parent) {
+    ExprMap::const_iterator j = scope->ids.find(identifier);
+    if (j != scope->ids.end()) { return j->second; }
   }
-  return nullptr;
-}
-
-Field* SymbolTable::FindField(const std::string& identifier) const {
-  Scope* scope = currentScope_;
-  for (scope = currentScope_; scope != nullptr; scope = scope->parent) {
-    ClassType* classType = scope->classType;
-    if (classType) { return classType->FindField(identifier); }
-  }
-  return nullptr;
-}
-
-Var* SymbolTable::FindVarInScope(const std::string& identifier) const {
-  if (!currentScope_) return nullptr;
-  VarMap::const_iterator j = currentScope_->varMap.find(identifier);
-  if (j != currentScope_->varMap.end()) { return j->second; }
   return nullptr;
 }
 
@@ -80,6 +56,11 @@ Var* SymbolTable::DefineVar(std::string identifier, Type* type) {
   currentScope_->vars.push_back(var);
   currentScope_->varMap[identifier] = var.get();
   return var.get();
+}
+
+void SymbolTable::DefineID(std::string identifier, Expr* expr) {
+  assert(currentScope_);
+  currentScope_->ids[identifier] = expr;
 }
 
 bool SymbolTable::DefineType(std::string identifier, Type* type) {
