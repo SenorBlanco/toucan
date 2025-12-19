@@ -60,7 +60,6 @@ static EnumType* DeclareEnum(const char* id);
 static void DeclareUsing(const char* id, Type* type);
 static void BeginClass(Type* type, ClassType* parent);
 static ClassType*  BeginClassTemplate(TypeList* templateArgs, const char* id);
-static Stmt* EndClass();
 static void BeginEnum(Type* e);
 static void AppendEnum(const char* id);
 static void AppendEnum(const char* id, int value);
@@ -114,22 +113,21 @@ Type* FindType(const char* str) {
     Toucan::ArgList*     argList;
     Toucan::UnresolvedInitializer* initializer;
     Toucan::Type*        type;
-    Toucan::ClassType*   classType;
     Toucan::TypeList*    typeList;
 };
 
-%type <type> scalar_type type class_header enum_header
+%type <type> scalar_type type class_header template_class_header enum_header
 %type <type> simple_type opt_return_type
-%type <classType> template_class_header
 %type <expr> expr opt_expr assignable arith_expr expr_or_list opt_initializer opt_length list_initializer
 %type <initializer> initializer initializer_or_type
 %type <arg> argument
 %type <stmt> statement expr_statement for_loop_stmt
 %type <stmt> assignment
 %type <stmt> if_statement for_statement while_statement do_statement
-%type <stmt> opt_else var_decl class_decl
+%type <stmt> opt_else var_decl class_decl class_body_decl
 %type <stmt> class_forward_decl
-%type <stmts> statements var_decl_list var_decl_statement formal_arguments non_empty_formal_arguments method_body
+%type <stmts> statements var_decl_list var_decl_statement formal_arguments non_empty_formal_arguments
+%type <stmts> method_body class_body
 %type <argList> arguments non_empty_arguments opt_workgroup_size
 %type <typeList> types
 %type <typeList> template_formal_arguments
@@ -278,9 +276,9 @@ class_forward_decl:
 
 class_decl:
     class_header opt_parent_class '{'       { BeginClass($1, AsClassType($2)); }
-    class_body '}'                          { $$ = EndClass(); }
-  | template_class_header opt_parent_class  '{' { $1->SetParent(AsClassType($2)); }
-    class_body '}'                              { $$ = EndClass(); }
+    class_body '}'                          { symbols_->PopScope(); $$ = Make<UnresolvedClassDefinition>(AsClassType($1), $5); }
+  | template_class_header opt_parent_class  '{' { AsClassType($1)->SetParent(AsClassType($2)); }
+    class_body '}'                              { symbols_->PopScope(); $$ = Make<UnresolvedClassDefinition>(AsClassType($1), $5); }
   ;
   ;
 
@@ -290,8 +288,8 @@ opt_parent_class:
   ;
 
 class_body:
-    class_body class_body_decl
-  | /* nothing */
+    class_body class_body_decl              { if ($2) $1->Append($2); $$ = $1; }
+  | /* nothing */                           { $$ = Make<Stmts>(); }
   ;
 
 enum_header:
@@ -329,9 +327,9 @@ class_body_decl:
     opt_initializer method_body             { EndMethod($8, $7); }
   | method_modifiers '~' T_TYPENAME '(' ')' { BeginDestructor($1, $3); }
     method_body                             { EndMethod($7); }
-  | var_decl_statement ';'                  { CreateFieldsFromVarDecls($1); }
-  | enum_decl ';'
-  | using_decl
+  | var_decl_statement ';'                  { CreateFieldsFromVarDecls($1); $$ = $1; }
+  | enum_decl ';'                           { $$ = nullptr; }
+  | using_decl                              { $$ = nullptr; }
   ;
 
 method_body:
@@ -724,7 +722,6 @@ static void BeginClass(Type* t, ClassType* parent) {
   ClassType* c = static_cast<ClassType*>(t);
   if (c->IsDefined()) {
     yyerrorf("class \"%s\" already has a definition", c->GetName().c_str());
-    return;
   }
   c->SetParent(parent);
   c->SetDefined(true);
@@ -745,12 +742,6 @@ static ClassType* BeginClassTemplate(TypeList* templateArgs, const char* id) {
     symbols_->DefineType(type->GetName(), type);
   }
   return t;
-}
-
-static Stmt* EndClass() {
-  Scope* scope = symbols_->PopScope();
-  assert(scope->classType);
-  return Make<UnresolvedClassDefinition>(scope->classType);
 }
 
 static void BeginEnum(Type* t) {
@@ -913,7 +904,7 @@ static void InstantiateClassTemplates() {
     TypeReplacementPass pass(nodes_, symbols_, types_, classTemplate->GetFormalTemplateArgs(), instance->GetTemplateArgs(), &instanceQueue_);
     pass.ResolveClassInstance(classTemplate, instance);
     numSyntaxErrors += pass.NumErrors();
-    (*rootStmts_)->Append(Make<UnresolvedClassDefinition>(instance));
+    (*rootStmts_)->Append(Make<UnresolvedClassDefinition>(instance, Make<Stmts>()));
   }
 }
 

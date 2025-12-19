@@ -327,7 +327,7 @@ UnresolvedNewExpr::UnresolvedNewExpr(Type* type, Expr* length, ArgList* arglist,
 
 Type* UnresolvedNewExpr::GetType(TypeTable* types) { return types->GetStrongPtrType(type_); }
 
-UnresolvedClassDefinition::UnresolvedClassDefinition(ClassType* classType) : class_(classType) {}
+UnresolvedClassDefinition::UnresolvedClassDefinition(ClassType* classType, Stmts* stmts) : class_(classType), stmts_(stmts) {}
 
 NodeVector::NodeVector() {}
 
