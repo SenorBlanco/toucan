@@ -95,6 +95,7 @@ class SemanticPass : public CopyVisitor {
   TypeTable*       types_;
   TypeLocationList typesToValidate_;
   int              numErrors_ = 0;
+  Method*          currentMethod_ = nullptr;
 };
 
 };  // namespace Toucan

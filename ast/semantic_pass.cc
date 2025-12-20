@@ -977,7 +977,10 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
       }
     }
 
+    currentMethod_ = method.get();
     method->stmts = Resolve(method->stmts);
+    currentMethod_ = nullptr;
+
     if (method->IsConstructor()) {
       symbols_->PushScope(scope);
       Expr* initializer = method->initializer ? Resolve(method->initializer)
@@ -1027,9 +1030,7 @@ void SemanticPass::UnwindStack(Scope* scope, Stmts* stmts) {
 Result SemanticPass::Visit(ReturnStatement* stmt) {
   if (auto returnValue = Resolve(stmt->GetExpr())) {
     auto type = returnValue->GetType(types_);
-    auto scope = symbols_->PeekScope();
-    while (scope && !scope->method) { scope = scope->parent; }
-    auto returnType = scope ? scope->method->returnType : types_->GetVoid();
+    auto returnType = currentMethod_ ? currentMethod_->returnType : types_->GetVoid();
     if (!type->CanWidenTo(returnType)) {
       Error("cannot return a value of type %s from a function of type %s", type->ToString().c_str(),
       returnType->ToString().c_str());
