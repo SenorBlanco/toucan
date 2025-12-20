@@ -32,7 +32,7 @@ struct Scope {
   Scope(Scope* p) : parent(p) {}
   Scope*     parent;
   EnumType*  enumType = nullptr;
-  Method*    method = nullptr;
+  Stmts*     stmts = nullptr;
   VarVector  vars;
   VarMap     varMap;
   TypeMap    types;

@@ -80,7 +80,7 @@ Type* SymbolTable::FindType(const std::string& identifier) const {
 
 void SymbolTable::Dump() {
   for (const auto& scope : scopes_) {
-    printf("Scope%s:\n", scope->method ? " (method)" : "");
+    printf("Scope:\n");
     for (auto var : scope->vars) {
       printf("  %s", var->type->ToString().c_str());
       printf(" %s;\n", var->name.c_str());
@@ -94,7 +94,6 @@ void SymbolTable::Dump() {
         printf("  enum %s;\n", name);
       }
     }
-    if (scope->method) { printf("TODO:  print formal args here\n"); }
   }
 }
 

@@ -186,7 +186,7 @@ Method* MethodDecl::CreateMethod(ClassType* classType, TypeTable* types) {
       method->AddFormalArg(v->GetID(), v->GetType(), v->GetInitExpr());
     }
   }
-  scope_->method = method;
+  scope_->stmts = method->stmts;
   if (method->stmts) method->stmts->SetScope(scope_);
   return method;
 }
