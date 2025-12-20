@@ -447,7 +447,6 @@ void GenBindings::EmitClass(ClassType* classType) {
     if (emitSymbolsAndStatements_) {
       file_ << "  scope = symbols->PushNewScope();\n"
             << "  symbols->PopScope();\n"
-            << "  scope->classType = c;\n"
             << "  c->SetScope(scope);\n";
     }
   if (ClassType* parent = classType->GetParent()) {

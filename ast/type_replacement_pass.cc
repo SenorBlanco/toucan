@@ -55,7 +55,6 @@ void TypeReplacementPass::ResolveClassInstance(ClassTemplate* classTemplate, Cla
   srcTypes_.push_back(classTemplate);
   dstTypes_.push_back(instance);
   instance->SetScope(symbols_->PushNewScope());
-  instance->GetScope()->classType = instance;
   if (auto parent = classTemplate->GetParent()) {
     instance->SetParent(static_cast<ClassType*>(ResolveType(parent)));
   }

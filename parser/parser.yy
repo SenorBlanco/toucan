@@ -726,7 +726,6 @@ static void BeginClass(Type* t, ClassType* parent) {
   c->SetParent(parent);
   c->SetDefined(true);
   Scope* scope = symbols_->PushNewScope();
-  scope->classType = c;
   c->SetScope(scope);
 }
 
@@ -735,7 +734,6 @@ static ClassType* BeginClassTemplate(TypeList* templateArgs, const char* id) {
   symbols_->DefineType(id, t);
   t->SetDefined(true);
   Scope* scope = symbols_->PushNewScope();
-  scope->classType = t;
   t->SetScope(scope);
   for (Type* const& i : *templateArgs) {
     auto type = static_cast<FormalTemplateArg*>(i);
