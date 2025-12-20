@@ -646,15 +646,22 @@ class ZeroInitStmt : public Stmt {
   Expr* lhs_;
 };
 
-// FIXME: this should be a unique_ptr<Method>.
 class MethodDecl : public Stmt {
  public:
-  MethodDecl(Method* method);
+  MethodDecl(int modifiers, std::string id, std::array<uint32_t, 3> workgroupSize, Stmts* formalArguments, int thisQualifiers, Type* returnType, Expr* initializer, Stmts* body, Scope* scope);
   Result      Accept(Visitor* visitor) override;
-  Method*     GetMethod() { return method_; }
+  Method*     CreateMethod(ClassType* classType, TypeTable* types);
 
  private:
-  Method*     method_;
+  int                     modifiers_;
+  std::string             id_;
+  std::array<uint32_t, 3> workgroupSize_;
+  Stmts*                  formalArguments_;
+  int                     thisQualifiers_;
+  Type*                   returnType_;
+  Stmts*                  body_;
+  Expr*                   initializer_;
+  Scope*                  scope_;
 };
 
 class VarDeclaration : public Stmt {

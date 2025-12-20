@@ -14,6 +14,8 @@
 
 #include "ast.h"
 
+#include "symbol.h" // FIXME: remove this after Scope cleanup
+
 namespace Toucan {
 
 ASTNode::ASTNode() {}
@@ -158,7 +160,36 @@ Type* UnresolvedListExpr::GetType(TypeTable* types) {
   return types->GetList(std::move(vars));
 }
 
-MethodDecl::MethodDecl(Method* method) : method_(method) {}
+MethodDecl::MethodDecl(int modifiers, std::string id, std::array<uint32_t, 3> workgroupSize, Stmts* formalArguments, int thisQualifiers, Type* returnType, Expr* initializer, Stmts* body, Scope* scope)
+    : modifiers_(modifiers),
+      id_(id),
+      workgroupSize_(workgroupSize),
+      formalArguments_(formalArguments),
+      thisQualifiers_(thisQualifiers),
+      returnType_(returnType),
+      body_(body),
+      initializer_(initializer),
+      scope_(scope) {}
+
+Method* MethodDecl::CreateMethod(ClassType* classType, TypeTable* types) {
+  Method* method = new Method(modifiers_, returnType_, id_, classType);
+  method->stmts = body_;
+  method->initializer = initializer_;
+  if (!(modifiers_ & Method::Modifier::Static)) {
+    Type* thisType = types->GetQualifiedType(classType, thisQualifiers_);
+    thisType = types->GetRawPtrType(thisType);
+    method->AddFormalArg("this", thisType, nullptr);
+  }
+  if (formalArguments_) {
+    for (auto& it : formalArguments_->GetStmts()) {
+      VarDeclaration* v = static_cast<VarDeclaration*>(it);
+      method->AddFormalArg(v->GetID(), v->GetType(), v->GetInitExpr());
+    }
+  }
+  scope_->method = method;
+  if (method->stmts) method->stmts->SetScope(scope_);
+  return method;
+}
 
 VarDeclaration::VarDeclaration(std::string id, Type* type, Expr* initExpr)
     : id_(id), type_(type), initExpr_(initExpr) {}

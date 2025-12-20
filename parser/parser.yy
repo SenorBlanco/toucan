@@ -65,11 +65,10 @@ static void BeginEnum(Type* e);
 static void AppendEnum(const char* id);
 static void AppendEnum(const char* id, int value);
 static void EndEnum();
-static MethodDecl* BeginMethod(int modifiers, std::string id, ArgList* workgroupSize,
-                                      Stmts* formalArguments, int thisQualifiers, Type* returnType);
-static MethodDecl* BeginConstructor(int modifiers, Type* type, Stmts* formalArguments);
-static MethodDecl* BeginDestructor(int modifiers, Type* type);
-static MethodDecl* EndMethod(MethodDecl* decl, Stmts* stmts, Expr* initializer = nullptr);
+static MethodDecl* MakeMethod(int modifiers, std::string id, ArgList* optWorkgroupSize,
+                              Stmts* formalArguments, int thisQualifiers, Type* returnType, Expr* initializer, Stmts* body);
+static MethodDecl* MakeConstructor(int modifiers, Type* type, Stmts* formalArguments, Expr* initializer, Stmts* body);
+static MethodDecl* MakeDestructor(int modifiers, Type* type, Stmts* body);
 static void BeginBlock();
 static void EndBlock(Stmts* stmts);
 static Expr* Load(Expr* expr);
@@ -112,7 +111,6 @@ Type* FindType(const char* str) {
     Toucan::Arg*         arg;
     Toucan::ArgList*     argList;
     Toucan::UnresolvedInitializer* initializer;
-    Toucan::MethodDecl*  methodDecl;
     Toucan::Type*        type;
     Toucan::TypeList*    typeList;
 };
@@ -320,14 +318,14 @@ opt_return_type:
   ;
 
 class_body_decl:
-    method_modifiers opt_workgroup_size T_IDENTIFIER '(' formal_arguments ')'
-    opt_type_qualifiers opt_return_type     { $<methodDecl>$ = BeginMethod($1, $3, $2, $5, $7, $8); }
-    method_body                             { $$ = EndMethod($<methodDecl>9, $10); }
-  | method_modifiers T_TYPENAME '(' formal_arguments ')'
-                                            { $<methodDecl>$ = BeginConstructor($1, $2, $4); }
-    opt_initializer method_body             { $$ = EndMethod($<methodDecl>6, $8, $7); }
-  | method_modifiers '~' T_TYPENAME '(' ')' { $<methodDecl>$ = BeginDestructor($1, $3); }
-    method_body                             { $$ = EndMethod($<methodDecl>6, $7); }
+    method_modifiers opt_workgroup_size T_IDENTIFIER '(' formal_arguments ')' opt_type_qualifiers
+    opt_return_type                         { symbols_->PushNewScope(); }
+    method_body                             { $$ = MakeMethod($1, $3, $2, $5, $7, $8, nullptr, $10); symbols_->PopScope(); }
+  | method_modifiers T_TYPENAME '(' formal_arguments ')' opt_initializer
+                                            { symbols_->PushNewScope(); }
+    method_body                             { $$ = MakeConstructor($1, $2, $4, $6, $8); symbols_->PopScope(); }
+  | method_modifiers '~' T_TYPENAME '(' ')' { symbols_->PushNewScope(); }
+    method_body                             { $$ = MakeDestructor($1, $3, $7); symbols_->PopScope(); }
   | var_decl_statement ';'                  { $$ = $1; }
   | enum_decl ';'                           { $$ = nullptr; }
   | using_decl                              { $$ = nullptr; }
@@ -723,6 +721,7 @@ static void BeginClass(Type* t, ClassType* parent) {
   ClassType* c = static_cast<ClassType*>(t);
   if (c->IsDefined()) {
     yyerrorf("class \"%s\" already has a definition", c->GetName().c_str());
+    return;
   }
   c->SetParent(parent);
   c->SetDefined(true);
@@ -761,7 +760,7 @@ class ClassPopulator : public Visitor {
   }
 
   Result Visit(MethodDecl* decl) {
-    classType_->AddMethod(decl->GetMethod());
+    classType_->AddMethod(decl->CreateMethod(classType_, types_));
     return {};
   }
 
@@ -808,27 +807,11 @@ static void EndBlock(Stmts* stmts) {
   stmts->SetScope(symbols_->PopScope());
 }
 
-static MethodDecl* BeginMethod(int modifiers, std::string id, ArgList* workgroupSize,
-                                      Stmts* formalArguments, int thisQualifiers, Type* returnType) {
-  Scope* classScope = symbols_->PeekScope();
-  while (!classScope->classType) {
-    classScope = classScope->parent;
-  }
-  ClassType* classType = classScope->classType;
-  Method* method = new Method(modifiers, returnType, id, classType);
-  if (!(modifiers & Method::Modifier::Static)) {
-    Type* thisType = types_->GetQualifiedType(classType, thisQualifiers);
-    thisType = types_->GetRawPtrType(thisType);
-    method->AddFormalArg("this", thisType, nullptr);
-  }
-  if (formalArguments) {
-    for (Stmt* const& it : formalArguments->GetStmts()) {
-      VarDeclaration* v = static_cast<VarDeclaration*>(it);
-      method->AddFormalArg(v->GetID(), v->GetType(), v->GetInitExpr());
-    }
-  }
-  if (workgroupSize) {
-    auto args = workgroupSize->GetArgs();
+static MethodDecl* MakeMethod(int modifiers, std::string id, ArgList* optWorkgroupSize,
+                              Stmts* formalArguments, int thisQualifiers, Type* returnType, Expr* initializer, Stmts* body) {
+  std::array<uint32_t, 3> workgroupSize;
+  if (optWorkgroupSize) {
+    auto args = optWorkgroupSize->GetArgs();
     if (!(modifiers & Method::Modifier::Compute)) {
       yyerror("non-compute shaders do not require a workgroup size");
     } else if (args.size() == 0 || args.size() > 3) {
@@ -840,37 +823,35 @@ static MethodDecl* BeginMethod(int modifiers, std::string id, ArgList* workgroup
           yyerrorf("workgroup size is not an integer constant");
           break;
         } else {
-          method->workgroupSize[i] = static_cast<IntConstant*>(expr)->GetValue();
+          workgroupSize[i] = static_cast<IntConstant*>(expr)->GetValue();
         }
       }
     }
-  } else if (method->modifiers & Method::Modifier::Compute) {
+  } else if (modifiers & Method::Modifier::Compute) {
     yyerrorf("compute shader requires a workgroup size");
   }
-  Scope* scope = symbols_->PushNewScope();
-  scope->method = method;
-  return Make<MethodDecl>(method);
+  return Make<MethodDecl>(modifiers, id, workgroupSize, formalArguments, thisQualifiers, returnType, initializer, body, symbols_->PeekScope());
 }
 
-static MethodDecl* BeginConstructor(int modifiers, Type* type, Stmts* formalArguments) {
+static MethodDecl* MakeConstructor(int modifiers, Type* type, Stmts* formalArguments, Expr* initializer, Stmts* body) {
   if (!type->IsClass()) {
     yyerror("constructor must be of class type");
     return nullptr;
   }
+  std::array<uint32_t, 3> workgroupSize;
   ClassType* classType = static_cast<ClassType*>(type);
   auto returnType = types_->GetRawPtrType(classType);
-  return BeginMethod(modifiers, classType->GetName(), nullptr, formalArguments, 0, returnType);
+  return MakeMethod(modifiers, classType->GetName(), nullptr, formalArguments, 0, returnType, initializer, body);
 }
 
-static MethodDecl* BeginDestructor(int modifiers, Type* type) {
+static MethodDecl* MakeDestructor(int modifiers, Type* type, Stmts* body) {
   if (!type->IsClass()) {
     yyerror("destructor must be of class type");
     return nullptr;
   }
   ClassType* classType = static_cast<ClassType*>(type);
   std::string name(std::string("~") + classType->GetName());
-  Type* returnType = types_->GetVoid();
-  return BeginMethod(modifiers, name.c_str(), nullptr, nullptr, 0, returnType);
+  return MakeMethod(modifiers, name.c_str(), nullptr, nullptr, 0, types_->GetVoid(), nullptr, body);
 }
 
 static Type* GetScopedType(Type* type, const char* id) {
@@ -887,15 +868,6 @@ static Type* GetScopedType(Type* type, const char* id) {
     return nullptr;
   }
   return scopedType;
-}
-
-MethodDecl* EndMethod(MethodDecl* decl, Stmts* stmts, Expr* initializer) {
-  Scope* methodScope = symbols_->PopScope(); // FIXME: remove
-  Method* method = decl->GetMethod();
-  method->stmts = stmts;
-  method->initializer = initializer;
-  if (stmts) stmts->SetScope(methodScope); // FIXME: remove
-  return decl;
 }
 
 static TypeList* AddIDToTypeList(const char* id, TypeList* list) {
