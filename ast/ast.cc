@@ -158,6 +158,8 @@ Type* UnresolvedListExpr::GetType(TypeTable* types) {
   return types->GetList(std::move(vars));
 }
 
+MethodDecl::MethodDecl(Method* method) : method_(method) {}
+
 VarDeclaration::VarDeclaration(std::string id, Type* type, Expr* initExpr)
     : id_(id), type_(type), initExpr_(initExpr) {}
 
@@ -327,7 +329,7 @@ UnresolvedNewExpr::UnresolvedNewExpr(Type* type, Expr* length, ArgList* arglist,
 
 Type* UnresolvedNewExpr::GetType(TypeTable* types) { return types->GetStrongPtrType(type_); }
 
-UnresolvedClassDefinition::UnresolvedClassDefinition(ClassType* classType, Stmts* stmts) : class_(classType), stmts_(stmts) {}
+UnresolvedClassDefinition::UnresolvedClassDefinition(ClassType* classType) : class_(classType) {}
 
 NodeVector::NodeVector() {}
 
@@ -357,6 +359,7 @@ Result Initializer::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result InsertElementExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result IntConstant::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result LengthExpr::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result MethodDecl::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result NullConstant::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ReturnStatement::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result MethodCall::Accept(Visitor* visitor) { return visitor->Visit(this); }

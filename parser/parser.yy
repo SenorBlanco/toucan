@@ -60,15 +60,16 @@ static EnumType* DeclareEnum(const char* id);
 static void DeclareUsing(const char* id, Type* type);
 static void BeginClass(Type* type, ClassType* parent);
 static ClassType*  BeginClassTemplate(TypeList* templateArgs, const char* id);
+static Stmt* EndClass(ClassType* classType, Stmts* classBody);
 static void BeginEnum(Type* e);
 static void AppendEnum(const char* id);
 static void AppendEnum(const char* id, int value);
 static void EndEnum();
-static void BeginMethod(int modifiers, std::string id, ArgList* workgroupSize,
-                        Stmts* formalArguments, int thisQualifiers, Type* returnType);
-static void BeginConstructor(int modifiers, Type* type, Stmts* formalArguments);
-static void BeginDestructor(int modifiers, Type* type);
-static Method* EndMethod(Stmts* stmts, Expr* initializer = nullptr);
+static MethodDecl* BeginMethod(int modifiers, std::string id, ArgList* workgroupSize,
+                                      Stmts* formalArguments, int thisQualifiers, Type* returnType);
+static MethodDecl* BeginConstructor(int modifiers, Type* type, Stmts* formalArguments);
+static MethodDecl* BeginDestructor(int modifiers, Type* type);
+static MethodDecl* EndMethod(MethodDecl* decl, Stmts* stmts, Expr* initializer = nullptr);
 static void BeginBlock();
 static void EndBlock(Stmts* stmts);
 static Expr* Load(Expr* expr);
@@ -78,7 +79,6 @@ static Expr* MakeArrayAccess(Expr* lhs, Expr* expr);
 static Expr* MakeNewExpr(UnresolvedInitializer* initializer, Expr* length = nullptr);
 static Expr* InlineFile(const char* filename);
 static Expr* StringLiteral(const char* str);
-static void CreateFieldsFromVarDecls(Stmts* stmts);
 static Type* GetArrayType(Type* elementType, int numElements);
 static Type* GetScopedType(Type* type, const char* id);
 static TypeList* AddIDToTypeList(const char* id, TypeList* list);
@@ -112,6 +112,7 @@ Type* FindType(const char* str) {
     Toucan::Arg*         arg;
     Toucan::ArgList*     argList;
     Toucan::UnresolvedInitializer* initializer;
+    Toucan::MethodDecl*  methodDecl;
     Toucan::Type*        type;
     Toucan::TypeList*    typeList;
 };
@@ -276,9 +277,9 @@ class_forward_decl:
 
 class_decl:
     class_header opt_parent_class '{'       { BeginClass($1, AsClassType($2)); }
-    class_body '}'                          { symbols_->PopScope(); $$ = Make<UnresolvedClassDefinition>(AsClassType($1), $5); }
+    class_body '}'                          { $$ = EndClass(AsClassType($1), $5); }
   | template_class_header opt_parent_class  '{' { AsClassType($1)->SetParent(AsClassType($2)); }
-    class_body '}'                              { symbols_->PopScope(); $$ = Make<UnresolvedClassDefinition>(AsClassType($1), $5); }
+    class_body '}'                              { $$ = EndClass(AsClassType($1), $5); }
   ;
   ;
 
@@ -320,14 +321,14 @@ opt_return_type:
 
 class_body_decl:
     method_modifiers opt_workgroup_size T_IDENTIFIER '(' formal_arguments ')'
-    opt_type_qualifiers opt_return_type     { BeginMethod($1, $3, $2, $5, $7, $8); }
-    method_body                             { EndMethod($10); }
+    opt_type_qualifiers opt_return_type     { $<methodDecl>$ = BeginMethod($1, $3, $2, $5, $7, $8); }
+    method_body                             { $$ = EndMethod($<methodDecl>9, $10); }
   | method_modifiers T_TYPENAME '(' formal_arguments ')'
-                                            { BeginConstructor($1, $2, $4); }
-    opt_initializer method_body             { EndMethod($8, $7); }
-  | method_modifiers '~' T_TYPENAME '(' ')' { BeginDestructor($1, $3); }
-    method_body                             { EndMethod($7); }
-  | var_decl_statement ';'                  { CreateFieldsFromVarDecls($1); $$ = $1; }
+                                            { $<methodDecl>$ = BeginConstructor($1, $2, $4); }
+    opt_initializer method_body             { $$ = EndMethod($<methodDecl>6, $8, $7); }
+  | method_modifiers '~' T_TYPENAME '(' ')' { $<methodDecl>$ = BeginDestructor($1, $3); }
+    method_body                             { $$ = EndMethod($<methodDecl>6, $7); }
+  | var_decl_statement ';'                  { $$ = $1; }
   | enum_decl ';'                           { $$ = nullptr; }
   | using_decl                              { $$ = nullptr; }
   ;
@@ -744,6 +745,38 @@ static ClassType* BeginClassTemplate(TypeList* templateArgs, const char* id) {
   return t;
 }
 
+class ClassPopulator : public Visitor {
+ public:
+  ClassPopulator(ClassType* classType) : classType_(classType) {}
+
+ private:
+  Result Visit(Stmts* stmts) override {
+    for (auto stmt : stmts->GetStmts()) stmt->Accept(this);
+    return {};
+  }
+
+  Result Visit(VarDeclaration* v) {
+    classType_->AddField(v->GetID(), v->GetType(), v->GetInitExpr());
+    return {};
+  }
+
+  Result Visit(MethodDecl* decl) {
+    classType_->AddMethod(decl->GetMethod());
+    return {};
+  }
+
+  Result Default(ASTNode* node) override { return {}; }
+
+  ClassType*    classType_;
+};
+
+static Stmt* EndClass(ClassType* classType, Stmts* classBody) {
+  symbols_->PopScope();
+  ClassPopulator populator(classType);
+  classBody->Accept(&populator);
+  return Make<UnresolvedClassDefinition>(classType);
+}
+
 static void BeginEnum(Type* t) {
   Scope* scope = symbols_->PushNewScope();
   scope->enumType = static_cast<EnumType*>(t);
@@ -775,8 +808,8 @@ static void EndBlock(Stmts* stmts) {
   stmts->SetScope(symbols_->PopScope());
 }
 
-static void BeginMethod(int modifiers, std::string id, ArgList* workgroupSize,
-                        Stmts* formalArguments, int thisQualifiers, Type* returnType) {
+static MethodDecl* BeginMethod(int modifiers, std::string id, ArgList* workgroupSize,
+                                      Stmts* formalArguments, int thisQualifiers, Type* returnType) {
   Scope* classScope = symbols_->PeekScope();
   while (!classScope->classType) {
     classScope = classScope->parent;
@@ -816,36 +849,28 @@ static void BeginMethod(int modifiers, std::string id, ArgList* workgroupSize,
   }
   Scope* scope = symbols_->PushNewScope();
   scope->method = method;
+  return Make<MethodDecl>(method);
 }
 
-static void BeginConstructor(int modifiers, Type* type, Stmts* formalArguments) {
+static MethodDecl* BeginConstructor(int modifiers, Type* type, Stmts* formalArguments) {
   if (!type->IsClass()) {
     yyerror("constructor must be of class type");
-    return;
+    return nullptr;
   }
   ClassType* classType = static_cast<ClassType*>(type);
   auto returnType = types_->GetRawPtrType(classType);
-  BeginMethod(modifiers, classType->GetName(), nullptr, formalArguments, 0, returnType);
+  return BeginMethod(modifiers, classType->GetName(), nullptr, formalArguments, 0, returnType);
 }
 
-static void BeginDestructor(int modifiers, Type* type) {
+static MethodDecl* BeginDestructor(int modifiers, Type* type) {
   if (!type->IsClass()) {
     yyerror("destructor must be of class type");
-    return;
+    return nullptr;
   }
   ClassType* classType = static_cast<ClassType*>(type);
   std::string name(std::string("~") + classType->GetName());
   Type* returnType = types_->GetVoid();
-  BeginMethod(modifiers, name.c_str(), nullptr, nullptr, 0, returnType);
-}
-
-static void CreateFieldsFromVarDecls(Stmts* stmts) {
-  ClassType* classType = symbols_->PeekScope()->classType;
-  assert(classType);
-  for (Stmt* const& it : stmts->GetStmts()) {
-    VarDeclaration* v = static_cast<VarDeclaration*>(it);
-    classType->AddField(v->GetID(), v->GetType(), v->GetInitExpr());
-  }
+  return BeginMethod(modifiers, name.c_str(), nullptr, nullptr, 0, returnType);
 }
 
 static Type* GetScopedType(Type* type, const char* id) {
@@ -864,19 +889,13 @@ static Type* GetScopedType(Type* type, const char* id) {
   return scopedType;
 }
 
-static Method* EndMethod(Stmts* stmts, Expr* initializer) {
-  Scope* methodScope = symbols_->PopScope();
-  Method* method = methodScope->method;
+MethodDecl* EndMethod(MethodDecl* decl, Stmts* stmts, Expr* initializer) {
+  Scope* methodScope = symbols_->PopScope(); // FIXME: remove
+  Method* method = decl->GetMethod();
   method->stmts = stmts;
   method->initializer = initializer;
-  if (stmts) stmts->SetScope(methodScope);
-  Scope* scope = symbols_->PeekScope();
-  if (!scope || !scope->classType) {
-    yyerror("method definition outside class?!");
-    return nullptr;
-  }
-  scope->classType->AddMethod(method);
-  return method;
+  if (stmts) stmts->SetScope(methodScope); // FIXME: remove
+  return decl;
 }
 
 static TypeList* AddIDToTypeList(const char* id, TypeList* list) {
@@ -904,7 +923,7 @@ static void InstantiateClassTemplates() {
     TypeReplacementPass pass(nodes_, symbols_, types_, classTemplate->GetFormalTemplateArgs(), instance->GetTemplateArgs(), &instanceQueue_);
     pass.ResolveClassInstance(classTemplate, instance);
     numSyntaxErrors += pass.NumErrors();
-    (*rootStmts_)->Append(Make<UnresolvedClassDefinition>(instance, Make<Stmts>()));
+    (*rootStmts_)->Append(Make<UnresolvedClassDefinition>(instance));
   }
 }
 

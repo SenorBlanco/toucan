@@ -488,6 +488,7 @@ size_t ClassType::ComputeFieldOffsets() {
 }
 
 void ClassType::AddMethod(Method* method) {
+  method->classType = this;
   methods_.push_back(std::unique_ptr<Method>(method));
   if (method->IsDestructor()) destructor_ = method;
 }

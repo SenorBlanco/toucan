@@ -646,6 +646,17 @@ class ZeroInitStmt : public Stmt {
   Expr* lhs_;
 };
 
+// FIXME: this should be a unique_ptr<Method>.
+class MethodDecl : public Stmt {
+ public:
+  MethodDecl(Method* method);
+  Result      Accept(Visitor* visitor) override;
+  Method*     GetMethod() { return method_; }
+
+ private:
+  Method*     method_;
+};
+
 class VarDeclaration : public Stmt {
  public:
   VarDeclaration(std::string id, Type* type, Expr* initExpr);
@@ -745,14 +756,12 @@ class UnresolvedNewExpr : public Expr {
 
 class UnresolvedClassDefinition : public Stmt {
  public:
-  UnresolvedClassDefinition(ClassType* classType, Stmts* stmts);
+  UnresolvedClassDefinition(ClassType* classType);
   Result Accept(Visitor* visitor) override;
   ClassType* GetClass() { return class_; }
-  Stmts*     GetStmts() { return stmts_; }
 
  private:
   ClassType* class_;
-  Stmts*     stmts_;
 };
 
 class UnaryOp : public Expr {
@@ -812,6 +821,7 @@ class Visitor {
   virtual Result Visit(IntConstant* node) { return Default(node); }
   virtual Result Visit(UIntConstant* node) { return Default(node); }
   virtual Result Visit(LengthExpr* node) { return Default(node); }
+  virtual Result Visit(MethodDecl* node) { return Default(node); }
   virtual Result Visit(NullConstant* node) { return Default(node); }
   virtual Result Visit(ReturnStatement* node) { return Default(node); }
   virtual Result Visit(MethodCall* node) { return Default(node); }
