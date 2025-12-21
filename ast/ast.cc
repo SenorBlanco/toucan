@@ -175,6 +175,7 @@ Method* MethodDecl::CreateMethod(ClassType* classType, TypeTable* types) {
   Method* method = new Method(modifiers_, returnType_, id_, classType);
   method->stmts = body_;
   method->initializer = initializer_;
+  method->workgroupSize = workgroupSize_;
   if (!(modifiers_ & Method::Modifier::Static)) {
     Type* thisType = types->GetQualifiedType(classType, thisQualifiers_);
     thisType = types->GetRawPtrType(thisType);

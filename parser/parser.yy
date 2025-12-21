@@ -830,7 +830,6 @@ static MethodDecl* MakeConstructor(int modifiers, Type* type, Stmts* formalArgum
     yyerror("constructor must be of class type");
     return nullptr;
   }
-  std::array<uint32_t, 3> workgroupSize;
   ClassType* classType = static_cast<ClassType*>(type);
   auto returnType = types_->GetRawPtrType(classType);
   return MakeMethod(modifiers, classType->GetName(), nullptr, formalArguments, 0, returnType, initializer, body);
