@@ -46,6 +46,7 @@ static Stmts** rootStmts_;
 static std::unordered_set<std::string> includedFiles_;
 static std::stack<FileLocation> fileStack_;
 static std::queue<ClassType*> instanceQueue_;
+static EnumType* currentEnumType_;
 
 extern int yylex();
 extern int yylex_destroy();
@@ -775,26 +776,19 @@ static Stmt* EndClass(ClassType* classType, Stmts* classBody) {
 }
 
 static void BeginEnum(Type* t) {
-  Scope* scope = symbols_->PushNewScope();
-  scope->enumType = static_cast<EnumType*>(t);
+  currentEnumType_ = static_cast<EnumType*>(t);
 }
 
 static void EndEnum() {
-  symbols_->PopScope();
+  currentEnumType_ = nullptr;
 }
 
 static void AppendEnum(const char *id) {
-  EnumType* enumType = symbols_->PeekScope()->enumType;
-  if (!enumType) return;
-
-  enumType->Append(id);
+  currentEnumType_->Append(id);
 }
 
 static void AppendEnum(const char *id, int value) {
-  EnumType* enumType = symbols_->PeekScope()->enumType;
-  if (!enumType) return;
-
-  enumType->Append(id, value);
+  currentEnumType_->Append(id, value);
 }
 
 static void BeginBlock() {
