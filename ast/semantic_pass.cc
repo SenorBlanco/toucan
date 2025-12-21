@@ -1017,7 +1017,7 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
 }
 
 void SemanticPass::UnwindStack(Scope* scope, Stmts* stmts) {
-  for(; scope && !(currentMethod_ && scope->stmts == currentMethod_->stmts); scope = scope->parent) {
+  for(; scope && !scope->isMethod; scope = scope->parent) {
     for (auto var : scope->vars) {
       if (var->type->NeedsDestruction()) {
         stmts->Append(Make<DestroyStmt>(Make<VarExpr>(var.get())));

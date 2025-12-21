@@ -45,7 +45,7 @@ Method* TypeReplacementPass::ResolveMethod(Method* m) {
   }
   if (m->stmts) {
     result->stmts = Resolve(m->stmts);
-    if (result->stmts->GetScope()) { result->stmts->GetScope()->stmts = result->stmts; }
+    result->stmts->GetScope()->isMethod = true;
   }
   if (m->initializer) result->initializer = Resolve(m->initializer);
   return result;

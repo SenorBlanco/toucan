@@ -31,7 +31,7 @@ typedef std::unordered_map<std::string, Expr*> ExprMap;
 struct Scope {
   Scope(Scope* p) : parent(p) {}
   Scope*     parent;
-  Stmts*     stmts = nullptr;
+  bool       isMethod = false;
   VarVector  vars;
   TypeMap    types;
   ExprMap    ids;
