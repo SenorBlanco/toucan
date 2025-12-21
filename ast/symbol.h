@@ -33,7 +33,6 @@ struct Scope {
   Scope*     parent;
   Stmts*     stmts = nullptr;
   VarVector  vars;
-  VarMap     varMap;
   TypeMap    types;
   ExprMap    ids;
 };

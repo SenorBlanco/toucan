@@ -173,7 +173,7 @@ Result SemanticPass::Visit(Stmts* stmts) {
     for (auto var : scope->vars) {
       newStmts->AppendVar(var);
     }
-    for (auto var : std::views::reverse(scope->vars)) {
+    for (auto var : std::views::reverse(newStmts->GetVars())) {
       if (var->type->NeedsDestruction() && !containsReturn) {
         newStmts->Append(Make<DestroyStmt>(Make<VarExpr>(var.get())));
       }
@@ -325,7 +325,6 @@ Result SemanticPass::Visit(VarDeclaration* decl) {
   if (!type->IsRawPtr() && type->ContainsRawPtr()) {
     return Error("cannot allocate a type containing a raw pointer");
   }
-  // FIXME: have StmtScope own its own vars.
   Var*  var = symbols_->DefineVar(id, type);
   Expr* varExpr = Make<VarExpr>(var);
   Expr* expr = Make<VarExpr>(var);

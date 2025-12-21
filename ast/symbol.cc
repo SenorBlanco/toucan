@@ -54,7 +54,6 @@ Var* SymbolTable::DefineVar(std::string identifier, Type* type) {
   if (!currentScope_) return nullptr;
   auto var = std::make_shared<Var>(identifier, type);
   currentScope_->vars.push_back(var);
-  currentScope_->varMap[identifier] = var.get();
   return var.get();
 }
 
