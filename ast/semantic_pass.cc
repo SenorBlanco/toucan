@@ -1016,8 +1016,8 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   return nullptr;
 }
 
-void SemanticPass::UnwindStack(Scope* scope, Stmts* stmts) {
-  for(; scope && !scope->isMethod; scope = scope->parent) {
+void SemanticPass::UnwindStack(Stmts* stmts) {
+  for (auto scope = symbols_->PeekScope(); scope && !scope->isMethod; scope = scope->parent) {
     for (auto var : scope->vars) {
       if (var->type->NeedsDestruction()) {
         stmts->Append(Make<DestroyStmt>(Make<VarExpr>(var.get())));
@@ -1036,7 +1036,7 @@ Result SemanticPass::Visit(ReturnStatement* stmt) {
     }
   }
   auto stmts = Make<Stmts>();
-  UnwindStack(symbols_->PeekScope(), stmts);
+  UnwindStack(stmts);
   stmts->Append(Make<ReturnStatement>(Resolve(stmt->GetExpr())));
   return stmts;
 }

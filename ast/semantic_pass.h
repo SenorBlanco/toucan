@@ -65,7 +65,7 @@ class SemanticPass : public CopyVisitor {
   void   PreVisit(UnresolvedClassDefinition* node);
 
  private:
-  void    UnwindStack(Scope* scope, Stmts* stmts);
+  void    UnwindStack(Stmts* stmts);
   Expr*   MakeConstantOne(Type* type);
   Expr*   MakeLoad(Expr* expr);
   Expr*   MakeReadOnlyTempVar(Expr* expr);
