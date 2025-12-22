@@ -19,6 +19,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "ast.h"
 #ifndef _AST_TYPE_H
 #include "type.h"
 #endif
@@ -45,15 +46,15 @@ class SymbolTable {
   Var*             DefineVar(std::string identifier, Type* type);
   void             DefineID(std::string identifier, Expr* expr);
   bool             DefineType(std::string identifier, Type* type);
-  Scope*           PushNewScope();
-  void             PushScope(Scope* scope);
-  Scope*           PopScope();
-  Scope*           PeekScope();
+  ScopedStmt*      PushNewScope();
+  void             PushScope(ScopedStmt* scope);
+  ScopedStmt*      PopScope();
+  ScopedStmt*      PeekScope();
   void             Dump();
 
  private:
-  Scope*                              currentScope_;
-  std::vector<std::unique_ptr<Scope>> scopes_;
+  ScopedStmt*                        currentScope_;
+  std::vector<ScopedStmt*>           scopes_;
 };
 
 };  // namespace Toucan

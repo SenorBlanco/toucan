@@ -159,24 +159,17 @@ Result SemanticPass::Visit(Data* node) { return node; }
 
 Result SemanticPass::Visit(Stmts* stmts) {
   Stmts* newStmts = Make<Stmts>();
-  Scope* scope = stmts->GetScope();
-  if (scope) { symbols_->PushScope(scope); }
+  symbols_->PushScope(newStmts);
   for (Stmt* const& it : stmts->GetStmts()) {
     Stmt* stmt = Resolve(it);
     if (stmt) newStmts->Append(stmt);
   }
-  if (scope) {
-    bool containsReturn = stmts->ContainsReturn();
-    // Append vars to new stmts for any vars in this scope.  Also
-    // append destructor calls for any vars that need it.
-    symbols_->PopScope();
-    for (auto var : scope->vars) {
-      newStmts->AppendVar(var);
-    }
-    for (auto var : std::views::reverse(newStmts->GetVars())) {
-      if (var->type->NeedsDestruction() && !containsReturn) {
-        newStmts->Append(Make<DestroyStmt>(Make<VarExpr>(var.get())));
-      }
+  bool containsReturn = stmts->ContainsReturn();
+  symbols_->PopScope();
+  // Append destructor calls for any vars that need it.
+  for (auto var : std::views::reverse(newStmts->GetVars())) {
+    if (var->type->NeedsDestruction() && !containsReturn) {
+      newStmts->Append(Make<DestroyStmt>(Make<VarExpr>(var.get())));
     }
   }
   return newStmts;
@@ -301,7 +294,7 @@ Stmts* SemanticPass::InitializeArray(Expr* dest, Type* elementType, Expr* length
 Result SemanticPass::Visit(VarDeclaration* decl) {
   std::string id = decl->GetID();
   Type*       type = decl->GetType();
-  if (symbols_->PeekScope()->ids.contains(id)) {
+  if (symbols_->FindID(id)) {
     return Error("variable \"%s\" already defined in this scope", id.c_str());
   }
   if (!type) return nullptr;
@@ -942,7 +935,7 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   // Template classes don't need semantic analysis, since their code won't be directly generated.
   if (classType->IsClassTemplate()) return nullptr;
 
-  symbols_->PushScope(scope);
+  symbols_->PushScope(defn);
 
   if (classType->NeedsDestruction()) {
     auto destructor = classType->GetDestructor();
@@ -967,13 +960,10 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   for (const auto& method : classType->GetMethods()) {
     if (!method->stmts) continue;
 
-    Scope* scope = method->stmts->GetScope();
-    if (scope) {
-      for (const auto& var : method->formalArgList) {
-        Expr* expr = Make<VarExpr>(var.get());
-        if (var->type->IsRawPtr()) expr = Make<LoadExpr>(expr);
-        scope->ids[var->name] = expr;
-      }
+    for (const auto& var : method->formalArgList) {
+      Expr* expr = Make<VarExpr>(var.get());
+      if (var->type->IsRawPtr()) expr = Make<LoadExpr>(expr);
+      method->stmts->DefineID(var->name, expr);
     }
 
     currentMethod_ = method.get();
@@ -981,7 +971,7 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
     currentMethod_ = nullptr;
 
     if (method->IsConstructor()) {
-      symbols_->PushScope(scope);
+      symbols_->PushScope(method->stmts);
       Expr* initializer = method->initializer ? Resolve(method->initializer)
                           : ResolveListExpr(Make<ArgList>(), method->classType);
       symbols_->PopScope();
@@ -1017,8 +1007,8 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
 }
 
 void SemanticPass::UnwindStack(Stmts* stmts) {
-  for (auto scope = symbols_->PeekScope(); scope && !scope->isMethod; scope = scope->parent) {
-    for (auto var : scope->vars) {
+  for (auto scope = symbols_->PeekScope(); scope && !scope->IsMethod(); scope = scope->GetParent()) {
+    for (auto var : scope->GetVars()) {
       if (var->type->NeedsDestruction()) {
         stmts->Append(Make<DestroyStmt>(Make<VarExpr>(var.get())));
       }

@@ -320,6 +320,8 @@ NullConstant::NullConstant() {}
 
 Type* NullConstant::GetType(TypeTable* types) { return types->GetStrongPtrType(types->GetVoid()); }
 
+ScopedStmt::ScopedStmt() {}
+
 Stmts::Stmts() : scope_(nullptr) {}
 
 void Stmts::AppendVar(std::shared_ptr<Var> var) { vars_.push_back(var); }

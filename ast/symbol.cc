@@ -22,29 +22,22 @@ namespace Toucan {
 
 SymbolTable::SymbolTable() : currentScope_(nullptr) {}
 
-Scope* SymbolTable::PushNewScope() {
-  Scope* scope = new Scope(currentScope_);
-  scopes_.push_back(std::unique_ptr<Scope>(scope));
-  currentScope_ = scope;
-  return scope;
-}
-
-void SymbolTable::PushScope(Scope* scope) {
-  assert(scope && currentScope_ == scope->parent);
+void SymbolTable::PushScope(ScopedStmt* scope) {
+  scope->SetParent(currentScope_);
   currentScope_ = scope;
 }
 
-Scope* SymbolTable::PopScope() {
-  Scope* back = currentScope_;
-  currentScope_ = back ? back->parent : nullptr;
+ScopedStmt* SymbolTable::PopScope() {
+  ScopedStmt* back = currentScope_;
+  currentScope_ = back ? back->GetParent() : nullptr;
   return back;
 }
 
-Scope* SymbolTable::PeekScope() { return currentScope_; }
+ScopedStmt* SymbolTable::PeekScope() { return currentScope_; }
 
 Expr* SymbolTable::FindID(const std::string& identifier) const {
-  for (Scope* scope = currentScope_; scope != nullptr; scope = scope->parent) {
-    ExprMap::const_iterator j = scope->ids.find(identifier);
+  for (ScopedStmt* scope = currentScope_; scope != nullptr; scope = scope->GetParent()) {
+    ExprMap::const_iterator j = scope->FindID(identifier);
     if (j != scope->ids.end()) { return j->second; }
   }
   return nullptr;
@@ -69,8 +62,7 @@ bool SymbolTable::DefineType(std::string identifier, Type* type) {
 }
 
 Type* SymbolTable::FindType(const std::string& identifier) const {
-  Scope* scope = currentScope_;
-  for (scope = currentScope_; scope != nullptr; scope = scope->parent) {
+  for (auto scope = currentScope_; scope != nullptr; scope = scope->parent) {
     TypeMap::const_iterator j = scope->types.find(identifier);
     if (j != scope->types.end()) { return j->second; }
   }

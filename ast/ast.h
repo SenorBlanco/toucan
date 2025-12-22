@@ -541,7 +541,29 @@ class Stmt : public ASTNode {
   virtual bool ContainsReturn() const { return false; }
 };
 
-class Stmts : public Stmt {
+typedef std::unordered_map<std::string, Var*>  VarMap;
+typedef std::unordered_map<std::string, Type*> TypeMap;
+typedef std::unordered_map<std::string, Expr*> ExprMap;
+
+class ScopedStmt : public Stmt {
+ public:
+  ScopedStmt();
+  void                SetParent(ScopedStmt* parent) { parent_ = parent; }
+  void                DefineID(std::string id, Expr* expr) { ids_[id] = expr; }
+  bool                IsMethod() const { return isMethod_; }
+  ScopedStmt*         GetParent() const { return parent_; }
+  void                AppendVar(std::shared_ptr<Var> v);
+  const VarVector&    GetVars() const { return vars_; }
+
+ private:
+  ScopedStmt* parent_ = nullptr;
+  bool        isMethod_ = false;
+  VarVector   vars_;
+  TypeMap     types_;
+  ExprMap     ids_;
+};
+
+class Stmts : public ScopedStmt {
  public:
   Stmts();
   Result                    Accept(Visitor* visitor) override;
@@ -761,7 +783,7 @@ class UnresolvedNewExpr : public Expr {
   bool     constructor_;
 };
 
-class UnresolvedClassDefinition : public Stmt {
+class UnresolvedClassDefinition : public ScopedStmt {
  public:
   UnresolvedClassDefinition(ClassType* classType);
   Result Accept(Visitor* visitor) override;
