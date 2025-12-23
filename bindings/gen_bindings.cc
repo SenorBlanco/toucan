@@ -17,8 +17,6 @@
 #include <cassert>
 #include <iostream>
 
-#include <ast/symbol.h>
-
 namespace Toucan {
 
 namespace {
@@ -182,7 +180,7 @@ int GenBindings::EmitType(Type* type) {
       file_ << "  type" << id << "->Append(\"" << v.id << "\", " << v.value << ");\n";
     }
     if (emitSymbolsAndStatements_) {
-      file_ << "  symbols.DefineType(\"" << enumType->GetName() << "\", type" << id << ");\n";
+      file_ << "  rootStmts->DefineType(\"" << enumType->GetName() << "\", type" << id << ");\n";
     }
   } else if (type->IsPtr()) {
     PtrType* ptrType = static_cast<PtrType*>(type);
@@ -234,14 +232,11 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   file_ << "#include <cstdint>\n";
   file_ << "#include <ast/ast.h>\n";
   file_ << "#include <ast/native_class.h>\n";
-  file_ << "#include <ast/symbol.h>\n";
   file_ << "#include <ast/type.h>\n";
   file_ << "\n";
   file_ << "namespace Toucan {\n\n";
   if (emitSymbolsAndStatements_) {
     file_ << "void InitAPI(TypeTable* types, NodeVector* nodes, Stmts* rootStmts) {\n";
-    file_ << "  SymbolTable symbols;\n";
-    file_ << "  symbols.PushScope(rootStmts);\n";
   } else {
     file_ << "Type** InitTypes(TypeTable* types) {\n";
   }
@@ -479,7 +474,7 @@ void GenBindings::EmitClass(ClassType* classType) {
     }
   }
   if (emitSymbolsAndStatements_ && !classType->GetTemplate()) {
-    file_ << "  symbols.DefineType(\"" << classType->GetName() << "\", c);\n";
+    file_ << "  rootStmts->DefineType(\"" << classType->GetName() << "\", c);\n";
   }
 }
 

@@ -897,7 +897,7 @@ static ClassType* PopInstanceQueue() {
 static void InstantiateClassTemplates() {
   while (ClassType* instance = PopInstanceQueue()) {
     ClassTemplate* classTemplate = instance->GetTemplate();
-    TypeReplacementPass pass(nodes_, symbols_, types_, classTemplate->GetFormalTemplateArgs(), instance->GetTemplateArgs(), &instanceQueue_);
+    TypeReplacementPass pass(nodes_, types_, classTemplate->GetFormalTemplateArgs(), instance->GetTemplateArgs(), &instanceQueue_);
     pass.ResolveClassInstance(classTemplate, instance);
     numSyntaxErrors += pass.NumErrors();
     rootStmts_->Append(Make<UnresolvedClassDefinition>(instance));

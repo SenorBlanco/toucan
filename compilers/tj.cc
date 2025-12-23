@@ -36,7 +36,6 @@
 #include <api/init_api.h>
 #include <ast/ast.h>
 #include <ast/semantic_pass.h>
-#include <ast/symbol.h>
 #include <ast/type.h>
 #include <codegen/codegen_llvm.h>
 #include <codegen/codegen_spirv.h>
@@ -72,7 +71,6 @@ void WriteCode(const std::vector<uint32_t>& code) {
 
 int main(int argc, char** argv) {
   bool dump = false;
-  bool dumpSymbolTable = false;
   bool spirv = false;
   bool showTime = false;
 
@@ -85,7 +83,6 @@ int main(int argc, char** argv) {
   while ((opt = getopt(argc, argv, optstring)) > 0) {
     switch (opt) {
       case 'd': dump = true; break;
-      case 's': dumpSymbolTable = true; break;
       case 'v': spirv = true; break;
       case 't': showTime = true; break;
       case 'c': classname = optarg; break;
@@ -106,20 +103,14 @@ int main(int argc, char** argv) {
   NodeVector  nodes;
   auto rootStmts = nodes.Make<Stmts>();
   InitAPI(&types, &nodes, rootStmts);
-  Stmts*            program;
   int syntaxErrors = ParseProgram(filename, &types, &nodes, includePaths, rootStmts);
   if (syntaxErrors > 0) { exit(1); }
   types.SetMemoryLayout();
-  SymbolTable symbols; // FIXME remove this
-  SemanticPass semanticPass(&nodes, &symbols, &types);
+  SemanticPass semanticPass(&nodes, &types);
   rootStmts = semanticPass.Run(rootStmts);
   if (semanticPass.GetNumErrors() > 0) { exit(2); }
   types.ComputeFieldOffsets();
   double start, end;
-  if (dumpSymbolTable) {
-    symbols.Dump();
-    exit(0);
-  }
   if (spirv) {
     Type* t = rootStmts->FindType(classname);
     if (!t) {

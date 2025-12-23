@@ -18,18 +18,14 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "symbol.h"
-
 namespace Toucan {
 
 TypeReplacementPass::TypeReplacementPass(NodeVector*     nodes,
-                                         SymbolTable*    symbols,
                                          TypeTable*      types,
                                          const TypeList& srcTypes,
                                          const TypeList& dstTypes,
                                          std::queue<ClassType*>* instanceQueue)
     : CopyVisitor(nodes),
-      symbols_(symbols),
       types_(types),
       srcTypes_(srcTypes),
       dstTypes_(dstTypes),

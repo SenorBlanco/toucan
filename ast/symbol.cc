@@ -23,7 +23,6 @@ namespace Toucan {
 SymbolTable::SymbolTable() : currentScope_(nullptr) {}
 
 void SymbolTable::PushScope(Stmts* scope) {
-//  assert(scope->GetParent() == nullptr || scope->GetParent() == currentScope_);
   scope->SetParent(currentScope_);
   currentScope_ = scope;
 }
@@ -63,31 +62,8 @@ void SymbolTable::DefineType(std::string identifier, Type* type) {
 Type* SymbolTable::FindType(const std::string& identifier) const {
   for (auto scope = currentScope_; scope != nullptr; scope = scope->GetParent()) {
     if (auto type = scope->FindType(identifier)) return type;
-//    TypeMap::const_iterator j = scope->types.find(identifier);
-//    if (j != scope->types.end()) { return j->second; }
   }
   return nullptr;
-}
-
-void SymbolTable::Dump() {
-/*
-  for (const auto& scope : scopes_) {
-    printf("Scope:\n");
-    for (auto var : scope->vars) {
-      printf("  %s", var->type->ToString().c_str());
-      printf(" %s;\n", var->name.c_str());
-    }
-    for (const auto& i : scope->types) {
-      const char* name = i.first.c_str();
-      const Type* t = i.second;
-      if (t->IsClass()) {
-        printf("  class %s;\n", name);
-      } else if (t->IsEnum()) {
-        printf("  enum %s;\n", name);
-      }
-    }
-  }
-*/
 }
 
 };  // namespace Toucan

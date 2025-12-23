@@ -20,7 +20,6 @@
 #include <algorithm>
 
 #include "ast.h"
-#include "symbol.h"
 
 namespace Toucan {
 

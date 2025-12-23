@@ -16,10 +16,9 @@
 #define _AST_AST_SEMANTIC_PASS_H_
 
 #include "copy_visitor.h"
+#include <ast/symbol.h>
 
 namespace Toucan {
-
-class SymbolTable;
 
 struct TypeLocationPair {
   Type*        type;
@@ -30,7 +29,7 @@ using TypeLocationList = std::vector<TypeLocationPair>;
 
 class SemanticPass : public CopyVisitor {
  public:
-  SemanticPass(NodeVector* nodes, SymbolTable* symbols, TypeTable* types);
+  SemanticPass(NodeVector* nodes, TypeTable* types);
   Stmts* Run(Stmts* stmts);
   Result Visit(ArgList* node) override;
   Result Visit(ArrayAccess* node) override;
@@ -91,7 +90,7 @@ class SemanticPass : public CopyVisitor {
                      ArgList*            args,
                      std::vector<Expr*>* newArgList);
   Method* FindOverriddenMethod(ClassType* classType, Method* method);
-  SymbolTable*     symbols_;
+  SymbolTable      symbols_;
   TypeTable*       types_;
   TypeLocationList typesToValidate_;
   int              numErrors_ = 0;

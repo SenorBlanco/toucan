@@ -25,7 +25,6 @@
 #include <ranges>
 
 #include "api_validator.h"
-#include "symbol.h"
 
 namespace Toucan {
 
@@ -84,8 +83,8 @@ bool HasDuplicates(const std::vector<int>& indices) {
 
 }
 
-SemanticPass::SemanticPass(NodeVector* nodes, SymbolTable* symbols, TypeTable* types)
-    : CopyVisitor(nodes), symbols_(symbols), types_(types), numErrors_(0) {}
+SemanticPass::SemanticPass(NodeVector* nodes, TypeTable* types)
+    : CopyVisitor(nodes), types_(types), numErrors_(0) {}
 
 Stmts* SemanticPass::Run(Stmts* stmts) {
   UnresolvedClassVisitor ucv(this);
@@ -159,13 +158,13 @@ Result SemanticPass::Visit(Data* node) { return node; }
 
 Result SemanticPass::Visit(Stmts* stmts) {
   Stmts* newStmts = Make<Stmts>();
-  symbols_->PushScope(stmts);
+  symbols_.PushScope(stmts);
   for (Stmt* const& it : stmts->GetStmts()) {
     Stmt* stmt = Resolve(it);
     if (stmt) newStmts->Append(stmt);
   }
   bool containsReturn = stmts->ContainsReturn();
-  symbols_->PopScope();
+  symbols_.PopScope();
   for (auto var : stmts->GetVars()) {
     newStmts->AppendVar(var);
   }
@@ -297,7 +296,7 @@ Stmts* SemanticPass::InitializeArray(Expr* dest, Type* elementType, Expr* length
 Result SemanticPass::Visit(VarDeclaration* decl) {
   std::string id = decl->GetID();
   Type*       type = decl->GetType();
-  if (symbols_->PeekScope()->FindID(id)) {
+  if (symbols_.PeekScope()->FindID(id)) {
     return Error("variable \"%s\" already defined in this scope", id.c_str());
   }
   if (!type) return nullptr;
@@ -321,11 +320,11 @@ Result SemanticPass::Visit(VarDeclaration* decl) {
   if (!type->IsRawPtr() && type->ContainsRawPtr()) {
     return Error("cannot allocate a type containing a raw pointer");
   }
-  Var*  var = symbols_->AppendVar(id, type);
+  Var*  var = symbols_.AppendVar(id, type);
   Expr* varExpr = Make<VarExpr>(var);
   Expr* expr = Make<VarExpr>(var);
   if (var->type->IsRawPtr()) expr = Make<LoadExpr>(expr);
-  symbols_->DefineID(id, expr);
+  symbols_.DefineID(id, expr);
   return Initialize(varExpr, initExpr);
 }
 
@@ -540,7 +539,7 @@ Result SemanticPass::Visit(LoadExpr* node) {
 
 Result SemanticPass::Visit(UnresolvedIdentifier* node) {
   std::string id = node->GetID();
-  if (Expr* expr = symbols_->FindID(id)) {
+  if (Expr* expr = symbols_.FindID(id)) {
     copyFileLocation_ = false;
     expr = Resolve(expr);
     copyFileLocation_ = true;
@@ -930,12 +929,12 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   // Template classes don't need semantic analysis, since their code won't be directly generated.
   if (classType->IsClassTemplate()) return nullptr;
 
-  symbols_->PushScope(Make<Stmts>());
+  symbols_.PushScope(Make<Stmts>());
 
   for (auto c = classType; c != nullptr; c = c->GetParent()) {
     for (const auto& field : c->GetFields()) {
       Expr* thisPtr = Make<UnresolvedIdentifier>("this");
-      symbols_->DefineID(field->name, Make<FieldAccess>(thisPtr, field.get()));
+      symbols_.DefineID(field->name, Make<FieldAccess>(thisPtr, field.get()));
     }
   }
 
@@ -963,24 +962,23 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
     if (!method->stmts) continue;
 
     auto methodScope = Make<Stmts>();
-    symbols_->PushScope(methodScope);
+    symbols_.PushScope(methodScope);
     for (const auto& var : method->formalArgList) {
       Expr* expr = Make<VarExpr>(var.get());
       if (var->type->IsRawPtr()) expr = Make<LoadExpr>(expr);
-      symbols_->DefineID(var->name, expr);
+      symbols_.DefineID(var->name, expr);
     }
 
     currentMethod_ = method.get();
     method->stmts = Resolve(method->stmts);
     currentMethod_ = nullptr;
-    symbols_->PopScope();
+    symbols_.PopScope();
 
     if (method->IsConstructor()) {
-      // FIXME: why do we do this, again?
-      symbols_->PushScope(methodScope);
+      symbols_.PushScope(methodScope);
       Expr* initializer = method->initializer ? Resolve(method->initializer)
                           : ResolveListExpr(Make<ArgList>(), method->classType);
-      symbols_->PopScope();
+      symbols_.PopScope();
       auto This = Make<LoadExpr>(Make<VarExpr>(method->formalArgList[0].get()));
       method->stmts->Prepend(Make<StoreStmt>(This, Widen(initializer, method->classType)));
       method->stmts->Append(Make<ReturnStatement>(This));
@@ -1008,12 +1006,12 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
       Error("unsized arrays are only allowed as the last field of a class");
     }
   }
-  symbols_->PopScope();
+  symbols_.PopScope();
   return nullptr;
 }
 
 void SemanticPass::UnwindStack(Stmts* stmts) {
-  for (auto scope = symbols_->PeekScope(); scope && !scope->IsMethod(); scope = scope->GetParent()) {
+  for (auto scope = symbols_.PeekScope(); scope && !scope->IsMethod(); scope = scope->GetParent()) {
     for (auto var : scope->GetVars()) {
       if (var->type->NeedsDestruction()) {
         stmts->Append(Make<DestroyStmt>(Make<VarExpr>(var.get())));
