@@ -54,7 +54,6 @@ Method* TypeReplacementPass::ResolveMethod(Method* m) {
 void TypeReplacementPass::ResolveClassInstance(ClassTemplate* classTemplate, ClassType* instance) {
   srcTypes_.push_back(classTemplate);
   dstTypes_.push_back(instance);
-//  instance->SetScope(symbols_->PushNewScope());
   if (auto parent = classTemplate->GetParent()) {
     instance->SetParent(static_cast<ClassType*>(ResolveType(parent)));
   }
@@ -69,7 +68,6 @@ void TypeReplacementPass::ResolveClassInstance(ClassTemplate* classTemplate, Cla
     Field* field = i.get();
     instance->AddField(field->name, ResolveType(field->type), Resolve(field->defaultValue));
   }
-//  symbols_->PopScope();
 }
 
 Type* TypeReplacementPass::PushQualifiers(Type* type, int qualifiers) {
@@ -157,13 +155,11 @@ TypeList* TypeReplacementPass::ResolveTypes(TypeList* typeList) {
 Result TypeReplacementPass::Visit(Stmts* stmts) {
   Stmts* newStmts = Make<Stmts>();
   newStmts->SetFileLocation(stmts->GetFileLocation());
-//  if (stmts->GetScope()) { newStmts->SetScope(symbols_->PushNewScope()); }
 
   for (Stmt* const& it : stmts->GetStmts()) {
     Stmt* stmt = Resolve(it);
     if (stmt) newStmts->Append(stmt);
   }
-//  if (stmts->GetScope()) { symbols_->PopScope(); }
   return newStmts;
 }
 

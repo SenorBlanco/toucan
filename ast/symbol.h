@@ -38,14 +38,13 @@ class SymbolTable {
   Var*             AppendVar(std::string identifier, Type* type);
   void             DefineID(std::string identifier, Expr* expr);
   void             DefineType(std::string identifier, Type* type);
-  void             PushScope(ScopedStmt* scope);
-  ScopedStmt*      PopScope();
-  ScopedStmt*      PeekScope();
+  void             PushScope(Stmts* scope);
+  Stmts*           PopScope();
+  Stmts*           PeekScope();
   void             Dump();
 
  private:
-  ScopedStmt*                        currentScope_;
-  std::vector<ScopedStmt*>           scopes_;
+  Stmts*                             currentScope_;
 };
 
 };  // namespace Toucan

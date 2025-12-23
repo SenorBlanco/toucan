@@ -774,7 +774,7 @@ class ClassPopulator : public Visitor {
 };
 
 static Stmt* EndClass(ClassType* classType) {
-  auto classBody = static_cast<Stmts*>(symbols_->PopScope());
+  auto classBody = symbols_->PopScope();
   ClassPopulator populator(classType);
   classBody->Accept(&populator);
   for (auto type : classBody->GetTypes()) {
@@ -803,12 +803,12 @@ static void BeginBlock() {
   symbols_->PushScope(Make<Stmts>());
 }
 
-static void AppendStatement(Stmt* stmt) {
-  if (stmt) static_cast<Stmts*>(symbols_->PeekScope())->Append(stmt);
+static Stmts* EndBlock() {
+  return symbols_->PopScope();
 }
 
-static Stmts* EndBlock() {
-  return static_cast<Stmts*>(symbols_->PopScope());
+static void AppendStatement(Stmt* stmt) {
+  if (stmt) symbols_->PeekScope()->Append(stmt);
 }
 
 MethodDecl* MakeMethod(int modifiers, ArgList* optWorkgroupSize, std::string id,

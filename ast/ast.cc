@@ -316,21 +316,19 @@ NullConstant::NullConstant() {}
 
 Type* NullConstant::GetType(TypeTable* types) { return types->GetStrongPtrType(types->GetVoid()); }
 
-ScopedStmt::ScopedStmt() {}
-
-Expr* ScopedStmt::FindID(const std::string& identifier) {
+Expr* Stmts::FindID(const std::string& identifier) {
   auto i = ids_.find(identifier);
   if (i != ids_.end()) { return i->second; }
   return nullptr;
 }
 
-Type* ScopedStmt::FindType(const std::string& identifier) {
+Type* Stmts::FindType(const std::string& identifier) {
   auto i = types_.find(identifier);
   if (i != types_.end()) { return i->second; }
   return nullptr;
 }
 
-void ScopedStmt::AppendVar(std::shared_ptr<Var> var) { vars_.push_back(var); }
+void Stmts::AppendVar(std::shared_ptr<Var> var) { vars_.push_back(var); }
 
 Stmts::Stmts() {}
 

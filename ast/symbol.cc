@@ -22,22 +22,22 @@ namespace Toucan {
 
 SymbolTable::SymbolTable() : currentScope_(nullptr) {}
 
-void SymbolTable::PushScope(ScopedStmt* scope) {
+void SymbolTable::PushScope(Stmts* scope) {
 //  assert(scope->GetParent() == nullptr || scope->GetParent() == currentScope_);
   scope->SetParent(currentScope_);
   currentScope_ = scope;
 }
 
-ScopedStmt* SymbolTable::PopScope() {
-  ScopedStmt* back = currentScope_;
+Stmts* SymbolTable::PopScope() {
+  Stmts* back = currentScope_;
   currentScope_ = back ? back->GetParent() : nullptr;
   return back;
 }
 
-ScopedStmt* SymbolTable::PeekScope() { return currentScope_; }
+Stmts* SymbolTable::PeekScope() { return currentScope_; }
 
 Expr* SymbolTable::FindID(const std::string& identifier) const {
-  for (ScopedStmt* scope = currentScope_; scope != nullptr; scope = scope->GetParent()) {
+  for (Stmts* scope = currentScope_; scope != nullptr; scope = scope->GetParent()) {
     if (Expr* expr = scope->FindID(identifier)) return expr;
   }
   return nullptr;

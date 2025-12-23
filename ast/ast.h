@@ -544,30 +544,7 @@ typedef std::unordered_map<std::string, Var*>  VarMap;
 typedef std::unordered_map<std::string, Type*> TypeMap;
 typedef std::unordered_map<std::string, Expr*> ExprMap;
 
-class ScopedStmt : public Stmt {
- public:
-  ScopedStmt();
-  void                SetParent(ScopedStmt* parent) { parent_ = parent; }
-  void                DefineID(std::string id, Expr* expr) { ids_[id] = expr; }
-  void                DefineType(std::string id, Type* type) { types_[id] = type; }
-  Expr*               FindID(const std::string& id);
-  Type*               FindType(const std::string& id);
-  bool                IsMethod() const { return isMethod_; }
-  void                SetMethod(bool isMethod) { isMethod_ = isMethod; }
-  ScopedStmt*         GetParent() const { return parent_; }
-  void                AppendVar(std::shared_ptr<Var> v);
-  const VarVector&    GetVars() const { return vars_; }
-  const TypeMap&      GetTypes() const { return types_; }
-
- private:
-  ScopedStmt* parent_ = nullptr;
-  bool        isMethod_ = false;
-  VarVector   vars_;
-  TypeMap     types_;
-  ExprMap     ids_;
-};
-
-class Stmts : public ScopedStmt {
+class Stmts : public Stmt {
  public:
   Stmts();
   Result                    Accept(Visitor* visitor) override;
@@ -575,9 +552,25 @@ class Stmts : public ScopedStmt {
   void                      Prepend(Stmt* stmt) { stmts_.insert(stmts_.begin(), stmt); }
   const std::vector<Stmt*>& GetStmts() { return stmts_; }
   bool                      ContainsReturn() const override;
+  void                      SetParent(Stmts* parent) { parent_ = parent; }
+  void                      DefineID(std::string id, Expr* expr) { ids_[id] = expr; }
+  void                      DefineType(std::string id, Type* type) { types_[id] = type; }
+  Expr*                     FindID(const std::string& id);
+  Type*                     FindType(const std::string& id);
+  bool                      IsMethod() const { return isMethod_; }
+  void                      SetMethod(bool isMethod) { isMethod_ = isMethod; }
+  Stmts*                    GetParent() const { return parent_; }
+  void                      AppendVar(std::shared_ptr<Var> v);
+  const VarVector&          GetVars() const { return vars_; }
+  const TypeMap&            GetTypes() const { return types_; }
 
  private:
-  std::vector<Stmt*> stmts_;
+  std::vector<Stmt*>        stmts_;
+  Stmts*                    parent_ = nullptr;
+  VarVector                 vars_;
+  TypeMap                   types_;
+  ExprMap                   ids_;
+  bool                      isMethod_;
 };
 
 class ExprStmt : public Stmt {
@@ -666,7 +659,7 @@ class ZeroInitStmt : public Stmt {
   Expr* lhs_;
 };
 
-class MethodDecl : public ScopedStmt {
+class MethodDecl : public Stmt {
  public:
   MethodDecl(int modifiers, std::array<uint32_t, 3> workgroupSize, std::string id, Stmts* formalArguments, int thisQualifiers, Type* returnType, Expr* initializer, Stmts* body);
   Result      Accept(Visitor* visitor) override;
