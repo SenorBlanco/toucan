@@ -166,6 +166,9 @@ Result SemanticPass::Visit(Stmts* stmts) {
   }
   bool containsReturn = stmts->ContainsReturn();
   symbols_->PopScope();
+  for (auto var : stmts->GetVars()) {
+    newStmts->AppendVar(var);
+  }
   // Append destructor calls for any vars that need it.
   for (auto var : std::views::reverse(newStmts->GetVars())) {
     if (var->type->NeedsDestruction() && !containsReturn) {
@@ -294,7 +297,7 @@ Stmts* SemanticPass::InitializeArray(Expr* dest, Type* elementType, Expr* length
 Result SemanticPass::Visit(VarDeclaration* decl) {
   std::string id = decl->GetID();
   Type*       type = decl->GetType();
-  if (symbols_->FindID(id)) {
+  if (symbols_->PeekScope()->FindID(id)) {
     return Error("variable \"%s\" already defined in this scope", id.c_str());
   }
   if (!type) return nullptr;
@@ -919,12 +922,6 @@ void SemanticPass::PreVisit(UnresolvedClassDefinition* defn) {
       field->type = field->defaultValue->GetType(types_);
     }
   }
-  for (auto c = classType; c != nullptr; c = c->GetParent()) {
-    for (const auto& field : c->GetFields()) {
-      Expr* thisPtr = Make<UnresolvedIdentifier>("this");
-      defn->DefineID(field->name, Make<FieldAccess>(thisPtr, field.get()));
-    }
-  }
 }
 
 Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
@@ -933,7 +930,14 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   // Template classes don't need semantic analysis, since their code won't be directly generated.
   if (classType->IsClassTemplate()) return nullptr;
 
-  symbols_->PushScope(defn);
+  symbols_->PushScope(Make<Stmts>());
+
+  for (auto c = classType; c != nullptr; c = c->GetParent()) {
+    for (const auto& field : c->GetFields()) {
+      Expr* thisPtr = Make<UnresolvedIdentifier>("this");
+      symbols_->DefineID(field->name, Make<FieldAccess>(thisPtr, field.get()));
+    }
+  }
 
   if (classType->NeedsDestruction()) {
     auto destructor = classType->GetDestructor();
@@ -958,18 +962,22 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   for (const auto& method : classType->GetMethods()) {
     if (!method->stmts) continue;
 
+    auto methodScope = Make<Stmts>();
+    symbols_->PushScope(methodScope);
     for (const auto& var : method->formalArgList) {
       Expr* expr = Make<VarExpr>(var.get());
       if (var->type->IsRawPtr()) expr = Make<LoadExpr>(expr);
-      method->stmts->DefineID(var->name, expr);
+      symbols_->DefineID(var->name, expr);
     }
 
     currentMethod_ = method.get();
     method->stmts = Resolve(method->stmts);
     currentMethod_ = nullptr;
+    symbols_->PopScope();
 
     if (method->IsConstructor()) {
-      symbols_->PushScope(method->stmts);
+      // FIXME: why do we do this, again?
+      symbols_->PushScope(methodScope);
       Expr* initializer = method->initializer ? Resolve(method->initializer)
                           : ResolveListExpr(Make<ArgList>(), method->classType);
       symbols_->PopScope();

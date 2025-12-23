@@ -134,8 +134,7 @@ Type* TypeReplacementPass::ResolveType(Type* type) {
       } else {
         newType = static_cast<ClassType*>(newType)->FindType(ust->GetID());
         if (!newType) {
-          Error("Type \"%s\" not found in \"%s\"", ust->GetID().c_str(),
-                newType->ToString().c_str());
+          Error("Type \"%s\" not found", ust->GetID().c_str());
         }
       }
     } else {

@@ -557,6 +557,7 @@ class ScopedStmt : public Stmt {
   ScopedStmt*         GetParent() const { return parent_; }
   void                AppendVar(std::shared_ptr<Var> v);
   const VarVector&    GetVars() const { return vars_; }
+  const TypeMap&      GetTypes() const { return types_; }
 
  private:
   ScopedStmt* parent_ = nullptr;
@@ -779,11 +780,11 @@ class UnresolvedNewExpr : public Expr {
   bool     constructor_;
 };
 
-class UnresolvedClassDefinition : public ScopedStmt {
+class UnresolvedClassDefinition : public Stmt {
  public:
   UnresolvedClassDefinition(ClassType* classType);
   Result Accept(Visitor* visitor) override;
-  ClassType* GetClass() { return class_; }
+  ClassType* GetClass() const { return class_; }
 
  private:
   ClassType* class_;

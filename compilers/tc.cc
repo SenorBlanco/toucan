@@ -95,9 +95,9 @@ int main(int argc, char** argv) {
   TypeTable   types;
   NodeVector  nodes;
   auto              rootStmts = nodes.Make<Stmts>();
-  symbols->PushScope(rootStmts); // FIXME: make InitAPI do this?
+  symbols.PushScope(rootStmts); // FIXME: make InitAPI do this?
   InitAPI(&symbols, &types, &nodes);
-  symbols->PopScope();
+  symbols.PopScope();
   int syntaxErrors = ParseProgram(filename, &symbols, &types, &nodes, includePaths, rootStmts);
   if (syntaxErrors > 0) { exit(1); }
   types.SetMemoryLayout();

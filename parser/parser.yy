@@ -327,21 +327,20 @@ opt_return_type:
   ;
 
 class_body_decl:
-    method_modifiers opt_workgroup_size T_IDENTIFIER '(' formal_arguments ')'
-    opt_type_qualifiers opt_return_type     { BeginBlock(); }
-    method_body                             { $$ = MakeMethod($1, $2, $3, $5, $7, $8, nullptr, $10); }
-  | method_modifiers T_TYPENAME '(' formal_arguments ')'
-                                            { BeginBlock(); }
-    opt_initializer method_body             { $$ = MakeConstructor($1, $2, $4, $7, $8); }
-  | method_modifiers '~' T_TYPENAME '(' ')' { BeginBlock(); }
-    method_body                             { $$ = MakeDestructor($1, $3, $7); }
+    method_modifiers opt_workgroup_size T_IDENTIFIER '(' formal_arguments ')' opt_type_qualifiers
+    opt_return_type method_body
+                                            { $$ = MakeMethod($1, $2, $3, $5, $7, $8, 0, $9); }
+  | method_modifiers T_TYPENAME '(' formal_arguments ')' opt_initializer method_body
+                                            { $$ = MakeConstructor($1, $2, $4, $6, $7); }
+  | method_modifiers '~' T_TYPENAME '(' ')' method_body
+                                            { $$ = MakeDestructor($1, $3, $6); }
   | var_decl_statement ';'                  { $$ = nullptr; }
   | enum_decl ';'                           { $$ = nullptr; }
   | using_decl                              { $$ = nullptr; }
   ;
 
 method_body:
-    block_statement                         { $$ = EndBlock(); }
+    block_statement
   | ';'                                     { $$ = 0; }
   ;
 
@@ -759,12 +758,12 @@ class ClassPopulator : public Visitor {
     return {};
   }
 
-  Result Visit(VarDeclaration* v) {
+  Result Visit(VarDeclaration* v) override {
     classType_->AddField(v->GetID(), v->GetType(), v->GetInitExpr());
     return {};
   }
 
-  Result Visit(MethodDecl* decl) {
+  Result Visit(MethodDecl* decl) override {
     classType_->AddMethod(decl->CreateMethod(classType_, types_));
     return {};
   }
@@ -778,6 +777,9 @@ static Stmt* EndClass(ClassType* classType) {
   auto classBody = static_cast<Stmts*>(symbols_->PopScope());
   ClassPopulator populator(classType);
   classBody->Accept(&populator);
+  for (auto type : classBody->GetTypes()) {
+    classType->DefineType(type.first, type.second);
+  }
   return Make<UnresolvedClassDefinition>(classType);
 }
 

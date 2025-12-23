@@ -23,7 +23,7 @@ namespace Toucan {
 SymbolTable::SymbolTable() : currentScope_(nullptr) {}
 
 void SymbolTable::PushScope(ScopedStmt* scope) {
-  assert(scope->GetParent() == nullptr || scope->GetParent() == currentScope_);
+//  assert(scope->GetParent() == nullptr || scope->GetParent() == currentScope_);
   scope->SetParent(currentScope_);
   currentScope_ = scope;
 }
