@@ -45,7 +45,7 @@ Method* TypeReplacementPass::ResolveMethod(Method* m) {
   }
   if (m->stmts) {
     result->stmts = Resolve(m->stmts);
-    result->stmts->GetScope()->isMethod = true;
+    result->stmts->SetMethod(true);
   }
   if (m->initializer) result->initializer = Resolve(m->initializer);
   return result;
@@ -54,12 +54,12 @@ Method* TypeReplacementPass::ResolveMethod(Method* m) {
 void TypeReplacementPass::ResolveClassInstance(ClassTemplate* classTemplate, ClassType* instance) {
   srcTypes_.push_back(classTemplate);
   dstTypes_.push_back(instance);
-  instance->SetScope(symbols_->PushNewScope());
+//  instance->SetScope(symbols_->PushNewScope());
   if (auto parent = classTemplate->GetParent()) {
     instance->SetParent(static_cast<ClassType*>(ResolveType(parent)));
   }
-  for (const auto& i : classTemplate->GetScope()->types) {
-    instance->GetScope()->types[i.first] = ResolveType(i.second);
+  for (const auto& i : classTemplate->GetTypes()) {
+    instance->DefineType(i.first, ResolveType(i.second));
   }
   for (const auto& i : classTemplate->GetMethods()) {
     Method* method = i.get();
@@ -69,7 +69,7 @@ void TypeReplacementPass::ResolveClassInstance(ClassTemplate* classTemplate, Cla
     Field* field = i.get();
     instance->AddField(field->name, ResolveType(field->type), Resolve(field->defaultValue));
   }
-  symbols_->PopScope();
+//  symbols_->PopScope();
 }
 
 Type* TypeReplacementPass::PushQualifiers(Type* type, int qualifiers) {
@@ -158,13 +158,13 @@ TypeList* TypeReplacementPass::ResolveTypes(TypeList* typeList) {
 Result TypeReplacementPass::Visit(Stmts* stmts) {
   Stmts* newStmts = Make<Stmts>();
   newStmts->SetFileLocation(stmts->GetFileLocation());
-  if (stmts->GetScope()) { newStmts->SetScope(symbols_->PushNewScope()); }
+//  if (stmts->GetScope()) { newStmts->SetScope(symbols_->PushNewScope()); }
 
   for (Stmt* const& it : stmts->GetStmts()) {
     Stmt* stmt = Resolve(it);
     if (stmt) newStmts->Append(stmt);
   }
-  if (stmts->GetScope()) { symbols_->PopScope(); }
+//  if (stmts->GetScope()) { symbols_->PopScope(); }
   return newStmts;
 }
 

@@ -26,5 +26,5 @@ extern int   ParseProgram(const char*                     filename,
                           Toucan::TypeTable*              types,
                           Toucan::NodeVector*             nodes,
                           const std::vector<std::string>& includePaths,
-                          Toucan::Stmts**                 stmts);
+                          Toucan::Stmts*                  rootStmts);
 #endif

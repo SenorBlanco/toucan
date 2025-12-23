@@ -23,6 +23,7 @@ namespace Toucan {
 SymbolTable::SymbolTable() : currentScope_(nullptr) {}
 
 void SymbolTable::PushScope(ScopedStmt* scope) {
+  assert(scope->GetParent() == nullptr || scope->GetParent() == currentScope_);
   scope->SetParent(currentScope_);
   currentScope_ = scope;
 }
@@ -37,39 +38,39 @@ ScopedStmt* SymbolTable::PeekScope() { return currentScope_; }
 
 Expr* SymbolTable::FindID(const std::string& identifier) const {
   for (ScopedStmt* scope = currentScope_; scope != nullptr; scope = scope->GetParent()) {
-    ExprMap::const_iterator j = scope->FindID(identifier);
-    if (j != scope->ids.end()) { return j->second; }
+    if (Expr* expr = scope->FindID(identifier)) return expr;
   }
   return nullptr;
 }
 
-Var* SymbolTable::DefineVar(std::string identifier, Type* type) {
+Var* SymbolTable::AppendVar(std::string identifier, Type* type) {
   if (!currentScope_) return nullptr;
   auto var = std::make_shared<Var>(identifier, type);
-  currentScope_->vars.push_back(var);
+  currentScope_->AppendVar(var);
   return var.get();
 }
 
 void SymbolTable::DefineID(std::string identifier, Expr* expr) {
   assert(currentScope_);
-  currentScope_->ids[identifier] = expr;
+  currentScope_->DefineID(identifier, expr);
 }
 
-bool SymbolTable::DefineType(std::string identifier, Type* type) {
-  if (!currentScope_) return false;
-  currentScope_->types[identifier] = type;
-  return true;
+void SymbolTable::DefineType(std::string identifier, Type* type) {
+  assert(currentScope_);
+  currentScope_->DefineType(identifier, type);
 }
 
 Type* SymbolTable::FindType(const std::string& identifier) const {
-  for (auto scope = currentScope_; scope != nullptr; scope = scope->parent) {
-    TypeMap::const_iterator j = scope->types.find(identifier);
-    if (j != scope->types.end()) { return j->second; }
+  for (auto scope = currentScope_; scope != nullptr; scope = scope->GetParent()) {
+    if (auto type = scope->FindType(identifier)) return type;
+//    TypeMap::const_iterator j = scope->types.find(identifier);
+//    if (j != scope->types.end()) { return j->second; }
   }
   return nullptr;
 }
 
 void SymbolTable::Dump() {
+/*
   for (const auto& scope : scopes_) {
     printf("Scope:\n");
     for (auto var : scope->vars) {
@@ -86,6 +87,7 @@ void SymbolTable::Dump() {
       }
     }
   }
+*/
 }
 
 };  // namespace Toucan

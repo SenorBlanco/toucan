@@ -29,24 +29,15 @@ namespace Toucan {
 typedef std::unordered_map<std::string, Var*>  VarMap;
 typedef std::unordered_map<std::string, Type*> TypeMap;
 typedef std::unordered_map<std::string, Expr*> ExprMap;
-struct Scope {
-  Scope(Scope* p) : parent(p) {}
-  Scope*     parent;
-  bool       isMethod = false;
-  VarVector  vars;
-  TypeMap    types;
-  ExprMap    ids;
-};
 
 class SymbolTable {
  public:
   SymbolTable();
   Expr*            FindID(const std::string& identifier) const;
   Type*            FindType(const std::string& identifier) const;
-  Var*             DefineVar(std::string identifier, Type* type);
+  Var*             AppendVar(std::string identifier, Type* type);
   void             DefineID(std::string identifier, Expr* expr);
-  bool             DefineType(std::string identifier, Type* type);
-  ScopedStmt*      PushNewScope();
+  void             DefineType(std::string identifier, Type* type);
   void             PushScope(ScopedStmt* scope);
   ScopedStmt*      PopScope();
   ScopedStmt*      PeekScope();

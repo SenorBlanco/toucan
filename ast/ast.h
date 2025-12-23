@@ -26,7 +26,6 @@
 namespace Toucan {
 
 struct Var;
-struct Scope;
 
 class Visitor;
 
@@ -550,7 +549,11 @@ class ScopedStmt : public Stmt {
   ScopedStmt();
   void                SetParent(ScopedStmt* parent) { parent_ = parent; }
   void                DefineID(std::string id, Expr* expr) { ids_[id] = expr; }
+  void                DefineType(std::string id, Type* type) { types_[id] = type; }
+  Expr*               FindID(const std::string& id);
+  Type*               FindType(const std::string& id);
   bool                IsMethod() const { return isMethod_; }
+  void                SetMethod(bool isMethod) { isMethod_ = isMethod; }
   ScopedStmt*         GetParent() const { return parent_; }
   void                AppendVar(std::shared_ptr<Var> v);
   const VarVector&    GetVars() const { return vars_; }
@@ -569,17 +572,11 @@ class Stmts : public ScopedStmt {
   Result                    Accept(Visitor* visitor) override;
   void                      Append(Stmt* stmt) { stmts_.push_back(stmt); }
   void                      Prepend(Stmt* stmt) { stmts_.insert(stmts_.begin(), stmt); }
-  Scope*                    GetScope() { return scope_; }
-  void                      SetScope(Scope* scope) { scope_ = scope; }
   const std::vector<Stmt*>& GetStmts() { return stmts_; }
-  void                      AppendVar(std::shared_ptr<Var> v);
-  const VarVector&          GetVars() const { return vars_; }
   bool                      ContainsReturn() const override;
 
  private:
   std::vector<Stmt*> stmts_;
-  Scope*             scope_;
-  VarVector          vars_;
 };
 
 class ExprStmt : public Stmt {
@@ -668,9 +665,9 @@ class ZeroInitStmt : public Stmt {
   Expr* lhs_;
 };
 
-class MethodDecl : public Stmt {
+class MethodDecl : public ScopedStmt {
  public:
-  MethodDecl(int modifiers, std::string id, std::array<uint32_t, 3> workgroupSize, Stmts* formalArguments, int thisQualifiers, Type* returnType, Expr* initializer, Stmts* body, Scope* scope);
+  MethodDecl(int modifiers, std::array<uint32_t, 3> workgroupSize, std::string id, Stmts* formalArguments, int thisQualifiers, Type* returnType, Expr* initializer, Stmts* body);
   Result      Accept(Visitor* visitor) override;
   Method*     CreateMethod(ClassType* classType, TypeTable* types);
 
@@ -683,7 +680,6 @@ class MethodDecl : public Stmt {
   Type*                   returnType_;
   Stmts*                  body_;
   Expr*                   initializer_;
-  Scope*                  scope_;
 };
 
 class VarDeclaration : public Stmt {

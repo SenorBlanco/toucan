@@ -1,9 +1,7 @@
-include "include/string.t"
+//include "include/string.t"
 
-var a = 2;
-var b : int;
-var c : int;
-b = 3;
-c = a * b;
+class C {
+  foo(i : int) : int { return i; }
+}
 
-System.PrintLine(String.From(c).Get());
+//System.PrintLine(String.From(c).Get());

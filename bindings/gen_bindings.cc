@@ -249,7 +249,6 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
     return;
   }
   file_ << "  ClassType* c;\n";
-  file_ << "  Scope* scope;\n";
   file_ << "  Method *m;\n";
   file_ << "\n";
   if (header_) {
@@ -444,11 +443,12 @@ void GenBindings::EmitClass(ClassType* classType) {
   }
   file_ << "  c->SetMemoryLayout(MemoryLayout::" <<
     MemoryLayoutToString(classType->GetMemoryLayout()) << ");\n";
-    if (emitSymbolsAndStatements_) {
-      file_ << "  scope = symbols->PushNewScope();\n"
-            << "  symbols->PopScope();\n"
-            << "  c->SetScope(scope);\n";
-    }
+    // FIXME
+//    if (emitSymbolsAndStatements_) {
+//      file_ << "  scope = symbols->PushNewScope();\n"
+//            << "  symbols->PopScope();\n"
+//            << "  c->SetScope(scope);\n";
+//    }
   if (ClassType* parent = classType->GetParent()) {
     int parentID = EmitType(classType->GetParent());
     file_ << "  c->SetParent(type" << parentID << ");\n";
@@ -470,18 +470,16 @@ void GenBindings::EmitClass(ClassType* classType) {
   for (const auto& method : classType->GetMethods()) {
     EmitMethod(method.get());
   }
-  if (classType->GetScope()) {
-    for (const auto& pair : classType->GetScope()->types) {
+  for (const auto& pair : classType->GetTypes()) {
+    if (emitSymbolsAndStatements_) {
       int typeID = EmitType(pair.second);
-      if (emitSymbolsAndStatements_) {
-        file_ << "  scope->types[\"" << pair.first << "\"] = ";
-        if (typeID >= 0) {
-          file_ << "type" << typeID;
-        } else {
-          file_ << "nullptr";
-        }
-        file_ << ";\n";
+      file_ << "  c->DefineType(\"" << pair.first << "\", ";
+      if (typeID >= 0) {
+        file_ << "type" << typeID;
+      } else {
+        file_ << "nullptr";
       }
+      file_ << ");\n";
     }
   }
   if (emitSymbolsAndStatements_ && !classType->GetTemplate()) {

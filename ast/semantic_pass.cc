@@ -159,7 +159,7 @@ Result SemanticPass::Visit(Data* node) { return node; }
 
 Result SemanticPass::Visit(Stmts* stmts) {
   Stmts* newStmts = Make<Stmts>();
-  symbols_->PushScope(newStmts);
+  symbols_->PushScope(stmts);
   for (Stmt* const& it : stmts->GetStmts()) {
     Stmt* stmt = Resolve(it);
     if (stmt) newStmts->Append(stmt);
@@ -318,7 +318,7 @@ Result SemanticPass::Visit(VarDeclaration* decl) {
   if (!type->IsRawPtr() && type->ContainsRawPtr()) {
     return Error("cannot allocate a type containing a raw pointer");
   }
-  Var*  var = symbols_->DefineVar(id, type);
+  Var*  var = symbols_->AppendVar(id, type);
   Expr* varExpr = Make<VarExpr>(var);
   Expr* expr = Make<VarExpr>(var);
   if (var->type->IsRawPtr()) expr = Make<LoadExpr>(expr);
@@ -900,7 +900,6 @@ Result SemanticPass::Visit(ForStatement* node) {
 
 void SemanticPass::PreVisit(UnresolvedClassDefinition* defn) {
   ClassType* classType = defn->GetClass();
-  Scope* scope = classType->GetScope();
 
   // Non-native template classes don't need inferred type resolution
   if (!classType->HasNativeMethods() && classType->IsClassTemplate()) return;
@@ -923,14 +922,13 @@ void SemanticPass::PreVisit(UnresolvedClassDefinition* defn) {
   for (auto c = classType; c != nullptr; c = c->GetParent()) {
     for (const auto& field : c->GetFields()) {
       Expr* thisPtr = Make<UnresolvedIdentifier>("this");
-      scope->ids[field->name] = Make<FieldAccess>(thisPtr, field.get());
+      defn->DefineID(field->name, Make<FieldAccess>(thisPtr, field.get()));
     }
   }
 }
 
 Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   ClassType* classType = defn->GetClass();
-  Scope*     scope = classType->GetScope();
 
   // Template classes don't need semantic analysis, since their code won't be directly generated.
   if (classType->IsClassTemplate()) return nullptr;

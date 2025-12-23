@@ -42,7 +42,7 @@ static NodeVector* nodes_;
 static SymbolTable* symbols_;
 static TypeTable* types_;
 static std::vector<std::string> includePaths_;
-static Stmts** rootStmts_;
+static Stmts* rootStmts_;
 static std::unordered_set<std::string> includedFiles_;
 static std::stack<FileLocation> fileStack_;
 static std::queue<ClassType*> instanceQueue_;
@@ -61,17 +61,20 @@ static EnumType* DeclareEnum(const char* id);
 static void DeclareUsing(const char* id, Type* type);
 static void BeginClass(Type* type, ClassType* parent);
 static ClassType*  BeginClassTemplate(TypeList* templateArgs, const char* id);
-static Stmt* EndClass(ClassType* classType, Stmts* classBody);
+static Stmt* EndClass(ClassType* classType);
 static void BeginEnum(Type* e);
 static void AppendEnum(const char* id);
 static void AppendEnum(const char* id, int value);
 static void EndEnum();
-static MethodDecl* MakeMethod(int modifiers, std::string id, ArgList* optWorkgroupSize,
-                              Stmts* formalArguments, int thisQualifiers, Type* returnType, Expr* initializer, Stmts* body);
-static MethodDecl* MakeConstructor(int modifiers, Type* type, Stmts* formalArguments, Expr* initializer, Stmts* body);
+static MethodDecl* MakeMethod(int modifiers, ArgList* optWorkgroupSize, std::string id,
+                              Stmts* formalArguments, int thisQualifiers, Type* returnType, 
+                              Expr* initializer, Stmts* body);
+static MethodDecl* MakeConstructor(int modifiers, Type* type, Stmts* formalArguments,
+                                   Expr* initializer, Stmts* body);
 static MethodDecl* MakeDestructor(int modifiers, Type* type, Stmts* body);
 static void BeginBlock();
-static void EndBlock(Stmts* stmts);
+static void AppendStatement(Stmt* stmt);
+static Stmts* EndBlock();
 static Expr* Load(Expr* expr);
 static Stmt* Store(Expr* expr, Expr* value);
 static Expr* Identifier(const char* id);
@@ -126,8 +129,8 @@ Type* FindType(const char* str) {
 %type <stmt> if_statement for_statement while_statement do_statement
 %type <stmt> opt_else var_decl class_decl class_body_decl
 %type <stmt> class_forward_decl
-%type <stmts> statements var_decl_list var_decl_statement formal_arguments non_empty_formal_arguments
-%type <stmts> method_body class_body
+%type <stmts> block_statement formal_arguments non_empty_formal_arguments
+%type <stmts> method_body
 %type <argList> arguments non_empty_arguments opt_workgroup_size
 %type <typeList> types
 %type <typeList> template_formal_arguments
@@ -163,22 +166,28 @@ Type* FindType(const char* str) {
 %expect 1   /* we expect 1 shift/reduce: dangling-else */
 %%
 program:
-    statements                              { *rootStmts_ = $1; }
+    statements
+  ;
 
 statements:
-    statements statement                    { if ($2) $1->Append($2); $$ = $1; }
-  | /* nothing */                           { $$ = Make<Stmts>(); }
+    statements statement                    { AppendStatement($2); }
+  | /* nothing */
   ;
+
+block_statement:
+    '{' { BeginBlock(); } statements '}'    { $$ = EndBlock(); }
+  ;
+
 statement:
     ';'                                     { $$ = 0; }
   | expr_statement ';'
-  | '{' { BeginBlock(); } statements '}'    { EndBlock($3); $$ = $3; }
+  | block_statement                         { $$ = $1; }
   | if_statement
   | for_statement
   | while_statement 
   | do_statement
   | T_RETURN opt_expr ';'                   { $$ = MakeReturnStatement($2); }
-  | var_decl_statement ';'                  { $$ = $1; }
+  | var_decl_statement ';'                  { $$ = 0; }
   | class_decl
   | class_forward_decl
   | enum_decl                               { $$ = 0; }
@@ -206,12 +215,11 @@ opt_else:
   | /* nothing */                           { $$ = 0; }
   ;
 for_statement:
-    T_FOR '(' { symbols_->PushNewScope(); }
+    T_FOR '(' { BeginBlock(); }
     for_loop_stmt ';' opt_expr ';' for_loop_stmt ')' statement
       {
-        Stmts* stmts = Make<Stmts>();
+        Stmts* stmts = EndBlock();
         stmts->Append(Make<ForStatement>($4, $6, $8, $10));
-        stmts->SetScope(symbols_->PopScope());
         $$ = stmts;
       }
   ;
@@ -222,7 +230,7 @@ opt_expr:
 for_loop_stmt:
     assignment
   | expr_statement
-  | var_decl_statement                      { $$ = $1; }
+  | var_decl_statement                      { $$ = 0; }
   | /* nothing */                           { $$ = 0; }
   ;
 while_statement:
@@ -232,7 +240,7 @@ do_statement:
     T_DO statement T_WHILE '(' expr ')' ';' { $$ = Make<DoStatement>($2, $5); }
   ;
 var_decl_statement:
-    T_VAR var_decl_list                     { $$ = $2; }
+    T_VAR var_decl_list
   ;
 
 simple_type:
@@ -256,8 +264,8 @@ type:
   ;
 
 var_decl_list:
-    var_decl_list ',' var_decl              { $$ = $1; if ($3) $1->Append($3); }
-  | var_decl                                { $$ = Make<Stmts>(); if ($1) $$->Append($1); }
+    var_decl_list ',' var_decl              { AppendStatement($3); }
+  | var_decl                                { AppendStatement($1); }
   ;
 
 class_header:
@@ -276,9 +284,9 @@ class_forward_decl:
 
 class_decl:
     class_header opt_parent_class '{'       { BeginClass($1, AsClassType($2)); }
-    class_body '}'                          { $$ = EndClass(AsClassType($1), $5); }
+    class_body '}'                          { $$ = EndClass(AsClassType($1)); }
   | template_class_header opt_parent_class  '{' { AsClassType($1)->SetParent(AsClassType($2)); }
-    class_body '}'                              { $$ = EndClass(AsClassType($1), $5); }
+    class_body '}'                              { $$ = EndClass(AsClassType($1)); }
   ;
   ;
 
@@ -288,8 +296,8 @@ opt_parent_class:
   ;
 
 class_body:
-    class_body class_body_decl              { if ($2) $1->Append($2); $$ = $1; }
-  | /* nothing */                           { $$ = Make<Stmts>(); }
+    class_body class_body_decl              { AppendStatement($2); }
+  | /* nothing */
   ;
 
 enum_header:
@@ -319,21 +327,21 @@ opt_return_type:
   ;
 
 class_body_decl:
-    method_modifiers opt_workgroup_size T_IDENTIFIER '(' formal_arguments ')' opt_type_qualifiers
-    opt_return_type                         { symbols_->PushNewScope(); }
-    method_body                             { $$ = MakeMethod($1, $3, $2, $5, $7, $8, nullptr, $10); symbols_->PopScope(); }
-  | method_modifiers T_TYPENAME '(' formal_arguments ')' opt_initializer
-                                            { symbols_->PushNewScope(); }
-    method_body                             { $$ = MakeConstructor($1, $2, $4, $6, $8); symbols_->PopScope(); }
-  | method_modifiers '~' T_TYPENAME '(' ')' { symbols_->PushNewScope(); }
-    method_body                             { $$ = MakeDestructor($1, $3, $7); symbols_->PopScope(); }
-  | var_decl_statement ';'                  { $$ = $1; }
+    method_modifiers opt_workgroup_size T_IDENTIFIER '(' formal_arguments ')'
+    opt_type_qualifiers opt_return_type     { BeginBlock(); }
+    method_body                             { $$ = MakeMethod($1, $2, $3, $5, $7, $8, nullptr, $10); }
+  | method_modifiers T_TYPENAME '(' formal_arguments ')'
+                                            { BeginBlock(); }
+    opt_initializer method_body             { $$ = MakeConstructor($1, $2, $4, $7, $8); }
+  | method_modifiers '~' T_TYPENAME '(' ')' { BeginBlock(); }
+    method_body                             { $$ = MakeDestructor($1, $3, $7); }
+  | var_decl_statement ';'                  { $$ = nullptr; }
   | enum_decl ';'                           { $$ = nullptr; }
   | using_decl                              { $$ = nullptr; }
   ;
 
 method_body:
-    '{' statements '}'                      { $$ = $2; }
+    block_statement                         { $$ = EndBlock(); }
   | ';'                                     { $$ = 0; }
   ;
 
@@ -726,16 +734,14 @@ static void BeginClass(Type* t, ClassType* parent) {
   }
   c->SetParent(parent);
   c->SetDefined(true);
-  Scope* scope = symbols_->PushNewScope();
-  c->SetScope(scope);
+  BeginBlock();
 }
 
 static ClassType* BeginClassTemplate(TypeList* templateArgs, const char* id) {
   ClassTemplate* t = types_->Make<ClassTemplate>(id, *templateArgs);
   symbols_->DefineType(id, t);
   t->SetDefined(true);
-  Scope* scope = symbols_->PushNewScope();
-  t->SetScope(scope);
+  BeginBlock();
   for (Type* const& i : *templateArgs) {
     auto type = static_cast<FormalTemplateArg*>(i);
     symbols_->DefineType(type->GetName(), type);
@@ -768,8 +774,8 @@ class ClassPopulator : public Visitor {
   ClassType*    classType_;
 };
 
-static Stmt* EndClass(ClassType* classType, Stmts* classBody) {
-  symbols_->PopScope();
+static Stmt* EndClass(ClassType* classType) {
+  auto classBody = static_cast<Stmts*>(symbols_->PopScope());
   ClassPopulator populator(classType);
   classBody->Accept(&populator);
   return Make<UnresolvedClassDefinition>(classType);
@@ -792,15 +798,20 @@ static void AppendEnum(const char *id, int value) {
 }
 
 static void BeginBlock() {
-  symbols_->PushNewScope();
+  symbols_->PushScope(Make<Stmts>());
 }
 
-static void EndBlock(Stmts* stmts) {
-  stmts->SetScope(symbols_->PopScope());
+static void AppendStatement(Stmt* stmt) {
+  if (stmt) static_cast<Stmts*>(symbols_->PeekScope())->Append(stmt);
 }
 
-static MethodDecl* MakeMethod(int modifiers, std::string id, ArgList* optWorkgroupSize,
-                              Stmts* formalArguments, int thisQualifiers, Type* returnType, Expr* initializer, Stmts* body) {
+static Stmts* EndBlock() {
+  return static_cast<Stmts*>(symbols_->PopScope());
+}
+
+MethodDecl* MakeMethod(int modifiers, ArgList* optWorkgroupSize, std::string id,
+                      Stmts* formalArguments, int thisQualifiers, Type* returnType,
+                      Expr* initializer, Stmts* body) {
   std::array<uint32_t, 3> workgroupSize;
   if (optWorkgroupSize) {
     auto args = optWorkgroupSize->GetArgs();
@@ -822,27 +833,28 @@ static MethodDecl* MakeMethod(int modifiers, std::string id, ArgList* optWorkgro
   } else if (modifiers & Method::Modifier::Compute) {
     yyerrorf("compute shader requires a workgroup size");
   }
-  return Make<MethodDecl>(modifiers, id, workgroupSize, formalArguments, thisQualifiers, returnType, initializer, body, symbols_->PeekScope());
+  return Make<MethodDecl>(modifiers, workgroupSize, id, formalArguments, thisQualifiers,
+                          returnType, initializer, body);
 }
 
-static MethodDecl* MakeConstructor(int modifiers, Type* type, Stmts* formalArguments, Expr* initializer, Stmts* body) {
+MethodDecl* MakeConstructor(int modifiers, Type* type, Stmts* formalArguments, Expr* initializer, Stmts* body) {
   if (!type->IsClass()) {
     yyerror("constructor must be of class type");
     return nullptr;
   }
   ClassType* classType = static_cast<ClassType*>(type);
   auto returnType = types_->GetRawPtrType(classType);
-  return MakeMethod(modifiers, classType->GetName(), nullptr, formalArguments, 0, returnType, initializer, body);
+  return MakeMethod(modifiers, nullptr, classType->GetName(), formalArguments, 0, returnType, initializer, body);
 }
 
-static MethodDecl* MakeDestructor(int modifiers, Type* type, Stmts* body) {
+MethodDecl* MakeDestructor(int modifiers, Type* type, Stmts* body) {
   if (!type->IsClass()) {
     yyerror("destructor must be of class type");
     return nullptr;
   }
   ClassType* classType = static_cast<ClassType*>(type);
   std::string name(std::string("~") + classType->GetName());
-  return MakeMethod(modifiers, name.c_str(), nullptr, nullptr, 0, types_->GetVoid(), nullptr, body);
+  return MakeMethod(modifiers, nullptr, name.c_str(), nullptr, 0, types_->GetVoid(), nullptr, body);
 }
 
 static Type* GetScopedType(Type* type, const char* id) {
@@ -886,7 +898,7 @@ static void InstantiateClassTemplates() {
     TypeReplacementPass pass(nodes_, symbols_, types_, classTemplate->GetFormalTemplateArgs(), instance->GetTemplateArgs(), &instanceQueue_);
     pass.ResolveClassInstance(classTemplate, instance);
     numSyntaxErrors += pass.NumErrors();
-    (*rootStmts_)->Append(Make<UnresolvedClassDefinition>(instance));
+    rootStmts_->Append(Make<UnresolvedClassDefinition>(instance));
   }
 }
 
@@ -895,7 +907,7 @@ int ParseProgram(const char* filename,
                  TypeTable* types,
                  NodeVector* nodes,
                  const std::vector<std::string>& includePaths,
-                 Stmts** rootStmts) {
+                 Stmts* rootStmts) {
   numSyntaxErrors = 0;
   nodes_ = nodes;
   symbols_ = symbols;
@@ -903,10 +915,12 @@ int ParseProgram(const char* filename,
   includePaths_ = includePaths;
   rootStmts_ = rootStmts;
   PushFile(filename);
+  symbols->PushScope(rootStmts);
   yyparse();
+  symbols->PopScope();
   if (numSyntaxErrors == 0) {
-    if (!(*rootStmts_)->ContainsReturn()) {
-      (*rootStmts_)->Append(Make<ReturnStatement>(nullptr));
+    if (!rootStmts_->ContainsReturn()) {
+      rootStmts_->Append(Make<ReturnStatement>(nullptr));
     }
     InstantiateClassTemplates();
   }

@@ -14,8 +14,6 @@
 
 #include "ast.h"
 
-#include "symbol.h" // FIXME: remove this after Scope cleanup
-
 namespace Toucan {
 
 ASTNode::ASTNode() {}
@@ -160,16 +158,15 @@ Type* UnresolvedListExpr::GetType(TypeTable* types) {
   return types->GetList(std::move(vars));
 }
 
-MethodDecl::MethodDecl(int modifiers, std::string id, std::array<uint32_t, 3> workgroupSize, Stmts* formalArguments, int thisQualifiers, Type* returnType, Expr* initializer, Stmts* body, Scope* scope)
+MethodDecl::MethodDecl(int modifiers, std::array<uint32_t, 3> workgroupSize, std::string id, Stmts* formalArguments, int thisQualifiers, Type* returnType, Expr* initializer, Stmts* body)
     : modifiers_(modifiers),
       id_(id),
       workgroupSize_(workgroupSize),
       formalArguments_(formalArguments),
       thisQualifiers_(thisQualifiers),
       returnType_(returnType),
-      body_(body),
       initializer_(initializer),
-      scope_(scope) {}
+      body_(body) {}
 
 Method* MethodDecl::CreateMethod(ClassType* classType, TypeTable* types) {
   Method* method = new Method(modifiers_, returnType_, id_, classType);
@@ -187,8 +184,7 @@ Method* MethodDecl::CreateMethod(ClassType* classType, TypeTable* types) {
       method->AddFormalArg(v->GetID(), v->GetType(), v->GetInitExpr());
     }
   }
-  scope_->isMethod = true;
-  if (method->stmts) method->stmts->SetScope(scope_);
+  if (method->stmts) method->stmts->SetMethod(true);
   return method;
 }
 
@@ -322,9 +318,21 @@ Type* NullConstant::GetType(TypeTable* types) { return types->GetStrongPtrType(t
 
 ScopedStmt::ScopedStmt() {}
 
-Stmts::Stmts() : scope_(nullptr) {}
+Expr* ScopedStmt::FindID(const std::string& identifier) {
+  auto i = ids_.find(identifier);
+  if (i != ids_.end()) { return i->second; }
+  return nullptr;
+}
 
-void Stmts::AppendVar(std::shared_ptr<Var> var) { vars_.push_back(var); }
+Type* ScopedStmt::FindType(const std::string& identifier) {
+  auto i = types_.find(identifier);
+  if (i != types_.end()) { return i->second; }
+  return nullptr;
+}
+
+void ScopedStmt::AppendVar(std::shared_ptr<Var> var) { vars_.push_back(var); }
+
+Stmts::Stmts() {}
 
 bool Stmts::ContainsReturn() const {
   for (auto stmt : stmts_) {

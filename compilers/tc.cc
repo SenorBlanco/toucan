@@ -94,15 +94,12 @@ int main(int argc, char** argv) {
   SymbolTable symbols;
   TypeTable   types;
   NodeVector  nodes;
-  symbols.PushNewScope();
+  auto              rootStmts = nodes.Make<Stmts>();
+  symbols->PushScope(rootStmts); // FIXME: make InitAPI do this?
   InitAPI(&symbols, &types, &nodes);
-  auto*             apiStmts = nodes.Make<Stmts>();
-  const TypeVector& apiTypes = types.GetTypes();
-  Stmts*            rootStmts;
-  int syntaxErrors = ParseProgram(filename, &symbols, &types, &nodes, includePaths, &rootStmts);
+  symbols->PopScope();
+  int syntaxErrors = ParseProgram(filename, &symbols, &types, &nodes, includePaths, rootStmts);
   if (syntaxErrors > 0) { exit(1); }
-  Scope* topScope = symbols.PopScope();
-  rootStmts->SetScope(topScope);
   types.SetMemoryLayout();
   SemanticPass semanticPass(&nodes, &symbols, &types);
   rootStmts = semanticPass.Run(rootStmts);
@@ -111,9 +108,7 @@ int main(int argc, char** argv) {
   if (dumpSymbolTable) {
     symbols.Dump();
   } else if (spirv) {
-    symbols.PushScope(topScope);
-    Type* t = symbols.FindType(classname);
-    symbols.PopScope();
+    Type* t = rootStmts->FindType(classname);
     if (!t) {
       fprintf(stderr, "Class \"%s\" not found.\n", classname.c_str());
       exit(3);
