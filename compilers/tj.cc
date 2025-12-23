@@ -102,17 +102,15 @@ int main(int argc, char** argv) {
     yyin = stdin;
   }
 
-  SymbolTable symbols;
   TypeTable   types;
   NodeVector  nodes;
   auto rootStmts = nodes.Make<Stmts>();
-  symbols.PushScope(rootStmts); // FIXME: make InitAPI do this?
-  InitAPI(&symbols, &types, &nodes);
-  symbols.PopScope();
+  InitAPI(&types, &nodes, rootStmts);
   Stmts*            program;
-  int syntaxErrors = ParseProgram(filename, &symbols, &types, &nodes, includePaths, rootStmts);
+  int syntaxErrors = ParseProgram(filename, &types, &nodes, includePaths, rootStmts);
   if (syntaxErrors > 0) { exit(1); }
   types.SetMemoryLayout();
+  SymbolTable symbols; // FIXME remove this
   SemanticPass semanticPass(&nodes, &symbols, &types);
   rootStmts = semanticPass.Run(rootStmts);
   if (semanticPass.GetNumErrors() > 0) { exit(2); }

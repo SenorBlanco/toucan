@@ -59,12 +59,12 @@ int main(int argc, char** argv) {
     yyin = stdin;
   }
 
-  SymbolTable symbols;
   TypeTable   types;
   NodeVector nodes;
   Stmts*     rootStmts = nodes.Make<Stmts>();
-  int        syntaxErrors = ParseProgram(filename, &symbols, &types, &nodes, {}, rootStmts);
+  int        syntaxErrors = ParseProgram(filename, &types, &nodes, {}, rootStmts);
   if (syntaxErrors > 0) { exit(1); }
+  SymbolTable symbols;
   SemanticPass semanticPass(&nodes, &symbols, &types);
   Stmts*       semanticStmts = semanticPass.Run(rootStmts);
   if (semanticPass.GetNumErrors() > 0) { exit(2); }

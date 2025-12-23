@@ -91,16 +91,14 @@ int main(int argc, char** argv) {
   std::ofstream initTypesFile(initTypesFilename.c_str(), std::ofstream::out);
   if (initTypesFile.fail()) { std::perror(initTypesFilename.c_str()); }
 
-  SymbolTable symbols;
   TypeTable   types;
   NodeVector  nodes;
   auto              rootStmts = nodes.Make<Stmts>();
-  symbols.PushScope(rootStmts); // FIXME: make InitAPI do this?
-  InitAPI(&symbols, &types, &nodes);
-  symbols.PopScope();
-  int syntaxErrors = ParseProgram(filename, &symbols, &types, &nodes, includePaths, rootStmts);
+  InitAPI(&types, &nodes, rootStmts);
+  int syntaxErrors = ParseProgram(filename, &types, &nodes, includePaths, rootStmts);
   if (syntaxErrors > 0) { exit(1); }
   types.SetMemoryLayout();
+  SymbolTable symbols;
   SemanticPass semanticPass(&nodes, &symbols, &types);
   rootStmts = semanticPass.Run(rootStmts);
   if (semanticPass.GetNumErrors() > 0) { exit(2); }

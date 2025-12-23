@@ -905,21 +905,21 @@ static void InstantiateClassTemplates() {
 }
 
 int ParseProgram(const char* filename,
-                 SymbolTable* symbols,
                  TypeTable* types,
                  NodeVector* nodes,
                  const std::vector<std::string>& includePaths,
                  Stmts* rootStmts) {
   numSyntaxErrors = 0;
   nodes_ = nodes;
-  symbols_ = symbols;
+  SymbolTable symbols;
+  symbols_ = &symbols;
   types_ = types;
   includePaths_ = includePaths;
   rootStmts_ = rootStmts;
   PushFile(filename);
-  symbols->PushScope(rootStmts);
+  symbols.PushScope(rootStmts);
   yyparse();
-  symbols->PopScope();
+  symbols.PopScope();
   if (numSyntaxErrors == 0) {
     if (!rootStmts_->ContainsReturn()) {
       rootStmts_->Append(Make<ReturnStatement>(nullptr));
