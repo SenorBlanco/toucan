@@ -41,10 +41,10 @@ class SymbolTable {
   void             PushScope(Stmts* scope);
   Stmts*           PopScope();
   Stmts*           PeekScope();
-  void             Dump();
+  const std::vector<Stmts*>& Get() { return stack_; }
 
  private:
-  Stmts*                             currentScope_;
+  std::vector<Stmts*>  stack_;
 };
 
 };  // namespace Toucan

@@ -15,52 +15,52 @@
 #include "symbol.h"
 
 #include <string.h>
-
 #include "type.h"
+
+#include <ranges>
 
 namespace Toucan {
 
-SymbolTable::SymbolTable() : currentScope_(nullptr) {}
+SymbolTable::SymbolTable() {}
 
 void SymbolTable::PushScope(Stmts* scope) {
-  scope->SetParent(currentScope_);
-  currentScope_ = scope;
+  stack_.push_back(scope);
 }
 
 Stmts* SymbolTable::PopScope() {
-  Stmts* back = currentScope_;
-  currentScope_ = back ? back->GetParent() : nullptr;
+  Stmts* back = PeekScope();
+  stack_.pop_back();
   return back;
 }
 
-Stmts* SymbolTable::PeekScope() { return currentScope_; }
+Stmts* SymbolTable::PeekScope() { return stack_.empty() ? nullptr : stack_.back(); }
 
 Expr* SymbolTable::FindID(const std::string& identifier) const {
-  for (Stmts* scope = currentScope_; scope != nullptr; scope = scope->GetParent()) {
+  for (auto scope : std::views::reverse(stack_)) {
     if (Expr* expr = scope->FindID(identifier)) return expr;
   }
   return nullptr;
 }
 
 Var* SymbolTable::AppendVar(std::string identifier, Type* type) {
-  if (!currentScope_) return nullptr;
+  assert(!stack_.empty());
   auto var = std::make_shared<Var>(identifier, type);
-  currentScope_->AppendVar(var);
+  stack_.back()->AppendVar(var);
   return var.get();
 }
 
 void SymbolTable::DefineID(std::string identifier, Expr* expr) {
-  assert(currentScope_);
-  currentScope_->DefineID(identifier, expr);
+  assert(!stack_.empty());
+  stack_.back()->DefineID(identifier, expr);
 }
 
 void SymbolTable::DefineType(std::string identifier, Type* type) {
-  assert(currentScope_);
-  currentScope_->DefineType(identifier, type);
+  assert(!stack_.empty());
+  stack_.back()->DefineType(identifier, type);
 }
 
 Type* SymbolTable::FindType(const std::string& identifier) const {
-  for (auto scope = currentScope_; scope != nullptr; scope = scope->GetParent()) {
+  for (auto scope : std::views::reverse(stack_)) {
     if (auto type = scope->FindType(identifier)) return type;
   }
   return nullptr;

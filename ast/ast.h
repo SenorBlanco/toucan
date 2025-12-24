@@ -552,19 +552,16 @@ class Stmts : public Stmt {
   void                      Prepend(Stmt* stmt) { stmts_.insert(stmts_.begin(), stmt); }
   const std::vector<Stmt*>& GetStmts() { return stmts_; }
   bool                      ContainsReturn() const override;
-  void                      SetParent(Stmts* parent) { parent_ = parent; }
   void                      DefineID(std::string id, Expr* expr) { ids_[id] = expr; }
   void                      DefineType(std::string id, Type* type) { types_[id] = type; }
   Expr*                     FindID(const std::string& id);
   Type*                     FindType(const std::string& id);
-  Stmts*                    GetParent() const { return parent_; }
   void                      AppendVar(std::shared_ptr<Var> v);
   const VarVector&          GetVars() const { return vars_; }
   const TypeMap&            GetTypes() const { return types_; }
 
  private:
   std::vector<Stmt*>        stmts_;
-  Stmts*                    parent_ = nullptr;
   VarVector                 vars_;
   TypeMap                   types_;
   ExprMap                   ids_;

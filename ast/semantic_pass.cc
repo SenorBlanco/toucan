@@ -1010,7 +1010,9 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
 
 void SemanticPass::UnwindStack(Stmts* stmts) {
   Stmts* topScope = currentMethod_ ? currentMethod_->stmts : nullptr;
-  for (auto scope = symbols_.PeekScope(); scope != topScope; scope = scope->GetParent()) {
+  auto stack = symbols_.Get();
+  for (auto it = stack.rbegin(); it != stack.rend() && *it != topScope; ++it) {
+    auto scope = *it;
     for (auto var : scope->GetVars()) {
       if (var->type->NeedsDestruction()) {
         stmts->Append(Make<DestroyStmt>(Make<VarExpr>(var.get())));
