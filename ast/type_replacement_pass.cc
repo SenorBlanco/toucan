@@ -41,7 +41,6 @@ Method* TypeReplacementPass::ResolveMethod(Method* m) {
   }
   if (m->stmts) {
     result->stmts = Resolve(m->stmts);
-    result->stmts->SetMethod(true);
   }
   if (m->initializer) result->initializer = Resolve(m->initializer);
   return result;

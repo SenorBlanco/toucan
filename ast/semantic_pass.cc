@@ -972,17 +972,15 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
     currentMethod_ = method.get();
     method->stmts = Resolve(method->stmts);
     currentMethod_ = nullptr;
-    symbols_.PopScope();
 
     if (method->IsConstructor()) {
-      symbols_.PushScope(methodScope);
       Expr* initializer = method->initializer ? Resolve(method->initializer)
                           : ResolveListExpr(Make<ArgList>(), method->classType);
-      symbols_.PopScope();
       auto This = Make<LoadExpr>(Make<VarExpr>(method->formalArgList[0].get()));
       method->stmts->Prepend(Make<StoreStmt>(This, Widen(initializer, method->classType)));
       method->stmts->Append(Make<ReturnStatement>(This));
     }
+    symbols_.PopScope();
 
     if (method->returnType->ContainsRawPtr() && !method->IsConstructor()) {
       Error("cannot return a raw pointer");
@@ -1011,7 +1009,8 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
 }
 
 void SemanticPass::UnwindStack(Stmts* stmts) {
-  for (auto scope = symbols_.PeekScope(); scope && !scope->IsMethod(); scope = scope->GetParent()) {
+  Stmts* topScope = currentMethod_ ? currentMethod_->stmts : nullptr;
+  for (auto scope = symbols_.PeekScope(); scope != topScope; scope = scope->GetParent()) {
     for (auto var : scope->GetVars()) {
       if (var->type->NeedsDestruction()) {
         stmts->Append(Make<DestroyStmt>(Make<VarExpr>(var.get())));

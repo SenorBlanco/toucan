@@ -184,7 +184,6 @@ Method* MethodDecl::CreateMethod(ClassType* classType, TypeTable* types) {
       method->AddFormalArg(v->GetID(), v->GetType(), v->GetInitExpr());
     }
   }
-  if (method->stmts) method->stmts->SetMethod(true);
   return method;
 }
 

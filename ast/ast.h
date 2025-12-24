@@ -557,8 +557,6 @@ class Stmts : public Stmt {
   void                      DefineType(std::string id, Type* type) { types_[id] = type; }
   Expr*                     FindID(const std::string& id);
   Type*                     FindType(const std::string& id);
-  bool                      IsMethod() const { return isMethod_; }
-  void                      SetMethod(bool isMethod) { isMethod_ = isMethod; }
   Stmts*                    GetParent() const { return parent_; }
   void                      AppendVar(std::shared_ptr<Var> v);
   const VarVector&          GetVars() const { return vars_; }
@@ -570,7 +568,6 @@ class Stmts : public Stmt {
   VarVector                 vars_;
   TypeMap                   types_;
   ExprMap                   ids_;
-  bool                      isMethod_;
 };
 
 class ExprStmt : public Stmt {
