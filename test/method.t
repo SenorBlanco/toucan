@@ -1,4 +1,4 @@
-//include "include/test.t"
+include "include/test.t"
 
 class Foo {
   inc() {
@@ -13,4 +13,4 @@ foo.x = 0.0;
 foo.inc();
 foo.inc();
 foo.inc();
-//Test.Expect(foo.x == 3.0);
+Test.Expect(foo.x == 3.0);
