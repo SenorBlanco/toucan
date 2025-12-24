@@ -320,9 +320,10 @@ Result SemanticPass::Visit(VarDeclaration* decl) {
   if (!type->IsRawPtr() && type->ContainsRawPtr()) {
     return Error("cannot allocate a type containing a raw pointer");
   }
-  Var*  var = symbols_.AppendVar(id, type);
-  Expr* varExpr = Make<VarExpr>(var);
-  Expr* expr = Make<VarExpr>(var);
+  auto var = std::make_shared<Var>(id, type);
+  symbols_.PeekScope()->AppendVar(var);
+  Expr* varExpr = Make<VarExpr>(var.get());
+  Expr* expr = varExpr;
   if (var->type->IsRawPtr()) expr = Make<LoadExpr>(expr);
   symbols_.DefineID(id, expr);
   return Initialize(varExpr, initExpr);

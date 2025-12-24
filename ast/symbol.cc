@@ -42,13 +42,6 @@ Expr* SymbolTable::FindID(const std::string& identifier) const {
   return nullptr;
 }
 
-Var* SymbolTable::AppendVar(std::string identifier, Type* type) {
-  assert(!stack_.empty());
-  auto var = std::make_shared<Var>(identifier, type);
-  stack_.back()->AppendVar(var);
-  return var.get();
-}
-
 void SymbolTable::DefineID(std::string identifier, Expr* expr) {
   assert(!stack_.empty());
   stack_.back()->DefineID(identifier, expr);
