@@ -30,6 +30,8 @@ struct Var;
 class Visitor;
 
 using Result = std::variant<void*, uint32_t>;
+using ExprMap = std::unordered_map<std::string, Expr*>;
+using VarMap = std::unordered_map<std::string, Var*>;
 
 class ASTNode {
  public:
@@ -540,10 +542,6 @@ class Stmt : public ASTNode {
   virtual bool ContainsReturn() const { return false; }
 };
 
-typedef std::unordered_map<std::string, Var*>  VarMap;
-typedef std::unordered_map<std::string, Type*> TypeMap;
-typedef std::unordered_map<std::string, Expr*> ExprMap;
-
 class Stmts : public Stmt {
  public:
   Stmts();
@@ -551,13 +549,13 @@ class Stmts : public Stmt {
   void                      Append(Stmt* stmt) { stmts_.push_back(stmt); }
   void                      Prepend(Stmt* stmt) { stmts_.insert(stmts_.begin(), stmt); }
   const std::vector<Stmt*>& GetStmts() { return stmts_; }
-  bool                      ContainsReturn() const override;
   void                      DefineID(std::string id, Expr* expr) { ids_[id] = expr; }
   void                      DefineType(std::string id, Type* type) { types_[id] = type; }
   Expr*                     FindID(const std::string& id);
   Type*                     FindType(const std::string& id);
   void                      AppendVar(std::shared_ptr<Var> v);
   const VarVector&          GetVars() const { return vars_; }
+  bool                      ContainsReturn() const override;
   const TypeMap&            GetTypes() const { return types_; }
 
  private:

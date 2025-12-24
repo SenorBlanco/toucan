@@ -26,10 +26,6 @@
 
 namespace Toucan {
 
-typedef std::unordered_map<std::string, Var*>  VarMap;
-typedef std::unordered_map<std::string, Type*> TypeMap;
-typedef std::unordered_map<std::string, Expr*> ExprMap;
-
 class SymbolTable {
  public:
   SymbolTable();
