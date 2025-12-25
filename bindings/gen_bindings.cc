@@ -236,7 +236,7 @@ void GenBindings::Run(const TypeVector& referencedTypes) {
   file_ << "\n";
   file_ << "namespace Toucan {\n\n";
   if (emitSymbolsAndStatements_) {
-    file_ << "void InitAPI(TypeTable* types, NodeVector* nodes, Stmts* rootStmts) {\n";
+    file_ << "void InitAPI(NodeVector* nodes, TypeTable* types, Stmts* rootStmts) {\n";
   } else {
     file_ << "Type** InitTypes(TypeTable* types) {\n";
   }

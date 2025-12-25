@@ -549,19 +549,19 @@ class Stmts : public Stmt {
   void                      Prepend(Stmt* stmt) { stmts_.insert(stmts_.begin(), stmt); }
   const std::vector<Stmt*>& GetStmts() { return stmts_; }
   void                      DefineID(std::string id, Expr* expr) { ids_[id] = expr; }
-  void                      DefineType(std::string id, Type* type) { types_[id] = type; }
   Expr*                     FindID(const std::string& id);
+  void                      DefineType(std::string id, Type* type) { types_[id] = type; }
   Type*                     FindType(const std::string& id);
+  const TypeMap&            GetTypes() const { return types_; }
   void                      AppendVar(std::shared_ptr<Var> v);
   const VarVector&          GetVars() const { return vars_; }
   bool                      ContainsReturn() const override;
-  const TypeMap&            GetTypes() const { return types_; }
 
  private:
-  std::vector<Stmt*>        stmts_;
-  VarVector                 vars_;
-  TypeMap                   types_;
-  ExprMap                   ids_;
+  std::vector<Stmt*> stmts_;
+  ExprMap            ids_;
+  TypeMap            types_;
+  VarVector          vars_;
 };
 
 class ExprStmt : public Stmt {

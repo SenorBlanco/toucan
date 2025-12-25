@@ -905,8 +905,8 @@ static void InstantiateClassTemplates() {
 }
 
 int ParseProgram(const char* filename,
-                 TypeTable* types,
                  NodeVector* nodes,
+                 TypeTable* types,
                  const std::vector<std::string>& includePaths,
                  Stmts* rootStmts) {
   numSyntaxErrors = 0;

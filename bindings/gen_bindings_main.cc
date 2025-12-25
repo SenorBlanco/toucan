@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
   TypeTable   types;
   NodeVector nodes;
   Stmts*     rootStmts = nodes.Make<Stmts>();
-  int        syntaxErrors = ParseProgram(filename, &types, &nodes, {}, rootStmts);
+  int        syntaxErrors = ParseProgram(filename, &nodes, &types, {}, rootStmts);
   if (syntaxErrors > 0) { exit(1); }
   SemanticPass semanticPass(&nodes, &types);
   Stmts*       semanticStmts = semanticPass.Run(rootStmts);

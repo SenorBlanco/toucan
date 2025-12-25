@@ -91,8 +91,8 @@ int main(int argc, char** argv) {
   TypeTable   types;
   NodeVector  nodes;
   auto              rootStmts = nodes.Make<Stmts>();
-  InitAPI(&types, &nodes, rootStmts);
-  int syntaxErrors = ParseProgram(filename, &types, &nodes, includePaths, rootStmts);
+  InitAPI(&nodes, &types, rootStmts);
+  int syntaxErrors = ParseProgram(filename, &nodes, &types, includePaths, rootStmts);
   if (syntaxErrors > 0) { exit(1); }
   types.SetMemoryLayout();
   SemanticPass semanticPass(&nodes, &types);

@@ -22,8 +22,8 @@ class Stmts;
 
 extern FILE* yyin;
 extern int   ParseProgram(const char*                     filename,
-                          Toucan::TypeTable*              types,
                           Toucan::NodeVector*             nodes,
+                          Toucan::TypeTable*              types,
                           const std::vector<std::string>& includePaths,
                           Toucan::Stmts*                  rootStmts);
 #endif
