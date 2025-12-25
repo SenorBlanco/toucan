@@ -31,7 +31,6 @@ class Visitor;
 
 using Result = std::variant<void*, uint32_t>;
 using ExprMap = std::unordered_map<std::string, Expr*>;
-using VarMap = std::unordered_map<std::string, Var*>;
 
 class ASTNode {
  public:
