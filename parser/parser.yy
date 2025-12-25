@@ -66,12 +66,12 @@ static void BeginEnum(Type* e);
 static void AppendEnum(const char* id);
 static void AppendEnum(const char* id, int value);
 static void EndEnum();
-static MethodDecl* MakeMethod(int modifiers, ArgList* optWorkgroupSize, std::string id,
-                              Stmts* formalArguments, int thisQualifiers, Type* returnType, 
-                              Expr* initializer, Stmts* body);
-static MethodDecl* MakeConstructor(int modifiers, Type* type, Stmts* formalArguments,
-                                   Expr* initializer, Stmts* body);
-static MethodDecl* MakeDestructor(int modifiers, Type* type, Stmts* body);
+static void MakeMethodDecl(int modifiers, ArgList* optWorkgroupSize, std::string id,
+                           Stmts* formalArguments, int thisQualifiers, Type* returnType, 
+                           Expr* initializer, Stmts* body);
+static void MakeConstructor(int modifiers, Type* type, Stmts* formalArguments, Expr* initializer,
+                            Stmts* body);
+static void MakeDestructor(int modifiers, Type* type, Stmts* body);
 static void BeginBlock();
 static void AppendStatement(Stmt* stmt);
 static Stmts* EndBlock();
@@ -127,7 +127,7 @@ Type* FindType(const char* str) {
 %type <stmt> statement expr_statement for_loop_stmt
 %type <stmt> assignment
 %type <stmt> if_statement for_statement while_statement do_statement
-%type <stmt> opt_else var_decl class_decl class_body_decl
+%type <stmt> opt_else var_decl class_decl
 %type <stmt> class_forward_decl
 %type <stmts> block_statement formal_arguments non_empty_formal_arguments
 %type <stmts> method_body
@@ -296,7 +296,7 @@ opt_parent_class:
   ;
 
 class_body:
-    class_body class_body_decl              { AppendStatement($2); }
+    class_body class_body_decl
   | /* nothing */
   ;
 
@@ -329,14 +329,14 @@ opt_return_type:
 class_body_decl:
     method_modifiers opt_workgroup_size T_IDENTIFIER '(' formal_arguments ')' opt_type_qualifiers
     opt_return_type method_body
-                                            { $$ = MakeMethod($1, $2, $3, $5, $7, $8, 0, $9); }
+                                            { MakeMethodDecl($1, $2, $3, $5, $7, $8, 0, $9); }
   | method_modifiers T_TYPENAME '(' formal_arguments ')' opt_initializer method_body
-                                            { $$ = MakeConstructor($1, $2, $4, $6, $7); }
+                                            { MakeConstructor($1, $2, $4, $6, $7); }
   | method_modifiers '~' T_TYPENAME '(' ')' method_body
-                                            { $$ = MakeDestructor($1, $3, $6); }
-  | var_decl_statement ';'                  { $$ = nullptr; }
-  | enum_decl ';'                           { $$ = nullptr; }
-  | using_decl                              { $$ = nullptr; }
+                                            { MakeDestructor($1, $3, $6); }
+  | var_decl_statement ';'
+  | enum_decl ';'
+  | using_decl
   ;
 
 method_body:
@@ -811,9 +811,8 @@ static void AppendStatement(Stmt* stmt) {
   if (stmt) symbols_->PeekScope()->Append(stmt);
 }
 
-MethodDecl* MakeMethod(int modifiers, ArgList* optWorkgroupSize, std::string id,
-                      Stmts* formalArguments, int thisQualifiers, Type* returnType,
-                      Expr* initializer, Stmts* body) {
+void MakeMethodDecl(int modifiers, ArgList* optWorkgroupSize, std::string id, Stmts* formalArguments,
+                    int thisQualifiers, Type* returnType, Expr* initializer, Stmts* body) {
   std::array<uint32_t, 3> workgroupSize;
   if (optWorkgroupSize) {
     auto args = optWorkgroupSize->GetArgs();
@@ -835,28 +834,29 @@ MethodDecl* MakeMethod(int modifiers, ArgList* optWorkgroupSize, std::string id,
   } else if (modifiers & Method::Modifier::Compute) {
     yyerrorf("compute shader requires a workgroup size");
   }
-  return Make<MethodDecl>(modifiers, workgroupSize, id, formalArguments, thisQualifiers,
-                          returnType, initializer, body);
+  AppendStatement(Make<MethodDecl>(modifiers, workgroupSize, id, formalArguments, thisQualifiers,
+                          returnType, initializer, body));
 }
 
-MethodDecl* MakeConstructor(int modifiers, Type* type, Stmts* formalArguments, Expr* initializer, Stmts* body) {
+void MakeConstructor(int modifiers, Type* type, Stmts* formalArguments, Expr* initializer, Stmts* body) {
   if (!type->IsClass()) {
     yyerror("constructor must be of class type");
-    return nullptr;
+    return;
   }
   ClassType* classType = static_cast<ClassType*>(type);
   auto returnType = types_->GetRawPtrType(classType);
-  return MakeMethod(modifiers, nullptr, classType->GetName(), formalArguments, 0, returnType, initializer, body);
+  MakeMethodDecl(modifiers, nullptr, classType->GetName(), formalArguments, 0, returnType,
+                 initializer, body);
 }
 
-MethodDecl* MakeDestructor(int modifiers, Type* type, Stmts* body) {
+void MakeDestructor(int modifiers, Type* type, Stmts* body) {
   if (!type->IsClass()) {
     yyerror("destructor must be of class type");
-    return nullptr;
+    return;
   }
   ClassType* classType = static_cast<ClassType*>(type);
   std::string name(std::string("~") + classType->GetName());
-  return MakeMethod(modifiers, nullptr, name.c_str(), nullptr, 0, types_->GetVoid(), nullptr, body);
+  MakeMethodDecl(modifiers, nullptr, name.c_str(), nullptr, 0, types_->GetVoid(), nullptr, body);
 }
 
 static Type* GetScopedType(Type* type, const char* id) {

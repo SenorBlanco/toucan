@@ -163,14 +163,13 @@ Result SemanticPass::Visit(Stmts* stmts) {
     Stmt* stmt = Resolve(it);
     if (stmt) newStmts->Append(stmt);
   }
-  bool containsReturn = stmts->ContainsReturn();
   symbols_.PopScope();
   for (auto var : stmts->GetVars()) {
     newStmts->AppendVar(var);
   }
   // Append destructor calls for any vars that need it.
   for (auto var : std::views::reverse(newStmts->GetVars())) {
-    if (var->type->NeedsDestruction() && !containsReturn) {
+    if (var->type->NeedsDestruction() && !stmts->ContainsReturn()) {
       newStmts->Append(Make<DestroyStmt>(Make<VarExpr>(var.get())));
     }
   }
@@ -323,9 +322,7 @@ Result SemanticPass::Visit(VarDeclaration* decl) {
   auto var = std::make_shared<Var>(id, type);
   symbols_.PeekScope()->AppendVar(var);
   Expr* varExpr = Make<VarExpr>(var.get());
-  Expr* expr = varExpr;
-  if (var->type->IsRawPtr()) expr = Make<LoadExpr>(expr);
-  symbols_.DefineID(id, expr);
+  symbols_.DefineID(id, var->type->IsRawPtr() ? Make<LoadExpr>(varExpr) : varExpr);
   return Initialize(varExpr, initExpr);
 }
 
@@ -962,8 +959,7 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   for (const auto& method : classType->GetMethods()) {
     if (!method->stmts) continue;
 
-    auto methodScope = Make<Stmts>();
-    symbols_.PushScope(methodScope);
+    symbols_.PushScope(Make<Stmts>());
     for (const auto& var : method->formalArgList) {
       Expr* expr = Make<VarExpr>(var.get());
       if (var->type->IsRawPtr()) expr = Make<LoadExpr>(expr);
@@ -1013,8 +1009,7 @@ void SemanticPass::UnwindStack(Stmts* stmts) {
   Stmts* topScope = currentMethod_ ? currentMethod_->stmts : nullptr;
   auto stack = symbols_.Get();
   for (auto it = stack.rbegin(); it != stack.rend() && *it != topScope; ++it) {
-    auto scope = *it;
-    for (auto var : scope->GetVars()) {
+    for (auto var : (*it)->GetVars()) {
       if (var->type->NeedsDestruction()) {
         stmts->Append(Make<DestroyStmt>(Make<VarExpr>(var.get())));
       }
