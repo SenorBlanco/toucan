@@ -127,10 +127,10 @@ Type* FindType(const char* str) {
 %type <stmt> statement expr_statement var_decl_statement const_decl_statement for_loop_stmt
 %type <stmt> assignment
 %type <stmt> if_statement for_statement while_statement do_statement
-%type <stmt> opt_else class_decl class_body_decl var_decl
+%type <stmt> opt_else class_decl class_body_decl var_decl const_decl
 %type <stmt> class_forward_decl
 %type <stmts> statements formal_arguments non_empty_formal_arguments method_body
-%type <decls> var_decl_list
+%type <decls> var_decl_list const_decl_list
 %type <stmts> class_body block_statement
 %type <argList> arguments non_empty_arguments opt_workgroup_size
 %type <typeList> types
@@ -187,6 +187,7 @@ statement:
   | do_statement
   | T_RETURN opt_expr ';'                   { $$ = MakeReturnStatement($2); }
   | var_decl_statement ';'                  { $$ = $1; }
+  | const_decl_statement ';'                { $$ = $1; }
   | class_decl
   | class_forward_decl
   | enum_decl                               { $$ = 0; }
@@ -244,7 +245,7 @@ var_decl_statement:
   ;
 
 const_decl_statement:
-    T_CONST var_decl_list                { $$ = $2; }
+    T_CONST const_decl_list                 { $$ = $2; }
   ;
 
 simple_type:
@@ -270,6 +271,11 @@ type:
 var_decl_list:
     var_decl_list ',' var_decl              { $$ = $1; if ($3) $1->Append($3); }
   | var_decl                                { $$ = Make<Decls>(); if ($1) $$->Append($1); }
+  ;
+
+const_decl_list:
+    const_decl_list ',' const_decl          { $$ = $1; if ($3) $1->Append($3); }
+  | const_decl                              { $$ = Make<Decls>(); if ($1) $$->Append($1); }
   ;
 
 class_header:
@@ -339,6 +345,7 @@ class_body_decl:
   | method_modifiers '~' T_TYPENAME '(' ')' method_body
                                             { $$ = MakeDestructor($1, $3, $6); }
   | var_decl_statement ';'                  { $$ = $1; }
+  | const_decl_statement ';'                { $$ = $1; }
   | enum_decl ';'                           { $$ = 0; }
   | using_decl                              { $$ = 0; }
   ;
@@ -411,6 +418,10 @@ var_decl:
     T_IDENTIFIER ':' type                   { $$ = Make<VarDeclaration>($1, $3, nullptr); }
   | T_IDENTIFIER '=' expr_or_list           { $$ = Make<VarDeclaration>($1, types_->GetAuto(), $3); }
   | T_IDENTIFIER ':' type '=' expr_or_list  { $$ = Make<VarDeclaration>($1, $3, $5); }
+  ;
+
+const_decl:
+    T_IDENTIFIER '=' expr_or_list           { $$ = Make<ConstDecl>($1, $3); }
   ;
 
 scalar_type:
