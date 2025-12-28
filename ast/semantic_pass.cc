@@ -331,6 +331,33 @@ Result SemanticPass::Visit(VarDeclaration* decl) {
   return Initialize(varExpr, initExpr);
 }
 
+Result SemanticPass::Visit(ConstDecl* decl) {
+  std::string id = decl->GetID();
+  if (symbols_.PeekScope()->FindID(id)) {
+    return Error("variable \"%s\" already defined in this scope", id.c_str());
+  }
+  auto expr = Resolve(decl->GetExpr());
+  if (!expr) return nullptr;
+  auto type = expr->GetType(types_);
+
+  if (type->IsPtr()) {
+    return Error("cannot create a constant pointer");
+  }
+  if (type->ContainsRawPtr()) { // FIXME: should be all pointers
+    return Error("cannot allocate a type containing a raw pointer");
+  }
+  if (!expr->IsConstant(types_)) {
+    return Error("expression is not constant value");
+  }
+  typesToValidate_.push_back({type, decl->GetFileLocation()});
+
+  // This will be removed by the load expression added by the parser to turn assignable to expr.
+  expr = MakeReadOnlyTempVar(expr);
+
+  symbols_.DefineID(id, expr);
+  return {};
+}
+
 Result SemanticPass::ResolveMethodCall(Expr*       expr,
                                        ClassType*  classType,
                                        std::string id,
