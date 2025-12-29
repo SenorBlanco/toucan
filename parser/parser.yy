@@ -145,7 +145,7 @@ Type* FindType(const char* str) {
 %token <f> T_FLOAT_LITERAL
 %token <d> T_DOUBLE_LITERAL
 %token T_TRUE T_FALSE T_NULL T_IF T_ELSE T_FOR T_WHILE T_DO T_RETURN T_NEW
-%token T_CLASS T_ENUM T_VAR
+%token T_CLASS T_ENUM T_VAR T_AS
 %token T_READONLY T_WRITEONLY T_COHERENT T_DEVICEONLY T_HOSTREADABLE T_HOSTWRITEABLE
 %token T_INT T_UINT T_FLOAT T_DOUBLE T_BOOL T_BYTE T_UBYTE T_SHORT T_USHORT
 %token T_HALF
@@ -244,7 +244,7 @@ var_decl_statement:
   ;
 
 simple_type:
-    T_TYPENAME
+    T_IDENTIFIER
   | scalar_type
   | simple_type T_LT types T_GT             { $$ = GetClassTemplateInstance($1, *$3); }
   | simple_type T_LT T_INT_LITERAL T_GT     { $$ = types_->GetVector($1, $3); }
@@ -270,7 +270,6 @@ var_decl_list:
 
 class_header:
     T_CLASS T_IDENTIFIER                    { $$ = DeclareClass($2); }
-  | T_CLASS T_TYPENAME                      { $$ = AsClassType($2); }
   ;
 
 template_class_header:
@@ -302,7 +301,6 @@ class_body:
 
 enum_header:
     T_ENUM T_IDENTIFIER                     { $$ = DeclareEnum($2); }
-  | T_ENUM T_TYPENAME                       { $$ = AsEnumType($2); }
   ;
 
 enum_decl:
@@ -330,9 +328,9 @@ class_body_decl:
     method_modifiers opt_workgroup_size T_IDENTIFIER '(' formal_arguments ')' opt_type_qualifiers
     opt_return_type method_body
                                             { $$ = MakeMethodDecl($1, $2, $3, $5, $7, $8, 0, $9); }
-  | method_modifiers T_TYPENAME '(' formal_arguments ')' opt_initializer method_body
+  | method_modifiers T_IDENTIFIER '(' formal_arguments ')' opt_initializer method_body
                                             { $$ = MakeConstructor($1, $2, $4, $6, $7); }
-  | method_modifiers '~' T_TYPENAME '(' ')' method_body
+  | method_modifiers '~' T_IDENTIFIER '(' ')' method_body
                                             { $$ = MakeDestructor($1, $3, $6); }
   | var_decl_statement ';'                  { $$ = $1; }
   | enum_decl ';'                           { $$ = 0; }
@@ -471,7 +469,7 @@ arith_expr:
   | assignable T_PLUSPLUS                   { $$ = IncDec(IncDecExpr::Op::Inc, false, $1); }
   | assignable T_MINUSMINUS                 { $$ = IncDec(IncDecExpr::Op::Dec, false, $1); }
   | '(' arith_expr ')'                      { $$ = $2; }
-  | '(' type ')' arith_expr %prec UNARYMINUS      { $$ = Make<CastExpr>($2, $4); }
+  | arith_expr T_AS type                    { $$ = Make<CastExpr>($3, $1); }
   | T_INT_LITERAL                           { $$ = Make<IntConstant>($1, 32); }
   | T_UINT_LITERAL                          { $$ = Make<UIntConstant>($1, 32); }
   | T_BYTE_LITERAL                          { $$ = Make<IntConstant>($1, 8); }
@@ -531,7 +529,6 @@ assignable:
                                             { $$ = Make<UnresolvedMethodCall>($1, $3, $5); }
   | simple_type '.' T_IDENTIFIER '(' arguments ')'
                                             { $$ = MakeStaticMethodCall($1, $3, $5); }
-  | assignable ':'                          { $$ = Make<SmartToRawPtr>(Make<LoadExpr>($1)); }
   | initializer                             { $$ = Make<TempVarExpr>(nullptr, $1); }
   ;
 
