@@ -35,8 +35,8 @@ class LightUpdate {
       return;
     }
 
-    var ii = i as float;
-    lights[i].position.y = lights[i].position.y - 0.5 - 0.003 * (ii - 64.0 * Math.floor(ii / 64.0));
+    var j = i as float;
+    lights[i].position.y = lights[i].position.y - 0.5 - 0.003 * (j - 64.0 * Math.floor(j / 64.0));
 
     if (lights[i].position.y < lightExtent.min.y) {
       lights[i].position.y = lightExtent.max.y;
@@ -133,7 +133,7 @@ class GBuffersDebugView : TextureQuadPass {
     var gBufferAlbedo = textureBindings.Get().gBufferAlbedo;
     var result : float<4>;
     var windowSize = windowSizeBindings.Get().size.MapRead():;
-    var c = fb.fragCoord.xy / (windowSize as float<2>);
+    var c = fb.fragCoord.xy / windowSize as float<2>;
     if (c.x < 0.33333) {
       var rawDepth = gBufferDepth.Load(Math.floor(fb.fragCoord.xy) as uint<2>, 0).x;
       // Remap depth into something a bit more visible.
@@ -218,8 +218,7 @@ var window = new Window(System.GetScreenSize());
 
 var swapChain = new SwapChain<PreferredPixelFormat>(device, window);
 var windowSize = window.GetSize();
-var windowSizeFloat = windowSize as float<2>;
-var aspect = windowSizeFloat.x / windowSizeFloat.y;
+var aspect = windowSize.x as float / windowSize.y as float;
 
 var mesh = new Mesh<Vertex, ushort>(&dragonVertices, &dragonTriangles, Math.pi);
 TexCoordUtils<Vertex>.ComputeProjectedPlaneUVs(mesh.vertices, ProjectedPlane.XY);
@@ -348,7 +347,7 @@ modelUniformBuffer.SetData({modelMatrix, invertTransposeModelMatrix});
 var startTime = System.GetCurrentTime();
 while (System.IsRunning()) {
   // Rotate the camera around the origin based on time.
-  var rad = Math.pi * (float) ((System.GetCurrentTime() - startTime) / 5.0d) as float;
+  var rad = Math.pi * ((System.GetCurrentTime() - startTime) / 5.0d) as float;
   var rotation = Transform.translation(origin) * Transform.rotation({0.0, 1.0, 0.0}, rad);
   var rp4 = rotation * float<4>{@eyePosition, 1.0};
   rp4 /= rp4.w;
