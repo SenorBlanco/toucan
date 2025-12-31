@@ -70,6 +70,7 @@ test/compute-simple.t
 test/compute-swizzle.t
 test/compute-vector-cast.t
 test/constant-folding.t
+test/constants.t
 test/constructor-calls-initializer.t
 test/constructor-with-default-arg.t
 test/constructor-with-explicit-initializer.t
@@ -217,6 +218,8 @@ error-stack-allocate-raw-ptr-aggregate.t:17:  cannot allocate a type containing 
 error-stack-allocate-raw-ptr-aggregate.t:18:  cannot allocate a type containing a raw pointer
 test/error-stack-allocate-unsized-array.t
 error-stack-allocate-unsized-array.t:1:  cannot create storage of type []int
+test/error-store-to-constant.t
+error-store-to-constant.t:2:  expression is not an assignable value
 test/error-store-to-length.t
 error-store-to-length.t:2:  expression is not an assignable value
 test/error-swizzle.t
