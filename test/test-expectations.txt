@@ -109,6 +109,13 @@ test/error-assign-padded-array.t:21: expectation failed
 test/error-assign-padded-array.t:22: expectation failed
 test/error-cast-weak-ptr-to-strong.t
 error-cast-weak-ptr-to-strong.t:3:  cannot cast value of type ^int to *int
+test/error-constant-not-constant.t
+error-constant-not-constant.t:4:  expression is not constant
+error-constant-not-constant.t:5:  expression is not constant
+error-constant-not-constant.t:6:  expression is not constant
+error-constant-not-constant.t:7:  expression is not constant
+error-constant-not-constant.t:8:  expression is not constant
+error-constant-not-constant.t:9:  expression is not constant
 test/error-constructor-not-found.t
 error-constructor-not-found.t:1:  matching constructor not found
 test/error-dereference.t
