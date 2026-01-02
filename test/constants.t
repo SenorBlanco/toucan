@@ -35,3 +35,10 @@ Test.Assert(c11.x == 42.0 && c11.y == 21.0);
 
 const c12 = float<2, 2>{{c2, 21.0}, {14.0, c2}};
 Test.Assert(c12[0][0] == 42.0 && c12[0][1] == 21.0 && c12[1][0] == 14.0 && c12[1][1] == 42.0);
+
+const scoped = 42;
+{
+  const scoped = 21;
+  Test.Assert(scoped == 21);
+}
+Test.Assert(scoped == 42);
