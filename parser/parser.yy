@@ -82,6 +82,7 @@ static Expr* MakeNewExpr(UnresolvedInitializer* initializer, Expr* length = null
 static Expr* InlineFile(const char* filename);
 static Expr* StringLiteral(const char* str);
 static Type* GetArrayType(Type* elementType, int numElements);
+static Type* GetVectorType(Type* componentType, int numComponents);
 static Type* GetScopedType(Type* type, const char* id);
 static TypeList* AddIDToTypeList(const char* id, TypeList* list);
 static ClassType* GetClassTemplateInstance(Type* type, const TypeList& templateArgs);
@@ -248,8 +249,8 @@ simple_type:
     T_TYPENAME
   | scalar_type
   | simple_type T_LT types T_GT             { $$ = GetClassTemplateInstance($1, *$3); }
-  | T_LT T_INT_LITERAL T_GT simple_type     { $$ = types_->GetVector($4, $2); }
-  | simple_type ':' T_IDENTIFIER  { $$ = GetScopedType($1, $3); }
+  | T_LT T_INT_LITERAL T_GT simple_type     { $$ = GetVectorType($4, $2); }
+  | simple_type ':' T_IDENTIFIER            { $$ = GetScopedType($1, $3); }
   ;
 
 type:
@@ -977,4 +978,11 @@ static Type* GetArrayType(Type* elementType, int numElements) {
     return nullptr;
   }
   return types_->GetArrayType(elementType, numElements, MemoryLayout::Default);
+}
+
+static Type* GetVectorType(Type* componentType, int numComponents) {
+  if (componentType->IsVector()) {
+    return types_->GetMatrix(static_cast<VectorType*>(componentType), numComponents);
+  }
+  return types_->GetVector(componentType, numComponents);
 }

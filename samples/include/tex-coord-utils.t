@@ -6,9 +6,9 @@ enum ProjectedPlane {
 
 class TexCoordUtils<VertexType> {
   static ComputeProjectedPlaneUVs(vertices : *[]VertexType, plane : ProjectedPlane) {
-    var extentMin = float<2>{ 1000000.0,  1000000.0};
-    var extentMax = float<2>{-1000000.0, -1000000.0};
-    var ProjectedPlaneToComponent : [3]uint<2> = {
+    var extentMin = <2>float{ 1000000.0,  1000000.0};
+    var extentMax = <2>float{-1000000.0, -1000000.0};
+    var ProjectedPlaneToComponent : [3]<2>uint = {
       { 0, 1 }, { 0, 2 }, { 1, 2 }
     };
     var components = ProjectedPlaneToComponent[plane];

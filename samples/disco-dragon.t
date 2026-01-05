@@ -4,8 +4,8 @@ include "include/transform.t"
 include "include/tex-coord-utils.t"
 
 class LightData {
-  var position : float<4>;
-  var color    : float<3>;
+  var position : <4>float;
+  var color    : <3>float;
   var radius   : float;
 }
 
@@ -14,8 +14,8 @@ class Config {
 }
 
 class LightExtent {
-  var min : float<3>;
-  var max : float<3>;
+  var min : <3>float;
+  var max : <3>float;
 }
 
 class LightUpdateBindings {
@@ -47,18 +47,18 @@ class LightUpdate {
 }
 
 class Uniforms {
-  var modelMatrix : float<4,4>;
-  var normalModelMatrix : float<4,4>;
+  var modelMatrix : <4><4>float;
+  var normalModelMatrix : <4><4>float;
 }
 
 class Camera {
-  var viewProjectionMatrix : float<4,4>;
-  var invViewProjectionMatrix : float<4,4>;
+  var viewProjectionMatrix : <4><4>float;
+  var invViewProjectionMatrix : <4><4>float;
 }
 
 class VertexOutput {
-  var fragNormal : float<3>;
-  var fragUV : float<2>;
+  var fragNormal : <3>float;
+  var fragUV : <2>float;
 }
 
 class WriteGBuffersBindings {
@@ -67,9 +67,9 @@ class WriteGBuffersBindings {
 }
 
 class Vertex {
-  var position : float<3>;
-  var normal : float<3>;
-  var uv : float<2>;
+  var position : <3>float;
+  var normal : <3>float;
+  var uv : <2>float;
 }
 
 class WriteGBuffers {
@@ -81,9 +81,9 @@ class WriteGBuffers {
     // Transform the vertex position by the model and viewProjection matrices.
     // Transform the vertex normal by the normalModelMatrix (inverse transpose of the model).
     var output : VertexOutput;
-    var worldPosition = uniforms.modelMatrix * float<4>{@v.position, 1.0};
-    vb.position = camera.viewProjectionMatrix * float<4>{@worldPosition.xyz, 1.0};
-    var fragNormal = uniforms.normalModelMatrix * float<4>{@v.normal, 1.0};
+    var worldPosition = uniforms.modelMatrix * <4>float{@v.position, 1.0};
+    vb.position = camera.viewProjectionMatrix * <4>float{@worldPosition.xyz, 1.0};
+    var fragNormal = uniforms.normalModelMatrix * <4>float{@v.normal, 1.0};
     output.fragNormal = fragNormal.xyz;
     output.fragUV = v.uv;
     return output;
@@ -107,7 +107,7 @@ class WriteGBuffers {
 
 class TextureQuadPass {
   vertex main(vb : &VertexBuiltins) {
-    var pos : [6]float<2> = {
+    var pos : [6]<2>float = {
       { -1.0, -1.0 }, { 1.0, -1.0 }, { -1.0,  1.0 },
       { -1.0,  1.0 }, { 1.0, -1.0 }, {  1.0,  1.0 } };
     vb.position = {@pos[vb.vertexIndex], 0.0, 1.0};
@@ -123,7 +123,7 @@ class GBufferTextureBindings {
 }
 
 class WindowSizeBindings {
-  var size : *uniform Buffer<uint<2>>;
+  var size : *uniform Buffer<<2>uint>;
 }
 
 class GBuffersDebugView : TextureQuadPass {
@@ -131,21 +131,21 @@ class GBuffersDebugView : TextureQuadPass {
     var gBufferDepth = textureBindings.Get().gBufferDepth;
     var gBufferNormal = textureBindings.Get().gBufferNormal;
     var gBufferAlbedo = textureBindings.Get().gBufferAlbedo;
-    var result : float<4>;
+    var result : <4>float;
     var windowSize = windowSizeBindings.Get().size.MapRead():;
-    var c = fb.fragCoord.xy / windowSize as float<2>;
+    var c = fb.fragCoord.xy / windowSize as <2>float;
     if (c.x < 0.33333) {
-      var rawDepth = gBufferDepth.Load(Math.floor(fb.fragCoord.xy) as uint<2>, 0).x;
+      var rawDepth = gBufferDepth.Load(Math.floor(fb.fragCoord.xy) as <2>uint, 0).x;
       // Remap depth into something a bit more visible.
       var depth = (1.0 - rawDepth) * 50.0;
-      result = float<4>(depth);
+      result = <4>float(depth);
     } else if (c.x < 0.66667) {
-      result = gBufferNormal.Load(Math.floor(fb.fragCoord.xy) as uint<2>, 0);
+      result = gBufferNormal.Load(Math.floor(fb.fragCoord.xy) as <2>uint, 0);
       result.x = (result.x + 1.0) * 0.5;
       result.y = (result.y + 1.0) * 0.5;
       result.z = (result.z + 1.0) * 0.5;
     } else {
-      result = gBufferAlbedo.Load(Math.floor(fb.fragCoord.xy) as uint<2>, 0);
+      result = gBufferAlbedo.Load(Math.floor(fb.fragCoord.xy) as <2>uint, 0);
     }
     fragColor.Set(result);
   }
@@ -161,9 +161,9 @@ class DeferredRenderBufferBindings {
 }
 
 class DeferredRender : TextureQuadPass {
-  deviceonly static worldFromScreenCoord(camera : Camera, coord : float<2>, depthSample : float) : float<3> {
+  deviceonly static worldFromScreenCoord(camera : Camera, coord : <2>float, depthSample : float) : <3>float {
     // Reconstruct world-space position from the screen coordinates.
-    var posClip = float<4>(coord.x * 2.0 - 1.0, (1.0 - coord.y) * 2.0 - 1.0, depthSample, 1.0);
+    var posClip = <4>float(coord.x * 2.0 - 1.0, (1.0 - coord.y) * 2.0 - 1.0, depthSample, 1.0);
     var posWorldW = camera.invViewProjectionMatrix * posClip;
     var posWorld = posWorldW.xyz / posWorldW.www;
     return posWorld;
@@ -175,9 +175,9 @@ class DeferredRender : TextureQuadPass {
     var lights = buffers.lights.Map();
     var camera = buffers.camera.MapRead():;
     var textures = textureBindings.Get();
-    var result : float<3>;
+    var result : <3>float;
 
-    var depth = textures.gBufferDepth.Load(Math.floor(fb.fragCoord.xy) as uint<2>, 0).x;
+    var depth = textures.gBufferDepth.Load(Math.floor(fb.fragCoord.xy) as <2>uint, 0).x;
 
     // Don't light the sky.
     if (depth >= 1.0) {
@@ -185,10 +185,10 @@ class DeferredRender : TextureQuadPass {
     }
 
     var bufferSize = textures.gBufferDepth.GetSize();
-    var coordUV = fb.fragCoord.xy / bufferSize as float<2>;
+    var coordUV = fb.fragCoord.xy / bufferSize as <2>float;
     var position = this.worldFromScreenCoord(camera, coordUV, depth);
-    var normal = textures.gBufferNormal.Load(Math.floor(fb.fragCoord.xy) as uint<2>, 0).xyz;
-    var albedo = textures.gBufferAlbedo.Load(Math.floor(fb.fragCoord.xy) as uint<2>, 0).xyz;
+    var normal = textures.gBufferNormal.Load(Math.floor(fb.fragCoord.xy) as <2>uint, 0).xyz;
+    var albedo = textures.gBufferAlbedo.Load(Math.floor(fb.fragCoord.xy) as <2>uint, 0).xyz;
 
     for (var i = 0; i < config.numLights; i++) {
       var L = lights[i].position.xyz - position;
@@ -200,7 +200,7 @@ class DeferredRender : TextureQuadPass {
     }
 
     // Add some manual ambient.
-    result += float<3>(0.2);
+    result += <3>float(0.2);
 
     fragColor.Set({@result, 1.0});
   }
@@ -210,8 +210,8 @@ class DeferredRender : TextureQuadPass {
 }
 
 var kMaxNumLights = 1024;
-var lightExtentMin = float<3>{-50.0, -30.0, -50.0};
-var lightExtentMax = float<3>{ 50.0, 50.0, 50.0};
+var lightExtentMin = <3>float{-50.0, -30.0, -50.0};
+var lightExtentMax = <3>float{ 50.0, 50.0, 50.0};
 
 var device = new Device();
 var window = new Window(System.GetScreenSize());
@@ -328,9 +328,9 @@ var lightsBufferComputeBindGroup = new BindGroup<LightUpdateBindings>(device, {
   lightExtentBuffer
 });
 
-var eyePosition = float<3>(0.0, 50.0, -100.0);
-var upVector = float<3>(0.0, 1.0, 0.0);
-var origin = float<3>(0.0, 0.0, 0.0);
+var eyePosition = <3>float(0.0, 50.0, -100.0);
+var upVector = <3>float(0.0, 1.0, 0.0);
+var origin = <3>float(0.0, 0.0, 0.0);
 
 var pi = 3.141592653589;
 var projectionMatrix = Transform.perspective((2.0 * pi) / 5.0, aspect, 1.0, 2000.0);
@@ -350,7 +350,7 @@ while (System.IsRunning()) {
   // Rotate the camera around the origin based on time.
   var rad = pi * ((System.GetCurrentTime() - startTime) / 5.0d) as float;
   var rotation = Transform.translation(origin) * Transform.rotation({0.0, 1.0, 0.0}, rad);
-  var rp4 = rotation * float<4>{@eyePosition, 1.0};
+  var rp4 = rotation * <4>float{@eyePosition, 1.0};
   rp4 /= rp4.w;
   var rotatedEyePosition = rp4.xyz;
 
@@ -395,7 +395,7 @@ while (System.IsRunning()) {
     var debugViewPass = new RenderPass<GBuffersDebugView>(commandEncoder, {
       fragColor = fb
     });
-    var windowSizeBuffer = new uniform Buffer<uint<2>>(device, &windowSize);
+    var windowSizeBuffer = new uniform Buffer<<2>uint>(device, &windowSize);
     var windowSizeBindGroup = new BindGroup<WindowSizeBindings>(device, {windowSizeBuffer});
     debugViewPass.SetPipeline(gBuffersDebugViewPipeline);
     debugViewPass.Set({textureBindings = gBufferTexturesBindGroup,

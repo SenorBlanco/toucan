@@ -9,8 +9,8 @@ include "quaternion.t"
 include "transform.t"
 
 class Vertex {
-  var position : float<3>;
-  var normal   : float<3>;
+  var position : <3>float;
+  var normal   : <3>float;
 }
 
 var device = new Device();
@@ -52,20 +52,20 @@ class DrawPipeline {
 }
 
 class SkyboxPipeline : DrawPipeline {
-    vertex main(vb : &VertexBuiltins) : float<3> {
+    vertex main(vb : &VertexBuiltins) : <3>float {
         var v = position.Get();
         var uniforms = bindings.Get().uniforms.MapRead();
         var pos = float<4>(v.x, v.y, v.z, 1.0);
         vb.position = uniforms.projection * uniforms.view * uniforms.model * pos;
         return v;
     }
-    fragment main(fb : &FragmentBuiltins, position : float<3>) {
+    fragment main(fb : &FragmentBuiltins, position : <3>float) {
       var p = Math.normalize(position);
       var b = bindings.Get();
       // TODO: figure out why the skybox is X-flipped
-      fragColor.Set(b.textureView.Sample(b.sampler, float<3>(-p.x, p.y, p.z)));
+      fragColor.Set(b.textureView.Sample(b.sampler, <3>float(-p.x, p.y, p.z)));
     }
-    var position : *VertexInput<float<3>>;
+    var position : *VertexInput<<3>float>;
 };
 
 class ReflectionPipeline : DrawPipeline {
@@ -78,8 +78,8 @@ class ReflectionPipeline : DrawPipeline {
         var normal = viewModel * float<4>(n.x, n.y, n.z, 0.0);
         vb.position = uniforms.projection * pos;
         var varyings : Vertex;
-        varyings.position = float<3>(pos.x, pos.y, pos.z);
-        varyings.normal = float<3>(normal.x, normal.y, normal.z);
+        varyings.position = <3>float(pos.x, pos.y, pos.z);
+        varyings.normal = <3>float(normal.x, normal.y, normal.z);
         return varyings;
     }
     fragment main(fb : &FragmentBuiltins, varyings : Vertex) {
@@ -89,7 +89,7 @@ class ReflectionPipeline : DrawPipeline {
       var n = Math.normalize(varyings.normal);
       var r = Math.reflect(p, n);
       var invR = uniforms.viewInverse * float<4>(@r, 0.0);
-      fragColor.Set(b.textureView.Sample(b.sampler, float<3>(-invR.x, invR.y, invR.z)));
+      fragColor.Set(b.textureView.Sample(b.sampler, <3>float(-invR.x, invR.y, invR.z)));
     }
     var vert : *VertexInput<Vertex>;
 };
@@ -101,9 +101,9 @@ var cubeBindings = Bindings{
   textureView = texture.CreateSampleableView()
 };
 
-var cubeVB = new vertex Buffer<[]float<3>>(device, &cubeVerts);
+var cubeVB = new vertex Buffer<[]<3>float>(device, &cubeVerts);
 var cubeData = SkyboxPipeline{
-  position = new VertexInput<float<3>>(cubeVB),
+  position = new VertexInput<<3>float>(cubeVB),
   indexBuffer = new index Buffer<[]uint>(device, &cubeIndices),
   bindings = new BindGroup<Bindings>(device, &cubeBindings)
 };
@@ -123,14 +123,14 @@ var reflectionData = ReflectionPipeline{
 };
 
 var handler = EventHandler{ distance = 10.0 };
-var dragonQuat = Quaternion(float<3>(1.0, 0.0, 0.0), -3.1415926 / 2.0);
+var dragonQuat = Quaternion(<3>float(1.0, 0.0, 0.0), -3.1415926 / 2.0);
 dragonQuat.normalize();
 var depthBuffer = new renderable Texture2D<Depth24Plus>(device, window.GetSize());
 var uniforms : Uniforms;
 var prevWindowSize = uint<2>{0, 0};
 while (System.IsRunning()) {
-  var orientation = Quaternion(float<3>(0.0, 1.0, 0.0), handler.rotation.x);
-  orientation = orientation.mul(Quaternion(float<3>(1.0, 0.0, 0.0), handler.rotation.y));
+  var orientation = Quaternion(<3>float(0.0, 1.0, 0.0), handler.rotation.x);
+  orientation = orientation.mul(Quaternion(<3>float(1.0, 0.0, 0.0), handler.rotation.y));
   orientation.normalize();
   var newSize = window.GetSize();
   if (Math.any(newSize != prevWindowSize)) {

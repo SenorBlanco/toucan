@@ -1,4 +1,4 @@
-var cubeVerts = [24]float<3>{
+var cubeVerts = [24]<3>float{
   // Right face
   { 1.0, -1.0, -1.0},
   { 1.0, -1.0,  1.0},
@@ -36,7 +36,7 @@ var cubeVerts = [24]float<3>{
   {-1.0,  1.0,  1.0}
 };
 
-var cubeTexCoords = [24]float<2>(
+var cubeTexCoords = [24]<2>float{
   // Right face
   {1.0, 1.0},
   {0.0, 1.0},
@@ -72,7 +72,7 @@ var cubeTexCoords = [24]float<2>(
   {1.0, 1.0},
   {1.0, 0.0},
   {0.0, 0.0}
-);
+};
 
 var cubeIndices = [36]uint{
   0,  1,   2,  0,  2,  3,

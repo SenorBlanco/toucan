@@ -1,15 +1,15 @@
 class Pipeline {
   vertex main(vb : &VertexBuiltins) { vb.position = {@vertices.Get(), 0.0, 1.0}; }
   fragment main(fb : &FragmentBuiltins) { fragColor.Set( {0.0, 1.0, 0.0, 1.0} ); }
-  var vertices : *VertexInput<float<2>>;
+  var vertices : *VertexInput<<2>float>;
   var fragColor : *ColorOutput<PreferredPixelFormat>;
 }
 var device = new Device();
 var window = new Window(System.GetScreenSize());
 var swapChain = new SwapChain<PreferredPixelFormat>(device, window);
-var verts = [3]float<2>{ { 0.0, 1.0 }, {-1.0, -1.0 }, { 1.0, -1.0 } };
-var vb = new vertex Buffer<[]float<2>>(device, &verts);
-var vi = new VertexInput<float<2>>(vb);
+var verts = [3]<2>float{ { 0.0, 1.0 }, {-1.0, -1.0 }, { 1.0, -1.0 } };
+var vb = new vertex Buffer<[]<2>float>(device, &verts);
+var vi = new VertexInput<<2>float>(vb);
 var fb = swapChain.GetCurrentTexture().CreateColorOutput(LoadOp.Clear);
 var pipeline = new RenderPipeline<Pipeline>(device);
 var encoder = new CommandEncoder(device);

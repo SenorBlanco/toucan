@@ -1,9 +1,9 @@
 class Edge {
   var v2 : int;
-  var faceNormal : float<3>;
+  var faceNormal : <3>float;
   var next : *Edge;
 
-  static Create(v2 : uint, faceNormal : float<3>, head : &*Edge) : *Edge {
+  static Create(v2 : uint, faceNormal : <3>float, head : &*Edge) : *Edge {
     var edge = new Edge;
     edge.v2 = v2;
     edge.faceNormal = faceNormal;
@@ -16,14 +16,14 @@ class Edge {
 }
 
 class Mesh<VertexType, IndexType> {
-  Mesh(positions : &[]float<3>, triangles : &[][3]uint, creaseAngle : float) {
+  Mesh(positions : &[]<3>float, triangles : &[][3]uint, creaseAngle : float) {
     vertices = [triangles.length * 3] new VertexType;
     indices = [triangles.length * 3] new IndexType;
     var edgesByFirstIndex = [positions.length] new *Edge;
-    var normals = [triangles.length] new [3]float<3>;
+    var normals = [triangles.length] new [3]<3>float;
     for (var i = 0; i < triangles.length; ++i) {
       var t = triangles[i];
-      var p : [3]float<3>;
+      var p : [3]<3>float;
       for (var j = 0; j < 3; ++j) {
         p[j] = positions[t[j]];
       }

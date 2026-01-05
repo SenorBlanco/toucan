@@ -1,15 +1,15 @@
 class Vertex {
-  var position : float<2>;
-  var color : float<3>;
+  var position : <2>float;
+  var color : <3>float;
 }
 
 class Pipeline {
-  vertex main(vb : &VertexBuiltins) : float<3> {
+  vertex main(vb : &VertexBuiltins) : <3>float {
     var v = vertices.Get();
     vb.position = {@v.position, 0.0, 1.0};
     return v.color;
   }
-  fragment main(fb : &FragmentBuiltins, varyings : float<3>) {
+  fragment main(fb : &FragmentBuiltins, varyings : <3>float) {
     fragColor.Set({@varyings, 1.0});
   }
   var fragColor : *ColorOutput<PreferredPixelFormat>;

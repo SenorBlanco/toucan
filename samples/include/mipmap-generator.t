@@ -1,12 +1,12 @@
 class MipmapGeneratorPipeline {
-  vertex main(vb : &VertexBuiltins) : float<2> {
-    var verts = [6]float<2>{
+  vertex main(vb : &VertexBuiltins) : <2>float {
+    var verts = [6]<2>float{
       { -1.0, -1.0 }, { 1.0, -1.0 }, { -1.0, 1.0 },
       { -1.0,  1.0 }, { 1.0, -1.0 }, {  1.0, 1.0 }
     };
     var v = verts[vb.vertexIndex];
     vb.position = {@v, 0.0, 1.0};
-    return v * float<2>{0.5, -0.5} + float<2>{0.5};
+    return v * <2>float{0.5, -0.5} + <2>float{0.5};
   }
 }
 
@@ -16,7 +16,7 @@ class MipmapGenerator2DBindings {
 }
 
 class MipmapGenerator2DPipeline<PF> : MipmapGeneratorPipeline {
-  fragment main(fb : &FragmentBuiltins, texCoord : float<2>) {
+  fragment main(fb : &FragmentBuiltins, texCoord : <2>float) {
     var b = bindings.Get();
     fragColor.Set(b.texture.Sample(b.sampler, texCoord));
   }
@@ -31,8 +31,8 @@ class MipmapGeneratorCubeBindings {
 }
 
 class MipmapGeneratorCubePipeline<PF> : MipmapGeneratorPipeline {
-  fragment main(fb : &FragmentBuiltins, texCoord : float<2>) {
-    var faceMatrices = [6]float<3,3>{
+  fragment main(fb : &FragmentBuiltins, texCoord : <2>float) {
+    var faceMatrices = [6]<3><3>float{
       { { 0.0, 0.0, -2.0 }, { 0.0, -2.0,  0.0 }, {  1.0,  1.0,  1.0 } },
       { { 0.0, 0.0,  2.0 }, { 0.0, -2.0,  0.0 }, { -1.0,  1.0, -1.0 } },
       { { 2.0, 0.0,  0.0 }, { 0.0,  0.0,  2.0 }, { -1.0,  1.0, -1.0 } },
@@ -42,7 +42,7 @@ class MipmapGeneratorCubePipeline<PF> : MipmapGeneratorPipeline {
     };
     var b = bindings.Get();
     var face = b.uniforms.MapRead():;
-    var coord = faceMatrices[face] * float<3>{@texCoord, 1.0};
+    var coord = faceMatrices[face] * <3>float{@texCoord, 1.0};
     fragColor.Set(b.texture.Sample(b.sampler, coord));
   }
   var fragColor : *ColorOutput<PF>;

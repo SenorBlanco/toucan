@@ -6,7 +6,7 @@ var encoder = new CommandEncoder(device);
 class Pipeline {
   var color : *ColorOutput<PreferredPixelFormat>;
 }
-var fb = framebuffer.CreateColorOutput(LoadOp.Clear, StoreOp.Store, float<4>(0.0, 1.0, 0.0, 1.0));
+var fb = framebuffer.CreateColorOutput(LoadOp.Clear, StoreOp.Store, <4>float(0.0, 1.0, 0.0, 1.0));
 var renderPass = new RenderPass<Pipeline>(encoder, { fb });
 renderPass.End();
 device.GetQueue().Submit(encoder.Finish());
