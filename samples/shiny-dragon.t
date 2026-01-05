@@ -32,10 +32,10 @@ var swapChain = new SwapChain<PreferredPixelFormat>(device, window);
 var dragon = new Mesh<Vertex, uint>(&dragonVertices, &dragonTriangles, 0.5 * 3.1415926);
 
 class Uniforms {
-  var model       : float<4,4>;
-  var view        : float<4,4>;
-  var projection  : float<4,4>;
-  var viewInverse : float<4,4>;
+  var model       : <4><4>float;
+  var view        : <4><4>float;
+  var projection  : <4><4>float;
+  var viewInverse : <4><4>float;
 }
 
 class Bindings {
@@ -55,7 +55,7 @@ class SkyboxPipeline : DrawPipeline {
     vertex main(vb : &VertexBuiltins) : <3>float {
         var v = position.Get();
         var uniforms = bindings.Get().uniforms.MapRead();
-        var pos = float<4>(v.x, v.y, v.z, 1.0);
+        var pos = <4>float(v.x, v.y, v.z, 1.0);
         vb.position = uniforms.projection * uniforms.view * uniforms.model * pos;
         return v;
     }
@@ -74,8 +74,8 @@ class ReflectionPipeline : DrawPipeline {
         var n = Math.normalize(v.normal);
         var uniforms = bindings.Get().uniforms.MapRead();
         var viewModel = uniforms.view * uniforms.model;
-        var pos = viewModel * float<4>(v.position.x, v.position.y, v.position.z, 1.0);
-        var normal = viewModel * float<4>(n.x, n.y, n.z, 0.0);
+        var pos = viewModel * <4>float(v.position.x, v.position.y, v.position.z, 1.0);
+        var normal = viewModel * <4>float(n.x, n.y, n.z, 0.0);
         vb.position = uniforms.projection * pos;
         var varyings : Vertex;
         varyings.position = <3>float(pos.x, pos.y, pos.z);
@@ -88,7 +88,7 @@ class ReflectionPipeline : DrawPipeline {
       var p = Math.normalize(varyings.position);
       var n = Math.normalize(varyings.normal);
       var r = Math.reflect(p, n);
-      var invR = uniforms.viewInverse * float<4>(@r, 0.0);
+      var invR = uniforms.viewInverse * <4>float(@r, 0.0);
       fragColor.Set(b.textureView.Sample(b.sampler, <3>float(-invR.x, invR.y, invR.z)));
     }
     var vert : *VertexInput<Vertex>;
@@ -127,7 +127,7 @@ var dragonQuat = Quaternion(<3>float(1.0, 0.0, 0.0), -3.1415926 / 2.0);
 dragonQuat.normalize();
 var depthBuffer = new renderable Texture2D<Depth24Plus>(device, window.GetSize());
 var uniforms : Uniforms;
-var prevWindowSize = uint<2>{0, 0};
+var prevWindowSize = <2>uint{0, 0};
 while (System.IsRunning()) {
   var orientation = Quaternion(<3>float(0.0, 1.0, 0.0), handler.rotation.x);
   orientation = orientation.mul(Quaternion(<3>float(1.0, 0.0, 0.0), handler.rotation.y));

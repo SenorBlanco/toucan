@@ -8,8 +8,8 @@ include "transform.t"
 include "teapot.t"
 
 class Vertex {
-  var position : float<3>;
-  var normal : float<3>;
+  var position : <3>float;
+  var normal : <3>float;
 }
 
 var device = new Device();
@@ -30,13 +30,13 @@ var swapChain = new SwapChain<PreferredPixelFormat>(device, window);
 
 class BicubicPatch {
   Evaluate(u : float, v : float) : Vertex {
-    var pu : [4]float<3>, pv : [4]float<3>;
+    var pu : [4]<3>float, pv : [4]<3>float;
     for (var i = 0; i < 4; ++i) {
       pu[i] = vCubics[i].Evaluate(v);
       pv[i] = uCubics[i].Evaluate(u);
     }
-    var uCubic : Cubic<float<3>>;
-    var vCubic : Cubic<float<3>>;
+    var uCubic : Cubic<<3>float>;
+    var vCubic : Cubic<<3>float>;
     uCubic.FromBezier(pu);
     vCubic.FromBezier(pv);
     var result : Vertex;
@@ -54,8 +54,8 @@ class BicubicPatch {
     }
     return result;
   }
-  var uCubics : [4]Cubic<float<3>>;
-  var vCubics : [4]Cubic<float<3>>;
+  var uCubics : [4]Cubic<<3>float>;
+  var vCubics : [4]Cubic<<3>float>;
 }
 
 class BicubicTessellator {
@@ -63,14 +63,14 @@ class BicubicTessellator {
     var verticesPerPatch = patchWidth * patchWidth;
     vertices = [numPatches * verticesPerPatch] new Vertex;
   }
-  Tessellate(controlPoints : &[]float<3>, controlIndices : &[]uint) {
+  Tessellate(controlPoints : &[]<3>float, controlIndices : &[]uint) {
     var vi = 0, ii = 0;
     var scale = 1.0 / level as float;
     for (var k = 0; k < controlIndices.length; k += 16) {
       var patch : BicubicPatch;
       for (var i = 0; i < 4; ++i) {
-        var pu : [4]float<3>;
-        var pv : [4]float<3>;
+        var pu : [4]<3>float;
+        var pv : [4]<3>float;
         for (var j = 0; j < 4; ++j) {
           pu[j] = controlPoints[controlIndices[k + i + j * 4]];
           pv[j] = controlPoints[controlIndices[k + i * 4 + j]];
@@ -118,10 +118,10 @@ var tessTeapot = new BicubicTessellator(numPatches, level);
 tessTeapot.Tessellate(&teapotControlPoints, &teapotControlIndices);
 
 class Uniforms {
-  var model       : float<4,4>;
-  var view        : float<4,4>;
-  var projection  : float<4,4>;
-  var viewInverse : float<4,4>;
+  var model       : <4><4>float;
+  var view        : <4><4>float;
+  var projection  : <4><4>float;
+  var viewInverse : <4><4>float;
 }
 
 class Bindings {
@@ -138,20 +138,20 @@ class DrawPipeline {
 }
 
 class SkyboxPipeline : DrawPipeline {
-    vertex main(vb : &VertexBuiltins) : float<3> {
+    vertex main(vb : &VertexBuiltins) : <3>float {
         var v = position.Get();
         var uniforms = bindings.Get().uniforms.MapRead();
-        var pos = float<4>(@v, 1.0);
+        var pos = <4>float(@v, 1.0);
         vb.position = uniforms.projection * uniforms.view * uniforms.model * pos;
         return v;
     }
-    fragment main(fb : &FragmentBuiltins, position : float<3>) {
+    fragment main(fb : &FragmentBuiltins, position : <3>float) {
       var p = Math.normalize(position);
       var b = bindings.Get();
       // TODO: figure out why the skybox is X-flipped
-      fragColor.Set(b.textureView.Sample(b.sampler, float<3>(-p.x, p.y, p.z)));
+      fragColor.Set(b.textureView.Sample(b.sampler, <3>float(-p.x, p.y, p.z)));
     }
-    var position : *VertexInput<float<3>>;
+    var position : *VertexInput<<3>float>;
 };
 
 class ReflectionPipeline : DrawPipeline {
@@ -160,8 +160,8 @@ class ReflectionPipeline : DrawPipeline {
         var n = Math.normalize(v.normal);
         var uniforms = bindings.Get().uniforms.MapRead();
         var viewModel = uniforms.view * uniforms.model;
-        var pos = viewModel * float<4>(@v.position, 1.0);
-        var normal = viewModel * float<4>(@n, 0.0);
+        var pos = viewModel * <4>float(@v.position, 1.0);
+        var normal = viewModel * <4>float(@n, 0.0);
         vb.position = uniforms.projection * pos;
         var varyings : Vertex;
         varyings.position = pos.xyz;
@@ -174,8 +174,8 @@ class ReflectionPipeline : DrawPipeline {
       var p = Math.normalize(varyings.position);
       var n = Math.normalize(varyings.normal);
       var r = Math.reflect(p, n);
-      var invR = uniforms.viewInverse * float<4>(@r, 0.0);
-      fragColor.Set(b.textureView.Sample(b.sampler, float<3>(-invR.x, invR.y, invR.z)));
+      var invR = uniforms.viewInverse * <4>float(@r, 0.0);
+      fragColor.Set(b.textureView.Sample(b.sampler, <3>float(-invR.x, invR.y, invR.z)));
     }
     var vert : *VertexInput<Vertex>;
 };
@@ -187,9 +187,9 @@ var cubeBindings = Bindings{
   textureView = texture.CreateSampleableView()
 };
 
-var cubeVB = new vertex Buffer<[]float<3>>(device, &cubeVerts);
+var cubeVB = new vertex Buffer<[]<3>float>(device, &cubeVerts);
 var cubeData = SkyboxPipeline{
-  position = new VertexInput<float<3>>(cubeVB),
+  position = new VertexInput<<3>float>(cubeVB),
   indexBuffer = new index Buffer<[]uint>(device, &cubeIndices),
   bindings = new BindGroup<Bindings>(device, &cubeBindings)
 };
@@ -209,12 +209,12 @@ var teapotData = ReflectionPipeline{
 };
 
 var handler = EventHandler{ distance = 10.0 };
-var teapotQuat = Quaternion(float<3>(1.0, 0.0, 0.0), -3.1415926 / 2.0);
+var teapotQuat = Quaternion(<3>float(1.0, 0.0, 0.0), -3.1415926 / 2.0);
 teapotQuat.normalize();
 var teapotRotation = teapotQuat.toMatrix();
 var depthBuffer = new renderable Texture2D<Depth24Plus>(device, window.GetSize());
 var uniforms : Uniforms;
-var prevWindowSize = uint<2>{0, 0};
+var prevWindowSize = <2>uint{0, 0};
 var startTime = System.GetCurrentTime();
 var animCurves : [4]Cubic<float>;
 animCurves[0].FromBezier({1.0, 1.0, 1.5, 1.5});
@@ -223,7 +223,7 @@ animCurves[2].FromBezier({1.0, 1.0, 0.5, 0.5});
 animCurves[3].FromBezier({0.5, 0.5, 1.0, 1.0});
 var keyTimes : [4]float = { 0.0, 0.5, 1.5, 1.7 };
 var duration = 2.0;
-var animTeapotControlPoints = [teapotControlPoints.length] new float<3>;
+var animTeapotControlPoints = [teapotControlPoints.length] new <3>float;
 while (System.IsRunning()) {
   var animTime = ((System.GetCurrentTime() - startTime) % duration) as float;
   var key = keyTimes.length - 1;
@@ -248,8 +248,8 @@ while (System.IsRunning()) {
     animTeapotControlPoints[teapotControlIndices[i + 10]] *= t;
   }
 
-  var orientation = Quaternion(float<3>(0.0, 1.0, 0.0), handler.rotation.x);
-  orientation = orientation.mul(Quaternion(float<3>(1.0, 0.0, 0.0), handler.rotation.y));
+  var orientation = Quaternion(<3>float(0.0, 1.0, 0.0), handler.rotation.x);
+  orientation = orientation.mul(Quaternion(<3>float(1.0, 0.0, 0.0), handler.rotation.y));
   orientation.normalize();
   var newSize = window.GetSize();
   if (Math.any(newSize != prevWindowSize)) {

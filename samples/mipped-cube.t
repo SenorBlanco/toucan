@@ -22,9 +22,9 @@ var window = new Window(System.GetScreenSize());
 var swapChain = new SwapChain<PreferredPixelFormat>(device, window);
 
 class Uniforms {
-  var model       : float<4,4>;
-  var view        : float<4,4>;
-  var projection  : float<4,4>;
+  var model       : <4><4>float;
+  var view        : <4><4>float;
+  var projection  : <4><4>float;
 }
 
 class Bindings {
@@ -34,21 +34,21 @@ class Bindings {
 }
 
 class DrawPipeline {
-    vertex main(vb : &VertexBuiltins) : float<2> {
+    vertex main(vb : &VertexBuiltins) : <2>float {
         var v = vertices.Get();
         var uniforms = bindings.Get().uniforms.MapRead();
-        var pos = float<4>(@v, 1.0);
+        var pos = <4>float(@v, 1.0);
         vb.position = uniforms.projection * uniforms.view * uniforms.model * pos;
         return texCoords.Get();
     }
 
-    fragment main(fb : &FragmentBuiltins, texCoord : float<2>) {
+    fragment main(fb : &FragmentBuiltins, texCoord : <2>float) {
       var b = bindings.Get();
       fragColor.Set(b.textureView.Sample(b.sampler, texCoord));
     }
 
-    var vertices : *VertexInput<float<3>>;
-    var texCoords : *VertexInput<float<2>>;
+    var vertices : *VertexInput<<3>float>;
+    var texCoords : *VertexInput<<2>float>;
     var indexBuffer : *index Buffer<[]uint>;
     var fragColor : *ColorOutput<PreferredPixelFormat>;
     var depth : *DepthStencilOutput<Depth24Plus>;
@@ -62,25 +62,25 @@ var bindings = Bindings{
   uniforms = new uniform Buffer<Uniforms>(device)
 };
 
-var vb = new vertex Buffer<[]float<3>>(device, &cubeVerts);
-var tcb = new vertex Buffer<[]float<2>>(device, &cubeTexCoords);
+var vb = new vertex Buffer<[]<3>float>(device, &cubeVerts);
+var tcb = new vertex Buffer<[]<2>float>(device, &cubeTexCoords);
 var pipelineData = DrawPipeline{
-  vertices = new VertexInput<float<3>>(vb),
-  texCoords = new VertexInput<float<2>>(tcb),
+  vertices = new VertexInput<<3>float>(vb),
+  texCoords = new VertexInput<<2>float>(tcb),
   indexBuffer = new index Buffer<[]uint>(device, &cubeIndices),
   bindings = new BindGroup<Bindings>(device, &bindings)
 };
 
 var handler = EventHandler{ distance = 3.0 };
-var teapotQuat = Quaternion(float<3>(1.0, 0.0, 0.0), -3.1415926 / 2.0);
+var teapotQuat = Quaternion(<3>float(1.0, 0.0, 0.0), -3.1415926 / 2.0);
 teapotQuat.normalize();
 var teapotRotation = teapotQuat.toMatrix();
 var depthBuffer = new renderable Texture2D<Depth24Plus>(device, window.GetSize());
 var uniforms : Uniforms;
-var prevWindowSize = uint<2>{0, 0};
+var prevWindowSize = <2>uint{0, 0};
 while (System.IsRunning()) {
-  var orientation = Quaternion(float<3>(0.0, 1.0, 0.0), handler.rotation.x);
-  orientation = orientation.mul(Quaternion(float<3>(1.0, 0.0, 0.0), handler.rotation.y));
+  var orientation = Quaternion(<3>float(0.0, 1.0, 0.0), handler.rotation.x);
+  orientation = orientation.mul(Quaternion(<3>float(1.0, 0.0, 0.0), handler.rotation.y));
   orientation.normalize();
   var newSize = window.GetSize();
   if (Math.any(newSize != prevWindowSize)) {

@@ -2,7 +2,7 @@ include "event-handler.t"
 include "quaternion.t"
 include "transform.t"
 
-using Vector = float<2>;
+using Vector = <2>float;
 
 var width =  10;
 var height = 10;
@@ -79,8 +79,8 @@ class ParticleSystem {
 }
 
 class DrawUniforms {
-  var matrix : float<4,4>;
-  var color : float<4>;
+  var matrix : <4><4>float;
+  var color : <4>float;
 }
 
 class Bindings {
@@ -90,7 +90,7 @@ class Bindings {
 class DrawPipeline {
   vertex main(vb : &VertexBuiltins) {
     var matrix = bindings.Get().uniforms.MapRead().matrix;
-    vb.position = matrix * float<4>{@vertices.Get(), 0.0, 1.0};
+    vb.position = matrix * <4>float{@vertices.Get(), 0.0, 1.0};
   }
   fragment main(fb : &FragmentBuiltins) {
     fragColor.Set(bindings.Get().uniforms.MapRead().color);
@@ -107,7 +107,7 @@ for (var i = 0; i < bodies.length; ++i) {
   var x = i % width;
   var y = i % (width * height) / width;
   var z = i / (width * height);
-  var pos = float<2>((x - width / 2) as float + 0.5,
+  var pos = <2>float((x - width / 2) as float + 0.5,
                      (y - height / 2) as float + 0.5);
   bodies[i].position = pos;
   bodies[i].mass = Math.rand() * 2.5 + 1.25;
@@ -161,15 +161,15 @@ var frequency = 480.0;
 var maxStepsPerFrame = 32;
 var stepsDone = 0;
 while(System.IsRunning()) {
-  var orientation = Quaternion(float<3>(0.0, 1.0, 0.0), handler.rotation.x);
-  orientation = orientation.mul(Quaternion(float<3>(1.0, 0.0, 0.0), handler.rotation.y));
+  var orientation = Quaternion(<3>float(0.0, 1.0, 0.0), handler.rotation.x);
+  orientation = orientation.mul(Quaternion(<3>float(1.0, 0.0, 0.0), handler.rotation.y));
   orientation.normalize();
   drawUniforms.matrix = projection;
   drawUniforms.matrix *= Transform.translation({0.0, 0.0, -handler.distance});
   drawUniforms.matrix *= orientation.toMatrix();
-  drawUniforms.color = float<4>(1.0, 1.0, 1.0, 1.0);
+  drawUniforms.color = <4>float(1.0, 1.0, 1.0, 1.0);
   springBindings.uniforms.SetData(&drawUniforms);
-  drawUniforms.color = float<4>(0.0, 1.0, 0.0, 1.0);
+  drawUniforms.color = <4>float(0.0, 1.0, 0.0, 1.0);
   bodyBindings.uniforms.SetData(&drawUniforms);
   for (var i = 0; i < bodies.length; ++i) {
     var p = bodies[i].position;

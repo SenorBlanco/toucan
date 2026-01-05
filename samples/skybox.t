@@ -6,8 +6,8 @@ include "quaternion.t"
 include "transform.t"
 
 class Vertex {
-  var position : float<3>;
-  var normal : float<3>;
+  var position : <3>float;
+  var normal : <3>float;
 }
 
 var device = new Device();
@@ -26,14 +26,14 @@ MipmapGenerator<RGBA8unorm>.Generate(device, texture);
 var window = new Window(System.GetScreenSize());
 var swapChain = new SwapChain<PreferredPixelFormat>(device, window);
 
-var cubeVB = new vertex Buffer<[]float<3>>(device, &cubeVerts);
-var cubeInput = new VertexInput<float<3>>(cubeVB);
+var cubeVB = new vertex Buffer<[]<3>float>(device, &cubeVerts);
+var cubeInput = new VertexInput<<3>float>(cubeVB);
 var cubeIB = new index Buffer<[]uint>(device, &cubeIndices);
 
 class Uniforms {
-  var model       : float<4,4>;
-  var view        : float<4,4>;
-  var projection  : float<4,4>;
+  var model       : <4><4>float;
+  var view        : <4><4>float;
+  var projection  : <4><4>float;
 }
 
 class Bindings {
@@ -43,20 +43,20 @@ class Bindings {
 }
 
 class SkyboxPipeline {
-    vertex main(vb : &VertexBuiltins) : float<3> {
+    vertex main(vb : &VertexBuiltins) : <3>float {
         var v = vertices.Get();
         var uniforms = bindings.Get().uniforms.MapRead();
-        var pos = float<4>(@v, 1.0);
+        var pos = <4>float(@v, 1.0);
         vb.position = uniforms.projection * uniforms.view * uniforms.model * pos;
         return v;
     }
-    fragment main(fb : &FragmentBuiltins, position : float<3>) {
+    fragment main(fb : &FragmentBuiltins, position : <3>float) {
       var p = Math.normalize(position);
       var b = bindings.Get();
       // TODO: figure out why the skybox is X-flipped
-      fragColor.Set(b.textureView.Sample(b.sampler, float<3>(-p.x, p.y, p.z)));
+      fragColor.Set(b.textureView.Sample(b.sampler, <3>float(-p.x, p.y, p.z)));
     }
-    var vertices : *VertexInput<float<3>>;
+    var vertices : *VertexInput<<3>float>;
     var indices : *index Buffer<[]uint>;
     var fragColor : *ColorOutput<PreferredPixelFormat>;
     var depth : *DepthStencilOutput<Depth24Plus>;
@@ -77,8 +77,8 @@ var aspectRatio = windowSize.x as float / windowSize.y as float;
 var projection = Transform.projection(0.5, 200.0, -aspectRatio, aspectRatio, -1.0, 1.0);
 var depthBuffer = new renderable Texture2D<Depth24Plus>(device, window.GetSize());
 while (System.IsRunning()) {
-  var orientation = Quaternion(float<3>(0.0, 1.0, 0.0), handler.rotation.x);
-  orientation = orientation.mul(Quaternion(float<3>(1.0, 0.0, 0.0), handler.rotation.y));
+  var orientation = Quaternion(<3>float(0.0, 1.0, 0.0), handler.rotation.x);
+  orientation = orientation.mul(Quaternion(<3>float(1.0, 0.0, 0.0), handler.rotation.y));
   orientation.normalize();
   var uniforms : Uniforms;
   uniforms.projection = projection;
