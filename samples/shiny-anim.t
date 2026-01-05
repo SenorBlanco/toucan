@@ -65,7 +65,7 @@ class BicubicTessellator {
   }
   Tessellate(controlPoints : &[]float<3>, controlIndices : &[]uint) {
     var vi = 0, ii = 0;
-    var scale = 1.0 / level as float;
+    var scale = 1.0 / (level as float);
     for (var k = 0; k < controlIndices.length; k += 16) {
       var patch : BicubicPatch;
       for (var i = 0; i < 4; ++i) {
@@ -255,7 +255,7 @@ while (System.IsRunning()) {
   if (Math.any(newSize != prevWindowSize)) {
     swapChain.Resize(newSize);
     depthBuffer = new renderable Texture2D<Depth24Plus>(device, newSize);
-    var aspectRatio = newSize.x as float / newSize.y as float;
+    var aspectRatio = (newSize.x as float) / (newSize.y as float);
     uniforms.projection = Transform.projection(0.5, 200.0, -aspectRatio, aspectRatio, -1.0, 1.0);
     prevWindowSize = newSize;
   }

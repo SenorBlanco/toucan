@@ -245,7 +245,7 @@ var springUBO = new uniform Buffer<DrawUniforms>(device);
 var springBindings : DrawBindings;
 springBindings.uniforms = springUBO;
 var springBG = new BindGroup<DrawBindings>(device, &springBindings);
-var handler = EventHandler{ distance = 0.5 * width as float};
+var handler = EventHandler{ distance = 0.5 * (width as float)};
 var computeUniforms : ComputeUniforms;
 var projection = Transform.projection(1.0, 100.0, -1.0, 1.0, -1.0, 1.0);
 computeUniforms.deltaT = 8.0 / frequency;

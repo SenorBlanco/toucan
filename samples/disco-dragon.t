@@ -133,7 +133,7 @@ class GBuffersDebugView : TextureQuadPass {
     var gBufferAlbedo = textureBindings.Get().gBufferAlbedo;
     var result : float<4>;
     var windowSize = windowSizeBindings.Get().size.MapRead():;
-    var c = fb.fragCoord.xy / windowSize as float<2>;
+    var c = fb.fragCoord.xy / (windowSize as float<2>);
     if (c.x < 0.33333) {
       var rawDepth = gBufferDepth.Load(Math.floor(fb.fragCoord.xy) as uint<2>, 0).x;
       // Remap depth into something a bit more visible.
@@ -185,7 +185,7 @@ class DeferredRender : TextureQuadPass {
     }
 
     var bufferSize = textures.gBufferDepth.GetSize();
-    var coordUV = fb.fragCoord.xy / bufferSize as float<2>;
+    var coordUV = fb.fragCoord.xy / (bufferSize as float<2>);
     var position = this.worldFromScreenCoord(camera, coordUV, depth);
     var normal = textures.gBufferNormal.Load(Math.floor(fb.fragCoord.xy) as uint<2>, 0).xyz;
     var albedo = textures.gBufferAlbedo.Load(Math.floor(fb.fragCoord.xy) as uint<2>, 0).xyz;
@@ -218,7 +218,7 @@ var window = new Window(System.GetScreenSize());
 
 var swapChain = new SwapChain<PreferredPixelFormat>(device, window);
 var windowSize = window.GetSize();
-var aspect = windowSize.x as float / windowSize.y as float;
+var aspect = (windowSize.x as float) / (windowSize.y as float);
 
 var mesh = new Mesh<Vertex, ushort>(&dragonVertices, &dragonTriangles, Math.pi);
 TexCoordUtils<Vertex>.ComputeProjectedPlaneUVs(mesh.vertices, ProjectedPlane.XY);
@@ -347,7 +347,7 @@ modelUniformBuffer.SetData({modelMatrix, invertTransposeModelMatrix});
 var startTime = System.GetCurrentTime();
 while (System.IsRunning()) {
   // Rotate the camera around the origin based on time.
-  var rad = Math.pi * (float) ((System.GetCurrentTime() - startTime) / 5.0d) as float;
+  var rad = Math.pi * ((System.GetCurrentTime() - startTime) / 5.0d) as float;
   var rotation = Transform.translation(origin) * Transform.rotation({0.0, 1.0, 0.0}, rad);
   var rp4 = rotation * float<4>{@eyePosition, 1.0};
   rp4 /= rp4.w;

@@ -153,7 +153,7 @@ var bodyBG = new BindGroup<Bindings>(device, &bodyBindings);
 var springBindings : Bindings;
 springBindings.uniforms = new uniform Buffer<DrawUniforms>(device);
 var springBG = new BindGroup<Bindings>(device, &springBindings);
-var handler = EventHandler{ distance = 0.5 * width as float };
+var handler = EventHandler{ distance = 0.5 * (width as float) };
 var drawUniforms : DrawUniforms;
 var projection = Transform.projection(1.0, 100.0, -1.0, 1.0, -1.0, 1.0);
 var startTime = System.GetCurrentTime();

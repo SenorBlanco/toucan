@@ -214,7 +214,7 @@ var computeBindings = new BindGroup<ComputeBindings>(device, {
   controlPoints = teapotControlPointsBuffer,
   controlIndices = new storage Buffer<[]uint>(device, &teapotControlIndices),
   vertices = teapotVB,
-  uniforms = new uniform Buffer<ComputeUniforms>(device, { patchWidth = patchWidth, scale = 1.0 / level as float } )
+  uniforms = new uniform Buffer<ComputeUniforms>(device, { patchWidth = patchWidth, scale = 1.0 / (level as float) } )
 });
 
 var teapotData = ReflectionPipeline{
@@ -271,7 +271,7 @@ while (System.IsRunning()) {
   if (Math.any(newSize != prevWindowSize)) {
     swapChain.Resize(newSize);
     depthBuffer = new renderable Texture2D<Depth24Plus>(device, newSize);
-    var aspectRatio = newSize.x as float / newSize.y as float;
+    var aspectRatio = (newSize.x as float) / (newSize.y as float);
     uniforms.projection = Transform.projection(0.5, 200.0, -aspectRatio, aspectRatio, -1.0, 1.0);
     prevWindowSize = newSize;
   }

@@ -120,7 +120,7 @@ Type* FindType(const char* str) {
 };
 
 %type <type> scalar_type type class_header template_class_header enum_header
-%type <type> simple_type opt_return_type
+%type <type> simple_type opt_return_type castable_type
 %type <expr> expr opt_expr assignable arith_expr expr_or_list opt_initializer opt_length list_initializer
 %type <initializer> initializer initializer_or_type
 %type <arg> argument
@@ -158,14 +158,14 @@ Type* FindType(const char* str) {
 %left '|'
 %left '^'
 %left '&'
+%left T_AS
 %left T_EQ T_NE
 %left T_LT T_LE T_GE T_GT
 %left '+' '-'
 %left '*' '/' '%'
-%left T_AS
 %right UNARYMINUS '!' T_PLUSPLUS T_MINUSMINUS T_DOTDOT ':' '@'
 %left '.' '[' ']' '(' ')' '{' '}'
-%expect 2   /* we expect 2 shift/reduce: dangling-else, 1 for "as T<B" */
+%expect 1   /* we expect 1 shift/reduce: dangling-else */
 %%
 program:
     statements                              { rootStmts_->Append($1->GetStmts()); }
@@ -249,14 +249,18 @@ const_decl_statement:
     T_CONST const_decl_list                 { $$ = $2; }
   ;
 
-simple_type:
+castable_type:
     T_TYPENAME
   | scalar_type
-  | simple_type T_LT types T_GT             { $$ = GetClassTemplateInstance($1, *$3); }
-  | simple_type T_LT T_INT_LITERAL T_GT     { $$ = types_->GetVector($1, $3); }
-  | simple_type T_LT T_INT_LITERAL ',' T_INT_LITERAL T_GT 
+  | castable_type T_LT types T_GT             { $$ = GetClassTemplateInstance($1, *$3); }
+  | castable_type T_LT T_INT_LITERAL T_GT     { $$ = types_->GetVector($1, $3); }
+  | castable_type T_LT T_INT_LITERAL ',' T_INT_LITERAL T_GT 
     { $$ = types_->GetMatrix(types_->GetVector($1, $3), $5); }
-  | simple_type ':' T_IDENTIFIER  { $$ = GetScopedType($1, $3); }
+  | castable_type ':' T_IDENTIFIER  { $$ = GetScopedType($1, $3); }
+  ;
+
+simple_type:
+    castable_type
   ;
 
 type:
@@ -486,8 +490,8 @@ arith_expr:
   | T_MINUSMINUS assignable                 { $$ = IncDec(IncDecExpr::Op::Dec, true, $2); }
   | assignable T_PLUSPLUS                   { $$ = IncDec(IncDecExpr::Op::Inc, false, $1); }
   | assignable T_MINUSMINUS                 { $$ = IncDec(IncDecExpr::Op::Dec, false, $1); }
-  | '(' arith_expr ')'                      { $$ = $2; }
-  | arith_expr T_AS type                    { $$ = Make<CastExpr>($3, $1); }
+  | '(' expr ')'                            { $$ = $2; }
+  | arith_expr T_AS castable_type           { $$ = Make<CastExpr>($3, $1); }
   | T_INT_LITERAL                           { $$ = Make<IntConstant>($1, 32); }
   | T_UINT_LITERAL                          { $$ = Make<UIntConstant>($1, 32); }
   | T_BYTE_LITERAL                          { $$ = Make<IntConstant>($1, 8); }
