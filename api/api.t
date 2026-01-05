@@ -129,7 +129,7 @@ class VertexInput<T> {
 }
 
 class ColorOutput<PF> {
-  deviceonly Set(value : PF:DeviceType<4>);
+  deviceonly Set(value : <4>PF:DeviceType);
  ~ColorOutput();
 }
 
@@ -148,36 +148,36 @@ class Sampler {
 
 class SampleableTexture1D<ST> {
  ~SampleableTexture1D();
-  deviceonly Sample(sampler : &Sampler, coord : float) : ST<4>;
-  deviceonly Load(coord : uint, level : uint) : ST<4>;
+  deviceonly Sample(sampler : &Sampler, coord : float) : <4>ST;
+  deviceonly Load(coord : uint, level : uint) : <4>ST;
   deviceonly GetSize() : uint;
 }
 
 class SampleableTexture2D<ST> {
  ~SampleableTexture2D();
-  deviceonly Sample(sampler : &Sampler, coords : float<2>) : ST<4>;
-  deviceonly Load(coord : uint<2>, level : uint) : ST<4>;
-  deviceonly GetSize() : uint<2>;
+  deviceonly Sample(sampler : &Sampler, coords : <2>float) : <4>ST;
+  deviceonly Load(coord : <2>uint, level : uint) : <4>ST;
+  deviceonly GetSize() : <2>uint;
 }
 
 class SampleableTexture2DArray<ST> {
  ~SampleableTexture2DArray();
-  deviceonly Sample(sampler : &Sampler, coords : float<2>, layer : uint) : ST<4>;
-  deviceonly Load(coord : uint<2>, layer : uint, level : uint) : ST<4>;
-  deviceonly GetSize() : uint<2>;
+  deviceonly Sample(sampler : &Sampler, coords : <2>float, layer : uint) : <4>ST;
+  deviceonly Load(coord : <2>uint, layer : uint, level : uint) : <4>ST;
+  deviceonly GetSize() : <2>uint;
 }
 
 class SampleableTexture3D<ST> {
  ~SampleableTexture3D();
-  deviceonly Sample(sampler : &Sampler, coords : float<3>) : ST<4>;
-  deviceonly Load(coord : uint<3>, level : uint) : ST<4>;
-  deviceonly GetSize() : uint<3>;
+  deviceonly Sample(sampler : &Sampler, coords : <3>float) : <4>ST;
+  deviceonly Load(coord : <3>uint, level : uint) : <4>ST;
+  deviceonly GetSize() : <3>uint;
 }
 
 class SampleableTextureCube<ST> {
  ~SampleableTextureCube();
-  deviceonly Sample(sampler : &Sampler, coords : float<3>) : ST<4>;
-  deviceonly GetSize() : uint<2>;
+  deviceonly Sample(sampler : &Sampler, coords : <3>float) : <4>ST;
+  deviceonly GetSize() : <2>uint;
 }
 
 class Texture1D<PF> {
@@ -190,50 +190,50 @@ class Texture1D<PF> {
 }
 
 class Texture2D<PF> {
-  Texture2D(device : &Device, size : uint<2>, mipLevelCount = 1u);
+  Texture2D(device : &Device, size : <2>uint, mipLevelCount = 1u);
  ~Texture2D();
-  GetSize(mipLevel = 0u) : uint<2>;
+  GetSize(mipLevel = 0u) : <2>uint;
   MinBufferWidth() : uint;
   CreateSampleableView(baseMipLevel = 0u, mipLevelCount = 0u) sampleable : *SampleableTexture2D<PF:DeviceType>;
   CreateRenderableView(mipLevel = 0u) : *renderable Texture2D<PF>;
   CreateStorageView(mipLevel = 0u) : *storage Texture2D<PF>;
-  CreateColorOutput(loadOp = LoadOp.Load, storeOp = StoreOp.Store, clearValue = float<4>(0.0, 0.0, 0.0, 0.0)) renderable : *ColorOutput<PF>;
+  CreateColorOutput(loadOp = LoadOp.Load, storeOp = StoreOp.Store, clearValue = <4>float(0.0, 0.0, 0.0, 0.0)) renderable : *ColorOutput<PF>;
   CreateDepthStencilOutput(depthLoadOp = LoadOp.Load, depthStoreOp = StoreOp.Store, depthClearValue = 1.0, stencilLoadOp = LoadOp.Undefined, stencilStoreOp = StoreOp.Undefined, stencilClearValue = 0) renderable : *DepthStencilOutput<PF>;
-  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<2>, origin = uint<2>{0, 0}, mipLevel = 0u);
+  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : <2>uint, origin = <2>uint{0, 0}, mipLevel = 0u);
 }
 
 class Texture2DArray<PF> {
-  Texture2DArray(device : &Device, size : uint<2>, numLayers : uint, mipLevelCount = 1u);
+  Texture2DArray(device : &Device, size : <2>uint, numLayers : uint, mipLevelCount = 1u);
  ~Texture2D();
-  GetSize(mipLevel = 0u) : uint<2>;
+  GetSize(mipLevel = 0u) : <2>uint;
   GetNumLayers() : uint;
   MinBufferWidth() : uint;
   CreateSampleableView(baseMipLevel = 0u, mipLevelCount = 0u, baseArrayLayer = 0u, arrayLayerCount = 0u) sampleable : *SampleableTexture2DArray<PF:DeviceType>;
   CreateRenderableView(layee : uint, mipLevel = 0u) : *renderable Texture2D<PF>;
   CreateStorageView(layer : uint, mipLevel = 0u) : *storage Texture2DArray<PF>;
-  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<2>, layer : uint, numLayers = 1u, origin = uint<2>{0, 0}, mipLevel = 0u);
+  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : <2>uint, layer : uint, numLayers = 1u, origin = <2>uint{0, 0}, mipLevel = 0u);
 }
 
 class Texture3D<PF> {
-  Texture3D(device : &Device, size : uint<3>, mipLevelCount = 1u);
+  Texture3D(device : &Device, size : <3>uint, mipLevelCount = 1u);
  ~Texture3D();
-  GetSize(mipLevel = 0u) : uint<3>;
+  GetSize(mipLevel = 0u) : <3>uint;
   MinBufferWidth() : uint;
   CreateSampleableView(baseMipLevel = 0u, mipLevelCount = 0u) sampleable : *SampleableTexture3D<PF:DeviceType>;
   CreateRenderableView(depth : uint, mipLevel = 0u) : *renderable Texture2D<PF>;
   CreateStorageView(depth : uint, mipLevel = 0u) : *storage Texture3D<PF>;
-  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<3>, origin = uint<3>{0, 0, 0}, mipLevel = 0u);
+  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : <3>uint, origin = <3>uint{0, 0, 0}, mipLevel = 0u);
 }
 
 class TextureCube<PF> {
-  TextureCube(device : &Device, size : uint<2>, mipLevelCount = 1u);
+  TextureCube(device : &Device, size : <2>uint, mipLevelCount = 1u);
  ~TextureCube();
-  GetSize(mipLevel = 0u) : uint<2>;
+  GetSize(mipLevel = 0u) : <2>uint;
   MinBufferWidth() : uint;
   CreateSampleableView(baseMipLevel = 0u, mipLevelCount = 0u) sampleable : *SampleableTextureCube<PF:DeviceType>;
   CreateRenderableView(face : uint, mipLevel = 0u) : *renderable Texture2D<PF>;
   CreateStorageView(face : uint, mipLevel = 0u) : *storage TextureCube<PF>;
-  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : uint<2>, face : uint, numFaces = 1u, origin = uint<2>{0, 0}, mipLevel = 0u);
+  CopyFromBuffer(encoder : &CommandEncoder, source : &Buffer<[]PF:HostType>, size : <2>uint, face : uint, numFaces = 1u, origin = <2>uint{0, 0}, mipLevel = 0u);
 }
 
 class CommandEncoder {
@@ -264,104 +264,104 @@ class ComputePass<T> {
 }
 
 class Window {
-  Window(size : uint<2>, position = int<2>(0, 0));
-  GetSize() : uint<2>;
+  Window(size : <2>uint, position = <2>int(0, 0));
+  GetSize() : <2>uint;
  ~Window();
 }
 
 class SwapChain<T> {
   SwapChain(device : &Device, window : &Window);
  ~SwapChain();
-  Resize(size : uint<2>);
+  Resize(size : <2>uint);
   GetCurrentTexture() : *renderable Texture2D<T>;
   Present();
 }
 
 class Math {
  ~Math();
-  static all(v : bool<2>)   : bool;
-  static all(v : bool<3>)   : bool;
-  static all(v : bool<4>)   : bool;
-  static any(v : bool<2>)   : bool;
-  static any(v : bool<3>)   : bool;
-  static any(v : bool<4>)   : bool;
+  static all(v : <2>bool)   : bool;
+  static all(v : <3>bool)   : bool;
+  static all(v : <4>bool)   : bool;
+  static any(v : <2>bool)   : bool;
+  static any(v : <3>bool)   : bool;
+  static any(v : <4>bool)   : bool;
   static sqrt(v : float)    : float;
-  static sqrt(v : float<2>) : float<2>;
-  static sqrt(v : float<3>) : float<3>;
-  static sqrt(v : float<4>) : float<4>;
+  static sqrt(v : <2>float) : <2>float;
+  static sqrt(v : <3>float) : <3>float;
+  static sqrt(v : <4>float) : <4>float;
   static sin(v : float)     : float;
-  static sin(v : float<2>)  : float<2>;
-  static sin(v : float<3>)  : float<3>;
-  static sin(v : float<4>)  : float<4>;
+  static sin(v : <2>float)  : <2>float;
+  static sin(v : <3>float)  : <3>float;
+  static sin(v : <4>float)  : <4>float;
   static cos(v : float)     : float;
-  static cos(v : float<2>)  : float<2>;
-  static cos(v : float<3>)  : float<3>;
-  static cos(v : float<4>)  : float<4>;
+  static cos(v : <2>float)  : <2>float;
+  static cos(v : <3>float)  : <3>float;
+  static cos(v : <4>float)  : <4>float;
   static tan(v : float)     : float;
-  static tan(v : float<2>)  : float<2>;
-  static tan(v : float<3>)  : float<3>;
-  static tan(v : float<4>)  : float<4>;
-  static dot(v1 : float<2>, v2 : float<2>) : float;
-  static dot(v1 : float<3>, v2 : float<3>) : float;
-  static dot(v1 : float<4>, v2 : float<4>) : float;
-  static cross(v1 : float<3>, v2 : float<3>) : float<3>;
+  static tan(v : <2>float)  : <2>float;
+  static tan(v : <3>float)  : <3>float;
+  static tan(v : <4>float)  : <4>float;
+  static dot(v1 : <2>float, v2 : <2>float) : float;
+  static dot(v1 : <3>float, v2 : <3>float) : float;
+  static dot(v1 : <4>float, v2 : <4>float) : float;
+  static cross(v1 : <3>float, v2 : <3>float) : <3>float;
   static fabs(v : float)    : float;
-  static fabs(v : float<2>) : float<2>;
-  static fabs(v : float<3>) : float<3>;
-  static fabs(v : float<4>) : float<4>;
+  static fabs(v : <2>float) : <2>float;
+  static fabs(v : <3>float) : <3>float;
+  static fabs(v : <4>float) : <4>float;
   static floor(v : float)   : float;
-  static floor(v : float<2>) : float<2>;
-  static floor(v : float<3>) : float<3>;
-  static floor(v : float<4>) : float<4>;
+  static floor(v : <2>float) : <2>float;
+  static floor(v : <3>float) : <3>float;
+  static floor(v : <4>float) : <4>float;
   static ceil(v : float)   : float;
-  static ceil(v : float<2>) : float<2>;
-  static ceil(v : float<3>) : float<3>;
-  static ceil(v : float<4>) : float<4>;
+  static ceil(v : <2>float) : <2>float;
+  static ceil(v : <3>float) : <3>float;
+  static ceil(v : <4>float) : <4>float;
   static min(v1 : float,    v2 : float) : float;
-  static min(v1 : float<2>, v2 : float<2>) : float<2>;
-  static min(v1 : float<3>, v2 : float<3>) : float<3>;
-  static min(v1 : float<4>, v2 : float<4>) : float<4>;
+  static min(v1 : <2>float, v2 : <2>float) : <2>float;
+  static min(v1 : <3>float, v2 : <3>float) : <3>float;
+  static min(v1 : <4>float, v2 : <4>float) : <4>float;
   static min(v1 : int,    v2 : int) : int;
-  static min(v1 : int<2>, v2 : int<2>) : int<2>;
-  static min(v1 : int<3>, v2 : int<3>) : int<3>;
-  static min(v1 : int<4>, v2 : int<4>) : int<4>;
+  static min(v1 : <2>int, v2 : <2>int) : <2>int;
+  static min(v1 : <3>int, v2 : <3>int) : <3>int;
+  static min(v1 : <4>int, v2 : <4>int) : <4>int;
   static min(v1 : uint,    v2 : uint) : uint;
-  static min(v1 : uint<2>, v2 : uint<2>) : uint<2>;
-  static min(v1 : uint<3>, v2 : uint<3>) : uint<3>;
-  static min(v1 : uint<4>, v2 : uint<4>) : uint<4>;
+  static min(v1 : <2>uint, v2 : <2>uint) : <2>uint;
+  static min(v1 : <3>uint, v2 : <3>uint) : <3>uint;
+  static min(v1 : <4>uint, v2 : <4>uint) : <4>uint;
   static max(v1 : float,    v2 : float) : float;
-  static max(v1 : float<2>, v2 : float<2>) : float<2>;
-  static max(v1 : float<3>, v2 : float<3>) : float<3>;
-  static max(v1 : float<4>, v2 : float<4>) : float<4>;
+  static max(v1 : <2>float, v2 : <2>float) : <2>float;
+  static max(v1 : <3>float, v2 : <3>float) : <3>float;
+  static max(v1 : <4>float, v2 : <4>float) : <4>float;
   static max(v1 : int,    v2 : int) : int;
-  static max(v1 : int<2>, v2 : int<2>) : int<2>;
-  static max(v1 : int<3>, v2 : int<3>) : int<3>;
-  static max(v1 : int<4>, v2 : int<4>) : int<4>;
+  static max(v1 : <2>int, v2 : <2>int) : <2>int;
+  static max(v1 : <3>int, v2 : <3>int) : <3>int;
+  static max(v1 : <4>int, v2 : <4>int) : <4>int;
   static max(v1 : uint,    v2 : uint) : uint;
-  static max(v1 : uint<2>, v2 : uint<2>) : uint<2>;
-  static max(v1 : uint<3>, v2 : uint<3>) : uint<3>;
-  static max(v1 : uint<4>, v2 : uint<4>) : uint<4>;
+  static max(v1 : <2>uint, v2 : <2>uint) : <2>uint;
+  static max(v1 : <3>uint, v2 : <3>uint) : <3>uint;
+  static max(v1 : <4>uint, v2 : <4>uint) : <4>uint;
   static length(v : float) : float;
-  static length(v : float<2>) : float;
-  static length(v : float<3>) : float;
-  static length(v : float<4>) : float;
+  static length(v : <2>float) : float;
+  static length(v : <3>float) : float;
+  static length(v : <4>float) : float;
   static pow(v1 : float,    v2 : float) : float;
-  static pow(v1 : float<2>, v2 : float<2>) : float<2>;
-  static pow(v1 : float<3>, v2 : float<3>) : float<3>;
-  static pow(v1 : float<4>, v2 : float<4>) : float<4>;
+  static pow(v1 : <2>float, v2 : <2>float) : <2>float;
+  static pow(v1 : <3>float, v2 : <3>float) : <3>float;
+  static pow(v1 : <4>float, v2 : <4>float) : <4>float;
   static clz(value : int)   : int;
   static rand()             : float;
-  static normalize(v : float<3>) : float<3>;
-  static reflect(incident : float<3>, normal : float<3>) : float<3>;
-  static refract(incident : float<3>, normal : float<3>, eta : float) : float<3>;
-  static inverse(m : float<4,4>) : float<4,4>;
-  static transpose(m : float<4,4>) : float<4,4>;
+  static normalize(v : <3>float) : <3>float;
+  static reflect(incident : <3>float, normal : <3>float) : <3>float;
+  static refract(incident : <3>float, normal : <3>float, eta : float) : <3>float;
+  static inverse(m : <4><4>float) : <4><4>float;
+  static transpose(m : <4><4>float) : <4><4>float;
 }
 
 class Image<PF> {
   Image(encodedImage : *[]ubyte);
  ~Image();
-  GetSize() : uint<2>;
+  GetSize() : <2>uint;
   Decode(buffer : &writeonly []PF:HostType, bufferWidth : uint);
 }
 
@@ -372,10 +372,10 @@ enum EventModifiers { Shift = 0x01, Control = 0x02, Alt = 0x04 }
 class Event {
  ~Event();
   var type : EventType;
-  var position : int<2>;
+  var position : <2>int;
   var button : uint;
   var modifiers : uint;
-  var touches : [10]int<2>;
+  var touches : [10]<2>int;
   var numTouches : int;
 }
 
@@ -384,7 +384,7 @@ class System {
   static IsRunning() : bool;
   static HasPendingEvents() : bool;
   static GetNextEvent() : *Event;
-  static GetScreenSize() : uint<2>;
+  static GetScreenSize() : <2>uint;
   static StorageBarrier() : int;
   static GetCurrentTime() : double;
   static Print(str : &[]ubyte);
@@ -397,19 +397,19 @@ class System {
 class VertexBuiltins {
   var vertexIndex : readonly int;
   var instanceIndex : readonly int;
-  var position : writeonly float<4>;
+  var position : writeonly <4>float;
 }
 
 class FragmentBuiltins {
-  var fragCoord : readonly float<4>;
+  var fragCoord : readonly <4>float;
   var frontFacing : readonly bool;
 }
 
 class ComputeBuiltins {
-  var localInvocationId : readonly uint<3>;
+  var localInvocationId : readonly <3>uint;
   var localInvocationIndex : readonly uint;
-  var globalInvocationId : readonly uint<3>;
-  var workgroupId : readonly uint<3>;
+  var globalInvocationId : readonly <3>uint;
+  var workgroupId : readonly <3>uint;
 }
 
 class PixelFormat<DeviceType, HostType> {}
@@ -419,47 +419,47 @@ class R8snorm : PixelFormat<float, byte> {}
 class R8uint : PixelFormat<uint, ubyte> {}
 class R8sint : PixelFormat<int, byte> {}
 
-class RG8unorm : PixelFormat<float, ubyte<2>> {}
-class RG8snorm : PixelFormat<float, byte<2>> {}
-class RG8uint : PixelFormat<uint, ubyte<2>> {}
-class RG8sint : PixelFormat<int, byte<2>> {}
+class RG8unorm : PixelFormat<float, <2>ubyte> {}
+class RG8snorm : PixelFormat<float, <2>byte> {}
+class RG8uint : PixelFormat<uint, <2>ubyte> {}
+class RG8sint : PixelFormat<int, <2>byte> {}
 
-class RGBA8unorm : PixelFormat<float, ubyte<4>> {}
-class RGBA8unormSRGB : PixelFormat<float, ubyte<4>> {}
-class RGBA8snorm : PixelFormat<float, byte<4>> {}
-class RGBA8uint : PixelFormat<uint, ubyte<4>> {}
-class RGBA8sint : PixelFormat<int, byte<4>> {}
+class RGBA8unorm : PixelFormat<float, <4>ubyte> {}
+class RGBA8unormSRGB : PixelFormat<float, <4>ubyte> {}
+class RGBA8snorm : PixelFormat<float, <4>byte> {}
+class RGBA8uint : PixelFormat<uint, <4>ubyte> {}
+class RGBA8sint : PixelFormat<int, <4>byte> {}
 
-class BGRA8unorm : PixelFormat<float, ubyte<4>> {}
-class BGRA8unormSRGB : PixelFormat<float, ubyte<4>> {}
+class BGRA8unorm : PixelFormat<float, <4>ubyte> {}
+class BGRA8unormSRGB : PixelFormat<float, <4>ubyte> {}
 
 class R16uint : PixelFormat<uint, ushort> {}
 class R16sint : PixelFormat<int, short> {}
 class R16float : PixelFormat<float, ushort> {}
 
-class RG16uint : PixelFormat<uint, ushort<2>> {}
-class RG16sint : PixelFormat<int, short<2>> {}
-class RG16float : PixelFormat<float, ushort<2>> {}
+class RG16uint : PixelFormat<uint, <2>ushort> {}
+class RG16sint : PixelFormat<int, <2>short> {}
+class RG16float : PixelFormat<float, <2>ushort> {}
 
-class RGBA16uint : PixelFormat<uint, ushort<4>> {}
-class RGBA16sint : PixelFormat<int, short<4>> {}
-class RGBA16float : PixelFormat<float, ushort<4>> {}
+class RGBA16uint : PixelFormat<uint, <4>ushort> {}
+class RGBA16sint : PixelFormat<int, <4>short> {}
+class RGBA16float : PixelFormat<float, <4>ushort> {}
 
 class R32uint : PixelFormat<uint, uint> {}
 class R32sint : PixelFormat<int, int> {}
 class R32float : PixelFormat<float, float> {}
 
-class RG32uint : PixelFormat<uint, uint<2>> {}
-class RG32sint : PixelFormat<int, int<2>> {}
-class RG32float : PixelFormat<float, float<2>> {}
+class RG32uint : PixelFormat<uint, <2>uint> {}
+class RG32sint : PixelFormat<int, <2>int> {}
+class RG32float : PixelFormat<float, <2>float> {}
 
-class RGBA32uint : PixelFormat<uint, uint<4>> {}
-class RGBA32sint : PixelFormat<int, int<4>> {}
-class RGBA32float : PixelFormat<float, float<4>> {}
+class RGBA32uint : PixelFormat<uint, <4>uint> {}
+class RGBA32sint : PixelFormat<int, <4>int> {}
+class RGBA32float : PixelFormat<float, <4>float> {}
 
 class RGB10A2unorm : PixelFormat<float, uint> {}
 class RG11B10ufloat : PixelFormat<float, uint> {}
 
 class Depth24Plus : PixelFormat<float, uint> {}
 
-class PreferredPixelFormat : PixelFormat<float, ubyte<4>> {}
+class PreferredPixelFormat : PixelFormat<float, <4>ubyte> {}

@@ -248,9 +248,7 @@ simple_type:
     T_TYPENAME
   | scalar_type
   | simple_type T_LT types T_GT             { $$ = GetClassTemplateInstance($1, *$3); }
-  | simple_type T_LT T_INT_LITERAL T_GT     { $$ = types_->GetVector($1, $3); }
-  | simple_type T_LT T_INT_LITERAL ',' T_INT_LITERAL T_GT 
-    { $$ = types_->GetMatrix(types_->GetVector($1, $3), $5); }
+  | T_LT T_INT_LITERAL T_GT simple_type     { $$ = types_->GetVector($4, $2); }
   | simple_type ':' T_IDENTIFIER  { $$ = GetScopedType($1, $3); }
   ;
 

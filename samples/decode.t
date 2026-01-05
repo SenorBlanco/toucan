@@ -1,6 +1,6 @@
 class Vertex {
-  var position : float<2>;
-  var texCoord : float<2>;
+  var position : <2>float;
+  var texCoord : <2>float;
 };
 
 class Bindings {
@@ -9,12 +9,12 @@ class Bindings {
 }
 
 class Pipeline {
-    vertex main(vb : &VertexBuiltins) : float<2> {
+    vertex main(vb : &VertexBuiltins) : <2>float {
         var v = vertices.Get();
         vb.position = {@v.position, 0.0, 1.0};
         return v.texCoord;
     }
-    fragment main(fb : &FragmentBuiltins, texCoord : float<2>) {
+    fragment main(fb : &FragmentBuiltins, texCoord : <2>float) {
       fragColor.Set(bindings.Get().textureView.Sample(bindings.Get().sampler, texCoord));
     }
     var vertices : *VertexInput<Vertex>;
