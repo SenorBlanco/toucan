@@ -268,7 +268,7 @@ while(System.IsRunning()) {
   var encoder = new CommandEncoder(device);
   var computePass = new ComputePass<ComputeBase>(encoder, {bindings = computeBindGroup});
 
-  var totalSteps = (int) ((System.GetCurrentTime() - startTime) * frequency);
+  var totalSteps = ((System.GetCurrentTime() - startTime) * frequency) as int;
   for (var i = 0; stepsDone < totalSteps && i < maxStepsPerFrame; i++) {
     var computeForcesPass = new ComputePass<ComputeForces>(computePass);
     computeForcesPass.SetPipeline(computeForces);

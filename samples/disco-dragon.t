@@ -35,8 +35,8 @@ class LightUpdate {
       return;
     }
 
-    var j = i as float;
-    lights[i].position.y = lights[i].position.y - 0.5 - 0.003 * (j - 64.0 * Math.floor(j / 64.0));
+    var f = i as float;
+    lights[i].position.y = lights[i].position.y - 0.5 - 0.003 * (f - 64.0 * Math.floor(f / 64.0));
 
     if (lights[i].position.y < lightExtent.min.y) {
       lights[i].position.y = lightExtent.max.y;
