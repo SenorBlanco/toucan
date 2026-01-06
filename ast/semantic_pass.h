@@ -59,6 +59,7 @@ class SemanticPass : public CopyVisitor {
   Result Visit(UnresolvedStaticMethodCall* node) override;
   Result Visit(VarDeclaration* decl) override;
   Result Visit(WhileStatement* stmt) override;
+  Type*  ResolveType(Type* type) override;
   Result Error(const char* fmt, ...);
   Result Default(ASTNode* node) override;
   int    GetNumErrors() const { return numErrors_; }

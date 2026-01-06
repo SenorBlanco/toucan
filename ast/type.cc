@@ -301,7 +301,7 @@ std::string QualifiedType::ToString() const {
   return QualifiersToString(qualifiers_, " ") + baseType_->ToString();
 }
 
-UnresolvedScopedType::UnresolvedScopedType(FormalTemplateArg* baseType, std::string id)
+UnresolvedScopedType::UnresolvedScopedType(Type* baseType, std::string id)
     : baseType_(baseType), id_(id) {}
 
 std::string UnresolvedScopedType::ToString() const { return baseType_->ToString() + "::" + id_; }
@@ -800,7 +800,7 @@ Type* TypeTable::GetQualifiedType(Type* type, int qualifiers) {
   return result;
 }
 
-Type* TypeTable::GetUnresolvedScopedType(FormalTemplateArg* baseType, std::string id) {
+Type* TypeTable::GetUnresolvedScopedType(Type* baseType, std::string id) {
   TypeAndId key(baseType, id);
   if (Type* result = unresolvedScopedTypes_[key]) { return result; }
 

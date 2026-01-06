@@ -82,7 +82,6 @@ static Expr* MakeNewExpr(UnresolvedInitializer* initializer, Expr* length = null
 static Expr* InlineFile(const char* filename);
 static Expr* StringLiteral(const char* str);
 static Type* GetArrayType(Type* elementType, int numElements);
-static Type* GetScopedType(Type* type, const char* id);
 static TypeList* AddIDToTypeList(const char* id, TypeList* list);
 static ClassType* GetClassTemplateInstance(Type* type, const TypeList& templateArgs);
 static ClassType* AsClassType(Type* type);
@@ -163,7 +162,7 @@ Type* FindType(const char* str) {
 %left '+' '-'
 %left '*' '/' '%'
 %left T_AS
-%right UNARYMINUS '!' T_PLUSPLUS T_MINUSMINUS T_DOTDOT ':' '@'
+%right UNARYMINUS '!' T_PLUSPLUS T_MINUSMINUS T_DOTDOT T_COLONCOLON ':' '@'
 %left '.' '[' ']' '(' ')' '{' '}'
 %expect 2   /* we expect 2 shift/reduce: dangling-else, A<B */
 %%
@@ -257,7 +256,7 @@ simple_type:
   | simple_type T_LT T_INT_LITERAL T_GT     { $$ = types_->GetVector($1, $3); }
   | simple_type T_LT T_INT_LITERAL ',' T_INT_LITERAL T_GT 
     { $$ = types_->GetMatrix(types_->GetVector($1, $3), $5); }
-  | simple_type ':' T_IDENTIFIER  { $$ = GetScopedType($1, $3); }
+  | simple_type T_COLONCOLON T_IDENTIFIER   { $$ = types_->GetUnresolvedScopedType($1, $3); }
   ;
 
 type:
@@ -879,22 +878,6 @@ MethodDecl* MakeDestructor(int modifiers, Type* type, Stmts* body) {
   std::string name(std::string("~") + classType->GetName());
   return MakeMethodDecl(modifiers, nullptr, name.c_str(), nullptr, 0, types_->GetVoid(), nullptr,
                         body);
-}
-
-static Type* GetScopedType(Type* type, const char* id) {
-  if (type->IsFormalTemplateArg()) {
-    return types_->GetUnresolvedScopedType(static_cast<FormalTemplateArg*>(type), id);
-  }
-  if (!type->IsClass()) {
-    yyerrorf("\"%s\" is not a class type", type->ToString().c_str());
-    return nullptr;
-  }
-  Type* scopedType = static_cast<ClassType*>(type)->FindType(id);
-  if (!type) {
-    yyerrorf("class \"%s\" has no type named \"%s\"", type->ToString().c_str(), id);
-    return nullptr;
-  }
-  return scopedType;
 }
 
 static TypeList* AddIDToTypeList(const char* id, TypeList* list) {

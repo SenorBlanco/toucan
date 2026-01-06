@@ -100,6 +100,30 @@ Stmts* SemanticPass::Run(Stmts* stmts) {
   return stmts;
 }
 
+Type* SemanticPass::ResolveType(Type* type) {
+  if (!type) return nullptr;
+  if (type->IsUnresolvedScopedType()) {
+    auto  ust = static_cast<UnresolvedScopedType*>(type);
+    type = ResolveType(ust->GetBaseType());
+    if (!type->IsClass()) {
+      Error("\"%s\" is not a class type", type->ToString().c_str());
+      return nullptr;
+    }
+    auto classType = static_cast<ClassType*>(type);
+    if (ust->GetID() == "BaseClass") {
+      if (auto parent = classType->GetParent()) { type = parent; }
+    } else {
+      type = static_cast<ClassType*>(type)->FindType(ust->GetID());
+      if (!type) {
+        Error("class \"%s\" has no type named \"%s\"", type->ToString().c_str(), ust->GetID().c_str());
+        return nullptr;
+      }
+    }
+  }
+  typesToValidate_.push_back({type, fileLocation_});
+  return type;
+}
+
 Result SemanticPass::Visit(SmartToRawPtr* node) {
   Expr* expr = Resolve(node->GetExpr());
   if (!expr) return nullptr;
@@ -213,14 +237,13 @@ Result SemanticPass::Visit(ArgList* node) {
 }
 
 Result SemanticPass::Visit(UnresolvedInitializer* node) {
-  Type*              type = node->GetType();
+  Type*              type = ResolveType(node->GetType());
   ArgList*           argList = Resolve(node->GetArgList());
   if (!argList) return nullptr;
 
   auto               args = argList->GetArgs();
   std::vector<Expr*> exprs;
   if (type->ContainsRawPtr()) { return Error("cannot allocate a type containing a raw pointer"); }
-  typesToValidate_.push_back({type, node->GetFileLocation()});
   if (type->IsClass() && node->IsConstructor()) {
     ClassType*         classType = static_cast<ClassType*>(type);
     TypeList           types;
@@ -313,7 +336,7 @@ Result SemanticPass::Visit(VarDeclaration* decl) {
     assert(initExpr);
     type = initExpr->GetType(types_);
   }
-  typesToValidate_.push_back({type, decl->GetFileLocation()});
+  type = ResolveType(type);
   if (type->IsVoid() || (type->IsArray() && static_cast<ArrayType*>(type)->GetNumElements() == 0)) {
     std::string errorMsg = std::string("cannot create storage of type ") + type->ToString();
     return Error(errorMsg.c_str());
@@ -338,12 +361,10 @@ Result SemanticPass::Visit(ConstDecl* decl) {
   }
   auto expr = Resolve(decl->GetExpr());
   if (!expr) return nullptr;
-  auto type = expr->GetType(types_);
 
   if (!expr->IsConstant(types_)) {
     return Error("expression is not constant");
   }
-  typesToValidate_.push_back({type, decl->GetFileLocation()});
 
   // This will be removed by the load expression added by the parser to turn assignable to expr.
   expr = MakeReadOnlyTempVar(expr);
@@ -832,9 +853,8 @@ void SemanticPass::WidenArgList(std::vector<Expr*>& argList, const VarVector& fo
 }
 
 Result SemanticPass::Visit(UnresolvedNewExpr* node) {
-  Type* type = node->GetType();
+  Type* type = ResolveType(node->GetType());
   if (!type) return nullptr;
-  typesToValidate_.push_back({type, node->GetFileLocation()});
   if (type->IsUnsizedArray()) { return Error("cannot allocate unsized array"); }
   if (type->ContainsRawPtr()) { return Error("cannot allocate a type containing raw pointer"); }
 

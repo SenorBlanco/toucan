@@ -363,7 +363,7 @@ class FormalTemplateArg : public Type {
 
 class UnresolvedScopedType : public Type {
  public:
-  UnresolvedScopedType(FormalTemplateArg* baseType, std::string name);
+  UnresolvedScopedType(Type* baseType, std::string name);
   std::string ToString() const override;
   bool IsUnresolvedScopedType() const override { return true; }
   bool IsFullySpecified() const override { return false; }
@@ -371,11 +371,11 @@ class UnresolvedScopedType : public Type {
     assert(false);
     return 0;
   }
-  FormalTemplateArg* GetBaseType() { return baseType_; }
+  Type*              GetBaseType() { return baseType_; }
   std::string        GetID() const { return id_; }
 
  private:
-  FormalTemplateArg* baseType_;
+  Type*              baseType_;
   std::string        id_;
 };
 
@@ -554,7 +554,7 @@ class TypeTable {
   FormalTemplateArg* GetFormalTemplateArg(std::string name);
   ClassType*  GetClassTemplateInstance(ClassTemplate* classTemplate, const TypeList& templateArgs, std::queue<ClassType*>* instanceQueue);
   Type*       GetQualifiedType(Type* type, int qualifiers);
-  Type*       GetUnresolvedScopedType(FormalTemplateArg* baseType, std::string id);
+  Type*       GetUnresolvedScopedType(Type* type, std::string id);
   TypeList*   AppendTypeList(TypeList* type);
   static bool VectorScalar(Type* lhs, Type* rhs);
   static bool ScalarVector(Type* lhs, Type* rhs);
