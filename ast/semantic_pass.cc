@@ -105,6 +105,7 @@ Type* SemanticPass::ResolveType(Type* type) {
   if (type->IsUnresolvedScopedType()) {
     auto  ust = static_cast<UnresolvedScopedType*>(type);
     type = ResolveType(ust->GetBaseType());
+    if (!type) return nullptr;
     if (!type->IsClass()) {
       Error("\"%s\" is not a class type", type->ToString().c_str());
       return nullptr;
@@ -113,11 +114,12 @@ Type* SemanticPass::ResolveType(Type* type) {
     if (ust->GetID() == "BaseClass") {
       if (auto parent = classType->GetParent()) { type = parent; }
     } else {
-      type = static_cast<ClassType*>(type)->FindType(ust->GetID());
-      if (!type) {
+      auto newType = static_cast<ClassType*>(type)->FindType(ust->GetID());
+      if (!newType) {
         Error("class \"%s\" has no type named \"%s\"", type->ToString().c_str(), ust->GetID().c_str());
         return nullptr;
       }
+      type = newType;
     }
   }
   typesToValidate_.push_back({type, fileLocation_});
@@ -964,6 +966,7 @@ void SemanticPass::PreVisit(UnresolvedClassDefinition* defn) {
       if (method->formalArgList[i]->type->IsAuto()) {
         method->formalArgList[i]->type = method->defaultArgs[i]->GetType(types_);
       }
+      method->formalArgList[i]->type = ResolveType(method->formalArgList[i]->type);
     }
   }
 
