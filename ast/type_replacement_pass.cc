@@ -119,21 +119,7 @@ Type* TypeReplacementPass::ResolveType(Type* type) {
     return types_->GetClassTemplateInstance(instance->GetTemplate(), newArgs, instanceQueue_);
   } else if (type->IsUnresolvedScopedType()) {
     auto  ust = static_cast<UnresolvedScopedType*>(type);
-    Type* newType = ResolveType(ust->GetBaseType());
-    if (newType->IsClass()) {
-      auto classType = static_cast<ClassType*>(newType);
-      if (ust->GetID() == "BaseClass") {
-        if (auto parent = classType->GetParent()) { newType = parent; }
-      } else {
-        newType = static_cast<ClassType*>(newType)->FindType(ust->GetID());
-        if (!newType) {
-          Error("Type \"%s\" not found", ust->GetID().c_str());
-        }
-      }
-    } else {
-      Error("\"%s\" is not a class", newType->ToString().c_str());
-    }
-    return newType;
+    return types_->GetUnresolvedScopedType(ResolveType(ust->GetBaseType()), ust->GetID());
   }
   return type;
 }
