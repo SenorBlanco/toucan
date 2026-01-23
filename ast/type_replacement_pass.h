@@ -29,7 +29,7 @@ class TypeReplacementPass : public CopyVisitor {
                       TypeTable*      types,
                       const TypeList& srcTypes,
                       const TypeList& dstTypes,
-                      std::queue<ClassType*>* instanceQueue);
+                      NewClassCallback newClassCallback);
   Result    Error(const char* fmt, ...);
   Type*     ResolveType(Type* type) override;
   TypeList* ResolveTypes(TypeList* typeList);
@@ -44,7 +44,7 @@ class TypeReplacementPass : public CopyVisitor {
   TypeTable*   types_;
   TypeList     srcTypes_;
   TypeList     dstTypes_;
-  std::queue<ClassType*>* instanceQueue_;
+  NewClassCallback newClassCallback_;
   int          numErrors_ = 0;
 };
 

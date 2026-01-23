@@ -902,8 +902,11 @@ static TypeList* AddIDToTypeList(const char* id, TypeList* list) {
   return list;
 }
 
+void OnNewClass(ClassType* classType) {
+  instanceQueue_.push(classType);
+}
 static ClassType* GetClassTemplateInstance(Type* type, const TypeList& templateArgs) {
-  return types_->GetClassTemplateInstance(AsClassTemplate(type), templateArgs, &instanceQueue_);
+  return types_->GetClassTemplateInstance(AsClassTemplate(type), templateArgs, &OnNewClass);
 }
 
 static ClassType* PopInstanceQueue() {
@@ -916,7 +919,7 @@ static ClassType* PopInstanceQueue() {
 static void InstantiateClassTemplates() {
   while (ClassType* instance = PopInstanceQueue()) {
     ClassTemplate* classTemplate = instance->GetTemplate();
-    TypeReplacementPass pass(nodes_, types_, classTemplate->GetFormalTemplateArgs(), instance->GetTemplateArgs(), &instanceQueue_);
+    TypeReplacementPass pass(nodes_, types_, classTemplate->GetFormalTemplateArgs(), instance->GetTemplateArgs(), &OnNewClass);
     pass.ResolveClassInstance(classTemplate, instance);
     numSyntaxErrors += pass.NumErrors();
     rootStmts_->Append(Make<UnresolvedClassDefinition>(instance));
