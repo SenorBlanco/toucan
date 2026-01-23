@@ -23,17 +23,17 @@ namespace Toucan {
 
 SymbolTable::SymbolTable() {}
 
-void SymbolTable::PushScope(Stmts* scope) {
+void SymbolTable::PushScope(Scope* scope) {
   stack_.push_back(scope);
 }
 
-Stmts* SymbolTable::PopScope() {
-  Stmts* back = PeekScope();
+Scope* SymbolTable::PopScope() {
+  Scope* back = PeekScope();
   stack_.pop_back();
   return back;
 }
 
-Stmts* SymbolTable::PeekScope() { return stack_.empty() ? nullptr : stack_.back(); }
+Scope* SymbolTable::PeekScope() { return stack_.empty() ? nullptr : stack_.back(); }
 
 Expr* SymbolTable::FindID(const std::string& identifier) const {
   for (auto scope : std::views::reverse(stack_)) {

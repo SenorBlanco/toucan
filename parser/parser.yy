@@ -61,7 +61,7 @@ static EnumType* DeclareEnum(const char* id);
 static void DeclareUsing(const char* id, Type* type);
 static void BeginClass(Type* type, ClassType* parent);
 static ClassType*  BeginClassTemplate(TypeList* templateArgs, const char* id);
-static Stmt* EndClass(ClassType* classType, Stmts* body);
+static Stmt* EndClass(Stmts* body);
 static void BeginEnum(Type* e);
 static void AppendEnum(const char* id);
 static void AppendEnum(const char* id, int value);
@@ -73,7 +73,7 @@ static MethodDecl* MakeConstructor(int modifiers, Type* type, Stmts* formalArgum
                                    Expr* initializer, Stmts* body);
 static MethodDecl* MakeDestructor(int modifiers, Type* type, Stmts* body);
 static void BeginBlock();
-static void EndBlock(Stmts* stmts);
+static void EndBlock();
 static Expr* Load(Expr* expr);
 static Stmt* Store(Expr* expr, Expr* value);
 static Expr* Identifier(const char* id);
@@ -176,7 +176,7 @@ statements:
   ;
 
 block_statement:
-    '{' { BeginBlock(); } statements '}'    { EndBlock($3); $$ = $3; }
+    '{' { BeginBlock(); } statements '}'    { EndBlock(); $$ = $3; }
   ;
 statement:
     ';'                                     { $$ = 0; }
@@ -221,7 +221,7 @@ for_statement:
       {
         Stmts* stmts = Make<Stmts>();
         stmts->Append(Make<ForStatement>($4, $6, $8, $10));
-        EndBlock(stmts);
+        EndBlock();
         $$ = stmts;
       }
   ;
@@ -296,9 +296,9 @@ class_forward_decl:
 
 class_decl:
     class_header opt_parent_class '{'       { BeginClass($1, AsClassType($2)); }
-    class_body '}'                          { $$ = EndClass(AsClassType($1), $5); }
+    class_body '}'                          { $$ = EndClass($5); }
   | template_class_header opt_parent_class  '{' { AsClassType($1)->SetParent(AsClassType($2)); }
-    class_body '}'                              { $$ = EndClass(AsClassType($1), $5); }
+    class_body '}'                              { $$ = EndClass($5); }
   ;
   ;
 
@@ -746,14 +746,14 @@ static void BeginClass(Type* t, ClassType* parent) {
   }
   c->SetParent(parent);
   c->SetDefined(true);
-  BeginBlock();
+  symbols_->PushScope(Make<UnresolvedClassDefinition>(c));
 }
 
 static ClassType* BeginClassTemplate(TypeList* templateArgs, const char* id) {
   ClassTemplate* t = types_->Make<ClassTemplate>(id, *templateArgs);
   symbols_->DefineType(id, t);
   t->SetDefined(true);
-  BeginBlock();
+  symbols_->PushScope(Make<UnresolvedClassDefinition>(t));
   for (Type* const& i : *templateArgs) {
     auto type = static_cast<FormalTemplateArg*>(i);
     symbols_->DefineType(type->GetName(), type);
@@ -796,14 +796,12 @@ class ClassPopulator : public Visitor {
   ClassType*    classType_;
 };
 
-static Stmt* EndClass(ClassType* classType, Stmts* body) {
-  auto scope = symbols_->PopScope();
+static Stmt* EndClass(Stmts* body) {
+  auto defn = static_cast<UnresolvedClassDefinition*>(symbols_->PopScope());
+  auto classType = defn->GetClass();
   ClassPopulator populator(classType);
   body->Accept(&populator);
-  for (auto type : scope->GetTypes()) {
-    classType->DefineType(type.first, type.second);
-  }
-  return Make<UnresolvedClassDefinition>(classType);
+  return defn;
 }
 
 static void BeginEnum(Type* t) {
@@ -826,9 +824,8 @@ static void BeginBlock() {
   symbols_->PushScope(Make<Stmts>());
 }
 
-static void EndBlock(Stmts* stmts) {
-  auto scope = symbols_->PopScope();
-  for (auto type : scope->GetTypes()) stmts->DefineType(type.first, type.second);
+static void EndBlock() {
+  symbols_->PopScope();
 }
 
 MethodDecl* MakeMethodDecl(int modifiers, ArgList* optWorkgroupSize, std::string id, Stmts* formalArguments,

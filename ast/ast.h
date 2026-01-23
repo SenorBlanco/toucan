@@ -540,7 +540,22 @@ class Stmt : public ASTNode {
   virtual bool ContainsReturn() const { return false; }
 };
 
-class Stmts : public Stmt {
+class Scope : public Stmt {
+ public:
+  Scope();
+  void                      DefineID(std::string id, Expr* expr) { ids_[id] = expr; }
+  Expr*                     FindID(const std::string& id);
+  virtual void              DefineType(std::string id, Type* type) = 0;
+  virtual Type*             FindType(const std::string& id) = 0;
+  void                      AppendVar(std::shared_ptr<Var> v);
+  const VarVector&          GetVars() const { return vars_; }
+
+ private:
+  ExprMap            ids_;
+  VarVector          vars_;
+};
+
+class Stmts : public Scope {
  public:
   Stmts();
   Result                    Accept(Visitor* visitor) override;
@@ -548,20 +563,13 @@ class Stmts : public Stmt {
   void                      Append(const std::vector<Stmt*>& stmts);
   void                      Prepend(Stmt* stmt) { stmts_.insert(stmts_.begin(), stmt); }
   const std::vector<Stmt*>& GetStmts() { return stmts_; }
-  void                      DefineID(std::string id, Expr* expr) { ids_[id] = expr; }
-  Expr*                     FindID(const std::string& id);
-  void                      DefineType(std::string id, Type* type) { types_[id] = type; }
-  Type*                     FindType(const std::string& id);
-  const TypeMap&            GetTypes() const { return types_; }
-  void                      AppendVar(std::shared_ptr<Var> v);
-  const VarVector&          GetVars() const { return vars_; }
+  void                      DefineType(std::string id, Type* type) override { types_[id] = type; }
+  Type*                     FindType(const std::string& id) override;
   bool                      ContainsReturn() const override;
 
  private:
   std::vector<Stmt*> stmts_;
-  ExprMap            ids_;
   TypeMap            types_;
-  VarVector          vars_;
 };
 
 class ExprStmt : public Stmt {
@@ -789,12 +797,13 @@ class UnresolvedNewExpr : public Expr {
   bool     constructor_;
 };
 
-class UnresolvedClassDefinition : public Stmt {
+class UnresolvedClassDefinition : public Scope {
  public:
-  UnresolvedClassDefinition(ClassType* classType);
-  Result Accept(Visitor* visitor) override;
-  ClassType* GetClass() const { return class_; }
-
+                    UnresolvedClassDefinition(ClassType* classType);
+  Result            Accept(Visitor* visitor) override;
+  ClassType*        GetClass() const { return class_; }
+  void              DefineType(std::string id, Type* type) override { class_->DefineType(id, type); }
+  Type*             FindType(const std::string& id) override { return class_->FindType(id); }
  private:
   ClassType* class_;
 };

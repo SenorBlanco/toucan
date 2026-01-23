@@ -322,16 +322,20 @@ NullConstant::NullConstant() {}
 
 Type* NullConstant::GetType(TypeTable* types) { return types->GetStrongPtrType(types->GetVoid()); }
 
+Scope::Scope() {}
+
+Expr* Scope::FindID(const std::string& identifier) {
+  auto i = ids_.find(identifier);
+  if (i != ids_.end()) { return i->second; }
+  return nullptr;
+}
+
+void Scope::AppendVar(std::shared_ptr<Var> var) { vars_.push_back(var); }
+
 Stmts::Stmts() {}
 
 void Stmts::Append(const std::vector<Stmt*>& stmts) {
   stmts_.insert(stmts_.end(), stmts.begin(), stmts.end());
-}
-
-Expr* Stmts::FindID(const std::string& identifier) {
-  auto i = ids_.find(identifier);
-  if (i != ids_.end()) { return i->second; }
-  return nullptr;
 }
 
 Type* Stmts::FindType(const std::string& identifier) {
@@ -339,8 +343,6 @@ Type* Stmts::FindType(const std::string& identifier) {
   if (i != types_.end()) { return i->second; }
   return nullptr;
 }
-
-void Stmts::AppendVar(std::shared_ptr<Var> var) { vars_.push_back(var); }
 
 bool Stmts::ContainsReturn() const {
   for (auto stmt : stmts_) {

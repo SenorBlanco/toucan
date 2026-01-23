@@ -33,13 +33,13 @@ class SymbolTable {
   Type*            FindType(const std::string& identifier) const;
   void             DefineID(std::string identifier, Expr* expr);
   void             DefineType(std::string identifier, Type* type);
-  void             PushScope(Stmts* scope);
-  Stmts*           PopScope();
-  Stmts*           PeekScope();
-  const std::vector<Stmts*>& Get() { return stack_; }
+  void             PushScope(Scope* scope);
+  Scope*           PopScope();
+  Scope*           PeekScope();
+  const std::vector<Scope*>& Get() { return stack_; }
 
  private:
-  std::vector<Stmts*>  stack_;
+  std::vector<Scope*>  stack_;
 };
 
 };  // namespace Toucan
