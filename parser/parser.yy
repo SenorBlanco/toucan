@@ -22,12 +22,12 @@
 #include <cstring>
 #include <filesystem>
 #include <optional>
+#include <ranges>
 #include <stack>
 #include <unordered_map>
 #include <unordered_set>
 
 #include "ast/ast.h"
-#include "ast/symbol.h"
 #include "ast/type.h"
 #include "ast/type_replacement_pass.h"
 
@@ -39,7 +39,7 @@ using namespace Toucan;
 static void PushFile(const char* filename);
 
 static NodeVector* nodes_;
-static SymbolTable* symbols_;
+std::vector<Scope*> stack_;
 static TypeTable* types_;
 static std::vector<std::string> includePaths_;
 static Stmts* rootStmts_;
@@ -99,7 +99,10 @@ inline TypeList* Append(TypeList* typeList) {
   types_->AppendTypeList(typeList); return typeList;
 }
 Type* FindType(const char* str) {
-  return symbols_->FindType(str);
+  for (auto scope : std::views::reverse(stack_)) {
+    if (auto type = scope->FindType(str)) return type;
+  }
+  return nullptr;
 }
 %}
 
@@ -720,22 +723,22 @@ static Expr* MakeStaticMethodCall(Type* type, const char* id, ArgList* arguments
 }
 
 static ClassType* DeclareClass(const char *id) {
-  assert(!symbols_->FindType(id));
+  assert(!FindType(id));
   ClassType* c = types_->Make<ClassType>(id);
-  symbols_->DefineType(id, c);
+  stack_.back()->DefineType(id, c);
   return c;
 }
 
 static EnumType* DeclareEnum(const char *id) {
-  assert(!symbols_->FindType(id));
+  assert(!FindType(id));
   EnumType* e = types_->Make<EnumType>(id);
-  symbols_->DefineType(id, e);
+  stack_.back()->DefineType(id, e);
   return e;
 }
 
 static void DeclareUsing(const char *id, Type* type) {
-  assert(!symbols_->FindType(id));
-  symbols_->DefineType(id, type);
+  assert(!FindType(id));
+  stack_.back()->DefineType(id, type);
 }
 
 static void BeginClass(Type* t, ClassType* parent) {
@@ -746,17 +749,17 @@ static void BeginClass(Type* t, ClassType* parent) {
   }
   c->SetParent(parent);
   c->SetDefined(true);
-  symbols_->PushScope(Make<UnresolvedClassDefinition>(c));
+  stack_.push_back(Make<UnresolvedClassDefinition>(c));
 }
 
 static ClassType* BeginClassTemplate(TypeList* templateArgs, const char* id) {
   ClassTemplate* t = types_->Make<ClassTemplate>(id, *templateArgs);
-  symbols_->DefineType(id, t);
+  stack_.back()->DefineType(id, t);
   t->SetDefined(true);
-  symbols_->PushScope(Make<UnresolvedClassDefinition>(t));
+  stack_.push_back(Make<UnresolvedClassDefinition>(t));
   for (Type* const& i : *templateArgs) {
     auto type = static_cast<FormalTemplateArg*>(i);
-    symbols_->DefineType(type->GetName(), type);
+    stack_.back()->DefineType(type->GetName(), type);
   }
   return t;
 }
@@ -797,7 +800,8 @@ class ClassPopulator : public Visitor {
 };
 
 static Stmt* EndClass(Stmts* body) {
-  auto defn = static_cast<UnresolvedClassDefinition*>(symbols_->PopScope());
+  auto defn = static_cast<UnresolvedClassDefinition*>(stack_.back());
+  stack_.pop_back();
   auto classType = defn->GetClass();
   ClassPopulator populator(classType);
   body->Accept(&populator);
@@ -821,11 +825,11 @@ static void AppendEnum(const char *id, int value) {
 }
 
 static void BeginBlock() {
-  symbols_->PushScope(Make<Stmts>());
+  stack_.push_back(Make<Stmts>());
 }
 
 static void EndBlock() {
-  symbols_->PopScope();
+  stack_.pop_back();
 }
 
 MethodDecl* MakeMethodDecl(int modifiers, ArgList* optWorkgroupSize, std::string id, Stmts* formalArguments,
@@ -933,15 +937,13 @@ int ParseProgram(const char* filename,
                  Stmts* rootStmts) {
   numSyntaxErrors = 0;
   nodes_ = nodes;
-  SymbolTable symbols;
-  symbols_ = &symbols;
   types_ = types;
   includePaths_ = includePaths;
   rootStmts_ = rootStmts;
   PushFile(filename);
-  symbols.PushScope(rootStmts);
+  stack_.push_back(rootStmts);
   yyparse();
-  symbols.PopScope();
+  stack_.pop_back();
   if (numSyntaxErrors == 0) {
     if (!rootStmts_->ContainsReturn()) {
       rootStmts_->Append(Make<ReturnStatement>(nullptr));
@@ -950,7 +952,6 @@ int ParseProgram(const char* filename,
   }
   PopFile();
   nodes_ = nullptr;
-  symbols_ = nullptr;
   types_ = nullptr;
   rootStmts_ = nullptr;
 #ifndef _WIN32

@@ -30,9 +30,7 @@ class SymbolTable {
  public:
   SymbolTable();
   Expr*            FindID(const std::string& identifier) const;
-  Type*            FindType(const std::string& identifier) const;
   void             DefineID(std::string identifier, Expr* expr);
-  void             DefineType(std::string identifier, Type* type);
   void             PushScope(Scope* scope);
   Scope*           PopScope();
   Scope*           PeekScope();

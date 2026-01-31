@@ -47,16 +47,4 @@ void SymbolTable::DefineID(std::string identifier, Expr* expr) {
   stack_.back()->DefineID(identifier, expr);
 }
 
-void SymbolTable::DefineType(std::string identifier, Type* type) {
-  assert(!stack_.empty());
-  stack_.back()->DefineType(identifier, type);
-}
-
-Type* SymbolTable::FindType(const std::string& identifier) const {
-  for (auto scope : std::views::reverse(stack_)) {
-    if (auto type = scope->FindType(identifier)) return type;
-  }
-  return nullptr;
-}
-
 };  // namespace Toucan
