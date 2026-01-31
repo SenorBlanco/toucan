@@ -961,7 +961,7 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   // Template classes don't need semantic analysis, since their code won't be directly generated.
   if (classType->IsClassTemplate()) return nullptr;
 
-  symbols_.PushScope(Make<Stmts>());
+  symbols_.PushScope(defn);
 
   for (auto c = classType; c != nullptr; c = c->GetParent()) {
     for (const auto& field : c->GetFields()) {
