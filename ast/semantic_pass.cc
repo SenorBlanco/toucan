@@ -562,10 +562,12 @@ Result SemanticPass::Visit(LoadExpr* node) {
 }
 
 Expr* SemanticPass::FindID(std::string id) {
+  bool allowVars = true;
   for (auto scope : scopeStack_) {
     if (scope->IsStmts()) {
       auto stmts = static_cast<Stmts*>(scope);
       if (auto var = stmts->FindVar(id)) {
+        if (!allowVars) continue;
         Expr* expr = Make<VarExpr>(var);
         if (var->type->IsRawPtr()) expr = Make<LoadExpr>(expr);
         return expr;
@@ -580,6 +582,7 @@ Expr* SemanticPass::FindID(std::string id) {
       } else if (auto constant = classType->FindConstant(id)) {
         return MakeReadOnlyTempVar(constant);
       }
+      allowVars = false;
     }
   }
   return nullptr;

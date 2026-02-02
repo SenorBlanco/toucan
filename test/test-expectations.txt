@@ -327,6 +327,8 @@ error-validate.t:36:  while instantiating RenderPipeline<NoShaders>: no vertex s
 error-validate.t:36:  while instantiating RenderPipeline<NoShaders>: no fragment shader found
 error-validate.t:37:  while instantiating RenderPipeline<NoShaders2>: no vertex shader found
 error-validate.t:37:  while instantiating RenderPipeline<NoShaders2>: no fragment shader found
+test/error-var-out-of-scope.t
+error-var-out-of-scope.t:5:  unknown symbol "i"
 test/error-widen-null-to-raw-ptr.t
 error-widen-null-to-raw-ptr.t:1:  cannot store a value of type "null" to a location of type "&int"
 test/error-widen-weak-ptr-short-to-weak-ptr-int.t
