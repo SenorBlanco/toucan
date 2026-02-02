@@ -557,15 +557,15 @@ class Stmts : public Scope {
   void                      Append(const std::vector<Stmt*>& stmts);
   void                      Prepend(Stmt* stmt) { stmts_.insert(stmts_.begin(), stmt); }
   const std::vector<Stmt*>& GetStmts() { return stmts_; }
+  void                      AppendConstant(std::string name, Expr* value);
+  Expr*                     FindConstant(const std::string& id) const;
   void                      DefineType(std::string id, Type* type) override { types_[id] = type; }
   Type*                     FindType(const std::string& id) const override;
+  Var*                      FindVar(const std::string& id) const;
   void                      AppendVar(std::shared_ptr<Var> v);
   const VarVector&          GetVars() const { return vars_; }
   bool                      ContainsReturn() const override;
   bool                      IsStmts() const override { return true; }
-  Expr*                     FindConstant(const std::string& id) const;
-  Var*                      FindVar(const std::string& id) const;
-  void                      AppendConstant(std::string name, Expr* value);
 
  private:
   std::vector<Stmt*> stmts_;
