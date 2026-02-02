@@ -565,9 +565,7 @@ Result SemanticPass::Visit(UnresolvedIdentifier* node) {
   std::string id = node->GetID();
   auto FindID = [this](std::string id) -> Expr* {
     for (auto scope : scopeStack_) {
-      if (auto expr = scope->FindID(id)) {
-        return expr;
-      }
+      if (auto expr = scope->FindID(id)) return expr;
     }
     return nullptr;
   };
