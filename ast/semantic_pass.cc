@@ -166,11 +166,11 @@ Result SemanticPass::Visit(Decls* node) {
 
 Result SemanticPass::Visit(Stmts* stmts) {
   Stmts* newStmts = Make<Stmts>();
-  symbols_.PushScope(stmts);
+  scopeStack_.Push(stmts);
   for (auto stmt : stmts->GetStmts()) {
     if ((stmt = Resolve(stmt))) newStmts->Append(stmt);
   }
-  symbols_.PopScope();
+  scopeStack_.Pop();
   for (auto var : stmts->GetVars()) newStmts->AppendVar(var);
   // Append destructor calls for any vars that need it.
   for (auto var : std::views::reverse(stmts->GetVars())) {
@@ -300,7 +300,7 @@ Stmts* SemanticPass::InitializeArray(Expr* dest, Type* elementType, Expr* length
 Result SemanticPass::Visit(VarDeclaration* decl) {
   std::string id = decl->GetID();
   Type*       type = decl->GetType();
-  if (symbols_.PeekScope()->FindID(id)) {
+  if (scopeStack_.Top()->FindID(id)) {
     return Error("identifier \"%s\" already defined in this scope", id.c_str());
   }
   if (!type) return nullptr;
@@ -325,15 +325,15 @@ Result SemanticPass::Visit(VarDeclaration* decl) {
     return Error("cannot allocate a type containing a raw pointer");
   }
   auto var = std::make_shared<Var>(id, type);
-  symbols_.PeekScope()->AppendVar(var);
+  scopeStack_.Top()->AppendVar(var);
   Expr* varExpr = Make<VarExpr>(var.get());
-  symbols_.DefineID(id, var->type->IsRawPtr() ? Make<LoadExpr>(varExpr) : varExpr);
+  scopeStack_.Top()->DefineID(id, var->type->IsRawPtr() ? Make<LoadExpr>(varExpr) : varExpr);
   return Initialize(varExpr, initExpr);
 }
 
 Result SemanticPass::Visit(ConstDecl* decl) {
   std::string id = decl->GetID();
-  if (symbols_.PeekScope()->FindID(id)) {
+  if (scopeStack_.Top()->FindID(id)) {
     return Error("identifier \"%s\" already defined in this scope", id.c_str());
   }
   auto expr = Resolve(decl->GetExpr());
@@ -348,7 +348,7 @@ Result SemanticPass::Visit(ConstDecl* decl) {
   // This will be removed by the load expression added by the parser to turn assignable to expr.
   expr = MakeReadOnlyTempVar(expr);
 
-  symbols_.DefineID(id, expr);
+  scopeStack_.Top()->DefineID(id, expr);
   return {};
 }
 
@@ -563,7 +563,15 @@ Result SemanticPass::Visit(LoadExpr* node) {
 
 Result SemanticPass::Visit(UnresolvedIdentifier* node) {
   std::string id = node->GetID();
-  if (Expr* expr = symbols_.FindID(id)) {
+  auto FindID = [this](std::string id) -> Expr* {
+    for (auto scope : scopeStack_) {
+      if (auto expr = scope->FindID(id)) {
+        return expr;
+      }
+    }
+    return nullptr;
+  };
+  if (Expr* expr = FindID(id)) {
     copyFileLocation_ = false;
     expr = Resolve(expr);
     copyFileLocation_ = true;
@@ -961,15 +969,15 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   // Template classes don't need semantic analysis, since their code won't be directly generated.
   if (classType->IsClassTemplate()) return nullptr;
 
-  symbols_.PushScope(defn);
+  scopeStack_.Push(defn);
 
   for (auto c = classType; c != nullptr; c = c->GetParent()) {
     for (const auto& field : c->GetFields()) {
       Expr* thisPtr = Make<UnresolvedIdentifier>("this");
-      symbols_.DefineID(field->name, Make<FieldAccess>(thisPtr, field.get()));
+      scopeStack_.Top()->DefineID(field->name, Make<FieldAccess>(thisPtr, field.get()));
     }
     for (const auto& constant : c->GetConstants()) {
-      symbols_.DefineID(constant.first, MakeReadOnlyTempVar(constant.second));
+      scopeStack_.Top()->DefineID(constant.first, MakeReadOnlyTempVar(constant.second));
     }
   }
 
@@ -996,11 +1004,11 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   for (const auto& method : classType->GetMethods()) {
     if (!method->stmts) continue;
 
-    symbols_.PushScope(Make<Stmts>());
+    scopeStack_.Push(Make<Stmts>());
     for (const auto& var : method->formalArgList) {
       Expr* expr = Make<VarExpr>(var.get());
       if (var->type->IsRawPtr()) expr = Make<LoadExpr>(expr);
-      symbols_.DefineID(var->name, expr);
+      scopeStack_.Top()->DefineID(var->name, expr);
     }
 
     currentMethod_ = method.get();
@@ -1014,7 +1022,7 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
       method->stmts->Prepend(Make<StoreStmt>(This, Widen(initializer, method->classType)));
       method->stmts->Append(Make<ReturnStatement>(This));
     }
-    symbols_.PopScope();
+    scopeStack_.Pop();
 
     if (method->returnType->ContainsRawPtr() && !method->IsConstructor()) {
       Error("cannot return a raw pointer");
@@ -1038,15 +1046,14 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
       Error("unsized arrays are only allowed as the last field of a class");
     }
   }
-  symbols_.PopScope();
+  scopeStack_.Pop();
   return nullptr;
 }
 
 void SemanticPass::UnwindStack(Stmts* stmts) {
-  Stmts* topScope = currentMethod_ ? currentMethod_->stmts : nullptr;
-  auto stack = symbols_.Get();
-  for (auto it = stack.rbegin(); it != stack.rend() && *it != topScope; ++it) {
-    for (auto var : (*it)->GetVars()) {
+  for (auto scope : scopeStack_) {
+    if (currentMethod_ && scope == currentMethod_->stmts) break;
+    for (auto var : scope->GetVars()) {
       if (var->type->NeedsDestruction()) {
         stmts->Append(Make<DestroyStmt>(Make<VarExpr>(var.get())));
       }

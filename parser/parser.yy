@@ -22,7 +22,6 @@
 #include <cstring>
 #include <filesystem>
 #include <optional>
-#include <ranges>
 #include <stack>
 #include <unordered_map>
 #include <unordered_set>
@@ -39,7 +38,7 @@ using namespace Toucan;
 static void PushFile(const char* filename);
 
 static NodeVector* nodes_;
-std::vector<Scope*> stack_;
+static ScopeStack scopeStack_;
 static TypeTable* types_;
 static std::vector<std::string> includePaths_;
 static Stmts* rootStmts_;
@@ -99,7 +98,7 @@ inline TypeList* Append(TypeList* typeList) {
   types_->AppendTypeList(typeList); return typeList;
 }
 Type* FindType(const char* str) {
-  for (auto scope : std::views::reverse(stack_)) {
+  for (auto scope : scopeStack_) {
     if (auto type = scope->FindType(str)) return type;
   }
   return nullptr;
@@ -725,20 +724,20 @@ static Expr* MakeStaticMethodCall(Type* type, const char* id, ArgList* arguments
 static ClassType* DeclareClass(const char *id) {
   assert(!FindType(id));
   ClassType* c = types_->Make<ClassType>(id);
-  stack_.back()->DefineType(id, c);
+  scopeStack_.Top()->DefineType(id, c);
   return c;
 }
 
 static EnumType* DeclareEnum(const char *id) {
   assert(!FindType(id));
   EnumType* e = types_->Make<EnumType>(id);
-  stack_.back()->DefineType(id, e);
+  scopeStack_.Top()->DefineType(id, e);
   return e;
 }
 
 static void DeclareUsing(const char *id, Type* type) {
   assert(!FindType(id));
-  stack_.back()->DefineType(id, type);
+  scopeStack_.Top()->DefineType(id, type);
 }
 
 static void BeginClass(Type* t, ClassType* parent) {
@@ -749,17 +748,17 @@ static void BeginClass(Type* t, ClassType* parent) {
   }
   c->SetParent(parent);
   c->SetDefined(true);
-  stack_.push_back(Make<UnresolvedClassDefinition>(c));
+  scopeStack_.Push(Make<UnresolvedClassDefinition>(c));
 }
 
 static ClassType* BeginClassTemplate(TypeList* templateArgs, const char* id) {
   ClassTemplate* t = types_->Make<ClassTemplate>(id, *templateArgs);
-  stack_.back()->DefineType(id, t);
+  scopeStack_.Top()->DefineType(id, t);
   t->SetDefined(true);
-  stack_.push_back(Make<UnresolvedClassDefinition>(t));
+  scopeStack_.Push(Make<UnresolvedClassDefinition>(t));
   for (Type* const& i : *templateArgs) {
     auto type = static_cast<FormalTemplateArg*>(i);
-    stack_.back()->DefineType(type->GetName(), type);
+    scopeStack_.Top()->DefineType(type->GetName(), type);
   }
   return t;
 }
@@ -800,8 +799,7 @@ class ClassPopulator : public Visitor {
 };
 
 static Stmt* EndClass(Stmts* body) {
-  auto defn = static_cast<UnresolvedClassDefinition*>(stack_.back());
-  stack_.pop_back();
+  auto defn = static_cast<UnresolvedClassDefinition*>(scopeStack_.Pop());
   auto classType = defn->GetClass();
   ClassPopulator populator(classType);
   body->Accept(&populator);
@@ -825,11 +823,11 @@ static void AppendEnum(const char *id, int value) {
 }
 
 static void BeginBlock() {
-  stack_.push_back(Make<Stmts>());
+  scopeStack_.Push(Make<Stmts>());
 }
 
 static void EndBlock() {
-  stack_.pop_back();
+  scopeStack_.Pop();
 }
 
 MethodDecl* MakeMethodDecl(int modifiers, ArgList* optWorkgroupSize, std::string id, Stmts* formalArguments,
@@ -941,9 +939,9 @@ int ParseProgram(const char* filename,
   includePaths_ = includePaths;
   rootStmts_ = rootStmts;
   PushFile(filename);
-  stack_.push_back(rootStmts);
+  scopeStack_.Push(rootStmts);
   yyparse();
-  stack_.pop_back();
+  scopeStack_.Pop();
   if (numSyntaxErrors == 0) {
     if (!rootStmts_->ContainsReturn()) {
       rootStmts_->Append(Make<ReturnStatement>(nullptr));

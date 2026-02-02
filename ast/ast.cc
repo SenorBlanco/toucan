@@ -385,6 +385,8 @@ UnresolvedClassDefinition::UnresolvedClassDefinition(ClassType* classType) : cla
 
 NodeVector::NodeVector() {}
 
+ScopeStack::ScopeStack() {}
+
 Result Arg::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ArgList::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ArrayAccess::Accept(Visitor* visitor) { return visitor->Visit(this); }

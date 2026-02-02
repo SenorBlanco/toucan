@@ -837,6 +837,14 @@ class NodeVector {
   std::vector<std::unique_ptr<ASTNode>> nodes_;
 };
 
+class ScopeStack : public std::deque<Scope*> {
+ public:
+  ScopeStack();
+  void Push(Scope* scope) { push_front(scope); }
+  Scope* Pop()            { auto result = front(); pop_front(); return result; }
+  Scope* Top()            { return front(); }
+};
+
 class Visitor {
  public:
   virtual Result Visit(Arg* node) { return Default(node); }

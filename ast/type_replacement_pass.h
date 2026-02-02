@@ -21,8 +21,6 @@
 
 namespace Toucan {
 
-class SymbolTable;
-
 class TypeReplacementPass : public CopyVisitor {
  public:
   TypeReplacementPass(NodeVector*     nodes,

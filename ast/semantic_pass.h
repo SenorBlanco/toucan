@@ -16,7 +16,6 @@
 #define _AST_AST_SEMANTIC_PASS_H_
 
 #include "copy_visitor.h"
-#include <ast/symbol.h>
 
 namespace Toucan {
 
@@ -91,7 +90,7 @@ class SemanticPass : public CopyVisitor {
                      ArgList*            args,
                      std::vector<Expr*>* newArgList);
   Method* FindOverriddenMethod(ClassType* classType, Method* method);
-  SymbolTable      symbols_;
+  ScopeStack       scopeStack_;
   TypeTable*       types_;
   TypeLocationList typesToValidate_;
   int              numErrors_ = 0;
