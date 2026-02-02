@@ -300,7 +300,9 @@ Stmts* SemanticPass::InitializeArray(Expr* dest, Type* elementType, Expr* length
 Result SemanticPass::Visit(VarDeclaration* decl) {
   std::string id = decl->GetID();
   Type*       type = decl->GetType();
-  if (scopeStack_.Top()->FindID(id)) {
+  assert(scopeStack_.Top()->IsStmts());
+  auto scope = static_cast<Stmts*>(scopeStack_.Top());
+  if (scope->FindVar(id) || scope->FindConstant(id)) {
     return Error("identifier \"%s\" already defined in this scope", id.c_str());
   }
   if (!type) return nullptr;
@@ -325,15 +327,16 @@ Result SemanticPass::Visit(VarDeclaration* decl) {
     return Error("cannot allocate a type containing a raw pointer");
   }
   auto var = std::make_shared<Var>(id, type);
-  scopeStack_.Top()->AppendVar(var);
+  scope->AppendVar(var);
   Expr* varExpr = Make<VarExpr>(var.get());
-  scopeStack_.Top()->DefineID(id, var->type->IsRawPtr() ? Make<LoadExpr>(varExpr) : varExpr);
   return Initialize(varExpr, initExpr);
 }
 
 Result SemanticPass::Visit(ConstDecl* decl) {
   std::string id = decl->GetID();
-  if (scopeStack_.Top()->FindID(id)) {
+  assert(scopeStack_.Top()->IsStmts());
+  auto scope = static_cast<Stmts*>(scopeStack_.Top());
+  if (scope->FindVar(id) || scope->FindConstant(id)) {
     return Error("identifier \"%s\" already defined in this scope", id.c_str());
   }
   auto expr = Resolve(decl->GetExpr());
@@ -345,10 +348,7 @@ Result SemanticPass::Visit(ConstDecl* decl) {
   }
   typesToValidate_.push_back({type, decl->GetFileLocation()});
 
-  // This will be removed by the load expression added by the parser to turn assignable to expr.
-  expr = MakeReadOnlyTempVar(expr);
-
-  scopeStack_.Top()->DefineID(id, expr);
+  scope->AppendConstant(id, expr);
   return {};
 }
 
@@ -561,14 +561,32 @@ Result SemanticPass::Visit(LoadExpr* node) {
   return MakeLoad(expr);
 }
 
+Expr* SemanticPass::FindID(std::string id) {
+  for (auto scope : scopeStack_) {
+    if (scope->IsStmts()) {
+      auto stmts = static_cast<Stmts*>(scope);
+      if (auto var = stmts->FindVar(id)) {
+        Expr* expr = Make<VarExpr>(var);
+        if (var->type->IsRawPtr()) expr = Make<LoadExpr>(expr);
+        return expr;
+      } else if (auto constant = stmts->FindConstant(id)) {
+        return MakeReadOnlyTempVar(constant);
+      }
+    } else if (scope->IsUnresolvedClassDefinition()) {
+      auto classType = static_cast<UnresolvedClassDefinition*>(scope)->GetClass();
+      if (auto field = classType->FindField(id)) {
+        Expr* thisPtr = Make<UnresolvedIdentifier>("this");
+        return Make<FieldAccess>(thisPtr, field);
+      } else if (auto constant = classType->FindConstant(id)) {
+        return MakeReadOnlyTempVar(constant);
+      }
+    }
+  }
+  return nullptr;
+}
+
 Result SemanticPass::Visit(UnresolvedIdentifier* node) {
   std::string id = node->GetID();
-  auto FindID = [this](std::string id) -> Expr* {
-    for (auto scope : scopeStack_) {
-      if (auto expr = scope->FindID(id)) return expr;
-    }
-    return nullptr;
-  };
   if (Expr* expr = FindID(id)) {
     copyFileLocation_ = false;
     expr = Resolve(expr);
@@ -969,16 +987,6 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
 
   scopeStack_.Push(defn);
 
-  for (auto c = classType; c != nullptr; c = c->GetParent()) {
-    for (const auto& field : c->GetFields()) {
-      Expr* thisPtr = Make<UnresolvedIdentifier>("this");
-      scopeStack_.Top()->DefineID(field->name, Make<FieldAccess>(thisPtr, field.get()));
-    }
-    for (const auto& constant : c->GetConstants()) {
-      scopeStack_.Top()->DefineID(constant.first, MakeReadOnlyTempVar(constant.second));
-    }
-  }
-
   if (classType->NeedsDestruction()) {
     auto destructor = classType->GetDestructor();
     if (!destructor) {
@@ -1002,13 +1010,12 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
   for (const auto& method : classType->GetMethods()) {
     if (!method->stmts) continue;
 
-    scopeStack_.Push(Make<Stmts>());
+    auto newStmts = Make<Stmts>();
     for (const auto& var : method->formalArgList) {
-      Expr* expr = Make<VarExpr>(var.get());
-      if (var->type->IsRawPtr()) expr = Make<LoadExpr>(expr);
-      scopeStack_.Top()->DefineID(var->name, expr);
+      newStmts->AppendVar(var);
     }
 
+    scopeStack_.Push(newStmts);
     currentMethod_ = method.get();
     method->stmts = Resolve(method->stmts);
     currentMethod_ = nullptr;
@@ -1051,9 +1058,11 @@ Result SemanticPass::Visit(UnresolvedClassDefinition* defn) {
 void SemanticPass::UnwindStack(Stmts* stmts) {
   for (auto scope : scopeStack_) {
     if (currentMethod_ && scope == currentMethod_->stmts) break;
-    for (auto var : scope->GetVars()) {
-      if (var->type->NeedsDestruction()) {
-        stmts->Append(Make<DestroyStmt>(Make<VarExpr>(var.get())));
+    if (scope->IsStmts()) {
+      for (auto var : std::views::reverse(static_cast<Stmts*>(scope)->GetVars()) ){
+        if (var->type->NeedsDestruction()) {
+          stmts->Append(Make<DestroyStmt>(Make<VarExpr>(var.get())));
+        }
       }
     }
   }

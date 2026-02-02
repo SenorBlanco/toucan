@@ -324,23 +324,32 @@ Type* NullConstant::GetType(TypeTable* types) { return types->GetStrongPtrType(t
 
 Scope::Scope() {}
 
-Expr* Scope::FindID(const std::string& identifier) {
-  auto i = ids_.find(identifier);
-  if (i != ids_.end()) { return i->second; }
-  return nullptr;
-}
-
-void Scope::AppendVar(std::shared_ptr<Var> var) { vars_.push_back(var); }
-
 Stmts::Stmts() {}
 
 void Stmts::Append(const std::vector<Stmt*>& stmts) {
   stmts_.insert(stmts_.end(), stmts.begin(), stmts.end());
 }
 
-Type* Stmts::FindType(const std::string& identifier) {
+void Stmts::AppendConstant(std::string name, Expr* value) { constants_[name] = value; }
+
+Type* Stmts::FindType(const std::string& identifier) const {
   auto i = types_.find(identifier);
   if (i != types_.end()) { return i->second; }
+  return nullptr;
+}
+
+void Stmts::AppendVar(std::shared_ptr<Var> var) { vars_.push_back(var); }
+
+Expr* Stmts::FindConstant(const std::string& identifier) const {
+  auto i = constants_.find(identifier);
+  if (i != constants_.end()) { return i->second; }
+  return nullptr;
+}
+
+Var* Stmts::FindVar(const std::string& identifier) const {
+  for (auto var : vars_) {
+    if (var->name == identifier) return var.get();
+  }
   return nullptr;
 }
 
