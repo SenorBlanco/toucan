@@ -51,6 +51,7 @@ class NativeClass {
   static ClassType* Texture2DArray;
   static ClassType* Texture3D;
   static ClassType* TextureCube;
+  static ClassType* Thread;
   static ClassType* VertexInput;
   static ClassType* Window;
 };

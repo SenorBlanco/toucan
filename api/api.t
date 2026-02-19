@@ -263,6 +263,11 @@ class ComputePass<T> {
   End();
 }
 
+class Thread<T> {
+  Thread(t : *T);
+  Join();
+}
+
 class Window {
   Window(size : uint<2>, position = int<2>(0, 0));
   GetSize() : uint<2>;
