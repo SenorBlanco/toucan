@@ -155,7 +155,7 @@ static void DefineType(std::string id, Type* type) {
 %token T_READONLY T_WRITEONLY T_COHERENT T_DEVICEONLY T_HOSTREADABLE T_HOSTWRITEABLE
 %token T_INT T_UINT T_FLOAT T_DOUBLE T_BOOL T_BYTE T_UBYTE T_SHORT T_USHORT
 %token T_HALF
-%token T_STATIC T_VERTEX T_FRAGMENT T_COMPUTE T_THIS
+%token T_STATIC T_VERTEX T_FRAGMENT T_COMPUTE T_THREAD T_THIS
 %token T_INDEX T_UNIFORM T_STORAGE T_SAMPLEABLE T_RENDERABLE
 %token T_USING T_INLINE T_UNFILTERABLE
 %right '=' T_ADD_EQUALS T_SUB_EQUALS T_MUL_EQUALS T_DIV_EQUALS
@@ -376,6 +376,7 @@ method_modifier:
   | T_VERTEX                                { $$ = Method::Modifier::Vertex; }
   | T_FRAGMENT                              { $$ = Method::Modifier::Fragment; }
   | T_COMPUTE                               { $$ = Method::Modifier::Compute; }
+  | T_THREAD                                { $$ = Method::Modifier::Thread; }
   ;
 
 opt_type_qualifiers:

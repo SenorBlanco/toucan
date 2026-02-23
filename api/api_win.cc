@@ -46,6 +46,10 @@ struct Window {
   uint32_t size[2];
 };
 
+struct Thread {
+  HANDLE   handle;
+};
+
 static int gNumWindows = 0;
 static uint32_t gScreenSize[2];
 
@@ -209,6 +213,20 @@ double System_GetCurrentTime() {
   struct _timeb t;
   _ftime(&t);
   return static_cast<double>(t.time) + t.millitm / 1000.0;
+}
+
+DWORD ThreadStart(LPVOID lpThreadparameter) {
+  return 0L;
+}
+
+Thread* Thread_Thread(int qualifiers, Type* T, Object* t) {
+  auto thread = new Thread();
+  thread->handle = CreateThread(NULL, 0, ThreadStart, 0, 0, NULL);
+  return thread;
+}
+
+void Thread_Join(Thread* This) {
+  WaitForSingleObject(This->handle, INFINITE);
 }
 
 };  // namespace Toucan

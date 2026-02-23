@@ -320,7 +320,8 @@ struct Method {
     DeviceOnly = 1<<1,
     Vertex =     1<<2,
     Fragment =   1<<3,
-    Compute =    1<<4
+    Compute =    1<<4,
+    Thread =     1<<5
   };
 };
 

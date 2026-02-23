@@ -104,6 +104,7 @@ vertex  { return T_VERTEX; }
 index   { return T_INDEX; }
 fragment { return T_FRAGMENT; }
 compute { return T_COMPUTE; }
+thread  { return T_THREAD; }
 uniform { return T_UNIFORM; }
 storage { return T_STORAGE; }
 sampleable { return T_SAMPLEABLE; }
