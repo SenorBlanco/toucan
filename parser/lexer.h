@@ -20,6 +20,8 @@ extern void        IncLineNum();
 extern void        yyerror(const char* str);
 extern FILE*       IncludeFile(const char* filename);
 extern void        PopFile();
+extern int         lex();
+extern void        lex_destroy();
 namespace Toucan {
 class Arg;
 class ArgList;

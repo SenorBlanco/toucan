@@ -132,14 +132,9 @@ ushort  { return T_USHORT; }
 half    { return T_HALF; }
 
 {ALPHA}{ALPHANUM}* {
-  if (Type* t = FindType(yytext)) {
-    yylval.type = t;
-    return T_TYPENAME;
-  } else {
-    identifiers_[yytext] = yytext;
-    yylval.identifier = identifiers_[yytext].c_str();
-    return T_IDENTIFIER;
-  }
+  identifiers_[yytext] = yytext;
+  yylval.identifier = identifiers_[yytext].c_str();
+  return T_IDENTIFIER;
 }
 
 \"([^\"]|\\\"|\\\\)*\" {
@@ -199,3 +194,27 @@ half    { return T_HALF; }
 }
 
 %%
+
+struct Token {
+  int id;
+  YYSTYPE value;
+};
+
+using TokenVector = std::vector<Token>;
+
+int lex() {
+  int token = yylex();
+  if (token == T_IDENTIFIER) {
+    if (Type* t = FindType(yylval.identifier)) {
+      yylval.type = t;
+      return T_TYPENAME;
+    }
+  }
+  return token;
+}
+
+void lex_destroy() {
+#ifndef _WIN32
+    yylex_destroy();
+#endif
+}
