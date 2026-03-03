@@ -47,8 +47,7 @@ static std::stack<FileLocation> fileStack_;
 static std::queue<ClassType*> instanceQueue_;
 static EnumType* currentEnumType_;
 
-extern int yylex();
-extern int yylex_destroy();
+#define yylex lex
 
 static Expr* BinOp(BinOpNode::Op op, Expr* arg1, Expr* arg2);
 static Expr* UnOp(UnaryOp::Op op, Expr* expr);
@@ -568,7 +567,7 @@ void yyerror(const char *s) {
   numSyntaxErrors++;
 }
 
-static void yyerrorf(const char *fmt, ...) {
+void yyerrorf(const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   std::string filename = std::filesystem::path(GetFileName()).filename().string();
@@ -956,9 +955,7 @@ int ParseProgram(const char* filename,
   nodes_ = nullptr;
   types_ = nullptr;
   rootStmts_ = nullptr;
-#ifndef _WIN32
-  yylex_destroy();
-#endif
+  lex_destroy();
   return numSyntaxErrors;
 }
 

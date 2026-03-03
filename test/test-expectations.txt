@@ -156,8 +156,23 @@ error-listexpr-mismatch.t:11:  cannot store a value of type "{ { int, int }, { f
 error-listexpr-mismatch.t:12:  cannot store a value of type "{ uint<2>, { float, float } }" to a location of type "C"
 error-listexpr-mismatch.t:13:  cannot store a value of type "{ int, { float, float } }" to a location of type "C"
 error-listexpr-mismatch.t:14:  cannot store a value of type "{ ubyte }" to a location of type "C"
+test/error-macros.t
+error-macros.t:1: invalid directive
+error-macros.t:2: invalid macro name
+error-macros.t:3: invalid macro name
+error-macros.t:7: invalid directive "#zzz"
+error-macros.t:10: invalid directive
+error-macros.t:12: invalid formal argument
+error-macros.t:17: invalid directive
+error-macros.t:20: missing ','
+error-macros.t:22: missing ','
+error-macros.t:22: invalid formal argument
+error-macros.t:23: missing )
+error-macros.t:23: missing #enddef
 test/error-missing-class.t
 error-missing-class.t:3: syntax error
+test/error-missing-enddef.t
+error-missing-enddef.t:2: missing #enddef
 test/error-missing-field.t
 error-missing-field.t:5:  field "zzz" not found on class "Foo"
 test/error-missing-method.t
@@ -393,6 +408,10 @@ test/list-init-vector.t
 test/local-var-do.t
 test/local-var-while.t
 test/loop.t
+test/macro-functions.t
+test/macro-nested.t
+test/macro-recursion.t
+test/macro.t
 test/matrix-array-access.t
 test/matrix-constructor.t
 test/matrix-initializer.t
