@@ -21,6 +21,7 @@
 
 #include <webgpu/webgpu_cpp.h>
 
+#include <ast/type.h>
 #include "api_internal.h"
 
 namespace Toucan {
@@ -220,6 +221,20 @@ DWORD ThreadStart(LPVOID lpThreadparameter) {
 }
 
 Thread* Thread_Thread(int qualifiers, Type* T, Object* t) {
+  if (!T->IsClass()) { return nullptr; }
+  ClassType*         classType = static_cast<ClassType*>(T);
+  Method* threadMain;
+
+  for (ClassType* c = classType; c != nullptr && (!threadMain); c = c->GetParent()) {
+    for (auto& method : c->GetMethods()) {
+      if (method->modifiers & Method::Modifier::Thread) {
+        threadMain = method.get();
+        break;
+      }
+    }
+  }
+  if (!threadMain) return nullptr;
+
   auto thread = new Thread();
   thread->handle = CreateThread(NULL, 0, ThreadStart, 0, 0, NULL);
   return thread;
