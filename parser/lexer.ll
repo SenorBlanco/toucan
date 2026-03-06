@@ -196,18 +196,39 @@ half    { return T_HALF; }
 %%
 
 struct Token {
-  int id;
+  int token;
   YYSTYPE value;
 };
 
 using TokenVector = std::vector<Token>;
 
+struct Macro {
+  TokenVector tokens;
+};
+
+std::unordered_map<std::string, Macro> macros_;
+Macro* currentMacro_;
+TokenVector::iterator currentToken_;
+
 int lex() {
-  int token = yylex();
+  int token;
+  if (currentMacro_) {
+    token = currentToken_->token;
+    yylval = currentToken_->value;
+    currentToken_++;
+    if (currentToken_ == currentMacro_->tokens.end()) currentMacro_ = nullptr;
+  } else {
+    token = yylex();
+  }
   if (token == T_IDENTIFIER) {
     if (Type* t = FindType(yylval.identifier)) {
       yylval.type = t;
       return T_TYPENAME;
+    }
+    auto it = macros_.find(yylval.identifier);
+    if (it != macros_.end()) {
+      currentMacro_ = &it->second;
+      currentToken_ = currentMacro_->tokens.begin();
     }
   }
   return token;
