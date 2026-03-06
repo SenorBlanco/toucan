@@ -226,21 +226,41 @@ static int get_next_token() {
   }
 }
 
+static void encode_define(Macro& macro) {
+  bool done = false;
+  while (!done) {
+    int token = get_next_token();
+    macro.tokens.push_back(Token{token, yylval});
+    if (token == '#') {
+      int token = get_next_token();
+      macro.tokens.push_back(Token{token, yylval});
+      if (token == T_IDENTIFIER && !strcmp(yylval.identifier, "end")) {
+        done = true;
+      }
+    }
+  }
+}
+
 static void parse_define() {
   int token = get_next_token();
   if (token == T_IDENTIFIER) {
     const char* id = yylval.identifier;
-    bool end = false;
+    bool done = false;
     Macro& macro = macros_[id];
-    while (!end) {
+    while (!done) {
       int token = get_next_token();
       if (token == '#') {
         int token = get_next_token();
         if (token == T_IDENTIFIER && !strcmp(yylval.identifier, "end")) {
           return;
+        } else if (token == T_IDENTIFIER && !strcmp(yylval.identifier, "define")) {
+          macro.tokens.push_back(Token{'#', 0});
+          macro.tokens.push_back(Token{token, yylval});
+          encode_define(macro);
         }
+      } else {
+        macro.tokens.push_back(Token{token, yylval});
       }
-      macro.tokens.push_back(Token{token, yylval});
     }
   } else {
     yyerror("invalid macro name");
@@ -260,18 +280,17 @@ int lex() {
   int token = get_next_token();
   if (token == '#') {
     parse_command();
-    return lex(); // FIXME: possible to do without recursion?
+    return lex();
   }
   if (token == T_IDENTIFIER) {
-    if (Type* t = FindType(yylval.identifier)) {
-      yylval.type = t;
-      return T_TYPENAME;
-    }
     auto it = macros_.find(yylval.identifier);
     if (it != macros_.end()) {
       currentMacro_ = &it->second;
       currentToken_ = currentMacro_->tokens.begin();
-      return get_next_token();
+      return lex();
+    } else if (Type* t = FindType(yylval.identifier)) {
+      yylval.type = t;
+      return T_TYPENAME;
     }
   }
   return token;

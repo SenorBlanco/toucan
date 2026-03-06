@@ -393,6 +393,7 @@ test/list-init-vector.t
 test/local-var-do.t
 test/local-var-while.t
 test/loop.t
+test/macro-nested.t
 test/macro.t
 test/matrix-array-access.t
 test/matrix-constructor.t
