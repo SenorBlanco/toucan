@@ -260,7 +260,7 @@ int lex() {
   int token = get_next_token();
   if (token == '#') {
     parse_command();
-    token = get_next_token();
+    return lex(); // FIXME: possible to do without recursion?
   }
   if (token == T_IDENTIFIER) {
     if (Type* t = FindType(yylval.identifier)) {

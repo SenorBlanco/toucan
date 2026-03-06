@@ -1,5 +1,6 @@
 include "include/test.t"
 #define INT int #end
+#define SUM 3+4 #end
 
-var a : INT = 42;
-Test.Expect(a == 42);
+var a : INT = SUM;
+Test.Expect(a == 7);
