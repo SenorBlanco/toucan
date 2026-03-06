@@ -1,1 +1,5 @@
-define A(A, B, C) A + B + C
+include "include/test.t"
+#define INT int #end
+
+var a : INT = 42;
+Test.Expect(a == 42);

@@ -212,17 +212,48 @@ TokenVector::iterator currentToken_;
 
 static int get_next_token() {
   if (currentMacro_) {
+    if (currentToken_ == currentMacro_->tokens.end()) {
+      currentMacro_ = nullptr;
+      return yylex();
+    }
+
     int token = currentToken_->token;
     yylval = currentToken_->value;
     currentToken_++;
-    if (currentToken_ == currentMacro_->tokens.end()) currentMacro_ = nullptr;
     return token;
   } else {
     return yylex();
   }
 }
 
+static void parse_define() {
+  int token = get_next_token();
+  if (token == T_IDENTIFIER) {
+    const char* id = yylval.identifier;
+    bool end = false;
+    Macro& macro = macros_[id];
+    while (!end) {
+      int token = get_next_token();
+      if (token == '#') {
+        int token = get_next_token();
+        if (token == T_IDENTIFIER && !strcmp(yylval.identifier, "end")) {
+          return;
+        }
+      }
+      macro.tokens.push_back(Token{token, yylval});
+    }
+  } else {
+    yyerror("invalid macro name");
+  }
+}
+
 static void parse_command() {
+  int token = get_next_token();
+  if (token == T_IDENTIFIER) {
+    if (!strcmp(yylval.identifier, "define")) {
+      parse_define();
+    }
+  }
 }
 
 int lex() {
@@ -240,6 +271,7 @@ int lex() {
     if (it != macros_.end()) {
       currentMacro_ = &it->second;
       currentToken_ = currentMacro_->tokens.begin();
+      return get_next_token();
     }
   }
   return token;
