@@ -210,15 +210,26 @@ std::unordered_map<std::string, Macro> macros_;
 Macro* currentMacro_;
 TokenVector::iterator currentToken_;
 
-int lex() {
-  int token;
+static int get_next_token() {
   if (currentMacro_) {
-    token = currentToken_->token;
+    int token = currentToken_->token;
     yylval = currentToken_->value;
     currentToken_++;
     if (currentToken_ == currentMacro_->tokens.end()) currentMacro_ = nullptr;
+    return token;
   } else {
-    token = yylex();
+    return yylex();
+  }
+}
+
+static void parse_command() {
+}
+
+int lex() {
+  int token = get_next_token();
+  if (token == '#') {
+    parse_command();
+    token = get_next_token();
   }
   if (token == T_IDENTIFIER) {
     if (Type* t = FindType(yylval.identifier)) {
