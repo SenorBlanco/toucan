@@ -233,14 +233,13 @@ int record_next_token(Macro& macro) {
 }
 
 static void record_define(Macro& macro) {
-  bool done = false;
-  while (!done) {
+  while (true) {
     int token = record_next_token(macro);
     if (token == '#') {
       int token = record_next_token(macro);
       if (token == T_IDENTIFIER) {
         if (!strcmp(yylval.identifier, "enddef")) {
-          done = true;
+          return;
         } else if (!strcmp(yylval.identifier, "def")) {
           record_define(macro);
         }
@@ -253,22 +252,23 @@ static void define() {
   int token = get_next_token();
   if (token == T_IDENTIFIER) {
     const char* id = yylval.identifier;
-    bool done = false;
     Macro& macro = macros_[id];
-    while (!done) {
+    while (true) {
       int token = get_next_token();
       if (token == '#') {
         int token = get_next_token();
-        if (token == T_IDENTIFIER && !strcmp(yylval.identifier, "enddef")) {
-          return;
-        } else if (token == T_IDENTIFIER && !strcmp(yylval.identifier, "def")) {
-          macro.tokens.push_back(Token{'#', 0});
-          macro.tokens.push_back(Token{token, yylval});
-          record_define(macro);
+        if (token == T_IDENTIFIER) {
+          if (token == T_IDENTIFIER && !strcmp(yylval.identifier, "enddef")) {
+            return;
+          } else if (token == T_IDENTIFIER && !strcmp(yylval.identifier, "def")) {
+            macro.tokens.push_back(Token{'#', 0});
+            macro.tokens.push_back(Token{token, yylval});
+            record_define(macro);
+            continue;
+          }
         }
-      } else {
-        macro.tokens.push_back(Token{token, yylval});
       }
+      macro.tokens.push_back(Token{token, yylval});
     }
   } else {
     yyerror("invalid macro name");
