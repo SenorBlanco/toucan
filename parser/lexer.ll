@@ -226,22 +226,30 @@ static int get_next_token() {
   }
 }
 
-static void encode_define(Macro& macro) {
+int record_next_token(Macro& macro) {
+  int token = get_next_token();
+  macro.tokens.push_back(Token({token, yylval}));
+  return token;
+}
+
+static void record_define(Macro& macro) {
   bool done = false;
   while (!done) {
-    int token = get_next_token();
-    macro.tokens.push_back(Token{token, yylval});
+    int token = record_next_token(macro);
     if (token == '#') {
-      int token = get_next_token();
-      macro.tokens.push_back(Token{token, yylval});
-      if (token == T_IDENTIFIER && !strcmp(yylval.identifier, "enddef")) {
-        done = true;
+      int token = record_next_token(macro);
+      if (token == T_IDENTIFIER) {
+        if (!strcmp(yylval.identifier, "enddef")) {
+          done = true;
+        } else if (!strcmp(yylval.identifier, "def")) {
+          record_define(macro);
+        }
       }
     }
   }
 }
 
-static void parse_define() {
+static void define() {
   int token = get_next_token();
   if (token == T_IDENTIFIER) {
     const char* id = yylval.identifier;
@@ -256,7 +264,7 @@ static void parse_define() {
         } else if (token == T_IDENTIFIER && !strcmp(yylval.identifier, "def")) {
           macro.tokens.push_back(Token{'#', 0});
           macro.tokens.push_back(Token{token, yylval});
-          encode_define(macro);
+          record_define(macro);
         }
       } else {
         macro.tokens.push_back(Token{token, yylval});
@@ -267,11 +275,11 @@ static void parse_define() {
   }
 }
 
-static void parse_directive() {
+static void directive() {
   int token = get_next_token();
   if (token == T_IDENTIFIER) {
     if (!strcmp(yylval.identifier, "def")) {
-      parse_define();
+      define();
     }
   }
 }
@@ -279,7 +287,7 @@ static void parse_directive() {
 int lex() {
   int token = get_next_token();
   if (token == '#') {
-    parse_directive();
+    directive();
     return lex();
   }
   if (token == T_IDENTIFIER) {
