@@ -248,30 +248,20 @@ static void record_define(Macro& macro) {
   }
 }
 
-static void define() {
-  int token = get_next_token();
-  if (token == T_IDENTIFIER) {
-    const char* id = yylval.identifier;
-    Macro& macro = macros_[id];
-    while (true) {
-      int token = get_next_token();
-      if (token == '#') {
-        int token = get_next_token();
-        if (token == T_IDENTIFIER) {
-          if (token == T_IDENTIFIER && !strcmp(yylval.identifier, "enddef")) {
-            return;
-          } else if (token == T_IDENTIFIER && !strcmp(yylval.identifier, "def")) {
-            macro.tokens.push_back(Token{'#', 0});
-            macro.tokens.push_back(Token{token, yylval});
-            record_define(macro);
-            continue;
-          }
+static void define(Macro& macro) {
+  while (true) {
+    int token = record_next_token(macro);
+    if (token == '#') {
+      int token = record_next_token(macro);
+      if (token == T_IDENTIFIER) {
+        if (!strcmp(yylval.identifier, "enddef")) {
+          macro.tokens.resize(macro.tokens.size() - 2);
+          return;
+        } else if (!strcmp(yylval.identifier, "def")) {
+          record_define(macro);
         }
       }
-      macro.tokens.push_back(Token{token, yylval});
     }
-  } else {
-    yyerror("invalid macro name");
   }
 }
 
@@ -279,7 +269,14 @@ static void directive() {
   int token = get_next_token();
   if (token == T_IDENTIFIER) {
     if (!strcmp(yylval.identifier, "def")) {
-      define();
+      int token = get_next_token();
+      if (token == T_IDENTIFIER) {
+        const char* id = yylval.identifier;
+        Macro& macro = macros_[id];
+        define(macro);
+      } else {
+        yyerror("invalid macro name");
+      }
     }
   }
 }
