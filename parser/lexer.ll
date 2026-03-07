@@ -242,6 +242,8 @@ static void define(Macro& macro) {
           return;
         } else if (!strcmp(yylval.identifier, "def")) {
           define(macro);
+        } else {
+          yyerror("invalid directive");
         }
       }
     }
