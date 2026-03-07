@@ -267,7 +267,7 @@ static void parse_define() {
   }
 }
 
-static void parse_command() {
+static void parse_directive() {
   int token = get_next_token();
   if (token == T_IDENTIFIER) {
     if (!strcmp(yylval.identifier, "define")) {
@@ -279,7 +279,7 @@ static void parse_command() {
 int lex() {
   int token = get_next_token();
   if (token == '#') {
-    parse_command();
+    parse_directive();
     return lex();
   }
   if (token == T_IDENTIFIER) {
