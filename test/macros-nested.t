@@ -1,8 +1,8 @@
 include "include/test.t"
-#define WRAPPER
-#define INT int #end
-#define SUM 3+4 #end
-#end
+#def WRAPPER
+#def INT int #enddef
+#def SUM 3+4 #enddef
+#enddef
 
 WRAPPER
 

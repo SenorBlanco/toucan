@@ -1,6 +1,6 @@
 include "include/test.t"
-#define INT int #end
-#define SUM 3+4 #end
+#def INT int #enddef
+#def SUM 3+4 #enddef
 
 var a : INT = SUM;
 Test.Expect(a == 7);

@@ -234,7 +234,7 @@ static void encode_define(Macro& macro) {
     if (token == '#') {
       int token = get_next_token();
       macro.tokens.push_back(Token{token, yylval});
-      if (token == T_IDENTIFIER && !strcmp(yylval.identifier, "end")) {
+      if (token == T_IDENTIFIER && !strcmp(yylval.identifier, "enddef")) {
         done = true;
       }
     }
@@ -251,9 +251,9 @@ static void parse_define() {
       int token = get_next_token();
       if (token == '#') {
         int token = get_next_token();
-        if (token == T_IDENTIFIER && !strcmp(yylval.identifier, "end")) {
+        if (token == T_IDENTIFIER && !strcmp(yylval.identifier, "enddef")) {
           return;
-        } else if (token == T_IDENTIFIER && !strcmp(yylval.identifier, "define")) {
+        } else if (token == T_IDENTIFIER && !strcmp(yylval.identifier, "def")) {
           macro.tokens.push_back(Token{'#', 0});
           macro.tokens.push_back(Token{token, yylval});
           encode_define(macro);
@@ -270,7 +270,7 @@ static void parse_define() {
 static void parse_directive() {
   int token = get_next_token();
   if (token == T_IDENTIFIER) {
-    if (!strcmp(yylval.identifier, "define")) {
+    if (!strcmp(yylval.identifier, "def")) {
       parse_define();
     }
   }
