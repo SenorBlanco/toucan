@@ -228,13 +228,14 @@ static int get_next_token() {
 
 int record_next_token(Macro& macro) {
   int token = get_next_token();
-  macro.tokens.push_back(Token({token, yylval}));
+  if (token != 0) macro.tokens.push_back(Token({token, yylval}));
   return token;
 }
 
 static void define(Macro& macro) {
-  while (true) {
-    int token = record_next_token(macro);
+  int token = 0;
+  do {
+    token = record_next_token(macro);
     if (token == '#') {
       int token = record_next_token(macro);
       if (token == T_IDENTIFIER) {
@@ -247,7 +248,7 @@ static void define(Macro& macro) {
         }
       }
     }
-  }
+  } while (token != 0);
 }
 
 static void directive() {
@@ -258,13 +259,15 @@ static void directive() {
       if (token == T_IDENTIFIER) {
         Macro& macro = macros_[yylval.identifier];
         define(macro);
-        macro.tokens.resize(macro.tokens.size() - 2);
+        macro.tokens.resize(std::max(macro.tokens.size() - 2, (size_t)0));
       } else {
         yyerror("invalid macro name");
       }
     } else {
       yyerror("invalid directive");
     }
+  } else {
+    yyerror("invalid directive");
   }
 }
 
@@ -273,8 +276,7 @@ int lex() {
   if (token == '#') {
     directive();
     return lex();
-  }
-  if (token == T_IDENTIFIER) {
+  } else if (token == T_IDENTIFIER) {
     auto it = macros_.find(yylval.identifier);
     if (it != macros_.end()) {
       currentMacro_ = &it->second;

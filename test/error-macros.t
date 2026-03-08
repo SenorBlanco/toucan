@@ -5,3 +5,5 @@
 int
 #zzz
 #enddef
+
+#def FOO
