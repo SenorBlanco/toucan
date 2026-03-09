@@ -185,11 +185,11 @@ half    { return T_HALF; }
 }
 
 <<EOF>> {
-    yypop_buffer_state();
-    if (YY_CURRENT_BUFFER) {
+    if (yy_buffer_stack_top > 0) {
+        yypop_buffer_state();
         PopFile();
     } else {
-        yyterminate();
+        return 0;
     }
 }
 
@@ -229,28 +229,27 @@ static int record_next_token(Macro& macro) {
   return token;
 }
 
-static bool define(Macro& macro) {
+static void define(Macro& macro) {
   int token = 0;
   do {
     token = record_next_token(macro);
     if (token == '#') {
-      token = record_next_token(macro);
-      if (token != T_IDENTIFIER) {
-        yyerror("invalid directive");
-      } else if (!strcmp(yylval.identifier, "enddef")) {
-        return true;
-      } else if (!strcmp(yylval.identifier, "def")) {
-        if (!define(macro)) return false;
-      } else {
-        yyerror("invalid directive");
+      int token = record_next_token(macro);
+      if (token == T_IDENTIFIER) {
+        if (!strcmp(yylval.identifier, "enddef")) {
+          return;
+        } else if (!strcmp(yylval.identifier, "def")) {
+          define(macro);
+        } else {
+          yyerror("invalid directive");
+        }
       }
     }
   } while (token != 0);
   yyerror("missing #enddef");
-  return false;
 }
 
-static bool directive() {
+static void directive() {
   int token = get_next_token();
   if (token != T_IDENTIFIER) {
     yyerror("invalid directive");
@@ -260,19 +259,20 @@ static bool directive() {
       yyerror("invalid macro name");
     } else {
       Macro& macro = macros_[yylval.identifier];
-      if (!define(macro)) return false;
-      macro.tokens.resize(macro.tokens.size() - 2);
+      define(macro);
+      if (macro.tokens.size() >= 2) {
+        macro.tokens.resize(macro.tokens.size() - 2);
+      }
     }
   } else {
     yyerror("invalid directive");
   }
-  return token != 0;
 }
 
 int lex() {
   int token = get_next_token();
   if (token == '#') {
-    if (!directive()) return 0;
+    directive();
     return lex();
   } else if (token == T_IDENTIFIER) {
     auto it = macros_.find(yylval.identifier);
