@@ -200,15 +200,13 @@ struct Token {
   YYSTYPE value;
 };
 
-using TokenVector = std::vector<Token>;
-
 struct Macro {
-  TokenVector tokens;
+  std::vector<Token> tokens;
 };
 
 std::unordered_map<std::string, Macro> macros_;
 Macro* currentMacro_;
-TokenVector::iterator currentToken_;
+std::vector<Token>::iterator currentToken_;
 
 static int get_next_token() {
   if (currentMacro_) {
