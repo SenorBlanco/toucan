@@ -209,60 +209,59 @@ std::vector<Token>::iterator currentMacro_;
 std::vector<Token>::iterator currentMacroEnd_;
 std::optional<Token> currentToken_;
 
-static int peek() {
+static Token peek() {
   if (!currentToken_) {
     if (currentMacro_ != currentMacroEnd_) {
       currentToken_ = *currentMacro_++;
-      yylval = currentToken_->value;
     } else {
       currentToken_ = {yylex(), yylval};
     }
   }
-  return currentToken_->token;
+  return *currentToken_;
 }
 
-static int get_next_token() {
-  int result = peek();
+static Token get_next_token() {
+  Token result = peek();
   currentToken_.reset();
   return result;
 }
 
-static int record_next_token(Macro& macro) {
-  int token = get_next_token();
-  if (token != 0) macro.tokens.push_back(Token({token, yylval}));
+static Token record_next_token(Macro& macro) {
+  Token token = get_next_token();
+  if (token.token != 0) macro.tokens.push_back(token);
   return token;
 }
 
 static void define(Macro& macro) {
-  int token = 0;
+  Token token = {0, 0};
   do {
     token = record_next_token(macro);
-    if (token == '#') {
-      int token = record_next_token(macro);
-      if (token == T_IDENTIFIER) {
-        if (!strcmp(yylval.identifier, "enddef")) {
+    if (token.token == '#') {
+      Token token = record_next_token(macro);
+      if (token.token == T_IDENTIFIER) {
+        if (!strcmp(token.value.identifier, "enddef")) {
           return;
-        } else if (!strcmp(yylval.identifier, "def")) {
+        } else if (!strcmp(token.value.identifier, "def")) {
           define(macro);
         } else {
           yyerror("invalid directive");
         }
       }
     }
-  } while (token != 0);
+  } while (token.token != 0);
   yyerror("missing #enddef");
 }
 
 static void directive() {
-  int token = get_next_token();
-  if (token != T_IDENTIFIER) {
+  Token token = get_next_token();
+  if (token.token != T_IDENTIFIER) {
     yyerror("invalid directive");
-  } else if (!strcmp(yylval.identifier, "def")) {
+  } else if (!strcmp(token.value.identifier, "def")) {
     token = get_next_token();
-    if (token != T_IDENTIFIER) {
+    if (token.token != T_IDENTIFIER) {
       yyerror("invalid macro name");
     } else {
-      Macro& macro = macros_[yylval.identifier];
+      Macro& macro = macros_[token.value.identifier];
       define(macro);
       if (macro.tokens.size() >= 2) {
         macro.tokens.resize(macro.tokens.size() - 2);
@@ -274,22 +273,23 @@ static void directive() {
 }
 
 int lex() {
-  int token = get_next_token();
-  if (token == '#') {
+  Token token = get_next_token();
+  if (token.token == '#') {
     directive();
     return lex();
-  } else if (token == T_IDENTIFIER) {
-    auto it = macros_.find(yylval.identifier);
+  } else if (token.token == T_IDENTIFIER) {
+    auto it = macros_.find(token.value.identifier);
     if (it != macros_.end()) {
       currentMacro_ = it->second.tokens.begin();
       currentMacroEnd_ = it->second.tokens.end();
       return lex();
-    } else if (Type* t = FindType(yylval.identifier)) {
+    } else if (Type* t = FindType(token.value.identifier)) {
       yylval.type = t;
       return T_TYPENAME;
     }
   }
-  return token;
+  yylval = token.value;
+  return token.token;
 }
 
 void lex_destroy() {
