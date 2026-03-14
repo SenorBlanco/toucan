@@ -16,6 +16,7 @@
 %{
 #include <stdlib.h>
 #include <string.h>
+#include <optional>
 #include <unordered_map>
 #include <string>
 
@@ -209,7 +210,7 @@ static std::vector<Token>::iterator currentMacro_;
 static std::vector<Token>::iterator currentMacroEnd_;
 static std::optional<Token> currentToken_;
 
-static Token peek_next_token() {
+static Token peek_token() {
   if (!currentToken_) {
     if (currentMacro_ != currentMacroEnd_) {
       currentToken_ = *currentMacro_++;
@@ -220,14 +221,14 @@ static Token peek_next_token() {
   return *currentToken_;
 }
 
-static Token get_next_token() {
-  Token result = peek_next_token();
+static Token get_token() {
+  Token result = peek_token();
   currentToken_.reset();
   return result;
 }
 
-static Token record_next_token(Macro& macro) {
-  Token token = get_next_token();
+static Token record_token(Macro& macro) {
+  Token token = get_token();
   if (token.id != 0) macro.tokens.push_back(token);
   return token;
 }
@@ -235,9 +236,9 @@ static Token record_next_token(Macro& macro) {
 static void define(Macro& macro) {
   Token token;
   do {
-    token = record_next_token(macro);
+    token = record_token(macro);
     if (token.id == '#') {
-      Token token = record_next_token(macro);
+      Token token = record_token(macro);
       if (token.id == T_IDENTIFIER) {
         if (!strcmp(token.value.identifier, "enddef")) {
           return;
@@ -253,11 +254,11 @@ static void define(Macro& macro) {
 }
 
 static void directive() {
-  Token token = get_next_token();
+  Token token = get_token();
   if (token.id != T_IDENTIFIER) {
     yyerror("invalid directive");
   } else if (!strcmp(token.value.identifier, "def")) {
-    token = get_next_token();
+    token = get_token();
     if (token.id != T_IDENTIFIER) {
       yyerror("invalid macro name");
     } else {
@@ -273,7 +274,7 @@ static void directive() {
 }
 
 int lex() {
-  Token token = get_next_token();
+  Token token = get_token();
   if (token.id == '#') {
     directive();
     return lex();
