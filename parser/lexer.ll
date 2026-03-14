@@ -202,7 +202,8 @@ struct Token {
 };
 
 struct Macro {
-  std::vector<Token> tokens;
+  std::vector<Token>       tokens;
+  std::vector<const char*> args;
 };
 
 static std::unordered_map<std::string, Macro> macros_;
@@ -253,6 +254,25 @@ static void define(Macro& macro) {
   yyerror("missing #enddef");
 }
 
+static void formal_args(Macro& macro) {
+  if (peek_token().id != '(') return;
+  get_token(); // consume '('
+  auto token = get_token();
+  for (;;) {
+    if (token.id == 0) break;
+    if (token.id == ')') return;
+    if (token.id != T_IDENTIFIER) {
+      yyerror("invalid formal argument");
+    }
+    macro.args.push_back(token.value.identifier);
+    token = get_token();
+    if (token.id == ',') {
+      token = get_token();
+    }
+  }
+  yyerror("missing )");
+}
+
 static void directive() {
   Token token = get_token();
   if (token.id != T_IDENTIFIER) {
@@ -263,6 +283,7 @@ static void directive() {
       yyerror("invalid macro name");
     } else {
       Macro& macro = macros_[token.value.identifier];
+      formal_args(macro);
       define(macro);
       if (macro.tokens.size() >= 2) {
         macro.tokens.resize(macro.tokens.size() - 2);
