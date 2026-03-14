@@ -205,18 +205,15 @@ struct Macro {
 };
 
 std::unordered_map<std::string, Macro> macros_;
-Macro* currentMacro_;
-std::vector<Token>::iterator currentToken_;
+std::vector<Token>::iterator currentMacro_;
+std::vector<Token>::iterator currentMacroEnd_;
 
 static int get_next_token() {
-  if (currentMacro_) {
-    if (currentToken_ != currentMacro_->tokens.end()) {
-      int token = currentToken_->token;
-      yylval = currentToken_->value;
-      currentToken_++;
-      return token;
-    }
-    currentMacro_ = nullptr;
+  if (currentMacro_ != currentMacroEnd_) {
+    int token = currentMacro_->token;
+    yylval = currentMacro_->value;
+    currentMacro_++;
+    return token;
   }
   return yylex();
 }
@@ -275,8 +272,8 @@ int lex() {
   } else if (token == T_IDENTIFIER) {
     auto it = macros_.find(yylval.identifier);
     if (it != macros_.end()) {
-      currentMacro_ = &it->second;
-      currentToken_ = currentMacro_->tokens.begin();
+      currentMacro_ = it->second.tokens.begin();
+      currentMacroEnd_ = it->second.tokens.end();
       return lex();
     } else if (Type* t = FindType(yylval.identifier)) {
       yylval.type = t;
