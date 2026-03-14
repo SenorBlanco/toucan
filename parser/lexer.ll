@@ -196,7 +196,7 @@ half    { return T_HALF; }
 %%
 
 struct Token {
-  int token;
+  int id;
   YYSTYPE value;
 };
 
@@ -228,7 +228,7 @@ static Token get_next_token() {
 
 static Token record_next_token(Macro& macro) {
   Token token = get_next_token();
-  if (token.token != 0) macro.tokens.push_back(token);
+  if (token.id != 0) macro.tokens.push_back(token);
   return token;
 }
 
@@ -236,9 +236,9 @@ static void define(Macro& macro) {
   Token token = {0, 0};
   do {
     token = record_next_token(macro);
-    if (token.token == '#') {
+    if (token.id == '#') {
       Token token = record_next_token(macro);
-      if (token.token == T_IDENTIFIER) {
+      if (token.id == T_IDENTIFIER) {
         if (!strcmp(token.value.identifier, "enddef")) {
           return;
         } else if (!strcmp(token.value.identifier, "def")) {
@@ -248,17 +248,17 @@ static void define(Macro& macro) {
         }
       }
     }
-  } while (token.token != 0);
+  } while (token.id != 0);
   yyerror("missing #enddef");
 }
 
 static void directive() {
   Token token = get_next_token();
-  if (token.token != T_IDENTIFIER) {
+  if (token.id != T_IDENTIFIER) {
     yyerror("invalid directive");
   } else if (!strcmp(token.value.identifier, "def")) {
     token = get_next_token();
-    if (token.token != T_IDENTIFIER) {
+    if (token.id != T_IDENTIFIER) {
       yyerror("invalid macro name");
     } else {
       Macro& macro = macros_[token.value.identifier];
@@ -274,10 +274,10 @@ static void directive() {
 
 int lex() {
   Token token = get_next_token();
-  if (token.token == '#') {
+  if (token.id == '#') {
     directive();
     return lex();
-  } else if (token.token == T_IDENTIFIER) {
+  } else if (token.id == T_IDENTIFIER) {
     auto it = macros_.find(token.value.identifier);
     if (it != macros_.end()) {
       currentMacro_ = it->second.tokens.begin();
@@ -289,7 +289,7 @@ int lex() {
     }
   }
   yylval = token.value;
-  return token.token;
+  return token.id;
 }
 
 void lex_destroy() {
