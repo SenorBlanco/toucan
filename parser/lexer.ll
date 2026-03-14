@@ -204,10 +204,10 @@ struct Macro {
   std::vector<Token> tokens;
 };
 
-std::unordered_map<std::string, Macro> macros_;
-std::vector<Token>::iterator currentMacro_;
-std::vector<Token>::iterator currentMacroEnd_;
-std::optional<Token> currentToken_;
+static std::unordered_map<std::string, Macro> macros_;
+static std::vector<Token>::iterator currentMacro_;
+static std::vector<Token>::iterator currentMacroEnd_;
+static std::optional<Token> currentToken_;
 
 static Token peek() {
   if (!currentToken_) {
