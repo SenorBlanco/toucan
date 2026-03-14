@@ -209,7 +209,7 @@ static std::vector<Token>::iterator currentMacro_;
 static std::vector<Token>::iterator currentMacroEnd_;
 static std::optional<Token> currentToken_;
 
-static Token peek() {
+static Token peek_next_token() {
   if (!currentToken_) {
     if (currentMacro_ != currentMacroEnd_) {
       currentToken_ = *currentMacro_++;
@@ -221,7 +221,7 @@ static Token peek() {
 }
 
 static Token get_next_token() {
-  Token result = peek();
+  Token result = peek_next_token();
   currentToken_.reset();
   return result;
 }
