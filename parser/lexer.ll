@@ -233,7 +233,7 @@ static Token record_next_token(Macro& macro) {
 }
 
 static void define(Macro& macro) {
-  Token token = {0, 0};
+  Token token;
   do {
     token = record_next_token(macro);
     if (token.id == '#') {
