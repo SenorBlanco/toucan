@@ -207,15 +207,24 @@ struct Macro {
 std::unordered_map<std::string, Macro> macros_;
 std::vector<Token>::iterator currentMacro_;
 std::vector<Token>::iterator currentMacroEnd_;
+std::optional<Token> currentToken_;
+
+static int peek() {
+  if (!currentToken_) {
+    if (currentMacro_ != currentMacroEnd_) {
+      currentToken_ = *currentMacro_++;
+      yylval = currentToken_->value;
+    } else {
+      currentToken_ = {yylex(), yylval};
+    }
+  }
+  return currentToken_->token;
+}
 
 static int get_next_token() {
-  if (currentMacro_ != currentMacroEnd_) {
-    int token = currentMacro_->token;
-    yylval = currentMacro_->value;
-    currentMacro_++;
-    return token;
-  }
-  return yylex();
+  int result = peek();
+  currentToken_.reset();
+  return result;
 }
 
 static int record_next_token(Macro& macro) {
