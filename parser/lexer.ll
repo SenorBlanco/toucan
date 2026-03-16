@@ -289,6 +289,13 @@ static void directive() {
         macro.tokens.resize(macro.tokens.size() - 2);
       }
     }
+  } else if (!strcmp(token.value.identifier, "undef")) {
+    token = get_token();
+    if (token.id != T_IDENTIFIER) {
+      yyerror("invalid macro name");
+    } else {
+      macros_.erase(token.value.identifier);
+    }
   } else {
     yyerror("invalid directive");
   }
