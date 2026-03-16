@@ -271,6 +271,7 @@ static void formal_args(Macro& macro) {
     if (token.id == ')') return;
     if (token.id != T_IDENTIFIER) {
       yyerror("invalid formal argument");
+      return;
     }
     macro.args.push_back(token.value.identifier);
     token = get_token();

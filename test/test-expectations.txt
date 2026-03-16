@@ -165,14 +165,11 @@ error-macros.t:10: invalid directive
 error-macros.t:12: invalid formal argument
 error-macros.t:16: missing arguments
 error-macros.t:21: expected , or )
-error-macros.t:21: missing arguments
-error-macros.t:21: expected , or )
-error-macros.t:21: invalid formal argument
-error-macros.t:21: invalid formal argument
-error-macros.t:21: missing )
-error-macros.t:21: missing #enddef
+error-macros.t:21: syntax error
 test/error-missing-class.t
 error-missing-class.t:3: syntax error
+test/error-missing-enddef.t
+error-missing-enddef.t:2: missing #enddef
 test/error-missing-field.t
 error-missing-field.t:5:  field "zzz" not found on class "Foo"
 test/error-missing-method.t
