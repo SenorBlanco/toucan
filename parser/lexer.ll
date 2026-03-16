@@ -280,6 +280,33 @@ static void formal_args(Macro& macro) {
   yyerror("missing )");
 }
 
+static void arg(Macro& arg) {
+  for (;;) {
+    auto token = get_token();
+    if (token.id == 0) {
+      yyerror("expected , or )");
+      return;
+    }
+    if (token.id == ')' || token.id == ',') return;
+    arg.tokens.push_back(token);
+  }
+}
+
+static void args(const Macro& macro) {
+  if (macro.args.empty()) return;
+
+  auto token = get_token();
+  if (token.id != '(') {
+    yyerror("missing arguments");
+  }
+
+  for (auto formalArg : macro.args) {
+    Macro& a = macros_[formalArg];
+    arg(a);
+    a.position = a.tokens.end();
+  }
+}
+
 static void directive() {
   Token token = get_token();
   if (token.id != T_IDENTIFIER) {
@@ -317,8 +344,10 @@ int lex() {
   } else if (token.id == T_IDENTIFIER) {
     auto it = macros_.find(token.value.identifier);
     if (it != macros_.end()) {
-      macroStack_.push(&it->second);
-      it->second.position = it->second.tokens.begin();
+      Macro& macro = it->second;
+      args(macro);
+      macroStack_.push(&macro);
+      macro.position = macro.tokens.begin();
       return lex();
     } else if (Type* t = FindType(token.value.identifier)) {
       yylval.type = t;
