@@ -159,8 +159,18 @@ error-listexpr-mismatch.t:14:  cannot store a value of type "{ ubyte }" to a loc
 test/error-macros.t
 error-macros.t:1: invalid directive
 error-macros.t:2: invalid macro name
-error-macros.t:6: invalid directive
-error-macros.t:10: missing #enddef
+error-macros.t:3: invalid macro name
+error-macros.t:7: invalid directive
+error-macros.t:10: invalid directive
+error-macros.t:12: invalid formal argument
+error-macros.t:16: missing arguments
+error-macros.t:21: expected , or )
+error-macros.t:21: missing arguments
+error-macros.t:21: expected , or )
+error-macros.t:21: invalid formal argument
+error-macros.t:21: invalid formal argument
+error-macros.t:21: missing )
+error-macros.t:21: missing #enddef
 test/error-missing-class.t
 error-missing-class.t:3: syntax error
 test/error-missing-field.t
@@ -400,6 +410,7 @@ test/local-var-while.t
 test/loop.t
 test/macro-functions.t
 test/macro-nested.t
+test/macro-recursion.t
 test/macro.t
 test/matrix-array-access.t
 test/matrix-constructor.t
