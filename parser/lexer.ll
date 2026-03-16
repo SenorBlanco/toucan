@@ -236,6 +236,20 @@ static Token get_token() {
   return result;
 }
 
+static bool expect(int id) {
+  if (peek_token().id != id) return false;
+  get_token();
+  return true;
+}
+
+static bool expect_identifier(const char* id) {
+  if (peek_token().id != T_IDENTIFIER) return false;
+
+  if (strcmp(peek_token().value.identifier, id)) return false;
+  get_token();
+  return true;
+}
+
 static Token record_token(Macro& macro) {
   Token token = get_token();
   if (token.id != 0) macro.tokens.push_back(token);
@@ -307,52 +321,79 @@ static void args(const Macro& macro) {
   }
 }
 
-static void directive() {
-  Token token = get_token();
+bool try_def() {
+  if (!expect_identifier("def")) return false;
+
+  auto token = get_token();
   if (token.id != T_IDENTIFIER) {
-    yyerror("invalid directive");
-  } else if (!strcmp(token.value.identifier, "def")) {
-    token = get_token();
-    if (token.id != T_IDENTIFIER) {
-      yyerror("invalid macro name");
-    } else {
-      Macro& macro = macros_[token.value.identifier];
-      formal_args(macro);
-      define(macro);
-      if (macro.tokens.size() >= 2) {
-        macro.tokens.resize(macro.tokens.size() - 2);
-      }
-    }
-  } else if (!strcmp(token.value.identifier, "undef")) {
-    token = get_token();
-    if (token.id != T_IDENTIFIER) {
-      yyerror("invalid macro name");
-    } else {
-      macros_.erase(token.value.identifier);
-    }
-  } else {
-    yyerrorf("invalid directive \"#%s\"", token.value.identifier);
+    yyerror("invalid macro name");
+    return true;
   }
+
+  Macro& macro = macros_[token.value.identifier];
+  formal_args(macro);
+  define(macro);
+  if (macro.tokens.size() >= 2) {
+    macro.tokens.resize(macro.tokens.size() - 2);
+  }
+  return true;
+}
+
+bool try_undef() {
+  if (!expect_identifier("undef")) return false;
+
+  auto token = get_token();
+  if (token.id != T_IDENTIFIER) {
+    yyerror("invalid macro name");
+  } else {
+    macros_.erase(token.value.identifier);
+  }
+  return true;
+}
+
+bool try_directive() {
+  if (!expect('#')) return false;
+  if (try_def() || try_undef()) return true;
+
+  yyerror("invalid directive");
+  return true;
+}
+
+bool try_macro() {
+  auto token = peek_token();
+  if (token.id != T_IDENTIFIER) return false;
+
+  auto it = macros_.find(token.value.identifier);
+  if (it == macros_.end() || it->second.position != -1) return false;
+
+  get_token();
+  Macro& macro = it->second;
+  args(macro);
+  macroStack_.push(&macro);
+  macro.position = 0;
+  return true;
+}
+
+Type* try_type() {
+  auto token = peek_token();
+  if (token.id != T_IDENTIFIER) return nullptr;
+
+  auto type = FindType(token.value.identifier);
+  if (!type) return nullptr;
+
+  get_token();
+  return type;
 }
 
 int lex() {
-  Token token = get_token();
-  if (token.id == '#') {
-    directive();
-    return lex();
-  } else if (token.id == T_IDENTIFIER) {
-    auto it = macros_.find(token.value.identifier);
-    if (it != macros_.end() && it->second.position == -1) {
-      Macro& macro = it->second;
-      args(macro);
-      macroStack_.push(&macro);
-      macro.position = 0;
-      return lex();
-    } else if (Type* t = FindType(token.value.identifier)) {
-      yylval.type = t;
-      return T_TYPENAME;
-    }
+  if (try_directive() || try_macro()) return lex();
+
+  if (Type* type = try_type()) {
+    yylval.type = type;
+    return T_TYPENAME;
   }
+
+  Token token = get_token();
   yylval = token.value;
   return token.id;
 }
