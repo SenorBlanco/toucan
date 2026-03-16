@@ -295,8 +295,7 @@ static void arg(Macro& arg) {
 static void args(const Macro& macro) {
   if (macro.args.empty()) return;
 
-  auto token = get_token();
-  if (token.id != '(') {
+  if (get_token().id != '(') {
     yyerror("missing arguments");
   }
 
