@@ -18,6 +18,7 @@
 #include <string.h>
 #include <optional>
 #include <unordered_map>
+#include <stack>
 #include <string>
 
 #include "parser/lexer.h"
@@ -202,19 +203,25 @@ struct Token {
 };
 
 struct Macro {
-  std::vector<Token>       tokens;
-  std::vector<const char*> args;
+  std::vector<Token>           tokens;
+  std::vector<const char*>     args;
+  std::vector<Token>::iterator position;
 };
 
 static std::unordered_map<std::string, Macro> macros_;
-static std::vector<Token>::iterator currentMacro_;
-static std::vector<Token>::iterator currentMacroEnd_;
+static std::stack<Macro*> macroStack_;
 static std::optional<Token> currentToken_;
 
 static Token peek_token() {
   if (!currentToken_) {
-    if (currentMacro_ != currentMacroEnd_) {
-      currentToken_ = *currentMacro_++;
+    if (!macroStack_.empty()) {
+      Macro* currentMacro = macroStack_.top();
+      if (currentMacro->position != currentMacro->tokens.end()) {
+        currentToken_ = *currentMacro->position++;
+      } else {
+        macroStack_.pop();
+        return peek_token();
+      }
     } else {
       currentToken_ = {yylex(), yylval};
     }
@@ -288,6 +295,7 @@ static void directive() {
       if (macro.tokens.size() >= 2) {
         macro.tokens.resize(macro.tokens.size() - 2);
       }
+      macro.position = macro.tokens.end();
     }
   } else if (!strcmp(token.value.identifier, "undef")) {
     token = get_token();
@@ -309,8 +317,8 @@ int lex() {
   } else if (token.id == T_IDENTIFIER) {
     auto it = macros_.find(token.value.identifier);
     if (it != macros_.end()) {
-      currentMacro_ = it->second.tokens.begin();
-      currentMacroEnd_ = it->second.tokens.end();
+      macroStack_.push(&it->second);
+      it->second.position = it->second.tokens.begin();
       return lex();
     } else if (Type* t = FindType(token.value.identifier)) {
       yylval.type = t;
