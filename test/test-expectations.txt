@@ -157,10 +157,10 @@ error-listexpr-mismatch.t:12:  cannot store a value of type "{ uint<2>, { float,
 error-listexpr-mismatch.t:13:  cannot store a value of type "{ int, { float, float } }" to a location of type "C"
 error-listexpr-mismatch.t:14:  cannot store a value of type "{ ubyte }" to a location of type "C"
 test/error-macros.t
-error-macros.t:1: invalid directive
+error-macros.t:1: invalid directive "#zzz"
 error-macros.t:2: invalid macro name
 error-macros.t:3: invalid macro name
-error-macros.t:7: invalid directive
+error-macros.t:7: invalid directive "#zzz"
 error-macros.t:10: invalid directive
 error-macros.t:12: invalid formal argument
 error-macros.t:16: missing arguments

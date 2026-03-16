@@ -567,7 +567,7 @@ void yyerror(const char *s) {
   numSyntaxErrors++;
 }
 
-static void yyerrorf(const char *fmt, ...) {
+void yyerrorf(const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   std::string filename = std::filesystem::path(GetFileName()).filename().string();

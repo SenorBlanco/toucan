@@ -254,7 +254,7 @@ static void define(Macro& macro) {
         } else if (!strcmp(token.value.identifier, "def")) {
           define(macro);
         } else {
-          yyerror("invalid directive");
+          yyerrorf("invalid directive \"#%s\"", token.value.identifier);
         }
       }
     }
@@ -331,7 +331,7 @@ static void directive() {
       macros_.erase(token.value.identifier);
     }
   } else {
-    yyerror("invalid directive");
+    yyerrorf("invalid directive \"#%s\"", token.value.identifier);
   }
 }
 

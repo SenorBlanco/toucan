@@ -18,6 +18,7 @@ extern std::string GetFileName();
 extern int         GetLineNum();
 extern void        IncLineNum();
 extern void        yyerror(const char* str);
+extern void        yyerrorf(const char *fmt, ...);
 extern FILE*       IncludeFile(const char* filename);
 extern void        PopFile();
 extern int         lex();
