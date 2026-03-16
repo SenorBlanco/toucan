@@ -238,7 +238,7 @@ static Token get_token() {
 
 static bool expect(int id) {
   if (peek_token().id != id) return false;
-  get_token();
+  currentToken_.reset();
   return true;
 }
 
@@ -246,7 +246,7 @@ static bool expect_identifier(const char* id) {
   if (peek_token().id != T_IDENTIFIER) return false;
 
   if (strcmp(peek_token().value.identifier, id)) return false;
-  get_token();
+  currentToken_.reset();
   return true;
 }
 
@@ -276,21 +276,27 @@ static void define(Macro& macro) {
   yyerror("missing #enddef");
 }
 
-static void formal_args(Macro& macro) {
-  if (peek_token().id != '(') return;
-  get_token(); // consume '('
+static void formal_arg(Macro& macro) {
   auto token = get_token();
-  for (;;) {
-    if (token.id == 0) break;
-    if (token.id == ')') return;
-    if (token.id != T_IDENTIFIER) {
-      yyerror("invalid formal argument");
-      return;
-    }
+  if (token.id != T_IDENTIFIER) {
+    yyerror("invalid formal argument");
+  } else {
     macro.args.push_back(token.value.identifier);
-    token = get_token();
-    if (token.id == ',') {
-      token = get_token();
+  }
+}
+
+static void formal_args(Macro& macro) {
+  if (!expect('(')) return;
+
+  for (;;) {
+    formal_arg(macro);
+    auto token = get_token();
+    if (token.id == ')') {
+      return;
+    } else if (token.id == 0) {
+      break;
+    } else if (token.id != ',') {
+      yyerror("missing ','");
     }
   }
   yyerror("missing )");
@@ -356,7 +362,7 @@ bool try_directive() {
   if (try_def() || try_undef()) return true;
 
   yyerror("invalid directive");
-  return true;
+  return false;
 }
 
 bool try_macro() {
@@ -374,26 +380,16 @@ bool try_macro() {
   return true;
 }
 
-Type* try_type() {
-  auto token = peek_token();
-  if (token.id != T_IDENTIFIER) return nullptr;
-
-  auto type = FindType(token.value.identifier);
-  if (!type) return nullptr;
-
-  get_token();
-  return type;
-}
-
 int lex() {
-  if (try_directive() || try_macro()) return lex();
+  while (try_directive() || try_macro()) {}
 
-  if (Type* type = try_type()) {
+  Token token = get_token();
+  Type* type;
+  if (token.id == T_IDENTIFIER && (type = FindType(token.value.identifier)) != nullptr) {
     yylval.type = type;
     return T_TYPENAME;
   }
 
-  Token token = get_token();
   yylval = token.value;
   return token.id;
 }
