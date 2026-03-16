@@ -203,9 +203,9 @@ struct Token {
 };
 
 struct Macro {
-  std::vector<Token>           tokens;
   std::vector<const char*>     args;
-  std::vector<Token>::iterator position;
+  std::vector<Token>           tokens;
+  int                          position = -1;
 };
 
 static std::unordered_map<std::string, Macro> macros_;
@@ -216,9 +216,10 @@ static Token peek_token() {
   if (!currentToken_) {
     if (!macroStack_.empty()) {
       Macro* currentMacro = macroStack_.top();
-      if (currentMacro->position != currentMacro->tokens.end()) {
-        currentToken_ = *currentMacro->position++;
+      if (currentMacro->position < currentMacro->tokens.size()) {
+        currentToken_ = currentMacro->tokens[currentMacro->position++];
       } else {
+        currentMacro->position = -1;
         macroStack_.pop();
         return peek_token();
       }
@@ -302,7 +303,6 @@ static void args(const Macro& macro) {
   for (auto formalArg : macro.args) {
     Macro& a = macros_[formalArg];
     arg(a);
-    a.position = a.tokens.end();
   }
 }
 
@@ -321,7 +321,6 @@ static void directive() {
       if (macro.tokens.size() >= 2) {
         macro.tokens.resize(macro.tokens.size() - 2);
       }
-      macro.position = macro.tokens.end();
     }
   } else if (!strcmp(token.value.identifier, "undef")) {
     token = get_token();
@@ -342,11 +341,11 @@ int lex() {
     return lex();
   } else if (token.id == T_IDENTIFIER) {
     auto it = macros_.find(token.value.identifier);
-    if (it != macros_.end()) {
+    if (it != macros_.end() && it->second.position == -1) {
       Macro& macro = it->second;
       args(macro);
       macroStack_.push(&macro);
-      macro.position = macro.tokens.begin();
+      macro.position = 0;
       return lex();
     } else if (Type* t = FindType(token.value.identifier)) {
       yylval.type = t;
