@@ -236,13 +236,13 @@ static Token get_token() {
   return result;
 }
 
-static bool expect(int id) {
+static bool accept(int id) {
   if (peek_token().id != id) return false;
   currentToken_.reset();
   return true;
 }
 
-static bool expect_identifier(const char* id) {
+static bool accept_identifier(const char* id) {
   if (peek_token().id != T_IDENTIFIER) return false;
 
   if (strcmp(peek_token().value.identifier, id)) return false;
@@ -286,7 +286,7 @@ static void formal_arg(Macro& macro) {
 }
 
 static void formal_args(Macro& macro) {
-  if (!expect('(')) return;
+  if (!accept('(')) return;
 
   for (;;) {
     formal_arg(macro);
@@ -328,7 +328,7 @@ static void args(const Macro& macro) {
 }
 
 bool try_def() {
-  if (!expect_identifier("def")) return false;
+  if (!accept_identifier("def")) return false;
 
   auto token = get_token();
   if (token.id != T_IDENTIFIER) {
@@ -346,7 +346,7 @@ bool try_def() {
 }
 
 bool try_undef() {
-  if (!expect_identifier("undef")) return false;
+  if (!accept_identifier("undef")) return false;
 
   auto token = get_token();
   if (token.id != T_IDENTIFIER) {
@@ -358,7 +358,7 @@ bool try_undef() {
 }
 
 bool try_directive() {
-  if (!expect('#')) return false;
+  if (!accept('#')) return false;
   if (try_def() || try_undef()) return true;
 
   yyerror("invalid directive");
