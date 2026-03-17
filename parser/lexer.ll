@@ -362,7 +362,8 @@ bool try_directive() {
   if (try_def() || try_undef()) return true;
 
   yyerror("invalid directive");
-  return false;
+  currentToken_.reset();
+  return true;
 }
 
 bool try_macro() {
