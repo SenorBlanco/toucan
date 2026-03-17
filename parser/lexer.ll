@@ -210,78 +210,80 @@ struct Macro {
 
 static std::unordered_map<std::string, Macro> macros_;
 static std::stack<Macro*> macroStack_;
-static std::optional<Token> currentToken_;
+static std::optional<int> currentToken_;
 
-static Token peek_token() {
+static int peek_token() {
   if (!currentToken_) {
     if (!macroStack_.empty()) {
       Macro* currentMacro = macroStack_.top();
       if (currentMacro->position < currentMacro->tokens.size()) {
-        currentToken_ = currentMacro->tokens[currentMacro->position++];
+        auto token = currentMacro->tokens[currentMacro->position++];
+        currentToken_ = token.id;
+        yylval = token.value;
       } else {
         currentMacro->position = -1;
         macroStack_.pop();
         return peek_token();
       }
     } else {
-      currentToken_ = {yylex(), yylval};
+      currentToken_ = yylex();
     }
   }
   return *currentToken_;
 }
 
-static Token get_token() {
-  Token result = peek_token();
+static int get_token() {
+  int result = peek_token();
   currentToken_.reset();
   return result;
 }
 
-static bool accept(int id) {
-  if (peek_token().id != id) return false;
+static bool accept(int token) {
+  if (peek_token() != token) return false;
   currentToken_.reset();
   return true;
 }
 
 static bool accept_identifier(const char* id) {
-  if (peek_token().id != T_IDENTIFIER) return false;
+  if (peek_token() != T_IDENTIFIER) return false;
 
-  if (strcmp(peek_token().value.identifier, id)) return false;
+  if (strcmp(yylval.identifier, id)) return false;
   currentToken_.reset();
   return true;
 }
 
-static Token record_token(Macro& macro) {
-  Token token = get_token();
-  if (token.id != 0) macro.tokens.push_back(token);
+static int record_token(Macro& macro) {
+  int token = get_token();
+  if (token != 0) macro.tokens.push_back({token, yylval});
   return token;
 }
 
 static void define(Macro& macro) {
-  Token token;
+  int token;
   do {
     token = record_token(macro);
-    if (token.id == '#') {
-      Token token = record_token(macro);
-      if (token.id == T_IDENTIFIER) {
-        if (!strcmp(token.value.identifier, "enddef")) {
+    if (token == '#') {
+      int token = record_token(macro);
+      if (token == T_IDENTIFIER) {
+        if (!strcmp(yylval.identifier, "enddef")) {
           return;
-        } else if (!strcmp(token.value.identifier, "def")) {
+        } else if (!strcmp(yylval.identifier, "def")) {
           define(macro);
         } else {
-          yyerrorf("invalid directive \"#%s\"", token.value.identifier);
+          yyerrorf("invalid directive \"#%s\"", yylval.identifier);
         }
       }
     }
-  } while (token.id != 0);
+  } while (token != 0);
   yyerror("missing #enddef");
 }
 
 static void formal_arg(Macro& macro) {
-  auto token = get_token();
-  if (token.id != T_IDENTIFIER) {
+  int token = get_token();
+  if (token != T_IDENTIFIER) {
     yyerror("invalid formal argument");
   } else {
-    macro.args.push_back(token.value.identifier);
+    macro.args.push_back(yylval.identifier);
   }
 }
 
@@ -290,12 +292,12 @@ static void formal_args(Macro& macro) {
 
   for (;;) {
     formal_arg(macro);
-    auto token = get_token();
-    if (token.id == ')') {
+    int token = get_token();
+    if (token == ')') {
       return;
-    } else if (token.id == 0) {
+    } else if (token == 0) {
       break;
-    } else if (token.id != ',') {
+    } else if (token != ',') {
       yyerror("missing ','");
     }
   }
@@ -304,20 +306,20 @@ static void formal_args(Macro& macro) {
 
 static void arg(Macro& arg) {
   for (;;) {
-    auto token = get_token();
-    if (token.id == 0) {
+    int token = get_token();
+    if (token == 0) {
       yyerror("expected , or )");
       return;
     }
-    if (token.id == ')' || token.id == ',') return;
-    arg.tokens.push_back(token);
+    if (token == ')' || token == ',') return;
+    arg.tokens.push_back({token, yylval});
   }
 }
 
 static void args(const Macro& macro) {
   if (macro.args.empty()) return;
 
-  if (get_token().id != '(') {
+  if (!accept('(')) {
     yyerror("missing arguments");
   }
 
@@ -327,16 +329,16 @@ static void args(const Macro& macro) {
   }
 }
 
-bool try_def() {
+bool def() {
   if (!accept_identifier("def")) return false;
 
-  auto token = get_token();
-  if (token.id != T_IDENTIFIER) {
+  int token = get_token();
+  if (token != T_IDENTIFIER) {
     yyerror("invalid macro name");
     return true;
   }
 
-  Macro& macro = macros_[token.value.identifier];
+  Macro& macro = macros_[yylval.identifier];
   formal_args(macro);
   define(macro);
   if (macro.tokens.size() >= 2) {
@@ -345,35 +347,34 @@ bool try_def() {
   return true;
 }
 
-bool try_undef() {
+bool undef() {
   if (!accept_identifier("undef")) return false;
 
-  auto token = get_token();
-  if (token.id != T_IDENTIFIER) {
+  int token = get_token();
+  if (token != T_IDENTIFIER) {
     yyerror("invalid macro name");
   } else {
-    macros_.erase(token.value.identifier);
+    macros_.erase(yylval.identifier);
   }
   return true;
 }
 
-bool try_directive() {
+bool directive() {
   if (!accept('#')) return false;
-  if (try_def() || try_undef()) return true;
+  if (def() || undef()) return true;
 
   yyerror("invalid directive");
   currentToken_.reset();
   return true;
 }
 
-bool try_macro() {
-  auto token = peek_token();
-  if (token.id != T_IDENTIFIER) return false;
+bool macro() {
+  if (peek_token() != T_IDENTIFIER) return false;
 
-  auto it = macros_.find(token.value.identifier);
+  auto it = macros_.find(yylval.identifier);
   if (it == macros_.end() || it->second.position != -1) return false;
 
-  get_token();
+  currentToken_.reset();
   Macro& macro = it->second;
   args(macro);
   macroStack_.push(&macro);
@@ -382,17 +383,16 @@ bool try_macro() {
 }
 
 int lex() {
-  while (try_directive() || try_macro()) {}
+  while (directive() || macro()) {}
 
-  Token token = get_token();
+  int token = get_token();
   Type* type;
-  if (token.id == T_IDENTIFIER && (type = FindType(token.value.identifier)) != nullptr) {
+  if (token == T_IDENTIFIER && (type = FindType(yylval.identifier)) != nullptr) {
     yylval.type = type;
     return T_TYPENAME;
   }
 
-  yylval = token.value;
-  return token.id;
+  return token;
 }
 
 void lex_destroy() {
