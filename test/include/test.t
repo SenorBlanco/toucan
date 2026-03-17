@@ -19,3 +19,30 @@ class Test {
   }
 }
 
+#def DEVICE_EXPECT_EQ(A, B) {
+
+class Bindings {
+  var result : *storage Buffer<uint>;
+}
+
+class TestPipeline {
+  compute(1, 1, 1) main(cb : &ComputeBuiltins) {
+    bindings.Get().result.Map(): = 1; // FIXME: EXPR
+  }
+  var bindings : *BindGroup<Bindings>;
+}
+
+var device = new Device();
+var pipeline = new ComputePipeline<TestPipeline>(device);
+
+var encoder = new CommandEncoder(device);
+var buffer = new storage Buffer<uint>(device);
+var bindings = new BindGroup<Bindings>(device, {buffer});
+var pass = new ComputePass<TestPipeline>(encoder, {bindings});
+pass.Dispatch(1, 1, 1);
+device.GetQueue().Submit(encoder.Finish());
+
+Test.Expect(buffer.Map(): == B);
+
+}
+#enddef
