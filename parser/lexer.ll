@@ -205,7 +205,8 @@ struct Token {
 struct Macro {
   std::vector<const char*>     args;
   std::vector<Token>           tokens;
-  int                          position = -1;
+  std::vector<Token>::iterator position;
+  bool                         active = false;
 };
 
 static std::unordered_map<std::string, Macro> macros_;
@@ -217,12 +218,12 @@ static int peek_token() {
 
   if (!macroStack_.empty()) {
     Macro* currentMacro = macroStack_.top();
-    if (currentMacro->position < currentMacro->tokens.size()) {
-      auto token = currentMacro->tokens[currentMacro->position++];
+    if (currentMacro->position < currentMacro->tokens.end()) {
+      auto token = *currentMacro->position++;
       currentToken_ = token.id;
       yylval = token.value;
     } else {
-      currentMacro->position = -1;
+      currentMacro->active = false;
       macroStack_.pop();
       return peek_token();
     }
@@ -377,13 +378,14 @@ bool macro() {
   if (peek_token() != T_IDENTIFIER) return false;
 
   auto it = macros_.find(yylval.identifier);
-  if (it == macros_.end() || it->second.position != -1) return false;
+  if (it == macros_.end() || it->second.active) return false;
 
   consume();
   Macro& macro = it->second;
   args(macro);
+  macro.active = true;
   macroStack_.push(&macro);
-  macro.position = 0;
+  macro.position = macro.tokens.begin();
   return true;
 }
 
