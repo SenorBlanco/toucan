@@ -213,34 +213,38 @@ static std::stack<Macro*> macroStack_;
 static std::optional<int> currentToken_;
 
 static int peek_token() {
-  if (!currentToken_) {
-    if (!macroStack_.empty()) {
-      Macro* currentMacro = macroStack_.top();
-      if (currentMacro->position < currentMacro->tokens.size()) {
-        auto token = currentMacro->tokens[currentMacro->position++];
-        currentToken_ = token.id;
-        yylval = token.value;
-      } else {
-        currentMacro->position = -1;
-        macroStack_.pop();
-        return peek_token();
-      }
+  if (currentToken_) return *currentToken_;
+
+  if (!macroStack_.empty()) {
+    Macro* currentMacro = macroStack_.top();
+    if (currentMacro->position < currentMacro->tokens.size()) {
+      auto token = currentMacro->tokens[currentMacro->position++];
+      currentToken_ = token.id;
+      yylval = token.value;
     } else {
-      currentToken_ = yylex();
+      currentMacro->position = -1;
+      macroStack_.pop();
+      return peek_token();
     }
+  } else {
+    currentToken_ = yylex();
   }
   return *currentToken_;
 }
 
+static void consume() {
+  currentToken_.reset();
+}
+
 static int get_token() {
   int result = peek_token();
-  currentToken_.reset();
+  consume();
   return result;
 }
 
 static bool accept(int token) {
   if (peek_token() != token) return false;
-  currentToken_.reset();
+  consume();
   return true;
 }
 
@@ -248,7 +252,7 @@ static bool accept_identifier(const char* id) {
   if (peek_token() != T_IDENTIFIER) return false;
 
   if (strcmp(yylval.identifier, id)) return false;
-  currentToken_.reset();
+  consume();
   return true;
 }
 
@@ -263,7 +267,7 @@ static void define(Macro& macro) {
   do {
     token = record_token(macro);
     if (token == '#') {
-      int token = record_token(macro);
+      token = record_token(macro);
       if (token == T_IDENTIFIER) {
         if (!strcmp(yylval.identifier, "enddef")) {
           return;
@@ -279,9 +283,9 @@ static void define(Macro& macro) {
 }
 
 static void formal_arg(Macro& macro) {
-  int token = get_token();
-  if (token != T_IDENTIFIER) {
+  if (!accept(T_IDENTIFIER)) {
     yyerror("invalid formal argument");
+    consume();
   } else {
     macro.args.push_back(yylval.identifier);
   }
@@ -292,12 +296,12 @@ static void formal_args(Macro& macro) {
 
   for (;;) {
     formal_arg(macro);
-    int token = get_token();
-    if (token == ')') {
+    if (accept(')')) {
       return;
-    } else if (token == 0) {
+    } else if (accept(0)) {
       break;
-    } else if (token != ',') {
+    } else if (!accept(',')) {
+      consume();
       yyerror("missing ','");
     }
   }
@@ -320,6 +324,7 @@ static void args(const Macro& macro) {
   if (macro.args.empty()) return;
 
   if (!accept('(')) {
+    consume();
     yyerror("missing arguments");
   }
 
@@ -332,9 +337,9 @@ static void args(const Macro& macro) {
 bool def() {
   if (!accept_identifier("def")) return false;
 
-  int token = get_token();
-  if (token != T_IDENTIFIER) {
+  if (!accept(T_IDENTIFIER)) {
     yyerror("invalid macro name");
+    consume();
     return true;
   }
 
@@ -350,9 +355,9 @@ bool def() {
 bool undef() {
   if (!accept_identifier("undef")) return false;
 
-  int token = get_token();
-  if (token != T_IDENTIFIER) {
+  if (!accept(T_IDENTIFIER)) {
     yyerror("invalid macro name");
+    consume();
   } else {
     macros_.erase(yylval.identifier);
   }
@@ -364,7 +369,7 @@ bool directive() {
   if (def() || undef()) return true;
 
   yyerror("invalid directive");
-  currentToken_.reset();
+  consume();
   return true;
 }
 
@@ -374,7 +379,7 @@ bool macro() {
   auto it = macros_.find(yylval.identifier);
   if (it == macros_.end() || it->second.position != -1) return false;
 
-  currentToken_.reset();
+  consume();
   Macro& macro = it->second;
   args(macro);
   macroStack_.push(&macro);
@@ -389,7 +394,7 @@ int lex() {
   Type* type;
   if (token == T_IDENTIFIER && (type = FindType(yylval.identifier)) != nullptr) {
     yylval.type = type;
-    return T_TYPENAME;
+    token = T_TYPENAME;
   }
 
   return token;
