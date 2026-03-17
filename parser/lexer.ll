@@ -213,7 +213,7 @@ static std::unordered_map<std::string, Macro> macros_;
 static std::stack<Macro*> macroStack_;
 static std::optional<int> currentToken_;
 
-static int peek_token() {
+static int peek() {
   if (currentToken_) return *currentToken_;
 
   if (!macroStack_.empty()) {
@@ -225,7 +225,7 @@ static int peek_token() {
     } else {
       currentMacro->active = false;
       macroStack_.pop();
-      return peek_token();
+      return peek();
     }
   } else {
     currentToken_ = yylex();
@@ -237,46 +237,48 @@ static void consume() {
   currentToken_.reset();
 }
 
-static int get_token() {
-  int result = peek_token();
+static int get() {
+  int result = peek();
   consume();
   return result;
 }
 
 static bool accept(int token) {
-  if (peek_token() != token) return false;
+  if (peek() != token) return false;
   consume();
   return true;
 }
 
 static bool accept_identifier(const char* id) {
-  if (peek_token() != T_IDENTIFIER) return false;
+  if (peek() != T_IDENTIFIER) return false;
 
   if (strcmp(yylval.identifier, id)) return false;
   consume();
   return true;
 }
 
-static int record_token(Macro& macro) {
-  int token = get_token();
+static int get_and_record(Macro& macro) {
+  int token = get();
   if (token != 0) macro.tokens.push_back({token, yylval});
   return token;
 }
 
-static void define(Macro& macro) {
+static void def_body(Macro& macro) {
   int token;
   do {
-    token = record_token(macro);
+    token = get_and_record(macro);
     if (token == '#') {
-      token = record_token(macro);
+      token = get_and_record(macro);
       if (token == T_IDENTIFIER) {
         if (!strcmp(yylval.identifier, "enddef")) {
           return;
         } else if (!strcmp(yylval.identifier, "def")) {
-          define(macro);
+          def_body(macro);
         } else {
           yyerrorf("invalid directive \"#%s\"", yylval.identifier);
         }
+      } else {
+        yyerror("invalid directive");
       }
     }
   } while (token != 0);
@@ -297,21 +299,21 @@ static void formal_args(Macro& macro) {
 
   for (;;) {
     formal_arg(macro);
-    if (accept(')')) {
-      return;
-    } else if (accept(0)) {
+    if (peek() == 0) {
+      yyerror("missing )");
       break;
+    } else if (accept(')')) {
+      return;
     } else if (!accept(',')) {
       consume();
       yyerror("missing ','");
     }
   }
-  yyerror("missing )");
 }
 
 static void arg(Macro& arg) {
   for (;;) {
-    int token = get_token();
+    int token = get();
     if (token == 0) {
       yyerror("expected , or )");
       return;
@@ -330,8 +332,7 @@ static void args(const Macro& macro) {
   }
 
   for (auto formalArg : macro.args) {
-    Macro& a = macros_[formalArg];
-    arg(a);
+    arg(macros_[formalArg]);
   }
 }
 
@@ -346,7 +347,7 @@ bool def() {
 
   Macro& macro = macros_[yylval.identifier];
   formal_args(macro);
-  define(macro);
+  def_body(macro);
   if (macro.tokens.size() >= 2) {
     macro.tokens.resize(macro.tokens.size() - 2);
   }
@@ -375,7 +376,7 @@ bool directive() {
 }
 
 bool macro() {
-  if (peek_token() != T_IDENTIFIER) return false;
+  if (peek() != T_IDENTIFIER) return false;
 
   auto it = macros_.find(yylval.identifier);
   if (it == macros_.end() || it->second.active) return false;
@@ -392,7 +393,7 @@ bool macro() {
 int lex() {
   while (directive() || macro()) {}
 
-  int token = get_token();
+  int token = get();
   Type* type;
   if (token == T_IDENTIFIER && (type = FindType(yylval.identifier)) != nullptr) {
     yylval.type = type;

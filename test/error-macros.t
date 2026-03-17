@@ -13,8 +13,10 @@ int
 
 #def C(A) A #enddef
 
-C;
+#def D
+#1
+#enddef
 
 #def B(A #enddef
 
-#def FOO
+C;
