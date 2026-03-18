@@ -19,30 +19,42 @@ class Test {
   }
 }
 
-#def DEVICE_EXPECT_EQ(A, B) {
+#def DEVICE_EXPECT_EQ(LHS, RHS) {
 
 class Bindings {
-  var result : *storage Buffer<uint>;
+  var result : *storage Buffer<int>;
 }
 
 class TestPipeline {
   compute(1, 1, 1) main(cb : &ComputeBuiltins) {
-    bindings.Get().result.Map(): = 1; // FIXME: EXPR
+    var result = bindings.Get().result.MapWrite();
+    if (LHS == RHS) {
+      result: = 1;
+    } else {
+      result: = 0;
+    }
   }
   var bindings : *BindGroup<Bindings>;
 }
 
 var device = new Device();
+var hostBuffer = new hostreadable Buffer<int>(device);
+var deviceBuffer = new storage Buffer<int>(device);
 var pipeline = new ComputePipeline<TestPipeline>(device);
-
 var encoder = new CommandEncoder(device);
-var buffer = new storage Buffer<uint>(device);
-var bindings = new BindGroup<Bindings>(device, {buffer});
-var pass = new ComputePass<TestPipeline>(encoder, {bindings});
+var bindings = new BindGroup<Bindings>(device, { deviceBuffer });
+var pass = new ComputePass<TestPipeline>(encoder, { bindings });
+pass.SetPipeline(pipeline);
 pass.Dispatch(1, 1, 1);
+pass.End();
+hostBuffer.CopyFromBuffer(encoder, deviceBuffer);
 device.GetQueue().Submit(encoder.Finish());
 
-Test.Expect(buffer.Map(): == B);
+Test.Expect(hostBuffer.MapRead(): == 1);
 
 }
+#enddef
+
+#def HOST_EXPECT_EQ(LHS, RHS)
+Test.Expect(LHS == RHS);
 #enddef
