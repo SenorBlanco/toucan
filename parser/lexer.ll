@@ -224,6 +224,9 @@ static int peek() {
       yylval = token.value;
     } else {
       currentMacro->active = false;
+      for (auto formalArg : currentMacro->args) {
+        macros_.erase(formalArg);
+      }
       macroStack_.pop();
       return peek();
     }
