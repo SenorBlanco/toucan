@@ -203,10 +203,9 @@ struct Token {
 };
 
 struct Macro {
-  std::vector<const char*>     args;
+  std::vector<const char*>     formalArgs;
   std::vector<Token>           tokens;
   std::vector<Token>::iterator position;
-  bool                         active = false;
 };
 
 using MacroArgs = std::unordered_map<std::string, Macro>;
@@ -230,7 +229,6 @@ static int peek() {
       currentToken_ = token.id;
       yylval = token.value;
     } else {
-      currentMacro->active = false;
       macroStack_.pop_front();
       return peek();
     }
@@ -297,7 +295,7 @@ static void formal_arg(Macro& macro) {
     yyerror("invalid formal argument");
     consume();
   } else {
-    macro.args.push_back(yylval.identifier);
+    macro.formalArgs.push_back(yylval.identifier);
   }
 }
 
@@ -331,7 +329,7 @@ static void arg(Macro& arg) {
 }
 
 static MacroArgs args(const Macro& macro) {
-  if (macro.args.empty()) return {};
+  if (macro.formalArgs.empty()) return {};
 
   if (!accept('(')) {
     consume();
@@ -340,7 +338,7 @@ static MacroArgs args(const Macro& macro) {
 
   MacroArgs args;
 
-  for (auto formalArg : macro.args) {
+  for (auto formalArg : macro.formalArgs) {
     arg(args[formalArg]);
   }
 
@@ -386,16 +384,21 @@ bool directive() {
   return true;
 }
 
-Macro* find_macro(const char* identifier) {
+static bool is_active(const Macro* macro) {
+  for (MacroScope& scope : macroStack_) if (scope.macro == macro) return true;
+  return false;
+}
+
+static Macro* find_macro(const char* identifier) {
   for (MacroScope& scope : macroStack_) {
     auto it = scope.args.find(identifier);
-    if (it != scope.args.end() && !it->second.active) {
+    if (it != scope.args.end()) {
       return &it->second;
     }
   }
 
   auto it = macros_.find(yylval.identifier);
-  if (it != macros_.end() && !it->second.active) return &it->second;
+  if (it != macros_.end() && !is_active(&it->second)) return &it->second;
 
   return nullptr;
 }
@@ -408,7 +411,6 @@ bool macro() {
 
   consume();
   auto macroArgs = args(*macro);
-  macro->active = true;
   macroStack_.push_front({macro, std::move(macroArgs)});
   macro->position = macro->tokens.begin();
   return true;
