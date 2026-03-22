@@ -392,7 +392,7 @@ static bool is_active(const Macro* macro) {
 static Macro* find_macro(const char* identifier) {
   for (MacroScope& scope : macroStack_) {
     auto it = scope.args.find(identifier);
-    if (it != scope.args.end()) {
+    if (it != scope.args.end() && !is_active(&it->second)) {
       return &it->second;
     }
   }
