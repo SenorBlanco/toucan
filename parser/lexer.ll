@@ -209,22 +209,29 @@ struct Macro {
   bool                         active = false;
 };
 
+using MacroArgs = std::unordered_map<std::string, Macro>;
+
+struct MacroScope {
+  Macro*    macro;
+  MacroArgs args;
+};
+
 static std::unordered_map<std::string, Macro> macros_;
-static std::stack<Macro*> macroStack_;
+static std::deque<MacroScope> macroStack_;
 static std::optional<int> currentToken_;
 
 static int peek() {
   if (currentToken_) return *currentToken_;
 
   if (!macroStack_.empty()) {
-    Macro* currentMacro = macroStack_.top();
+    Macro* currentMacro = macroStack_.front().macro;
     if (currentMacro->position < currentMacro->tokens.end()) {
       auto token = *currentMacro->position++;
       currentToken_ = token.id;
       yylval = token.value;
     } else {
       currentMacro->active = false;
-      macroStack_.pop();
+      macroStack_.pop_front();
       return peek();
     }
   } else {
@@ -323,17 +330,21 @@ static void arg(Macro& arg) {
   }
 }
 
-static void args(const Macro& macro) {
-  if (macro.args.empty()) return;
+static MacroArgs args(const Macro& macro) {
+  if (macro.args.empty()) return {};
 
   if (!accept('(')) {
     consume();
     yyerror("missing arguments");
   }
 
+  MacroArgs args;
+
   for (auto formalArg : macro.args) {
-    arg(macros_[formalArg]);
+    arg(args[formalArg]);
   }
+
+  return std::move(args);
 }
 
 bool def() {
@@ -375,18 +386,31 @@ bool directive() {
   return true;
 }
 
+Macro* find_macro(const char* identifier) {
+  for (MacroScope& scope : macroStack_) {
+    auto it = scope.args.find(identifier);
+    if (it != scope.args.end() && !it->second.active) {
+      return &it->second;
+    }
+  }
+
+  auto it = macros_.find(yylval.identifier);
+  if (it != macros_.end() && !it->second.active) return &it->second;
+
+  return nullptr;
+}
+
 bool macro() {
   if (peek() != T_IDENTIFIER) return false;
 
-  auto it = macros_.find(yylval.identifier);
-  if (it == macros_.end() || it->second.active) return false;
+  Macro* macro = find_macro(yylval.identifier);
+  if (!macro) return false;
 
   consume();
-  Macro& macro = it->second;
-  args(macro);
-  macro.active = true;
-  macroStack_.push(&macro);
-  macro.position = macro.tokens.begin();
+  auto macroArgs = args(*macro);
+  macro->active = true;
+  macroStack_.push_front({macro, std::move(macroArgs)});
+  macro->position = macro->tokens.begin();
   return true;
 }
 
