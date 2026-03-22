@@ -208,16 +208,16 @@ struct Macro {
   std::vector<Token>::iterator position;
 };
 
-using MacroArgs = std::unordered_map<std::string, Macro>;
+using MacroMap = std::unordered_map<std::string, Macro>;
 
 struct MacroScope {
   Macro*    macro;
-  MacroArgs args;
+  MacroMap  args;
 };
 
-static std::unordered_map<std::string, Macro> macros_;
+static MacroMap               macros_;
 static std::deque<MacroScope> macroStack_;
-static std::optional<int> currentToken_;
+static std::optional<int>     currentToken_;
 
 static int peek() {
   if (currentToken_) return *currentToken_;
@@ -328,7 +328,7 @@ static void arg(Macro& arg) {
   }
 }
 
-static MacroArgs args(const Macro& macro) {
+static MacroMap args(const Macro& macro) {
   if (macro.formalArgs.empty()) return {};
 
   if (!accept('(')) {
@@ -336,7 +336,7 @@ static MacroArgs args(const Macro& macro) {
     yyerror("missing arguments");
   }
 
-  MacroArgs args;
+  MacroMap args;
 
   for (auto formalArg : macro.formalArgs) {
     arg(args[formalArg]);
