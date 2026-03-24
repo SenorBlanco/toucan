@@ -60,8 +60,6 @@ ALPHA           [a-zA-Z_]
 ALPHANUM        [a-zA-Z0-9_]
 EXPONENT        ([Ee]("-"|"+")?[0-9]+)
 
-%x include
-
 %%
 
 ([0-9]+"."[0-9]+|[0-9]*"."[0-9]+){EXPONENT}? { yylval.f = std::strtof(yytext, nullptr); return T_FLOAT_LITERAL; }
@@ -118,9 +116,9 @@ coherent { return T_COHERENT; }
 hostreadable { return T_HOSTREADABLE; }
 hostwriteable { return T_HOSTWRITEABLE; }
 using   { return T_USING; }
+include { return T_INCLUDE; }
 inline  { return T_INLINE; }
 unfilterable { return T_UNFILTERABLE; }
-include BEGIN(include);
 
 int     { return T_INT; }
 uint    { return T_UINT; }
@@ -174,17 +172,6 @@ half    { return T_HALF; }
 \.\.            { return T_DOTDOT; }
 
 .               { return yytext[0]; }
-
-<include>[ \t\n]+  /* eat the whitespace */
-<include>[^ \t\n]+ {
-    std::string filename(yytext + 1, strlen(yytext) - 2);
-    FILE* f = IncludeFile(filename.c_str());
-    if (f) {
-        yyin = f;
-        yypush_buffer_state(yy_create_buffer(yyin, YY_BUF_SIZE));
-    }
-    BEGIN(INITIAL);
-}
 
 <<EOF>> {
     if (yy_buffer_stack_top > 0) {
@@ -377,6 +364,22 @@ bool undef() {
   return true;
 }
 
+bool include() {
+  if (!accept(T_INCLUDE)) return false;
+
+  if (get() != T_STRING_LITERAL) {
+    yyerror("include argument is not a string literal");
+    return true;
+  }
+  std::string filename(yytext + 1, strlen(yytext) - 2);
+  FILE* f = IncludeFile(filename.c_str());
+  if (f) {
+      yyin = f;
+      yypush_buffer_state(yy_create_buffer(yyin, YY_BUF_SIZE));
+  }
+  return true;
+}
+
 bool directive() {
   if (!accept('#')) return false;
   if (def() || undef()) return true;
@@ -413,7 +416,7 @@ bool macro() {
 }
 
 int lex() {
-  while (directive() || macro()) {}
+  while (directive() || macro() || include()) {}
 
   int token = get();
   Type* type;
