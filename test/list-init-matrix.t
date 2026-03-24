@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var m : float<4, 4> = {{1.0, 0.0, 0.0, 0.0},
                        {0.0, 1.0, 0.0, 0.0},

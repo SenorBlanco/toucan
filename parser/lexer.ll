@@ -116,7 +116,6 @@ coherent { return T_COHERENT; }
 hostreadable { return T_HOSTREADABLE; }
 hostwriteable { return T_HOSTWRITEABLE; }
 using   { return T_USING; }
-include { return T_INCLUDE; }
 inline  { return T_INLINE; }
 unfilterable { return T_UNFILTERABLE; }
 
@@ -365,7 +364,7 @@ bool undef() {
 }
 
 bool include() {
-  if (!accept(T_INCLUDE)) return false;
+  if (!accept_identifier("include")) return false;
 
   if (get() != T_STRING_LITERAL) {
     yyerror("include argument is not a string literal");
@@ -382,7 +381,7 @@ bool include() {
 
 bool directive() {
   if (!accept('#')) return false;
-  if (def() || undef()) return true;
+  if (def() || undef() || include()) return true;
 
   yyerror("invalid directive");
   consume();
@@ -416,7 +415,7 @@ bool macro() {
 }
 
 int lex() {
-  while (directive() || macro() || include()) {}
+  while (directive() || macro()) {}
 
   int token = get();
   Type* type;

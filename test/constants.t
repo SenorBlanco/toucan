@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 const c1 = 42;
 Test.Assert(c1 == 42);

@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var v2 = float<2>{1.0, 2.0};
 var v3 = float<3>{@v2, 3.0};

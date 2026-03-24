@@ -1,4 +1,4 @@
-include "include/string.t"
+#include "include/string.t"
 
 var filename = System.GetSourceFile();
 var line = System.GetSourceLine();

@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 #def DECLARE_INT(A) var A : int #enddef
 

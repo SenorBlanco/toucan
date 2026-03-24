@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var c : [3]int;
 var e : [3][3]float;

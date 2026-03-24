@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 class C {
   C(v : float = 3.0) {

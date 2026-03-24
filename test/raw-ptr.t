@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var i = 3;
 var pi : &int = &i;

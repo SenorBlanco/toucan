@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var array = [3]int{0, 1, 2};
 var slice12 = &array[1..3];

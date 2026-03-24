@@ -1,4 +1,4 @@
-include "include/string.t"
+#include "include/string.t"
 
 class C {
   static f(filename : *[]ubyte = System.GetSourceFile(), line : int = System.GetSourceLine()) {

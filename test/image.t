@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var image = new Image<RGBA8unorm>(null);
 Test.Expect(image == null);

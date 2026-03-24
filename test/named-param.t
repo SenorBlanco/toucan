@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 class Bar {
   static Foo(i : int, f : float) : float {

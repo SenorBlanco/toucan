@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 class C {
   C(v1 : float, v2 : float) : { value2 = v1, value1 = v2 } {}

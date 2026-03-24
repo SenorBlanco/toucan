@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 class Foo {
   static dot(arg1 : float<4>, arg2 : float<4>) : float {

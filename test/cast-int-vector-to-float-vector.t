@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var a = int<4>(-3, 101, 2, 0);
 var b = a as float<4>;

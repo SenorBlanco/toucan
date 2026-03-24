@@ -1,4 +1,4 @@
-include "quaternion.t"
+#include "quaternion.t"
 
 class Transform {
   static identity() : float<4,4> {

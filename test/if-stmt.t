@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var f : float;
 var i = 3;

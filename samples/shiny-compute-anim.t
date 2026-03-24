@@ -1,11 +1,11 @@
-include "cube.t"
-include "cube-loader.t"
-include "cubic.t"
-include "event-handler.t"
-include "mipmap-generator.t"
-include "quaternion.t"
-include "transform.t"
-include "teapot.t"
+#include "cube.t"
+#include "cube-loader.t"
+#include "cubic.t"
+#include "event-handler.t"
+#include "mipmap-generator.t"
+#include "quaternion.t"
+#include "transform.t"
+#include "teapot.t"
 
 class Vertex {
   var position : float<3>;

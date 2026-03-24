@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 enum Enum { Foo, Bar, Baz };
 class A {

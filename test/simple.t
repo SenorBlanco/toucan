@@ -1,4 +1,4 @@
-include "include/string.t"
+#include "include/string.t"
 
 var a = 2;
 var b : int;

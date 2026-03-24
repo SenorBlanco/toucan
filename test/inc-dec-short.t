@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var a = 3s;
 var b = 2s;

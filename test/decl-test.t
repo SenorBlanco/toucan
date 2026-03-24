@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var a : float;
 a = 3.0;

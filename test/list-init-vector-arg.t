@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 class C {
   static M(v : float<4>) : float {

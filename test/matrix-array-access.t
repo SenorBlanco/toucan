@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 var m : float<4, 4>;
 var i0 = 0, i1 = 1, i2 = 2, i3 = 3;
 m[i0][i0] = 4.0;

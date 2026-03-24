@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 class C {
   static pf(a : &[3]int) {

@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var v = float<4>(5.0, 0.0, 2.0, 3.0) / float<4>(2.0, 2.0, 2.0, 2.0);
 Test.Expect(v.x == 2.5);

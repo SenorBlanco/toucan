@@ -1,4 +1,4 @@
-include "include/string.t"
+#include "include/string.t"
 
 System.PrintLine(String.From(0).buffer);
 System.PrintLine(String.From(1).buffer);
