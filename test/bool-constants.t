@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var a : bool = true;
 var b : bool = false;

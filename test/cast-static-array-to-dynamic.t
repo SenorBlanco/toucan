@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var a = [2]float(-2.0, 4.0);
 var b = &a;

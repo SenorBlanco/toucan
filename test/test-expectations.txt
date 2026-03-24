@@ -135,6 +135,11 @@ test/error-implicit-void-return.t
 error-implicit-void-return.t:2:  implicit void return, in method returning int.
 test/error-include-not-found.t
 error-include-not-found.t:1: file "include/bogus.t" not found
+test/error-include-syntax.t
+error-include-syntax.t:1: include argument is not a string literal
+error-include-syntax.t:3: include argument is not a string literal
+error-include-syntax.t:5: include argument is not a string literal
+error-include-syntax.t:7: include argument is not a string literal
 test/error-index-buffer-get.t
 error-index-buffer-get.t:4:  class Buffer<[]uint> has no method Get()
 test/error-int-literal-too-large.t

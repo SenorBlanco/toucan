@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var x = float<2>(1.0, 2.0) * 2.0;
 var y = float<2>(3.0, 4.0) / 2.0;

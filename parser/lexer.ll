@@ -60,8 +60,6 @@ ALPHA           [a-zA-Z_]
 ALPHANUM        [a-zA-Z0-9_]
 EXPONENT        ([Ee]("-"|"+")?[0-9]+)
 
-%x include
-
 %%
 
 ([0-9]+"."[0-9]+|[0-9]*"."[0-9]+){EXPONENT}? { yylval.f = std::strtof(yytext, nullptr); return T_FLOAT_LITERAL; }
@@ -120,7 +118,6 @@ hostwriteable { return T_HOSTWRITEABLE; }
 using   { return T_USING; }
 inline  { return T_INLINE; }
 unfilterable { return T_UNFILTERABLE; }
-include BEGIN(include);
 
 int     { return T_INT; }
 uint    { return T_UINT; }
@@ -174,17 +171,6 @@ half    { return T_HALF; }
 \.\.            { return T_DOTDOT; }
 
 .               { return yytext[0]; }
-
-<include>[ \t\n]+  /* eat the whitespace */
-<include>[^ \t\n]+ {
-    std::string filename(yytext + 1, strlen(yytext) - 2);
-    FILE* f = IncludeFile(filename.c_str());
-    if (f) {
-        yyin = f;
-        yypush_buffer_state(yy_create_buffer(yyin, YY_BUF_SIZE));
-    }
-    BEGIN(INITIAL);
-}
 
 <<EOF>> {
     if (yy_buffer_stack_top > 0) {
@@ -377,9 +363,25 @@ bool undef() {
   return true;
 }
 
+bool include() {
+  if (!accept_identifier("include")) return false;
+
+  if (get() != T_STRING_LITERAL) {
+    yyerror("include argument is not a string literal");
+    return true;
+  }
+  std::string filename(yytext + 1, strlen(yytext) - 2);
+  FILE* f = IncludeFile(filename.c_str());
+  if (f) {
+      yyin = f;
+      yypush_buffer_state(yy_create_buffer(yyin, YY_BUF_SIZE));
+  }
+  return true;
+}
+
 bool directive() {
   if (!accept('#')) return false;
-  if (def() || undef()) return true;
+  if (def() || undef() || include()) return true;
 
   yyerror("invalid directive");
   consume();

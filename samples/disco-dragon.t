@@ -1,7 +1,7 @@
-include "include/dragon.t"
-include "include/mesh.t"
-include "include/transform.t"
-include "include/tex-coord-utils.t"
+#include "include/dragon.t"
+#include "include/mesh.t"
+#include "include/transform.t"
+#include "include/tex-coord-utils.t"
 
 class LightData {
   var position : float<4>;

@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var a = short<2>(-3s, 32767s);
 Test.Expect(a.x as int == -3);

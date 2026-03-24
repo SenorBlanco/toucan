@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 class C<T> {
   var s1 = 3 as T;

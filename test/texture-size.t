@@ -1,5 +1,5 @@
-include "include/test.t"
-include "include/string.t"
+#include "include/test.t"
+#include "include/string.t"
 var device = new Device();
 
 var texture1d = new sampleable Texture1D<RGBA8unorm>(device, 42, 1);

@@ -1,12 +1,12 @@
-include "cube.t"
-include "cube-loader.t"
-include "cubic.t"
-include "dragon.t"
-include "event-handler.t"
-include "mesh.t"
-include "mipmap-generator.t"
-include "quaternion.t"
-include "transform.t"
+#include "cube.t"
+#include "cube-loader.t"
+#include "cubic.t"
+#include "dragon.t"
+#include "event-handler.t"
+#include "mesh.t"
+#include "mipmap-generator.t"
+#include "quaternion.t"
+#include "transform.t"
 
 class Vertex {
   var position : float<3>;

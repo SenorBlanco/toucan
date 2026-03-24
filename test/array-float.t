@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var outer_count = 200;
 var a : [1024]float;

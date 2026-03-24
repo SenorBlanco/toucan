@@ -1,8 +1,8 @@
-include "cube.t"
-include "event-handler.t"
-include "quaternion.t"
-include "transform.t"
-include "mipmap-generator.t"
+#include "cube.t"
+#include "event-handler.t"
+#include "quaternion.t"
+#include "transform.t"
+#include "mipmap-generator.t"
 
 var device = new Device();
 

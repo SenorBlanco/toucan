@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var a = 2.0d;
 var b : double;

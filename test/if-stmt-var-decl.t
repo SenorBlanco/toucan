@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var i = 0;
 if (false) var a = i++;

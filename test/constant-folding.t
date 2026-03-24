@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var int4Array : [128]int<4> = { -int<4>{ -42, -21, -14, -7 } };
 Test.Expect(int4Array[0].w == 7);

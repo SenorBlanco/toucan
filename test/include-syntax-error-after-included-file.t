@@ -1,3 +1,3 @@
-include "include/fiveclass.t"
+#include "include/fiveclass.t"
 var a = 2;
 bogus bogus bogus;

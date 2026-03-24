@@ -1,4 +1,4 @@
-include "test.t"
+#include "test.t"
 
 var i = new int();
 

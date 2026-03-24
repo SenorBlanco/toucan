@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var v : int<4>;
 v.x = 4;

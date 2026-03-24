@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 #def FOO
 #def BAR
 #def INT int #enddef

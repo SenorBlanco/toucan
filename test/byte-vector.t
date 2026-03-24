@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var a = byte<2>(-3b, -5b);
 Test.Expect(a.x as int == -3);

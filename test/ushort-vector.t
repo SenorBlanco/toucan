@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var a = ushort<2>(5us, 65535us);
 Test.Expect(a.x as uint == 5);

@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var count = 200;
 var a : [256]float<4>;

@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 var a = 0;
 var i = 5;
 do {

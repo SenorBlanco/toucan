@@ -1,5 +1,5 @@
 
-include "include/test.t"
+#include "include/test.t"
 
 var v : int<3>;
 v.yz = v.xx;                   // Valid

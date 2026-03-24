@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var v41 = float<4>(1.0);
 var v42 = float<4>(2.0, 3.0);

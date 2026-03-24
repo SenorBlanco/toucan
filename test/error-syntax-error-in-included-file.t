@@ -1,1 +1,1 @@
-include "include/syntax-error.t"
+#include "include/syntax-error.t"

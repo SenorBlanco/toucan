@@ -1,4 +1,4 @@
-include "include/test.t"
+#include "include/test.t"
 
 var a = int<2>(0, 1);
 var b = int<2>(2, 1);
