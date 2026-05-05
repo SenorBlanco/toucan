@@ -112,7 +112,14 @@ int main(int argc, char** argv) {
   types.ComputeFieldOffsets();
   double start, end;
   if (spirv) {
-    Type* t = rootStmts->FindType(classname);
+    Type* t = nullptr;
+    for (auto type : types.GetTypes()) {
+      if (type->IsClass() && static_cast<ClassType*>(type)->GetName() == classname) {
+        t = type;
+        break;
+      }
+    }
+//    Type* t = rootStmts->FindType(classname);
     if (!t) {
       fprintf(stderr, "Class \"%s\" not found.\n", classname.c_str());
       exit(3);
