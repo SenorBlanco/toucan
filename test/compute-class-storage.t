@@ -10,7 +10,7 @@ class ComputeBindings {
 
 class Compute {
   compute(1, 1, 1) main(cb : &ComputeBuiltins) {
-    bindings.Get().data.MapWrite().array[0] = 42;
+    bindings.Get().data.MapWrite().array[0] = 42u;
   }
   var bindings : *BindGroup<ComputeBindings>;
 }
