@@ -326,7 +326,7 @@ Scope::Scope() {}
 
 Stmts::Stmts() {}
 
-void Stmts::Append(const std::vector<Stmt*>& stmts) {
+void Stmts::Append(const std::list<Stmt*>& stmts) {
   stmts_.insert(stmts_.end(), stmts.begin(), stmts.end());
 }
 
