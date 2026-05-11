@@ -131,7 +131,7 @@ executable("tc") {
   deps = [
     "//api:init_types",
     "//ast:ast",
-    "//bindings:gen_bindings_sources",
+#    "//bindings:gen_bindings_sources",
     "//codegen:codegen",
     "//parser:parser",
   ]

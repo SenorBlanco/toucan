@@ -33,7 +33,7 @@
 #include <llvm/Transforms/Scalar/GVN.h>
 #include <llvm/Transforms/Utils.h>
 
-#include <api/init_api.h>
+//#include <api/init_api.h>
 #include <ast/ast.h>
 #include <ast/semantic_pass.h>
 #include <ast/type.h>
@@ -102,7 +102,10 @@ int main(int argc, char** argv) {
   TypeTable   types;
   NodeVector  nodes;
   auto rootStmts = nodes.Make<Stmts>();
-  InitAPI(&nodes, &types, rootStmts);
+#ifdef IMPLICIT_INCLUDE
+  IncludeFile(IMPLICIT_INCLUDE);
+#endif
+//  InitAPI(&nodes, &types, rootStmts);
   int syntaxErrors = ParseProgram(filename, &nodes, &types, includePaths, rootStmts);
   if (syntaxErrors > 0) { exit(1); }
   types.SetMemoryLayout();
@@ -176,7 +179,7 @@ int main(int argc, char** argv) {
   auto typeList = codeGenLLVM.GetReferencedTypes().data();
   engine->addGlobalMapping(codeGenLLVM.GetTypeList(), &typeList);
   if (verifyFunction(*main)) { printf("LLVM main function is broken; aborting\n"); }
-  Toucan::exitOnAbort = true;
+//  Toucan::exitOnAbort = true;
   fpm.run(*main);
   if (dump) {
 #ifdef NDEBUG

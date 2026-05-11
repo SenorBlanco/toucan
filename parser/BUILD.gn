@@ -59,4 +59,7 @@ source_set("parser") {
     "..",
     "$target_gen_dir",
   ]
+  defines = [
+    "IMPLICIT_INCLUDE=\"" + rebase_path("../api/api.t", root_build_dir) + "\""
+  ]
 }
