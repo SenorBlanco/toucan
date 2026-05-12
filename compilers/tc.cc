@@ -63,6 +63,7 @@ int main(int argc, char** argv) {
   std::string              outputFilename = "a.o";
   std::string              initTypesFilename = "init_types.cc";
   std::vector<std::string> includePaths;
+  includePaths.push_back(API_PATH);
 
   while ((opt = getopt(argc, argv, optstring)) > 0) {
     switch (opt) {
@@ -91,9 +92,6 @@ int main(int argc, char** argv) {
   TypeTable   types;
   NodeVector  nodes;
   auto              rootStmts = nodes.Make<Stmts>();
-#ifdef IMPLICIT_INCLUDE
-  IncludeFile(IMPLICIT_INCLUDE);
-#endif
 //  InitAPI(&nodes, &types, rootStmts);
   int syntaxErrors = ParseProgram(filename, &nodes, &types, includePaths, rootStmts);
   if (syntaxErrors > 0) { exit(1); }
