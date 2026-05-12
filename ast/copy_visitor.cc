@@ -324,6 +324,80 @@ Result CopyVisitor::Visit(FieldAccess* node) {
   return Make<FieldAccess>(expr, node->GetField());
 }
 
+Result CopyVisitor::Visit(ASTArrayType* node) {
+  RESOLVE_OR_DIE(elementType, node->GetElementType());
+
+  return Make<ASTArrayType>(elementType, node->GetNumElements());
+}
+
+Result CopyVisitor::Visit(ASTBoolType* node) {
+  return Make<ASTBoolType>();
+}
+
+Result CopyVisitor::Visit(ASTClassTemplateInstance* node) {
+  RESOLVE_OR_DIE(classTemplate, node->GetClassTemplate());
+
+  return Make<ASTClassTemplateInstance>(classTemplate, node->GetTemplateArgs(), node->GetNewClassCallback());
+}
+
+Result CopyVisitor::Visit(ASTFloatingPointType* node) {
+  return Make<ASTFloatingPointType>(node->GetBits());
+}
+
+Result CopyVisitor::Visit(ASTFormalTemplateArg* node) {
+  return Make<ASTFormalTemplateArg>(node->GetName());
+}
+
+Result CopyVisitor::Visit(ASTIntegerType* node) {
+  return Make<ASTIntegerType>(node->GetBits(), node->IsSigned());
+}
+
+Result CopyVisitor::Visit(ASTLegacyType* node) {
+  return Make<ASTLegacyType>(node->GetType());
+}
+
+Result CopyVisitor::Visit(ASTMatrixType* node) {
+  RESOLVE_OR_DIE(columnType, node->GetColumnType());
+
+  return Make<ASTMatrixType>(columnType, node->GetNumColumns());
+}
+
+Result CopyVisitor::Visit(ASTQualifiedType* node) {
+  RESOLVE_OR_DIE(baseType, node->GetBaseType());
+
+  return Make<ASTQualifiedType>(baseType, node->GetQualifiers());
+}
+
+Result CopyVisitor::Visit(ASTRawPtrType* node) {
+  RESOLVE_OR_DIE(baseType, node->GetBaseType());
+
+  return Make<ASTRawPtrType>(baseType);
+}
+
+Result CopyVisitor::Visit(ASTScopedType* node) {
+  RESOLVE_OR_DIE(scope, node->GetScope());
+
+  return Make<ASTScopedType>(scope, node->GetName());
+}
+
+Result CopyVisitor::Visit(ASTStrongPtrType* node) {
+  RESOLVE_OR_DIE(baseType, node->GetBaseType());
+
+  return Make<ASTStrongPtrType>(baseType);
+}
+
+Result CopyVisitor::Visit(ASTVectorType* node) {
+  RESOLVE_OR_DIE(componentType, node->GetComponentType());
+
+  return Make<ASTVectorType>(componentType, node->GetNumComponents());
+}
+
+Result CopyVisitor::Visit(ASTWeakPtrType* node) {
+  RESOLVE_OR_DIE(baseType, node->GetBaseType());
+
+  return Make<ASTWeakPtrType>(baseType);
+}
+
 Result CopyVisitor::Default(ASTNode* node) {
   fprintf(stderr, "Internal error: unhandled node in CopyVisitor pass.");
   return {};

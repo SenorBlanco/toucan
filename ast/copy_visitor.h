@@ -23,6 +23,20 @@ class CopyVisitor : public Visitor {
  public:
   CopyVisitor(NodeVector* nodes);
   virtual Type* ResolveType(Type* type);
+  Result        Visit(ASTArrayType* node) override;
+  Result        Visit(ASTBoolType* node) override;
+  Result        Visit(ASTClassTemplateInstance* node) override;
+  Result        Visit(ASTFloatingPointType* node) override;
+  Result        Visit(ASTFormalTemplateArg* node) override;
+  Result        Visit(ASTIntegerType* node) override;
+  Result        Visit(ASTLegacyType* node) override;
+  Result        Visit(ASTMatrixType* node) override;
+  Result        Visit(ASTQualifiedType* node) override;
+  Result        Visit(ASTRawPtrType* node) override;
+  Result        Visit(ASTScopedType* node) override;
+  Result        Visit(ASTStrongPtrType* node) override;
+  Result        Visit(ASTVectorType* node) override;
+  Result        Visit(ASTWeakPtrType* node) override;
   Result        Visit(Arg* node) override;
   Result        Visit(ArgList* node) override;
   Result        Visit(ArrayAccess* node) override;

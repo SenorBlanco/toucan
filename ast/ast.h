@@ -48,14 +48,14 @@ class ASTNode {
 class ASTType : public ASTNode {
  public:
   virtual Type* Resolve(TypeTable* types) = 0;
-  Result Accept(Visitor* visitor) override { return nullptr; }
 };
 
 class ASTLegacyType : public ASTType {
  public:
   ASTLegacyType(Type* type) : type_(type) {}
-  virtual Type* Resolve(TypeTable* types) { return type_; }
-  Result Accept(Visitor* visitor) override { return nullptr; }
+  Type*  GetType() const { return type_; }
+  Result Accept(Visitor* visitor) override;
+  Type*  Resolve(TypeTable* types) override { return type_; }
  private:
   Type* type_;
 };
@@ -63,7 +63,7 @@ class ASTLegacyType : public ASTType {
 class ASTTypeList : public ASTNode {
  public:
   void Append(ASTType* type) { types_.push_back(type); }
-  Result Accept(Visitor* visitor) override { return nullptr; }
+  Result    Accept(Visitor* visitor) override { return nullptr; }
   TypeList* Resolve(TypeTable* types);
  private:
   std::vector<ASTType*> types_;
@@ -72,7 +72,10 @@ class ASTTypeList : public ASTNode {
 class ASTIntegerType : public ASTType {
  public:
   ASTIntegerType(uint32_t bits, bool isSigned);
-  Type* Resolve(TypeTable* types) { return types->GetInteger(bits_, isSigned_); }
+  uint32_t GetBits() const { return bits_; }
+  bool     IsSigned() const { return isSigned_; }
+  Result   Accept(Visitor* visitor) override;
+  Type*    Resolve(TypeTable* types) { return types->GetInteger(bits_, isSigned_); }
  private:
   uint32_t bits_;
   bool     isSigned_;
@@ -81,7 +84,9 @@ class ASTIntegerType : public ASTType {
 class ASTFloatingPointType : public ASTType {
  public:
   ASTFloatingPointType(uint32_t bits);
-  Type* Resolve(TypeTable* types) { return types->GetFloatingPoint(bits_); }
+  uint32_t GetBits() const { return bits_; }
+  Result   Accept(Visitor* visitor) override;
+  Type*    Resolve(TypeTable* types) { return types->GetFloatingPoint(bits_); }
  private:
   uint32_t bits_;
 };
@@ -89,13 +94,17 @@ class ASTFloatingPointType : public ASTType {
 class ASTBoolType : public ASTType {
  public:
   ASTBoolType();
-  Type* Resolve(TypeTable* types) { return types->GetBool(); }
+  Result Accept(Visitor* visitor) override;
+  Type*  Resolve(TypeTable* types) { return types->GetBool(); }
 };
 
 class ASTVectorType : public ASTType {
  public:
   ASTVectorType(ASTType* baseType, uint32_t numComponents);
-  virtual Type* Resolve(TypeTable* types) override { return types->GetVector(baseType_->Resolve(types), numComponents_); }
+  ASTType*   GetComponentType() const { return baseType_; }
+  uint32_t   GetNumComponents() const { return numComponents_; }
+  Result     Accept(Visitor* visitor) override;
+  Type*      Resolve(TypeTable* types) override { return types->GetVector(baseType_->Resolve(types), numComponents_); }
  private:
   ASTType*   baseType_;
   uint32_t   numComponents_;
@@ -104,7 +113,10 @@ class ASTVectorType : public ASTType {
 class ASTMatrixType : public ASTType {
  public:
   ASTMatrixType(ASTVectorType* columnType, uint32_t numColumns);
-  virtual Type* Resolve(TypeTable* types) override { return types->GetMatrix(static_cast<VectorType*>(columnType_->Resolve(types)), numColumns_); }
+  ASTVectorType*   GetColumnType() const { return columnType_; }
+  uint32_t         GetNumColumns() const { return numColumns_; }
+  Result           Accept(Visitor* visitor) override;
+  Type*            Resolve(TypeTable* types) override { return types->GetMatrix(static_cast<VectorType*>(columnType_->Resolve(types)), numColumns_); }
  private:
   ASTVectorType*   columnType_;
   uint32_t         numColumns_;
@@ -113,7 +125,10 @@ class ASTMatrixType : public ASTType {
 class ASTArrayType : public ASTType {
  public:
   ASTArrayType(ASTType* elementType, Expr* numElements);
-  virtual Type* Resolve(TypeTable* types) override;
+  Result     Accept(Visitor* visitor) override;
+  Type*      Resolve(TypeTable* types) override;
+  ASTType*   GetElementType() const { return elementType_; }
+  Expr*      GetNumElements() const { return numElements_; }
  private:
   ASTType*   elementType_;
   Expr*      numElements_;
@@ -122,7 +137,9 @@ class ASTArrayType : public ASTType {
 class ASTFormalTemplateArg : public ASTType {
  public:
   ASTFormalTemplateArg(std::string name);
-  virtual Type* Resolve(TypeTable* types) override { return types->GetFormalTemplateArg(name_); }
+  std::string  GetName() const { return name_; }
+  Result       Accept(Visitor* visitor) override;
+  Type*        Resolve(TypeTable* types) override { return types->GetFormalTemplateArg(name_); }
  private:
   std::string  name_;
 };
@@ -130,7 +147,10 @@ class ASTFormalTemplateArg : public ASTType {
 class ASTScopedType : public ASTType {
  public:
   ASTScopedType(ASTType* scope, std::string name);
-  virtual Type* Resolve(TypeTable* types) override;
+  ASTType*    GetScope() const { return scope_; }
+  std::string GetName() const { return name_; }
+  Result      Accept(Visitor* visitor) override;
+  Type*       Resolve(TypeTable* types) override;
  private:
   ASTType*    scope_;
   std::string name_;
@@ -139,43 +159,55 @@ class ASTScopedType : public ASTType {
 class ASTQualifiedType : public ASTType {
  public:
   ASTQualifiedType(ASTType* baseType, uint32_t qualifiers);
-  virtual Type* Resolve(TypeTable* types) override { return types->GetQualifiedType(baseType_->Resolve(types), qualifiers_); }
+  ASTType*    GetBaseType() const { return baseType_; }
+  uint32_t    GetQualifiers() const { return qualifiers_; }
+  Result      Accept(Visitor* visitor) override;
+  Type*       Resolve(TypeTable* types) override { return types->GetQualifiedType(baseType_->Resolve(types), qualifiers_); }
  private:
   ASTType*    baseType_;
   uint32_t    qualifiers_;
 };
 
-class ASTStrongPtrType : public ASTType {
+class ASTPtrType : public ASTType {
+ public:
+  ASTPtrType(ASTType* baseType);
+  ASTType* GetBaseType() const { return baseType_; }
+ private:
+  ASTType*    baseType_;
+};
+
+class ASTStrongPtrType : public ASTPtrType {
  public:
   ASTStrongPtrType(ASTType* baseType);
-  virtual Type* Resolve(TypeTable* types) override { return types->GetStrongPtrType(baseType_->Resolve(types)); }
- private:
-  ASTType*    baseType_;
+  Result Accept(Visitor* visitor) override;
+  Type*  Resolve(TypeTable* types) override { return types->GetStrongPtrType(GetBaseType()->Resolve(types)); }
 };
 
-class ASTWeakPtrType : public ASTType {
+class ASTWeakPtrType : public ASTPtrType {
  public:
   ASTWeakPtrType(ASTType* baseType);
-  virtual Type* Resolve(TypeTable* types) override { return types->GetWeakPtrType(baseType_->Resolve(types)); }
- private:
-  ASTType*    baseType_;
+  Result Accept(Visitor* visitor) override;
+  Type*  Resolve(TypeTable* types) override { return types->GetWeakPtrType(GetBaseType()->Resolve(types)); }
 };
 
-class ASTRawPtrType : public ASTType {
+class ASTRawPtrType : public ASTPtrType {
  public:
   ASTRawPtrType(ASTType* baseType);
-  virtual Type* Resolve(TypeTable* types) override { return types->GetRawPtrType(baseType_->Resolve(types)); }
- private:
-  ASTType*    baseType_;
+  Result Accept(Visitor* visitor) override;
+  Type*  Resolve(TypeTable* types) override { return types->GetRawPtrType(GetBaseType()->Resolve(types)); }
 };
 
 class ASTClassTemplateInstance : public ASTType {
  public:
   ASTClassTemplateInstance(ASTType* baseType, ASTTypeList* templateArgs, NewClassCallback newClassCallback);
-  virtual Type* Resolve(TypeTable* types) override;
+  ASTType*         GetClassTemplate() const { return classTemplate_; }
+  ASTTypeList*     GetTemplateArgs() const { return templateArgs_; }
+  NewClassCallback GetNewClassCallback() const { return newClassCallback_; }
+  Result           Accept(Visitor* visitor) override;
+  Type*            Resolve(TypeTable* types) override;
  private:
-  ASTType*      classTemplate_;
-  ASTTypeList*  templateArgs_;
+  ASTType*         classTemplate_;
+  ASTTypeList*     templateArgs_;
   NewClassCallback newClassCallback_;
 };
 
@@ -985,7 +1017,20 @@ class ScopeStack : public std::deque<Scope*> {
 
 class Visitor {
  public:
+  virtual Result Visit(ASTArrayType* node) { return Default(node); }
+  virtual Result Visit(ASTBoolType* node) { return Default(node); }
   virtual Result Visit(ASTClassTemplateInstance* node) { return Default(node); }
+  virtual Result Visit(ASTFloatingPointType* node) { return Default(node); }
+  virtual Result Visit(ASTFormalTemplateArg* node) { return Default(node); }
+  virtual Result Visit(ASTIntegerType* node) { return Default(node); }
+  virtual Result Visit(ASTLegacyType* node) { return Default(node); }
+  virtual Result Visit(ASTMatrixType* node) { return Default(node); }
+  virtual Result Visit(ASTQualifiedType* node) { return Default(node); }
+  virtual Result Visit(ASTRawPtrType* node) { return Default(node); }
+  virtual Result Visit(ASTScopedType* node) { return Default(node); }
+  virtual Result Visit(ASTStrongPtrType* node) { return Default(node); }
+  virtual Result Visit(ASTVectorType* node) { return Default(node); }
+  virtual Result Visit(ASTWeakPtrType* node) { return Default(node); }
   virtual Result Visit(Arg* node) { return Default(node); }
   virtual Result Visit(ArgList* node) { return Default(node); }
   virtual Result Visit(ArrayAccess* node) { return Default(node); }

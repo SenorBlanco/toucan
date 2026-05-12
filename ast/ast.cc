@@ -73,11 +73,13 @@ Type* ASTScopedType::Resolve(TypeTable* types) {
 
 ASTQualifiedType::ASTQualifiedType(ASTType* baseType, uint32_t qualifiers) : baseType_(baseType), qualifiers_(qualifiers) {}
 
-ASTStrongPtrType::ASTStrongPtrType(ASTType* baseType) : baseType_(baseType) {}
+ASTPtrType::ASTPtrType(ASTType* baseType) : baseType_(baseType) {}
 
-ASTWeakPtrType::ASTWeakPtrType(ASTType* baseType) : baseType_(baseType) {}
+ASTStrongPtrType::ASTStrongPtrType(ASTType* baseType) : ASTPtrType(baseType) {}
 
-ASTRawPtrType::ASTRawPtrType(ASTType* baseType) : baseType_(baseType) {}
+ASTWeakPtrType::ASTWeakPtrType(ASTType* baseType) : ASTPtrType(baseType) {}
+
+ASTRawPtrType::ASTRawPtrType(ASTType* baseType) : ASTPtrType(baseType) {}
 
 ASTClassTemplateInstance::ASTClassTemplateInstance(ASTType* classTemplate, ASTTypeList* templateArgs, NewClassCallback newClassCallback) : classTemplate_(classTemplate), templateArgs_(templateArgs), newClassCallback_(newClassCallback) {}
 
@@ -466,6 +468,20 @@ NodeVector::NodeVector() {}
 
 ScopeStack::ScopeStack() {}
 
+Result ASTArrayType::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result ASTBoolType::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result ASTClassTemplateInstance::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result ASTFloatingPointType::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result ASTFormalTemplateArg::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result ASTIntegerType::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result ASTLegacyType::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result ASTMatrixType::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result ASTQualifiedType::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result ASTRawPtrType::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result ASTScopedType::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result ASTStrongPtrType::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result ASTVectorType::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result ASTWeakPtrType::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result Arg::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ArgList::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ArrayAccess::Accept(Visitor* visitor) { return visitor->Visit(this); }
