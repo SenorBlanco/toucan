@@ -79,14 +79,10 @@ static Expr* MakeArrayAccess(Expr* lhs, Expr* expr);
 static Expr* MakeNewExpr(UnresolvedInitializer* initializer, Expr* length = nullptr);
 static Expr* InlineFile(const char* filename);
 static Expr* StringLiteral(const char* str);
-static Type* GetArrayType(Type* elementType, int numElements);
-static Type* GetScopedType(Type* type, const char* id);
-static TypeList* AddIDToTypeList(const char* id, TypeList* list);
-static ClassType* GetClassTemplateInstance(Type* type, const TypeList& templateArgs);
+static void OnNewClass(ClassType* classType);
 static ClassType* AsClassType(Type* type);
 static EnumType* AsEnumType(Type* type);
 static ClassTemplate* AsClassTemplate(Type* type);
-static int AsIntConstant(Expr* expr);
 
 template <typename T, typename... ARGS> T* Make(ARGS&&... args) {
   T* node = nodes_->Make<T>(std::forward<ARGS>(args)...);
@@ -120,12 +116,13 @@ static void DefineType(std::string id, Type* type) {
     Toucan::Arg*         arg;
     Toucan::ArgList*     argList;
     Toucan::UnresolvedInitializer* initializer;
-    Toucan::Type*        type;
-    Toucan::TypeList*    typeList;
+    Toucan::Type*        legacyType;
+    Toucan::ASTType*     type;
+    Toucan::ASTTypeList* typeList;
 };
 
-%type <type> scalar_type type class_header template_class_header enum_header
-%type <type> simple_type opt_return_type
+%type <type> scalar_type type simple_type
+%type <legacyType> legacy_type class_header template_class_header enum_header opt_return_type
 %type <expr> expr opt_expr assignable expr_or_list opt_initializer opt_length list_initializer
 %type <initializer> initializer initializer_or_type
 %type <arg> argument
@@ -142,9 +139,9 @@ static void DefineType(std::string id, Type* type) {
 %type <typeList> template_formal_arguments
 %type <i> type_qualifier type_qualifiers opt_type_qualifiers
 %type <i> method_modifier method_modifiers
-%type <type> opt_parent_class
+%type <legacyType> opt_parent_class
 %token <identifier> T_IDENTIFIER T_STRING_LITERAL
-%token <type> T_TYPENAME
+%token <legacyType> T_TYPENAME
 %token <i> T_BYTE_LITERAL T_UBYTE_LITERAL T_SHORT_LITERAL T_USHORT_LITERAL
 %token <i> T_INT_LITERAL T_UINT_LITERAL
 %token <f> T_FLOAT_LITERAL
@@ -256,23 +253,26 @@ const_decl_statement:
   ;
 
 simple_type:
-    T_TYPENAME
+    T_TYPENAME                              { $$ = Make<ASTLegacyType>($1); }
   | scalar_type
-  | simple_type T_LT types T_GT             { $$ = GetClassTemplateInstance($1, *$3); }
-  | simple_type T_LT T_INT_LITERAL T_GT     { $$ = types_->GetVector($1, $3); }
-  | simple_type T_LT T_INT_LITERAL ',' T_INT_LITERAL T_GT 
-    { $$ = types_->GetMatrix(types_->GetVector($1, $3), $5); }
-  | simple_type ':' T_IDENTIFIER  { $$ = GetScopedType($1, $3); }
+  | simple_type T_LT types T_GT             { $$ = Make<ASTClassTemplateInstance>($1, $3, OnNewClass); }
+  | simple_type T_LT T_INT_LITERAL T_GT     { $$ = Make<ASTVectorType>($1, $3); }
+  | simple_type T_LT T_INT_LITERAL ',' T_INT_LITERAL T_GT { $$ = Make<ASTMatrixType>(Make<ASTVectorType>($1, $3), $5); }
+  | simple_type ':' T_IDENTIFIER            { $$ = Make<ASTScopedType>($1, $3); }
   ;
 
 type:
     simple_type
-  | type_qualifier type                     { $$ = types_->GetQualifiedType($2, $1); }
-  | '*' type                                { $$ = types_->GetStrongPtrType($2); }
-  | '^' type                                { $$ = types_->GetWeakPtrType($2); }
-  | '&' type                                { $$ = types_->GetRawPtrType($2); }
-  | '[' expr ']' type                       { $$ = GetArrayType($4, AsIntConstant($2)); }
-  | '[' ']' type                            { $$ = GetArrayType($3, 0); }
+  | type_qualifier type                     { $$ = Make<ASTQualifiedType>($2, $1); }
+  | '*' type                                { $$ = Make<ASTStrongPtrType>($2); }
+  | '^' type                                { $$ = Make<ASTWeakPtrType>($2); }
+  | '&' type                                { $$ = Make<ASTRawPtrType>($2); }
+  | '[' expr ']' type                       { $$ = Make<ASTArrayType>($4, $2); }
+  | '[' ']' type                            { $$ = Make<ASTArrayType>($3, nullptr); }
+  ;
+
+legacy_type:
+    type                                    { $$ = $1->Resolve(types_); }
   ;
 
 var_decl_list:
@@ -292,7 +292,7 @@ class_header:
 
 template_class_header:
     T_CLASS T_IDENTIFIER T_LT template_formal_arguments T_GT
-                                            { $$ = BeginClassTemplate($4, $2); }
+                                            { $$ = BeginClassTemplate($4->Resolve(types_), $2); }
   ;
 
 class_forward_decl:
@@ -308,7 +308,7 @@ class_decl:
   ;
 
 opt_parent_class:
-    ':' simple_type                         { $$ = $2; }
+    ':' simple_type                         { $$ = $2->Resolve(types_); }
   | /* nothing */                           { $$ = nullptr; }
   ;
 
@@ -335,11 +335,11 @@ enum_list:
   ;
 
 using_decl:
-    T_USING T_IDENTIFIER '=' type ';'       { DeclareUsing($2, $4); }
+    T_USING T_IDENTIFIER '=' legacy_type ';'       { DeclareUsing($2, $4); }
   ;
 
 opt_return_type:
-    ':' type                                { $$ = $2; }
+    ':' legacy_type                         { $$ = $2; }
   | /* NOTHING */                           { $$ = types_->GetVoid(); }
   ;
 
@@ -363,10 +363,9 @@ method_body:
   ;
 
 template_formal_arguments:
-    T_IDENTIFIER
-                                            { $$ = AddIDToTypeList($1, nullptr); }
+    T_IDENTIFIER                            { $$ = Make<ASTTypeList>(); $$->Append(Make<ASTFormalTemplateArg>($1)); }
   | template_formal_arguments ',' T_IDENTIFIER
-                                            { $$ = AddIDToTypeList($3, $1); }
+                                            { $$ = $1; $$->Append(Make<ASTFormalTemplateArg>($3)); }
   ;
 
 method_modifier:
@@ -422,9 +421,9 @@ non_empty_formal_arguments:
   ;
 
 var_decl:
-    T_IDENTIFIER ':' type                   { $$ = Make<VarDeclaration>($1, $3, nullptr); }
+    T_IDENTIFIER ':' legacy_type                   { $$ = Make<VarDeclaration>($1, $3, nullptr); }
   | T_IDENTIFIER '=' expr_or_list           { $$ = Make<VarDeclaration>($1, types_->GetAuto(), $3); }
-  | T_IDENTIFIER ':' type '=' expr_or_list  { $$ = Make<VarDeclaration>($1, $3, $5); }
+  | T_IDENTIFIER ':' legacy_type '=' expr_or_list  { $$ = Make<VarDeclaration>($1, $3, $5); }
   ;
 
 const_decl:
@@ -432,15 +431,15 @@ const_decl:
   ;
 
 scalar_type:
-    T_INT           { $$ = types_->GetInt(); }
-  | T_UINT          { $$ = types_->GetUInt(); }
-  | T_SHORT         { $$ = types_->GetShort(); }
-  | T_USHORT        { $$ = types_->GetUShort(); }
-  | T_BYTE          { $$ = types_->GetByte(); }
-  | T_UBYTE         { $$ = types_->GetUByte(); }
-  | T_FLOAT         { $$ = types_->GetFloat(); }
-  | T_DOUBLE        { $$ = types_->GetDouble(); }
-  | T_BOOL          { $$ = types_->GetBool(); }
+    T_INT           { $$ = Make<ASTIntegerType>(32, true); }
+  | T_UINT          { $$ = Make<ASTIntegerType>(32, false); }
+  | T_SHORT         { $$ = Make<ASTIntegerType>(16, true); }
+  | T_USHORT        { $$ = Make<ASTIntegerType>(16, false); }
+  | T_BYTE          { $$ = Make<ASTIntegerType>(8, true); }
+  | T_UBYTE         { $$ = Make<ASTIntegerType>(8, false); }
+  | T_FLOAT         { $$ = Make<ASTFloatingPointType>(32); }
+  | T_DOUBLE        { $$ = Make<ASTFloatingPointType>(64); }
+  | T_BOOL          { $$ = Make<ASTBoolType>(); }
   ;
 
 arguments:
@@ -460,13 +459,13 @@ argument:
   ;
 
 initializer:
-    type '(' arguments ')'                  { $$ = Make<UnresolvedInitializer>($1, $3, true); }
-  | type '{' arguments '}'                  { $$ = Make<UnresolvedInitializer>($1, $3, false); }
+    type '(' arguments ')'                  { $$ = Make<UnresolvedInitializer>($1->Resolve(types_), $3, true); }
+  | type '{' arguments '}'                  { $$ = Make<UnresolvedInitializer>($1->Resolve(types_), $3, false); }
   ;
 
 initializer_or_type:
     initializer
-  | type                                    { $$ = Make<UnresolvedInitializer>($1, Make<ArgList>(), false); }
+  | type                                    { $$ = Make<UnresolvedInitializer>($1->Resolve(types_), Make<ArgList>(), false); }
   ;
 
 expr:
@@ -493,7 +492,7 @@ expr:
   | assignable T_PLUSPLUS                   { $$ = IncDec(IncDecExpr::Op::Inc, false, $1); }
   | assignable T_MINUSMINUS                 { $$ = IncDec(IncDecExpr::Op::Dec, false, $1); }
   | '(' expr ')'                            { $$ = $2; }
-  | expr T_AS type                          { $$ = Make<CastExpr>($3, $1); }
+  | expr T_AS type                          { $$ = Make<CastExpr>($3->Resolve(types_), $1); }
   | T_INT_LITERAL                           { $$ = Make<IntConstant>($1, 32); }
   | T_UINT_LITERAL                          { $$ = Make<UIntConstant>($1, 32); }
   | T_BYTE_LITERAL                          { $$ = Make<IntConstant>($1, 8); }
@@ -533,8 +532,8 @@ opt_initializer:
   ;
 
 types:
-    type                                    { $$ = Append(new TypeList()); $$->push_back($1);  }
-  | types ',' type                          { $1->push_back($3); $$ = $1; }
+    type                                    { $$ = Make<ASTTypeList>(); $$->Append($1);  }
+  | types ',' type                          { $1->Append($3); $$ = $1; }
   ;
 
 assignable:
@@ -544,11 +543,11 @@ assignable:
   | assignable '[' opt_expr T_DOTDOT opt_expr ']'
                                             { $$ = Make<SliceExpr>($1, $3, $5); }
   | assignable '.' T_IDENTIFIER             { $$ = Make<UnresolvedDot>($1, $3); }
-  | simple_type '.' T_IDENTIFIER            { $$ = Make<UnresolvedStaticDot>($1, $3); }
+  | simple_type '.' T_IDENTIFIER            { $$ = Make<UnresolvedStaticDot>($1->Resolve(types_), $3); }
   | assignable '.' T_IDENTIFIER '(' arguments ')'
                                             { $$ = Make<UnresolvedMethodCall>($1, $3, $5); }
   | simple_type '.' T_IDENTIFIER '(' arguments ')'
-                                            { $$ = MakeStaticMethodCall($1, $3, $5); }
+                                            { $$ = MakeStaticMethodCall($1->Resolve(types_), $3, $5); }
   | assignable ':'                          { $$ = Make<SmartToRawPtr>(Make<LoadExpr>($1)); }
   | initializer                             { $$ = Make<TempVarExpr>(nullptr, $1); }
   ;
@@ -883,35 +882,8 @@ MethodDecl* MakeDestructor(int modifiers, Type* type, Stmts* body) {
                         body);
 }
 
-static Type* GetScopedType(Type* type, const char* id) {
-  if (type->IsFormalTemplateArg()) {
-    return types_->GetUnresolvedScopedType(static_cast<FormalTemplateArg*>(type), id);
-  }
-  if (!type->IsClass()) {
-    yyerrorf("\"%s\" is not a class type", type->ToString().c_str());
-    return nullptr;
-  }
-  Type* scopedType = static_cast<ClassType*>(type)->FindType(id);
-  if (!type) {
-    yyerrorf("class \"%s\" has no type named \"%s\"", type->ToString().c_str(), id);
-    return nullptr;
-  }
-  return scopedType;
-}
-
-static TypeList* AddIDToTypeList(const char* id, TypeList* list) {
-  if (!list) {
-    list = Append(new TypeList());
-  }
-  list->push_back(types_->GetFormalTemplateArg(id));
-  return list;
-}
-
 void OnNewClass(ClassType* classType) {
   instanceQueue_.push(classType);
-}
-static ClassType* GetClassTemplateInstance(Type* type, const TypeList& templateArgs) {
-  return types_->GetClassTemplateInstance(AsClassTemplate(type), templateArgs, &OnNewClass);
 }
 
 static ClassType* PopInstanceQueue() {
@@ -981,19 +953,4 @@ static ClassTemplate* AsClassTemplate(Type* type) {
     return nullptr;
   }
   return static_cast<ClassTemplate*>(type);
-}
-
-static int AsIntConstant(Expr* expr) {
-  if (expr && !expr->IsIntConstant()) {
-    yyerrorf("array size is not an integer constant");
-  }
-  return static_cast<IntConstant*>(expr)->GetValue();
-}
-
-static Type* GetArrayType(Type* elementType, int numElements) {
-  if (elementType->IsVoid() || elementType->IsAuto()) {
-    yyerrorf("invalid array element type \"%s\"", elementType->ToString().c_str());
-    return nullptr;
-  }
-  return types_->GetArrayType(elementType, numElements, MemoryLayout::Default);
 }

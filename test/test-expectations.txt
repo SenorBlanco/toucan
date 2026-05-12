@@ -103,9 +103,9 @@ error-allocate-raw-ptr.t:11:  cannot allocate a type containing raw pointer
 test/error-allocate-unsized-array.t
 error-allocate-unsized-array.t:1:  cannot allocate unsized array
 test/error-array-size-non-integer.t
-error-array-size-non-integer.t:3: array size is not an integer constant
-error-array-size-non-integer.t:4: array size is not an integer constant
-error-array-size-non-integer.t:5: array size is not an integer constant
+array size is not an integer constant
+array size is not an integer constant
+array size is not an integer constant
 test/error-assign-padded-array.t
 test/error-assign-padded-array.t:21: expectation failed
 test/error-assign-padded-array.t:22: expectation failed

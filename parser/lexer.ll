@@ -420,7 +420,7 @@ int lex() {
   int token = get();
   Type* type;
   if (token == T_IDENTIFIER && (type = FindType(yylval.identifier)) != nullptr) {
-    yylval.type = type;
+    yylval.legacyType = type;
     token = T_TYPENAME;
   }
 

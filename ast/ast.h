@@ -45,6 +45,140 @@ class ASTNode {
   FileLocation fileLocation_;
 };
 
+class ASTType : public ASTNode {
+ public:
+  virtual Type* Resolve(TypeTable* types) = 0;
+  Result Accept(Visitor* visitor) override { return nullptr; }
+};
+
+class ASTLegacyType : public ASTType {
+ public:
+  ASTLegacyType(Type* type) : type_(type) {}
+  virtual Type* Resolve(TypeTable* types) { return type_; }
+  Result Accept(Visitor* visitor) override { return nullptr; }
+ private:
+  Type* type_;
+};
+
+class ASTTypeList : public ASTNode {
+ public:
+  void Append(ASTType* type) { types_.push_back(type); }
+  Result Accept(Visitor* visitor) override { return nullptr; }
+  TypeList* Resolve(TypeTable* types);
+ private:
+  std::vector<ASTType*> types_;
+};
+
+class ASTIntegerType : public ASTType {
+ public:
+  ASTIntegerType(uint32_t bits, bool isSigned);
+  Type* Resolve(TypeTable* types) { return types->GetInteger(bits_, isSigned_); }
+ private:
+  uint32_t bits_;
+  bool     isSigned_;
+};
+
+class ASTFloatingPointType : public ASTType {
+ public:
+  ASTFloatingPointType(uint32_t bits);
+  Type* Resolve(TypeTable* types) { return types->GetFloatingPoint(bits_); }
+ private:
+  uint32_t bits_;
+};
+
+class ASTBoolType : public ASTType {
+ public:
+  ASTBoolType();
+  Type* Resolve(TypeTable* types) { return types->GetBool(); }
+};
+
+class ASTVectorType : public ASTType {
+ public:
+  ASTVectorType(ASTType* baseType, uint32_t numComponents);
+  virtual Type* Resolve(TypeTable* types) override { return types->GetVector(baseType_->Resolve(types), numComponents_); }
+ private:
+  ASTType*   baseType_;
+  uint32_t   numComponents_;
+};
+
+class ASTMatrixType : public ASTType {
+ public:
+  ASTMatrixType(ASTVectorType* columnType, uint32_t numColumns);
+  virtual Type* Resolve(TypeTable* types) override { return types->GetMatrix(static_cast<VectorType*>(columnType_->Resolve(types)), numColumns_); }
+ private:
+  ASTVectorType*   columnType_;
+  uint32_t         numColumns_;
+};
+
+class ASTArrayType : public ASTType {
+ public:
+  ASTArrayType(ASTType* elementType, Expr* numElements);
+  virtual Type* Resolve(TypeTable* types) override;
+ private:
+  ASTType*   elementType_;
+  Expr*      numElements_;
+};
+
+class ASTFormalTemplateArg : public ASTType {
+ public:
+  ASTFormalTemplateArg(std::string name);
+  virtual Type* Resolve(TypeTable* types) override { return types->GetFormalTemplateArg(name_); }
+ private:
+  std::string  name_;
+};
+
+class ASTScopedType : public ASTType {
+ public:
+  ASTScopedType(ASTType* scope, std::string name);
+  virtual Type* Resolve(TypeTable* types) override;
+ private:
+  ASTType*    scope_;
+  std::string name_;
+};
+
+class ASTQualifiedType : public ASTType {
+ public:
+  ASTQualifiedType(ASTType* baseType, uint32_t qualifiers);
+  virtual Type* Resolve(TypeTable* types) override { return types->GetQualifiedType(baseType_->Resolve(types), qualifiers_); }
+ private:
+  ASTType*    baseType_;
+  uint32_t    qualifiers_;
+};
+
+class ASTStrongPtrType : public ASTType {
+ public:
+  ASTStrongPtrType(ASTType* baseType);
+  virtual Type* Resolve(TypeTable* types) override { return types->GetStrongPtrType(baseType_->Resolve(types)); }
+ private:
+  ASTType*    baseType_;
+};
+
+class ASTWeakPtrType : public ASTType {
+ public:
+  ASTWeakPtrType(ASTType* baseType);
+  virtual Type* Resolve(TypeTable* types) override { return types->GetWeakPtrType(baseType_->Resolve(types)); }
+ private:
+  ASTType*    baseType_;
+};
+
+class ASTRawPtrType : public ASTType {
+ public:
+  ASTRawPtrType(ASTType* baseType);
+  virtual Type* Resolve(TypeTable* types) override { return types->GetRawPtrType(baseType_->Resolve(types)); }
+ private:
+  ASTType*    baseType_;
+};
+
+class ASTClassTemplateInstance : public ASTType {
+ public:
+  ASTClassTemplateInstance(ASTType* baseType, ASTTypeList* templateArgs, NewClassCallback newClassCallback);
+  virtual Type* Resolve(TypeTable* types) override;
+ private:
+  ASTType*      classTemplate_;
+  ASTTypeList*  templateArgs_;
+  NewClassCallback newClassCallback_;
+};
+
 class Expr : public ASTNode {
  public:
   Expr();
@@ -851,6 +985,7 @@ class ScopeStack : public std::deque<Scope*> {
 
 class Visitor {
  public:
+  virtual Result Visit(ASTClassTemplateInstance* node) { return Default(node); }
   virtual Result Visit(Arg* node) { return Default(node); }
   virtual Result Visit(ArgList* node) { return Default(node); }
   virtual Result Visit(ArrayAccess* node) { return Default(node); }

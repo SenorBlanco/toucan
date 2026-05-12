@@ -18,6 +18,76 @@ namespace Toucan {
 
 ASTNode::ASTNode() {}
 
+TypeList* ASTTypeList::Resolve(TypeTable* types) {
+  auto result = new TypeList;
+  for (auto t : types_) {
+    result->push_back(t->Resolve(types));
+  }
+  return result;
+}
+
+ASTIntegerType::ASTIntegerType(uint32_t bits, bool isSigned) : bits_(bits), isSigned_(isSigned) {}
+
+ASTFloatingPointType::ASTFloatingPointType(uint32_t bits) : bits_(bits) {}
+
+ASTBoolType::ASTBoolType() {}
+
+ASTVectorType::ASTVectorType(ASTType* baseType, uint32_t numComponents) : baseType_(baseType), numComponents_(numComponents) {}
+
+ASTMatrixType::ASTMatrixType(ASTVectorType* columnType, uint32_t numColumns) : columnType_(columnType), numColumns_(numColumns) {}
+
+ASTArrayType::ASTArrayType(ASTType* elementType, Expr* numElements) : elementType_(elementType), numElements_(numElements) {}
+
+Type* ASTArrayType::Resolve(TypeTable* types) {
+  uint32_t numElements = 0;
+  if (numElements_) {
+    if (!numElements_->IsIntConstant()) {
+      fprintf(stderr, "array size is not an integer constant\n");
+      return nullptr;
+    }
+    // FIXME: use constant folder
+    numElements = static_cast<IntConstant*>(numElements_)->GetValue();
+  }
+  return types->GetArrayType(elementType_->Resolve(types), numElements, MemoryLayout::Default);
+}
+
+ASTFormalTemplateArg::ASTFormalTemplateArg(std::string name) : name_(name) {}
+
+ASTScopedType::ASTScopedType(ASTType* scope, std::string name) : scope_(scope), name_(name) {}
+Type* ASTScopedType::Resolve(TypeTable* types) {
+  auto type = scope_->Resolve(types);
+  if (type->IsFormalTemplateArg()) {
+    return types->GetUnresolvedScopedType(static_cast<FormalTemplateArg*>(type), name_);
+  }
+  if (!type->IsClass()) {
+    fprintf(stderr, "\"%s\" is not a class type\n", type->ToString().c_str());
+    exit(-1);
+  }
+  Type* scopedType = static_cast<ClassType*>(type)->FindType(name_);
+  if (!type) {
+    fprintf(stderr, "class \"%s\" has no type named \"%s\"\n", type->ToString().c_str(), name_.c_str());
+    exit(-1);
+  }
+  return scopedType;
+}
+
+ASTQualifiedType::ASTQualifiedType(ASTType* baseType, uint32_t qualifiers) : baseType_(baseType), qualifiers_(qualifiers) {}
+
+ASTStrongPtrType::ASTStrongPtrType(ASTType* baseType) : baseType_(baseType) {}
+
+ASTWeakPtrType::ASTWeakPtrType(ASTType* baseType) : baseType_(baseType) {}
+
+ASTRawPtrType::ASTRawPtrType(ASTType* baseType) : baseType_(baseType) {}
+
+ASTClassTemplateInstance::ASTClassTemplateInstance(ASTType* classTemplate, ASTTypeList* templateArgs, NewClassCallback newClassCallback) : classTemplate_(classTemplate), templateArgs_(templateArgs), newClassCallback_(newClassCallback) {}
+
+Type* ASTClassTemplateInstance::Resolve(TypeTable* types) {
+  auto t = classTemplate_->Resolve(types);
+  assert(t->IsClassTemplate());
+  auto args = templateArgs_->Resolve(types);
+  return types->GetClassTemplateInstance(static_cast<ClassTemplate*>(t), *args, newClassCallback_);
+}
+
 Expr::Expr() {}
 
 HeapAllocation::HeapAllocation(Type* type, Expr* length) : type_(type), length_(length) {}

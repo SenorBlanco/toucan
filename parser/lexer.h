@@ -29,6 +29,8 @@ class ArgList;
 class Decls;
 class Expr;
 class Stmt;
+class ASTType;
+class ASTTypeList;
 class UnresolvedInitializer;
 };  // namespace Toucan
 #endif
