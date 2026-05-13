@@ -213,7 +213,7 @@ Result SemanticPass::Visit(ArgList* node) {
 }
 
 Result SemanticPass::Visit(UnresolvedInitializer* node) {
-  Type*              type = node->GetType();
+  Type*              type = node->GetType()->Resolve(types_);
   ArgList*           argList = Resolve(node->GetArgList());
   if (!argList) return nullptr;
 
@@ -859,7 +859,7 @@ void SemanticPass::WidenArgList(std::vector<Expr*>& argList, const VarVector& fo
 }
 
 Result SemanticPass::Visit(UnresolvedNewExpr* node) {
-  Type* type = node->GetType();
+  Type* type = node->GetType()->Resolve(types_);
   if (!type) return nullptr;
   typesToValidate_.push_back({type, node->GetFileLocation()});
   if (type->IsUnsizedArray()) { return Error("cannot allocate unsized array"); }

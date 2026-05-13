@@ -441,15 +441,15 @@ class Initializer : public Expr {
 
 class UnresolvedInitializer : public Expr {
  public:
-  UnresolvedInitializer(Type* type, ArgList* arglist, bool constructor);
+  UnresolvedInitializer(ASTType* type, ArgList* arglist, bool constructor);
   Result   Accept(Visitor* visitor) override;
-  Type*    GetType(TypeTable* types) override { return type_; }
-  Type*    GetType() { return type_; }
+  Type*    GetType(TypeTable* types) override { return type_->Resolve(types); }
+  ASTType* GetType() { return type_; }
   ArgList* GetArgList() { return arglist_; }
   bool     IsConstructor() { return constructor_; }
 
  private:
-  Type*    type_;
+  ASTType* type_;
   ArgList* arglist_;
   bool     constructor_;
 };
@@ -954,16 +954,16 @@ class ReturnStatement : public Stmt {
 
 class UnresolvedNewExpr : public Expr {
  public:
-  UnresolvedNewExpr(Type* type, Expr* length, ArgList* arglist, bool constructor);
+  UnresolvedNewExpr(ASTType* type, Expr* length, ArgList* arglist, bool constructor);
   Result   Accept(Visitor* visitor) override;
   Type*    GetType(TypeTable* types) override;
-  Type*    GetType() { return type_; }
+  ASTType* GetType() { return type_; }
   Expr*    GetLength() { return length_; }
   ArgList* GetArgList() { return arglist_; }
   bool     IsConstructor() const { return constructor_; }
 
  private:
-  Type*    type_;
+  ASTType* type_;
   Expr*    length_;  // used for unsized arrays as last field
   ArgList* arglist_;
   bool     constructor_;

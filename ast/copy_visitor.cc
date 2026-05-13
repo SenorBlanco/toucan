@@ -131,7 +131,7 @@ Result CopyVisitor::Visit(InsertElementExpr* node) {
 }
 
 Result CopyVisitor::Visit(UnresolvedInitializer* node) {
-  Type*    type = ResolveType(node->GetType());
+  ASTType*    type = node->GetType();
   RESOLVE_OR_DIE(argList, node->GetArgList());
 
   return Make<UnresolvedInitializer>(type, argList, node->IsConstructor());
@@ -287,7 +287,7 @@ Result CopyVisitor::Visit(UnresolvedMethodCall* node) {
 }
 
 Result CopyVisitor::Visit(UnresolvedNewExpr* expr) {
-  Type*    type = ResolveType(expr->GetType());
+  ASTType* type = expr->GetType();
   Expr*    length = Resolve(expr->GetLength());
   RESOLVE_OR_DIE(argList, expr->GetArgList());
 

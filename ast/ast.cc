@@ -217,7 +217,7 @@ bool UnaryOp::IsConstant(TypeTable* types) const {
   return type->IsFloatingPoint() || type->IsInteger();
 }
 
-UnresolvedInitializer::UnresolvedInitializer(Type* type, ArgList* arglist, bool constructor)
+UnresolvedInitializer::UnresolvedInitializer(ASTType* type, ArgList* arglist, bool constructor)
     : type_(type), arglist_(arglist), constructor_(constructor) {}
 
 Initializer::Initializer(Type* type, ExprList* arglist) : type_(type), arglist_(arglist) {}
@@ -457,10 +457,10 @@ ForStatement::ForStatement(Stmt* initStmt, Expr* cond, Stmt* loopStmt, Stmt* bod
 
 ReturnStatement::ReturnStatement(Expr* expr) : expr_(expr) {}
 
-UnresolvedNewExpr::UnresolvedNewExpr(Type* type, Expr* length, ArgList* arglist, bool constructor)
+UnresolvedNewExpr::UnresolvedNewExpr(ASTType* type, Expr* length, ArgList* arglist, bool constructor)
     : type_(type), length_(length), arglist_(arglist), constructor_(constructor) {}
 
-Type* UnresolvedNewExpr::GetType(TypeTable* types) { return types->GetStrongPtrType(type_); }
+Type* UnresolvedNewExpr::GetType(TypeTable* types) { return types->GetStrongPtrType(type_->Resolve(types)); }
 
 ClassDecl::ClassDecl(ClassType* classType) : class_(classType) {}
 

@@ -459,13 +459,13 @@ argument:
   ;
 
 initializer:
-    type '(' arguments ')'                  { $$ = Make<UnresolvedInitializer>($1->Resolve(types_), $3, true); }
-  | type '{' arguments '}'                  { $$ = Make<UnresolvedInitializer>($1->Resolve(types_), $3, false); }
+    type '(' arguments ')'                  { $$ = Make<UnresolvedInitializer>($1, $3, true); }
+  | type '{' arguments '}'                  { $$ = Make<UnresolvedInitializer>($1, $3, false); }
   ;
 
 initializer_or_type:
     initializer
-  | type                                    { $$ = Make<UnresolvedInitializer>($1->Resolve(types_), Make<ArgList>(), false); }
+  | type                                    { $$ = Make<UnresolvedInitializer>($1, Make<ArgList>(), false); }
   ;
 
 expr:
