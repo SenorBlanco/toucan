@@ -37,12 +37,11 @@
 #include <llvm/Transforms/Scalar/GVN.h>
 #include <llvm/Transforms/Utils.h>
 
-#include <api/init_api.h>
 #include <ast/ast.h>
 #include <ast/native_class.h>
 #include <ast/semantic_pass.h>
 #include <ast/type.h>
-//#include <bindings/gen_bindings.h>
+#include <bindings/gen_bindings.h>
 #include <codegen/codegen_llvm.h>
 #include <codegen/codegen_spirv.h>
 #include <parser/parser.h>
@@ -93,7 +92,6 @@ int main(int argc, char** argv) {
   TypeTable   types;
   NodeVector  nodes;
   auto              rootStmts = nodes.Make<Stmts>();
-//  InitAPI(&nodes, &types, rootStmts);
   int syntaxErrors = ParseProgram(filename, &nodes, &types, includePaths, rootStmts);
   if (syntaxErrors > 0) { exit(1); }
   types.SetMemoryLayout();
@@ -229,9 +227,9 @@ int main(int argc, char** argv) {
 
       pass.run(*module);
       dest.flush();
- //     std::ofstream headerPlaceholder;
-//      GenBindings bindings(initTypesFile, headerPlaceholder, false);
-//      bindings.Run(codeGenLLVM.GetReferencedTypes());
+      std::ofstream headerPlaceholder;
+      GenBindings bindings(initTypesFile, headerPlaceholder, false);
+      bindings.Run(codeGenLLVM.GetReferencedTypes());
     }
     llvm::llvm_shutdown();
   }
