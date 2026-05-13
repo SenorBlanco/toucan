@@ -35,6 +35,7 @@
 
 #include <api/init_api.h>
 #include <ast/ast.h>
+#include <ast/native_class.h>
 #include <ast/semantic_pass.h>
 #include <ast/type.h>
 #include <codegen/codegen_llvm.h>
@@ -107,6 +108,7 @@ int main(int argc, char** argv) {
   int syntaxErrors = ParseProgram(filename, &nodes, &types, includePaths, rootStmts);
   if (syntaxErrors > 0) { exit(1); }
   types.SetMemoryLayout();
+  InitNativeClasses(rootStmts);
   SemanticPass semanticPass(&nodes, &types);
   rootStmts = semanticPass.Run(rootStmts);
   if (semanticPass.GetNumErrors() > 0) { exit(2); }
