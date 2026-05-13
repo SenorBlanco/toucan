@@ -73,8 +73,7 @@ std::string ConvertType(Type* type, const std::string& str) {
 GenBindings::GenBindings(std::ostream& file,
                          std::ostream& header)
     : file_(file),
-      header_(header),
-      sourcePass_(file_, this) {}
+      header_(header) {}
 
 int GenBindings::EmitType(Type* type) {
   if (!type) return -1;

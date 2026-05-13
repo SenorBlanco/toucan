@@ -19,7 +19,7 @@
 #include <ostream>
 #include <unordered_map>
 
-#include "dump_as_source_pass.h"
+#include <ast/type.h>
 
 namespace Toucan {
 
@@ -46,7 +46,6 @@ class GenBindings {
   std::ostream&                  header_;
   std::unordered_map<Type*, int> typeMap_;
   int                            numTypes_ = 0;
-  DumpAsSourcePass               sourcePass_;
 };
 
 };  // namespace Toucan
