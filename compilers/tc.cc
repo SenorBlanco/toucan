@@ -228,7 +228,7 @@ int main(int argc, char** argv) {
       pass.run(*module);
       dest.flush();
       std::ofstream headerPlaceholder;
-      GenBindings bindings(initTypesFile, headerPlaceholder, false);
+      GenBindings bindings(initTypesFile, headerPlaceholder);
       bindings.Run(codeGenLLVM.GetReferencedTypes());
     }
     llvm::llvm_shutdown();
