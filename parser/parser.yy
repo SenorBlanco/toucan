@@ -27,6 +27,7 @@
 #include <unordered_set>
 
 #include "ast/ast.h"
+#include "ast/template_pass.h"
 #include "ast/type.h"
 #include "ast/type_replacement_pass.h"
 
@@ -904,6 +905,8 @@ static void InstantiateClassTemplates() {
     numSyntaxErrors += pass.NumErrors();
     rootStmts_->Append(Make<ClassDecl>(instance));
   }
+  TemplatePass templatePass(nodes_);
+  rootStmts_->Accept(&templatePass);
 }
 
 int ParseProgram(const char* filename,
