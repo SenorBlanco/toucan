@@ -28,7 +28,7 @@
 
 using namespace Toucan;
 
-extern Type* FindType(const char* str);
+extern ASTType* FindType(const char* str);
 
 std::unordered_map<std::string, std::string> identifiers_;
 
@@ -418,9 +418,9 @@ int lex() {
   while (directive() || macro()) {}
 
   int token = get();
-  Type* type;
+  ASTType* type;
   if (token == T_IDENTIFIER && (type = FindType(yylval.identifier)) != nullptr) {
-    yylval.legacyType = type;
+    yylval.type = type;
     token = T_TYPENAME;
   }
 

@@ -92,7 +92,7 @@ template <typename T, typename... ARGS> T* Make(ARGS&&... args) {
 inline TypeList* Append(TypeList* typeList) {
   types_->AppendTypeList(typeList); return typeList;
 }
-Type* FindType(const char* str) {
+ASTType* FindType(const char* str) {
   for (auto scope : scopeStack_) {
     if (auto type = scope->FindType(str)) return type;
   }
@@ -100,7 +100,7 @@ Type* FindType(const char* str) {
 }
 
 static void DefineType(std::string id, Type* type) {
-  scopeStack_.Top()->DefineType(id, type);
+  scopeStack_.Top()->DefineType(id, Make<ASTLegacyType>(type));
 }
 %}
 
@@ -141,7 +141,7 @@ static void DefineType(std::string id, Type* type) {
 %type <i> method_modifier method_modifiers
 %type <legacyType> opt_parent_class
 %token <identifier> T_IDENTIFIER T_STRING_LITERAL
-%token <legacyType> T_TYPENAME
+%token <type> T_TYPENAME
 %token <i> T_BYTE_LITERAL T_UBYTE_LITERAL T_SHORT_LITERAL T_USHORT_LITERAL
 %token <i> T_INT_LITERAL T_UINT_LITERAL
 %token <f> T_FLOAT_LITERAL
@@ -253,7 +253,7 @@ const_decl_statement:
   ;
 
 simple_type:
-    T_TYPENAME                              { $$ = Make<ASTLegacyType>($1); }
+    T_TYPENAME
   | scalar_type
   | simple_type T_LT types T_GT             { $$ = Make<ASTClassTemplateInstance>($1, $3, OnNewClass); }
   | simple_type T_LT T_INT_LITERAL T_GT     { $$ = Make<ASTVectorType>($1, $3); }
@@ -287,7 +287,7 @@ const_decl_list:
 
 class_header:
     T_CLASS T_IDENTIFIER                    { $$ = DeclareClass($2); }
-  | T_CLASS T_TYPENAME                      { $$ = AsClassType($2); }
+  | T_CLASS T_TYPENAME                      { $$ = AsClassType($2->Resolve(types_)); }
   ;
 
 template_class_header:
@@ -319,7 +319,7 @@ class_body:
 
 enum_header:
     T_ENUM T_IDENTIFIER                     { $$ = DeclareEnum($2); }
-  | T_ENUM T_TYPENAME                       { $$ = AsEnumType($2); }
+  | T_ENUM T_TYPENAME                       { $$ = AsEnumType($2->Resolve(types_)); }
   ;
 
 enum_decl:
@@ -348,9 +348,9 @@ class_body_decl:
     opt_return_type method_body
                                             { $$ = MakeMethodDecl($1, $2, $3, $5, $7, $8, 0, $9); }
   | method_modifiers T_TYPENAME '(' formal_arguments ')' opt_initializer method_body
-                                            { $$ = MakeConstructor($1, $2, $4, $6, $7); }
+                                            { $$ = MakeConstructor($1, $2->Resolve(types_), $4, $6, $7); }
   | method_modifiers '~' T_TYPENAME '(' ')' method_body
-                                            { $$ = MakeDestructor($1, $3, $6); }
+                                            { $$ = MakeDestructor($1, $3->Resolve(types_), $6); }
   | var_decl_statement ';'                  { $$ = $1; }
   | const_decl_statement ';'                { $$ = $1; }
   | enum_decl ';'                           { $$ = 0; }
@@ -804,6 +804,9 @@ static Stmt* EndClass(Stmts* body) {
   auto node = static_cast<ClassDecl*>(scopeStack_.Pop());
   auto classType = node->GetClass();
   ClassPopulator populator(classType);
+  for (auto type : node->GetTypes()) {
+    classType->DefineType(type.first, type.second->Resolve(types_));
+  }
   body->Accept(&populator);
   return node;
 }

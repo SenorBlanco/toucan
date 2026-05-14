@@ -95,13 +95,13 @@ int main(int argc, char** argv) {
   int syntaxErrors = ParseProgram(filename, &nodes, &types, includePaths, rootStmts);
   if (syntaxErrors > 0) { exit(1); }
   types.SetMemoryLayout();
-  InitNativeClasses(rootStmts);
+  InitNativeClasses(rootStmts, &types);
   SemanticPass semanticPass(&nodes, &types);
   rootStmts = semanticPass.Run(rootStmts);
   if (semanticPass.GetNumErrors() > 0) { exit(2); }
   types.ComputeFieldOffsets();
   if (spirv) {
-    Type* t = rootStmts->FindType(classname);
+    Type* t = rootStmts->FindType(classname)->Resolve(&types);
     if (!t) {
       fprintf(stderr, "Class \"%s\" not found.\n", classname.c_str());
       exit(3);

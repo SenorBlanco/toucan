@@ -75,7 +75,7 @@ class ASTIntegerType : public ASTType {
   uint32_t GetBits() const { return bits_; }
   bool     IsSigned() const { return isSigned_; }
   Result   Accept(Visitor* visitor) override;
-  Type*    Resolve(TypeTable* types) { return types->GetInteger(bits_, isSigned_); }
+  Type*    Resolve(TypeTable* types) override { return types->GetInteger(bits_, isSigned_); }
  private:
   uint32_t bits_;
   bool     isSigned_;
@@ -86,7 +86,7 @@ class ASTFloatingPointType : public ASTType {
   ASTFloatingPointType(uint32_t bits);
   uint32_t GetBits() const { return bits_; }
   Result   Accept(Visitor* visitor) override;
-  Type*    Resolve(TypeTable* types) { return types->GetFloatingPoint(bits_); }
+  Type*    Resolve(TypeTable* types) override { return types->GetFloatingPoint(bits_); }
  private:
   uint32_t bits_;
 };
@@ -95,7 +95,7 @@ class ASTBoolType : public ASTType {
  public:
   ASTBoolType();
   Result Accept(Visitor* visitor) override;
-  Type*  Resolve(TypeTable* types) { return types->GetBool(); }
+  Type*  Resolve(TypeTable* types) override { return types->GetBool(); }
 };
 
 class ASTVectorType : public ASTType {
@@ -707,13 +707,18 @@ class Stmt : public ASTNode {
   virtual bool ContainsReturn() const { return false; }
 };
 
+using ASTTypeMap = std::unordered_map<std::string, ASTType*>;
+
 class Scope : public Stmt {
  public:
   Scope();
-  virtual void              DefineType(std::string id, Type* type) = 0;
-  virtual Type*             FindType(const std::string& id) const = 0;
-  virtual bool              IsStmts() const { return false; }
-  virtual bool              IsClassDecl() const { return false; }
+  void              DefineType(std::string id, ASTType* type) { types_[id] = type; }
+  ASTType*          FindType(const std::string& id) const;
+  virtual bool      IsStmts() const { return false; }
+  virtual bool      IsClassDecl() const { return false; }
+  const ASTTypeMap& GetTypes() const { return types_; } //FIXME: remove this
+ private:
+  ASTTypeMap        types_;
 };
 
 class Stmts : public Scope {
@@ -726,8 +731,6 @@ class Stmts : public Scope {
   const std::list<Stmt*>& GetStmts() { return stmts_; }
   void                    AppendConstant(std::string name, Expr* value);
   Expr*                   FindConstant(const std::string& id) const;
-  void                    DefineType(std::string id, Type* type) override { types_[id] = type; }
-  Type*                   FindType(const std::string& id) const override;
   Var*                    FindVar(const std::string& id) const;
   void                    AppendVar(std::shared_ptr<Var> v);
   const VarVector&        GetVars() const { return vars_; }
@@ -971,8 +974,6 @@ class ClassDecl : public Scope {
                     ClassDecl(ClassType* classType);
   Result            Accept(Visitor* visitor) override;
   ClassType*        GetClass() const { return class_; }
-  void              DefineType(std::string id, Type* type) override { class_->DefineType(id, type); }
-  Type*             FindType(const std::string& id) const override { return class_->FindType(id); }
   bool              IsClassDecl() const override { return true; }
  private:
   ClassType* class_;

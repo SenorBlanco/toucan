@@ -21,6 +21,7 @@ namespace Toucan {
 
 class ClassType;
 class Scope;
+class TypeTable;
 
 class NativeClass {
  public:
@@ -56,7 +57,7 @@ class NativeClass {
   static ClassType* Window;
 };
 
-void InitNativeClasses(Scope* scope);
+void InitNativeClasses(Scope* scope, TypeTable* types);
 
 };  // namespace Toucan
 #endif

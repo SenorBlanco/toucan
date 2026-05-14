@@ -50,9 +50,11 @@ ClassType* NativeClass::TextureCube;
 ClassType* NativeClass::VertexInput;
 ClassType* NativeClass::Window;
 
-void InitNativeClasses(Scope* scope) {
-  auto findClassType = [scope](const char* id) -> ClassType* {
-    return static_cast<ClassType*>(scope->FindType(id));
+void InitNativeClasses(Scope* scope, TypeTable* types) {
+  auto findClassType = [scope, types](const char* id) -> ClassType* {
+    auto* c = scope->FindType(id);
+    if (c == nullptr) return nullptr;
+    return static_cast<ClassType*>(c->Resolve(types));
   };
   NativeClass::BindGroup = findClassType("BindGroup");
   NativeClass::Buffer = findClassType("Buffer");

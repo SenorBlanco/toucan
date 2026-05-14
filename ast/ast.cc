@@ -396,16 +396,16 @@ Type* NullConstant::GetType(TypeTable* types) { return types->GetStrongPtrType(t
 
 Scope::Scope() {}
 
+ASTType* Scope::FindType(const std::string& identifier) const {
+  auto i = types_.find(identifier);
+  if (i != types_.end()) { return i->second; }
+  return nullptr;
+}
+
 Stmts::Stmts() {}
 
 void Stmts::Splice(Stmts* stmts) {
   stmts_.splice(stmts_.end(), std::move(stmts->stmts_));
-}
-
-Type* Stmts::FindType(const std::string& identifier) const {
-  auto i = types_.find(identifier);
-  if (i != types_.end()) { return i->second; }
-  return nullptr;
 }
 
 void Stmts::AppendVar(std::shared_ptr<Var> var) { vars_.push_back(var); }
