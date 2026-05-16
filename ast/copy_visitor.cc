@@ -264,7 +264,7 @@ Result CopyVisitor::Visit(MethodCall* node) {
 }
 
 Result CopyVisitor::Visit(ClassDecl* node) {
-  return Make<ClassDecl>(node->GetClass());
+  return Make<ClassDecl>(node->GetClass(), Resolve(node->GetParent()));
 }
 
 Result CopyVisitor::Visit(UnresolvedDot* node) {

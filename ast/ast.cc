@@ -462,7 +462,7 @@ UnresolvedNewExpr::UnresolvedNewExpr(Type* type, Expr* length, ArgList* arglist,
 
 Type* UnresolvedNewExpr::GetType(TypeTable* types) { return types->GetStrongPtrType(type_); }
 
-ClassDecl::ClassDecl(ClassType* classType) : class_(classType) {}
+ClassDecl::ClassDecl(ClassType* classType, ASTType* parent) : class_(classType), parent_(parent) {}
 
 NodeVector::NodeVector() {}
 

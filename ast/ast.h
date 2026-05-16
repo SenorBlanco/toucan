@@ -65,6 +65,7 @@ class ASTTypeList : public ASTNode {
   void Append(ASTType* type) { types_.push_back(type); }
   Result    Accept(Visitor* visitor) override { return nullptr; }
   TypeList* Resolve(TypeTable* types);
+  const std::vector<ASTType*> GetTypes() const { return types_; }
  private:
   std::vector<ASTType*> types_;
 };
@@ -971,12 +972,14 @@ class UnresolvedNewExpr : public Expr {
 
 class ClassDecl : public Scope {
  public:
-                    ClassDecl(ClassType* classType);
+                    ClassDecl(ClassType* classType, ASTType* parent);
   Result            Accept(Visitor* visitor) override;
   ClassType*        GetClass() const { return class_; }
+  ASTType*          GetParent() const { return parent_; }
   bool              IsClassDecl() const override { return true; }
  private:
   ClassType* class_;
+  ASTType*   parent_;
 };
 
 class UnaryOp : public Expr {

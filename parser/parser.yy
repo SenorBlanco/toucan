@@ -56,9 +56,9 @@ static Stmt* MakeReturnStatement(Expr* expr);
 static Expr* MakeStaticMethodCall(Type* type, const char *id, ArgList* arguments);
 static ClassType* DeclareClass(const char* id);
 static EnumType* DeclareEnum(const char* id);
-static void DeclareUsing(const char* id, Type* type);
-static void BeginClass(Type* type, ClassType* parent);
-static ClassType*  BeginClassTemplate(TypeList* templateArgs, const char* id);
+static void DeclareUsing(const char* id, ASTType* type);
+static void BeginClass(Type* type, ASTType* parent);
+static ClassType*  BeginClassTemplate(ASTTypeList* templateArgs, const char* id);
 static Stmt* EndClass(Stmts* body);
 static void BeginEnum(Type* e);
 static void AppendEnum(const char* id);
@@ -99,8 +99,13 @@ ASTType* FindType(const char* str) {
   return nullptr;
 }
 
+// FIXME: remove this
 static void DefineType(std::string id, Type* type) {
   scopeStack_.Top()->DefineType(id, Make<ASTLegacyType>(type));
+}
+
+static void DefineType(std::string id, ASTType* type) {
+  scopeStack_.Top()->DefineType(id, type);
 }
 %}
 
@@ -121,7 +126,7 @@ static void DefineType(std::string id, Type* type) {
     Toucan::ASTTypeList* typeList;
 };
 
-%type <type> scalar_type type simple_type
+%type <type> scalar_type type simple_type opt_parent_class
 %type <legacyType> legacy_type class_header template_class_header enum_header opt_return_type
 %type <expr> expr opt_expr assignable expr_or_list opt_initializer opt_length list_initializer
 %type <initializer> initializer initializer_or_type
@@ -139,7 +144,6 @@ static void DefineType(std::string id, Type* type) {
 %type <typeList> template_formal_arguments
 %type <i> type_qualifier type_qualifiers opt_type_qualifiers
 %type <i> method_modifier method_modifiers
-%type <legacyType> opt_parent_class
 %token <identifier> T_IDENTIFIER T_STRING_LITERAL
 %token <type> T_TYPENAME
 %token <i> T_BYTE_LITERAL T_UBYTE_LITERAL T_SHORT_LITERAL T_USHORT_LITERAL
@@ -292,7 +296,7 @@ class_header:
 
 template_class_header:
     T_CLASS T_IDENTIFIER T_LT template_formal_arguments T_GT
-                                            { $$ = BeginClassTemplate($4->Resolve(types_), $2); }
+                                            { $$ = BeginClassTemplate($4, $2); }
   ;
 
 class_forward_decl:
@@ -300,15 +304,15 @@ class_forward_decl:
   ;
 
 class_decl:
-    class_header opt_parent_class '{'           { BeginClass($1, AsClassType($2)); }
+    class_header opt_parent_class '{'           { BeginClass($1, $2); }
     class_body '}'                              { $$ = EndClass($5); }
-  | template_class_header opt_parent_class  '{' { AsClassType($1)->SetParent(AsClassType($2)); }
+  | template_class_header opt_parent_class  '{' { if ($2) AsClassType($1)->SetParent(AsClassType($2->Resolve(types_))); }
     class_body '}'                              { $$ = EndClass($5); }
   ;
   ;
 
 opt_parent_class:
-    ':' simple_type                         { $$ = $2->Resolve(types_); }
+    ':' simple_type                         { $$ = $2; }
   | /* nothing */                           { $$ = nullptr; }
   ;
 
@@ -335,7 +339,7 @@ enum_list:
   ;
 
 using_decl:
-    T_USING T_IDENTIFIER '=' legacy_type ';'       { DeclareUsing($2, $4); }
+    T_USING T_IDENTIFIER '=' type ';'       { DeclareUsing($2, $4); }
   ;
 
 opt_return_type:
@@ -737,29 +741,29 @@ static EnumType* DeclareEnum(const char *id) {
   return e;
 }
 
-static void DeclareUsing(const char *id, Type* type) {
+static void DeclareUsing(const char *id, ASTType* type) {
   assert(!FindType(id));
   DefineType(id, type);
 }
 
-static void BeginClass(Type* t, ClassType* parent) {
+static void BeginClass(Type* t, ASTType* parent) {
   ClassType* c = static_cast<ClassType*>(t);
   if (c->IsDefined()) {
     yyerrorf("class \"%s\" already has a definition", c->GetName().c_str());
     return;
   }
-  c->SetParent(parent);
+  if (parent) c->SetParent(AsClassType(parent->Resolve(types_)));
   c->SetDefined(true);
-  scopeStack_.Push(Make<ClassDecl>(c));
+  scopeStack_.Push(Make<ClassDecl>(c, parent));
 }
 
-static ClassType* BeginClassTemplate(TypeList* templateArgs, const char* id) {
-  ClassTemplate* t = types_->Make<ClassTemplate>(id, *templateArgs);
+static ClassType* BeginClassTemplate(ASTTypeList* templateArgs, const char* id) {
+  ClassTemplate* t = types_->Make<ClassTemplate>(id, *templateArgs->Resolve(types_));
   DefineType(id, t);
   t->SetDefined(true);
-  scopeStack_.Push(Make<ClassDecl>(t));
-  for (Type* const& i : *templateArgs) {
-    auto type = static_cast<FormalTemplateArg*>(i);
+  scopeStack_.Push(Make<ClassDecl>(t, nullptr));
+  for (ASTType* const& i : templateArgs->GetTypes()) {
+    auto type = static_cast<ASTFormalTemplateArg*>(i);
     DefineType(type->GetName(), type);
   }
   return t;
@@ -902,7 +906,8 @@ static void InstantiateClassTemplates() {
     TypeReplacementPass pass(nodes_, types_, classTemplate->GetFormalTemplateArgs(), instance->GetTemplateArgs(), &OnNewClass);
     pass.ResolveClassInstance(classTemplate, instance);
     numSyntaxErrors += pass.NumErrors();
-    rootStmts_->Append(Make<ClassDecl>(instance));
+    // FIXME: parent is wrong, but this won't be used by the old template code anyway
+    rootStmts_->Append(Make<ClassDecl>(instance, nullptr));
   }
 }
 
