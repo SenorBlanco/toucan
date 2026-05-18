@@ -149,7 +149,6 @@ error-invalid-class-casts.t:14:  cannot store a value of type "null" to a locati
 error-invalid-class-casts.t:17:  cannot store a value of type "*Base2" to a location of type "*Base"
 error-invalid-class-casts.t:19:  cannot store a value of type "*Derived" to a location of type "*Derived2"
 test/error-invalid-forward-decl.t
-error-invalid-forward-decl.t:5: type is already declared as non-class
 error-invalid-forward-decl.t:8: type is already declared as non-enum
 test/error-invalid-return-value.t
 error-invalid-return-value.t:4:  cannot return a value of type &int from a function of type ^int

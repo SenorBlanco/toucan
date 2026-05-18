@@ -28,6 +28,7 @@ namespace Toucan {
 
 struct Var;
 
+class ClassDecl;
 class Visitor;
 
 using Result = std::variant<void*, uint32_t>;
@@ -48,6 +49,7 @@ class ASTNode {
 class ASTType : public ASTNode {
  public:
   virtual Type* Resolve(TypeTable* types) = 0;
+  virtual bool  IsClass() const { return false; }
 };
 
 class ASTLegacyType : public ASTType {
@@ -126,13 +128,33 @@ class ASTMatrixType : public ASTType {
 class ASTArrayType : public ASTType {
  public:
   ASTArrayType(ASTType* elementType, Expr* numElements);
-  Result     Accept(Visitor* visitor) override;
-  Type*      Resolve(TypeTable* types) override;
   ASTType*   GetElementType() const { return elementType_; }
   Expr*      GetNumElements() const { return numElements_; }
+  Result     Accept(Visitor* visitor) override;
+  Type*      Resolve(TypeTable* types) override;
  private:
   ASTType*   elementType_;
   Expr*      numElements_;
+};
+
+class ASTClassType : public ASTType {
+ public:
+  ASTClassType(ClassDecl* decl);
+  ClassDecl* GetDecl() const { return decl_; }
+  bool       IsClass() const override { return true; }
+  Result     Accept(Visitor* visitor) override;
+  Type*      Resolve(TypeTable* types) override;
+ private:
+  ClassDecl* decl_;
+};
+
+class ASTClassTemplate : public ASTClassType {
+ public:
+  ASTClassTemplate(ClassDecl* decl, ASTTypeList* formalTemplateArgs);
+  Result       Accept(Visitor* visitor) override;
+  Type*        Resolve(TypeTable* types) override;
+ private:
+  ASTTypeList* formalTemplateArgs_;
 };
 
 class ASTFormalTemplateArg : public ASTType {
@@ -972,14 +994,16 @@ class UnresolvedNewExpr : public Expr {
 
 class ClassDecl : public Scope {
  public:
-                    ClassDecl(ClassType* classType, ASTType* parent);
+                    ClassDecl();
   Result            Accept(Visitor* visitor) override;
   ClassType*        GetClass() const { return class_; }
+  void              SetClass(ClassType* classType) { class_ = classType; }
   ASTType*          GetParent() const { return parent_; }
+  void              SetParent(ASTType* parent) { parent_ = parent; }
   bool              IsClassDecl() const override { return true; }
  private:
-  ClassType* class_;
-  ASTType*   parent_;
+  ClassType* class_ = nullptr;
+  ASTType*   parent_ = nullptr;
 };
 
 class UnaryOp : public Expr {
@@ -1023,7 +1047,9 @@ class Visitor {
  public:
   virtual Result Visit(ASTArrayType* node) { return Default(node); }
   virtual Result Visit(ASTBoolType* node) { return Default(node); }
+  virtual Result Visit(ASTClassTemplate* node) { return Default(node); }
   virtual Result Visit(ASTClassTemplateInstance* node) { return Default(node); }
+  virtual Result Visit(ASTClassType* node) { return Default(node); }
   virtual Result Visit(ASTFloatingPointType* node) { return Default(node); }
   virtual Result Visit(ASTFormalTemplateArg* node) { return Default(node); }
   virtual Result Visit(ASTIntegerType* node) { return Default(node); }

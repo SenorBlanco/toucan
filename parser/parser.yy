@@ -54,11 +54,11 @@ static Expr* UnOp(UnaryOp::Op op, Expr* expr);
 static Expr* IncDec(IncDecExpr::Op op, bool pre, Expr* expr);
 static Stmt* MakeReturnStatement(Expr* expr);
 static Expr* MakeStaticMethodCall(Type* type, const char *id, ArgList* arguments);
-static ClassType* DeclareClass(const char* id);
+static ASTClassType* DeclareClass(const char* id);
 static EnumType* DeclareEnum(const char* id);
 static void DeclareUsing(const char* id, ASTType* type);
-static void BeginClass(Type* type, ASTType* parent);
-static ClassType*  BeginClassTemplate(ASTTypeList* templateArgs, const char* id);
+static void BeginClass(ASTType* type, ASTType* parent);
+static ASTClassTemplate* BeginClassTemplate(ASTTypeList* templateArgs, const char* id);
 static Stmt* EndClass(Stmts* body);
 static void BeginEnum(Type* e);
 static void AppendEnum(const char* id);
@@ -123,11 +123,13 @@ static void DefineType(std::string id, ASTType* type) {
     Toucan::UnresolvedInitializer* initializer;
     Toucan::Type*        legacyType;
     Toucan::ASTType*     type;
+    Toucan::ASTClassTemplate* classTemplate;
     Toucan::ASTTypeList* typeList;
 };
 
-%type <type> scalar_type type simple_type opt_parent_class
-%type <legacyType> legacy_type class_header template_class_header enum_header opt_return_type
+%type <type> scalar_type type simple_type opt_parent_class class_header
+%type <legacyType> legacy_type enum_header opt_return_type
+%type <classTemplate> template_class_header
 %type <expr> expr opt_expr assignable expr_or_list opt_initializer opt_length list_initializer
 %type <initializer> initializer initializer_or_type
 %type <arg> argument
@@ -291,7 +293,7 @@ const_decl_list:
 
 class_header:
     T_CLASS T_IDENTIFIER                    { $$ = DeclareClass($2); }
-  | T_CLASS T_TYPENAME                      { $$ = AsClassType($2->Resolve(types_)); }
+  | T_CLASS T_TYPENAME                      { $$ = $2; }
   ;
 
 template_class_header:
@@ -306,9 +308,8 @@ class_forward_decl:
 class_decl:
     class_header opt_parent_class '{'           { BeginClass($1, $2); }
     class_body '}'                              { $$ = EndClass($5); }
-  | template_class_header opt_parent_class  '{' { if ($2) AsClassType($1)->SetParent(AsClassType($2->Resolve(types_))); }
+  | template_class_header opt_parent_class  '{' { if ($2) $1->GetDecl()->SetParent($2); }
     class_body '}'                              { $$ = EndClass($5); }
-  ;
   ;
 
 opt_parent_class:
@@ -425,7 +426,7 @@ non_empty_formal_arguments:
   ;
 
 var_decl:
-    T_IDENTIFIER ':' legacy_type                   { $$ = Make<VarDeclaration>($1, $3, nullptr); }
+    T_IDENTIFIER ':' legacy_type            { $$ = Make<VarDeclaration>($1, $3, nullptr); }
   | T_IDENTIFIER '=' expr_or_list           { $$ = Make<VarDeclaration>($1, types_->GetAuto(), $3); }
   | T_IDENTIFIER ':' legacy_type '=' expr_or_list  { $$ = Make<VarDeclaration>($1, $3, $5); }
   ;
@@ -727,11 +728,14 @@ static Expr* MakeStaticMethodCall(Type* type, const char* id, ArgList* arguments
   return Make<UnresolvedStaticMethodCall>(static_cast<ClassType*>(type), id, arguments);
 }
 
-static ClassType* DeclareClass(const char *id) {
+static ASTClassType* DeclareClass(const char *id) {
   assert(!FindType(id));
-  ClassType* c = types_->Make<ClassType>(id);
-  DefineType(id, c);
-  return c;
+  auto classDecl = Make<ClassDecl>();
+  // FIXME: remove ClassType here
+  classDecl->SetClass(types_->Make<ClassType>(id));
+  auto result = Make<ASTClassType>(classDecl);
+  DefineType(id, Make<ASTClassType>(classDecl));
+  return result;
 }
 
 static EnumType* DeclareEnum(const char *id) {
@@ -746,27 +750,36 @@ static void DeclareUsing(const char *id, ASTType* type) {
   DefineType(id, type);
 }
 
-static void BeginClass(Type* t, ASTType* parent) {
-  ClassType* c = static_cast<ClassType*>(t);
-  if (c->IsDefined()) {
-    yyerrorf("class \"%s\" already has a definition", c->GetName().c_str());
+static void BeginClass(ASTType* t, ASTType* parent) {
+  if (!t->IsClass()) {
+    yyerrorf("expected class, not %s", t->Resolve(types_)->ToString().c_str());
     return;
   }
-  if (parent) c->SetParent(AsClassType(parent->Resolve(types_)));
-  c->SetDefined(true);
-  scopeStack_.Push(Make<ClassDecl>(c, parent));
+  ASTClassType* c = static_cast<ASTClassType*>(t);
+//  if (c->IsDefined()) {
+//    yyerrorf("class \"%s\" already has a definition", c->GetName().c_str());
+//    return;
+//  }
+  auto decl = c->GetDecl();
+  if (parent) decl->SetParent(parent);
+//  c->SetDefined(true);
+  scopeStack_.Push(decl);
 }
 
-static ClassType* BeginClassTemplate(ASTTypeList* templateArgs, const char* id) {
+static ASTClassTemplate* BeginClassTemplate(ASTTypeList* templateArgs, const char* id) {
+  auto decl = Make<ClassDecl>();
+  auto result = Make<ASTClassTemplate>(decl, templateArgs);
+  DefineType(id, result);
+  // FIXME: remove this
   ClassTemplate* t = types_->Make<ClassTemplate>(id, *templateArgs->Resolve(types_));
-  DefineType(id, t);
+  decl->SetClass(t);
   t->SetDefined(true);
-  scopeStack_.Push(Make<ClassDecl>(t, nullptr));
+  scopeStack_.Push(decl);
   for (ASTType* const& i : templateArgs->GetTypes()) {
     auto type = static_cast<ASTFormalTemplateArg*>(i);
     DefineType(type->GetName(), type);
   }
-  return t;
+  return result;
 }
 
 class ClassPopulator : public Visitor {
@@ -807,6 +820,7 @@ class ClassPopulator : public Visitor {
 static Stmt* EndClass(Stmts* body) {
   auto node = static_cast<ClassDecl*>(scopeStack_.Pop());
   auto classType = node->GetClass();
+  if (node->GetParent()) classType->SetParent(AsClassType(node->GetParent()->Resolve(types_)));
   ClassPopulator populator(classType);
   for (auto type : node->GetTypes()) {
     classType->DefineType(type.first, type.second->Resolve(types_));
@@ -906,8 +920,9 @@ static void InstantiateClassTemplates() {
     TypeReplacementPass pass(nodes_, types_, classTemplate->GetFormalTemplateArgs(), instance->GetTemplateArgs(), &OnNewClass);
     pass.ResolveClassInstance(classTemplate, instance);
     numSyntaxErrors += pass.NumErrors();
-    // FIXME: parent is wrong, but this won't be used by the old template code anyway
-    rootStmts_->Append(Make<ClassDecl>(instance, nullptr));
+    auto decl = Make<ClassDecl>();
+    decl->SetClass(instance);
+    rootStmts_->Append(decl);
   }
 }
 

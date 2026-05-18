@@ -29,6 +29,7 @@ class ArgList;
 class Decls;
 class Expr;
 class Stmt;
+class ASTClassTemplate;
 class ASTType;
 class ASTTypeList;
 class UnresolvedInitializer;

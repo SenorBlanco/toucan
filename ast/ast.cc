@@ -81,6 +81,8 @@ ASTWeakPtrType::ASTWeakPtrType(ASTType* baseType) : ASTPtrType(baseType) {}
 
 ASTRawPtrType::ASTRawPtrType(ASTType* baseType) : ASTPtrType(baseType) {}
 
+ASTClassTemplate::ASTClassTemplate(ClassDecl* decl, ASTTypeList* formalTemplateArgs) : ASTClassType(decl), formalTemplateArgs_(formalTemplateArgs) {}
+
 ASTClassTemplateInstance::ASTClassTemplateInstance(ASTType* classTemplate, ASTTypeList* templateArgs, NewClassCallback newClassCallback) : classTemplate_(classTemplate), templateArgs_(templateArgs), newClassCallback_(newClassCallback) {}
 
 Type* ASTClassTemplateInstance::Resolve(TypeTable* types) {
@@ -89,6 +91,12 @@ Type* ASTClassTemplateInstance::Resolve(TypeTable* types) {
   auto args = templateArgs_->Resolve(types);
   return types->GetClassTemplateInstance(static_cast<ClassTemplate*>(t), *args, newClassCallback_);
 }
+
+ASTClassType::ASTClassType(ClassDecl* decl) : decl_(decl) {}
+
+Type* ASTClassType::Resolve(TypeTable* types) { return decl_->GetClass(); }
+
+Type* ASTClassTemplate::Resolve(TypeTable* types) { return GetDecl()->GetClass(); }
 
 Expr::Expr() {}
 
@@ -462,7 +470,7 @@ UnresolvedNewExpr::UnresolvedNewExpr(Type* type, Expr* length, ArgList* arglist,
 
 Type* UnresolvedNewExpr::GetType(TypeTable* types) { return types->GetStrongPtrType(type_); }
 
-ClassDecl::ClassDecl(ClassType* classType, ASTType* parent) : class_(classType), parent_(parent) {}
+ClassDecl::ClassDecl() {}
 
 NodeVector::NodeVector() {}
 
@@ -470,7 +478,9 @@ ScopeStack::ScopeStack() {}
 
 Result ASTArrayType::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ASTBoolType::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result ASTClassTemplate::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ASTClassTemplateInstance::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result ASTClassType::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ASTFloatingPointType::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ASTFormalTemplateArg::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ASTIntegerType::Accept(Visitor* visitor) { return visitor->Visit(this); }
