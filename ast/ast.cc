@@ -81,6 +81,25 @@ ASTWeakPtrType::ASTWeakPtrType(ASTType* baseType) : ASTPtrType(baseType) {}
 
 ASTRawPtrType::ASTRawPtrType(ASTType* baseType) : ASTPtrType(baseType) {}
 
+ASTEnumType::ASTEnumType(std::string name) : name_(name) {}
+
+void ASTEnumType::Append(std::string id) {
+  values_.push_back(ASTEnumValue(this, id, nextValue_++));
+}
+
+void ASTEnumType::Append(std::string id, int value) {
+  values_.push_back(ASTEnumValue(this, id, value));
+  nextValue_ = value + 1;
+}
+
+Type* ASTEnumType::Resolve(TypeTable* types) {
+  EnumType* result = types->Make<EnumType>(name_);
+  for (auto value : values_) {
+    result->Append(value.id, value.value);
+  }
+  return result;
+}
+
 ASTClassTemplate::ASTClassTemplate(ClassDecl* decl, ASTTypeList* formalTemplateArgs) : ASTClassType(decl), formalTemplateArgs_(formalTemplateArgs) {}
 
 ASTClassTemplateInstance::ASTClassTemplateInstance(ASTType* classTemplate, ASTTypeList* templateArgs, NewClassCallback newClassCallback) : classTemplate_(classTemplate), templateArgs_(templateArgs), newClassCallback_(newClassCallback) {}
@@ -481,6 +500,7 @@ Result ASTBoolType::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ASTClassTemplate::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ASTClassTemplateInstance::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ASTClassType::Accept(Visitor* visitor) { return visitor->Visit(this); }
+Result ASTEnumType::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ASTFloatingPointType::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ASTFormalTemplateArg::Accept(Visitor* visitor) { return visitor->Visit(this); }
 Result ASTIntegerType::Accept(Visitor* visitor) { return visitor->Visit(this); }

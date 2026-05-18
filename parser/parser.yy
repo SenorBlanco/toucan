@@ -45,7 +45,7 @@ static Stmts* rootStmts_;
 static std::unordered_set<std::string> includedFiles_;
 static std::stack<FileLocation> fileStack_;
 static std::queue<ClassType*> instanceQueue_;
-static EnumType* currentEnumType_;
+static ASTEnumType* currentEnumType_;
 
 #define yylex lex
 
@@ -55,12 +55,12 @@ static Expr* IncDec(IncDecExpr::Op op, bool pre, Expr* expr);
 static Stmt* MakeReturnStatement(Expr* expr);
 static Expr* MakeStaticMethodCall(Type* type, const char *id, ArgList* arguments);
 static ASTClassType* DeclareClass(const char* id);
-static EnumType* DeclareEnum(const char* id);
+static ASTEnumType* DeclareEnum(const char* id);
 static void DeclareUsing(const char* id, ASTType* type);
 static void BeginClass(ASTType* type, ASTType* parent);
 static ASTClassTemplate* BeginClassTemplate(ASTTypeList* templateArgs, const char* id);
 static Stmt* EndClass(Stmts* body);
-static void BeginEnum(Type* e);
+static void BeginEnum(ASTType* e);
 static void AppendEnum(const char* id);
 static void AppendEnum(const char* id, int value);
 static void EndEnum();
@@ -81,7 +81,7 @@ static Expr* InlineFile(const char* filename);
 static Expr* StringLiteral(const char* str);
 static void OnNewClass(ClassType* classType);
 static ClassType* AsClassType(Type* type);
-static EnumType* AsEnumType(Type* type);
+static ASTEnumType* AsEnumType(ASTType* type);
 static ClassTemplate* AsClassTemplate(Type* type);
 
 template <typename T, typename... ARGS> T* Make(ARGS&&... args) {
@@ -127,8 +127,8 @@ static void DefineType(std::string id, ASTType* type) {
     Toucan::ASTTypeList* typeList;
 };
 
-%type <type> scalar_type type simple_type opt_parent_class class_header
-%type <legacyType> legacy_type enum_header opt_return_type
+%type <type> scalar_type type simple_type opt_parent_class class_header enum_header
+%type <legacyType> legacy_type opt_return_type
 %type <classTemplate> template_class_header
 %type <expr> expr opt_expr assignable expr_or_list opt_initializer opt_length list_initializer
 %type <initializer> initializer initializer_or_type
@@ -324,13 +324,14 @@ class_body:
 
 enum_header:
     T_ENUM T_IDENTIFIER                     { $$ = DeclareEnum($2); }
-  | T_ENUM T_TYPENAME                       { $$ = AsEnumType($2->Resolve(types_)); }
+  | T_ENUM T_TYPENAME                       { $$ = AsEnumType($2); }
   ;
 
 enum_decl:
     enum_header '{'                         { BeginEnum($1); }
     enum_list '}'                           { EndEnum(); }
   ;
+
 enum_list:
     enum_list ',' T_IDENTIFIER                     { AppendEnum($3); }
   | enum_list ',' T_IDENTIFIER '=' T_INT_LITERAL   { AppendEnum($3, $5); }
@@ -738,11 +739,11 @@ static ASTClassType* DeclareClass(const char *id) {
   return result;
 }
 
-static EnumType* DeclareEnum(const char *id) {
+static ASTEnumType* DeclareEnum(const char *id) {
   assert(!FindType(id));
-  EnumType* e = types_->Make<EnumType>(id);
-  DefineType(id, e);
-  return e;
+  auto enumType = Make<ASTEnumType>(id);
+  DefineType(id, enumType);
+  return enumType;
 }
 
 static void DeclareUsing(const char *id, ASTType* type) {
@@ -829,11 +830,14 @@ static Stmt* EndClass(Stmts* body) {
   return node;
 }
 
-static void BeginEnum(Type* t) {
-  currentEnumType_ = static_cast<EnumType*>(t);
+static void BeginEnum(ASTType* t) {
+  currentEnumType_ = static_cast<ASTEnumType*>(t);
 }
 
 static void EndEnum() {
+  // FIXME: this shouldn't be necessary, but something is awry in the type ordering
+  // and enums end up defined in api.h after structs (classes) that use them
+  currentEnumType_->Resolve(types_);
   currentEnumType_ = nullptr;
 }
 
@@ -962,12 +966,12 @@ static ClassType* AsClassType(Type* type) {
   return static_cast<ClassType*>(type);
 }
 
-static EnumType* AsEnumType(Type* type) {
+static ASTEnumType* AsEnumType(ASTType* type) {
   if (type && !type->IsEnum()) {
     yyerrorf("type is already declared as non-enum");
     return nullptr;
   }
-  return static_cast<EnumType*>(type);
+  return static_cast<ASTEnumType*>(type);
 }
 
 static ClassTemplate* AsClassTemplate(Type* type) {

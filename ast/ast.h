@@ -50,6 +50,7 @@ class ASTType : public ASTNode {
  public:
   virtual Type* Resolve(TypeTable* types) = 0;
   virtual bool  IsClass() const { return false; }
+  virtual bool  IsEnum() const { return false; }
 };
 
 class ASTLegacyType : public ASTType {
@@ -135,6 +136,35 @@ class ASTArrayType : public ASTType {
  private:
   ASTType*   elementType_;
   Expr*      numElements_;
+};
+
+class ASTEnumType;
+
+struct ASTEnumValue {
+  ASTEnumValue(ASTEnumType* t, std::string i, int v) : type(t), id(i), value(v) {}
+  ASTEnumType*   type;
+  std::string    id;
+  int            value;
+};
+
+typedef std::vector<ASTEnumValue> ASTEnumValueVector;
+
+class ASTEnumType : public ASTType {
+ public:
+  ASTEnumType(std::string name);
+  std::string               GetName() { return name_; }
+  void                      Append(std::string identifier);
+  void                      Append(std::string identifier, int value);
+  const ASTEnumValueVector& GetValues() { return values_; }
+  const ASTEnumValue*       FindValue(const std::string& id);
+  Result                    Accept(Visitor* visitor) override;
+  Type*                     Resolve(TypeTable* types) override;
+  bool                      IsEnum() const override { return true; }
+
+ private:
+  ASTEnumValueVector values_;
+  int                nextValue_ = 0;
+  std::string        name_;
 };
 
 class ASTClassType : public ASTType {
@@ -1050,6 +1080,7 @@ class Visitor {
   virtual Result Visit(ASTClassTemplate* node) { return Default(node); }
   virtual Result Visit(ASTClassTemplateInstance* node) { return Default(node); }
   virtual Result Visit(ASTClassType* node) { return Default(node); }
+  virtual Result Visit(ASTEnumType* node) { return Default(node); }
   virtual Result Visit(ASTFloatingPointType* node) { return Default(node); }
   virtual Result Visit(ASTFormalTemplateArg* node) { return Default(node); }
   virtual Result Visit(ASTIntegerType* node) { return Default(node); }
