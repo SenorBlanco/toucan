@@ -558,7 +558,9 @@ Expr* SemanticPass::ResolveListExpr(ArgList* argList, Type* dstType) {
 
 Result SemanticPass::Visit(UnresolvedMethodCall* node) {
   std::string id = node->GetID();
-  Expr*       expr = Resolve(node->GetExpr());
+  Expr*       expr = node->GetExpr();
+  if (!expr) expr = Make<UnresolvedIdentifier>("this");
+  expr = Resolve(expr);
   if (!expr) return nullptr;
   ArgList* arglist = Resolve(node->GetArgList());
   if (!arglist) return nullptr;
