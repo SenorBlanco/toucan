@@ -178,7 +178,6 @@ void CodeGenLLVM::Run(Stmts* stmts) {
   stmts->Accept(this);
   while (!pendingMethods_.empty()) {
     Method* m = pendingMethods_.front();
-    printf("generating code for %s\n", m->mangledName.c_str());
     pendingMethods_.pop_front();
     GenCodeForMethod(m);
   }
@@ -505,7 +504,6 @@ llvm::Function* CodeGenLLVM::GetOrCreateMethodStub(Method* method) {
   } else {
     functions_[method] = function;
   }
-  printf("appending method %s\n", method->mangledName.c_str());
   pendingMethods_.push_back(method);
 
   return function;
@@ -1192,9 +1190,14 @@ Result CodeGenLLVM::Visit(StoreStmt* stmt) {
 }
 
 void CodeGenLLVM::CallSystemAbort() {
-  llvm::Type* voidType = llvm::Type::getVoidTy(*context_);
-  llvm::FunctionType* ft = llvm::FunctionType::get(voidType, false);
-  llvm::FunctionCallee systemAbort = module_->getOrInsertFunction("System_Abort", ft);
+  auto systemAbort = nativeFunctions_["System_Abort"];
+  if (!systemAbort) {
+    llvm::Type* voidType = llvm::Type::getVoidTy(*context_);
+    llvm::FunctionType* ft = llvm::FunctionType::get(voidType, false);
+    systemAbort = llvm::Function::Create(ft, llvm::GlobalValue::ExternalLinkage,
+                                      "System_Abort", module_);
+    nativeFunctions_["System_Abort"] = systemAbort;
+  }
   builder_->CreateCall(systemAbort, {});
 }
 

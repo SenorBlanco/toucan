@@ -1,4 +1,7 @@
 test/abort-on-assert-failure.t
+test/abort-on-assert-failure.t:4: assertion failed
+  Y__Y
+--\__(x)==     (pining for the fjords)
 test/abort-on-slice-fail1.t
   Y__Y
 --\__(x)==     (pining for the fjords)
