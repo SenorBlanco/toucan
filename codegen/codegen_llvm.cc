@@ -175,18 +175,12 @@ CodeGenLLVM::CodeGenLLVM(llvm::LLVMContext*                 context,
 }
 
 void CodeGenLLVM::Run(Stmts* stmts) {
-  // An iterator can't be used here, since new types may be added (but won't need codegen).
-  int size = types_->GetTypes().size();
-  for (int i = 0; i < size; ++i) {
-    Type* type = types_->GetTypes()[i];
-    if (type->IsClass()) {
-      ClassType* classType = static_cast<ClassType*>(type);
-      for (const auto& mit : classType->GetMethods()) {
-        GenCodeForMethod(mit.get());
-      }
-    }
-  }
   stmts->Accept(this);
+  while (!pendingMethods_.empty()) {
+    Method* m = pendingMethods_.front();
+    pendingMethods_.pop_front();
+    GenCodeForMethod(m);
+  }
 }
 
 llvm::Type* CodeGenLLVM::PadType(llvm::Type* type, int padding) {
@@ -465,6 +459,7 @@ llvm::Function* CodeGenLLVM::GetOrCreateMethodStub(Method* method) {
   } else {
     if (auto function = functions_[method]) return function;
   }
+  pendingMethods_.push_back(method);
   std::vector<llvm::Type*> params;
   llvm::Intrinsic::ID      intrinsic = llvm::Intrinsic::not_intrinsic;
   bool skipFirst = false;
