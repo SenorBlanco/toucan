@@ -28,3 +28,7 @@ toucan_executable("empty") {
 toucan_executable("hello") {
   sources = [ "hello.t" ]
 }
+
+toucan_executable("abort-on-assert-failure") {
+  sources = [ "abort-on-assert-failure.t" ]
+}

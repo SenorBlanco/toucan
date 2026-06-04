@@ -1,7 +1,4 @@
 test/abort-on-assert-failure.t
-test/abort-on-assert-failure.t:4: assertion failed
-  Y__Y
---\__(x)==     (pining for the fjords)
 test/abort-on-slice-fail1.t
   Y__Y
 --\__(x)==     (pining for the fjords)
@@ -65,12 +62,151 @@ test/class-constructor.t
 test/class-initializer.t
 test/complex-method.t
 test/compute-builtins.t
+WebGPU Error:
+Produced invalid SPIRV. Please file a bug at https://crbug.com/tint.
+ - While calling [Device].CreateShaderModule([ShaderModuleDescriptor]).
+
+WebGPU Error:
+[Invalid ShaderModule (unlabeled)] is invalid.
+ - While validating compute stage ([Invalid ShaderModule (unlabeled)], entryPoint: "main").
+ - While calling [Device].CreateComputePipeline([ComputePipelineDescriptor]).
+
+WebGPU Error:
+[Invalid ComputePipeline (unlabeled)] is invalid.
+ - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+
+WebGPU Error:
+[Invalid CommandBuffer] is invalid.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+
+test/compute-builtins.t:41: expectation failed
+test/compute-builtins.t:43: expectation failed
 test/compute-chained-vars.t
+WebGPU Error:
+Produced invalid SPIRV. Please file a bug at https://crbug.com/tint.
+ - While calling [Device].CreateShaderModule([ShaderModuleDescriptor]).
+
+WebGPU Error:
+[Invalid ShaderModule (unlabeled)] is invalid.
+ - While validating compute stage ([Invalid ShaderModule (unlabeled)], entryPoint: "main").
+ - While calling [Device].CreateComputePipeline([ComputePipelineDescriptor]).
+
+WebGPU Error:
+[Invalid ComputePipeline (unlabeled)] is invalid.
+ - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+
+WebGPU Error:
+[Invalid CommandBuffer] is invalid.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+
+test/compute-chained-vars.t:35: expectation failed
 test/compute-empty-class.t
+WebGPU Error:
+Produced invalid SPIRV. Please file a bug at https://crbug.com/tint.
+ - While calling [Device].CreateShaderModule([ShaderModuleDescriptor]).
+
+WebGPU Error:
+[Invalid ShaderModule (unlabeled)] is invalid.
+ - While validating compute stage ([Invalid ShaderModule (unlabeled)], entryPoint: "main").
+ - While calling [Device].CreateComputePipeline([ComputePipelineDescriptor]).
+
+WebGPU Error:
+[Invalid ComputePipeline (unlabeled)] is invalid.
+ - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+
+WebGPU Error:
+[Invalid CommandBuffer] is invalid.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+
+test/compute-empty-class.t:36: expectation failed
 test/compute-pass-ptr-to-element.t
+WebGPU Error:
+Produced invalid SPIRV. Please file a bug at https://crbug.com/tint.
+ - While calling [Device].CreateShaderModule([ShaderModuleDescriptor]).
+
+WebGPU Error:
+[Invalid ShaderModule (unlabeled)] is invalid.
+ - While validating compute stage ([Invalid ShaderModule (unlabeled)], entryPoint: "main").
+ - While calling [Device].CreateComputePipeline([ComputePipelineDescriptor]).
+
+WebGPU Error:
+[Invalid ComputePipeline (unlabeled)] is invalid.
+ - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+
+WebGPU Error:
+[Invalid CommandBuffer] is invalid.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+
+test/compute-pass-ptr-to-element.t:47: expectation failed
+test/compute-pass-ptr-to-element.t:48: expectation failed
+test/compute-pass-ptr-to-element.t:49: expectation failed
 test/compute-simple.t
+WebGPU Error:
+Produced invalid SPIRV. Please file a bug at https://crbug.com/tint.
+ - While calling [Device].CreateShaderModule([ShaderModuleDescriptor]).
+
+WebGPU Error:
+[Invalid ShaderModule (unlabeled)] is invalid.
+ - While validating compute stage ([Invalid ShaderModule (unlabeled)], entryPoint: "main").
+ - While calling [Device].CreateComputePipeline([ComputePipelineDescriptor]).
+
+WebGPU Error:
+[Invalid ComputePipeline (unlabeled)] is invalid.
+ - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+
+WebGPU Error:
+[Invalid CommandBuffer] is invalid.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+
+test/compute-simple.t:32: expectation failed
 test/compute-swizzle.t
+WebGPU Error:
+Produced invalid SPIRV. Please file a bug at https://crbug.com/tint.
+ - While calling [Device].CreateShaderModule([ShaderModuleDescriptor]).
+
+WebGPU Error:
+[Invalid ShaderModule (unlabeled)] is invalid.
+ - While validating compute stage ([Invalid ShaderModule (unlabeled)], entryPoint: "main").
+ - While calling [Device].CreateComputePipeline([ComputePipelineDescriptor]).
+
+WebGPU Error:
+[Invalid ComputePipeline (unlabeled)] is invalid.
+ - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+
+WebGPU Error:
+[Invalid CommandBuffer] is invalid.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+
+test/compute-swizzle.t:33: expectation failed
+test/compute-swizzle.t:34: expectation failed
+test/compute-swizzle.t:35: expectation failed
+test/compute-swizzle.t:36: expectation failed
 test/compute-vector-cast.t
+WebGPU Error:
+Produced invalid SPIRV. Please file a bug at https://crbug.com/tint.
+ - While calling [Device].CreateShaderModule([ShaderModuleDescriptor]).
+
+WebGPU Error:
+[Invalid ShaderModule (unlabeled)] is invalid.
+ - While validating compute stage ([Invalid ShaderModule (unlabeled)], entryPoint: "main").
+ - While calling [Device].CreateComputePipeline([ComputePipelineDescriptor]).
+
+WebGPU Error:
+[Invalid ComputePipeline (unlabeled)] is invalid.
+ - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+
+WebGPU Error:
+[Invalid CommandBuffer] is invalid.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+
+test/compute-vector-cast.t:34: expectation failed
 test/constant-folding.t
 test/constants.t
 test/constructor-calls-initializer.t
@@ -450,9 +586,65 @@ test/simple.t
 6
 test/slice.t
 test/spirv-call-graph.t
+WebGPU Error:
+Produced invalid SPIRV. Please file a bug at https://crbug.com/tint.
+ - While calling [Device].CreateShaderModule([ShaderModuleDescriptor]).
+
+WebGPU Error:
+[Invalid ShaderModule (unlabeled)] is invalid.
+ - While validating compute stage ([Invalid ShaderModule (unlabeled)], entryPoint: "main").
+ - While calling [Device].CreateComputePipeline([ComputePipelineDescriptor]).
+
 test/spirv-if-stmt.t
+WebGPU Error:
+Produced invalid SPIRV. Please file a bug at https://crbug.com/tint.
+ - While calling [Device].CreateShaderModule([ShaderModuleDescriptor]).
+
+WebGPU Error:
+[Invalid ShaderModule (unlabeled)] is invalid.
+ - While validating compute stage ([Invalid ShaderModule (unlabeled)], entryPoint: "main").
+ - While calling [Device].CreateComputePipeline([ComputePipelineDescriptor]).
+
 test/spirv-insert-element.t
+WebGPU Error:
+Produced invalid SPIRV. Please file a bug at https://crbug.com/tint.
+ - While calling [Device].CreateShaderModule([ShaderModuleDescriptor]).
+
+WebGPU Error:
+[Invalid ShaderModule (unlabeled)] is invalid.
+ - While validating compute stage ([Invalid ShaderModule (unlabeled)], entryPoint: "main").
+ - While calling [Device].CreateComputePipeline([ComputePipelineDescriptor]).
+
+WebGPU Error:
+[Invalid ComputePipeline (unlabeled)] is invalid.
+ - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+
+WebGPU Error:
+[Invalid CommandBuffer] is invalid.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+
+test/spirv-insert-element.t:32: expectation failed
 test/spirv-uint.t
+WebGPU Error:
+Produced invalid SPIRV. Please file a bug at https://crbug.com/tint.
+ - While calling [Device].CreateShaderModule([ShaderModuleDescriptor]).
+
+WebGPU Error:
+[Invalid ShaderModule (unlabeled)] is invalid.
+ - While validating compute stage ([Invalid ShaderModule (unlabeled)], entryPoint: "main").
+ - While calling [Device].CreateComputePipeline([ComputePipelineDescriptor]).
+
+WebGPU Error:
+[Invalid ComputePipeline (unlabeled)] is invalid.
+ - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+
+WebGPU Error:
+[Invalid CommandBuffer] is invalid.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+
+test/spirv-uint.t:32: expectation failed
 test/stack-method-call.t
 test/static-method-with-args.t
 test/static-method.t
@@ -484,6 +676,25 @@ test/ubyte.t
 test/uint.t
 test/unary-minus.t
 test/unfilterable.t
+WebGPU Error:
+Produced invalid SPIRV. Please file a bug at https://crbug.com/tint.
+ - While calling [Device].CreateShaderModule([ShaderModuleDescriptor]).
+
+WebGPU Error:
+[Invalid ShaderModule (unlabeled)] is invalid.
+ - While validating compute stage ([Invalid ShaderModule (unlabeled)], entryPoint: "main").
+ - While calling [Device].CreateComputePipeline([ComputePipelineDescriptor]).
+
+WebGPU Error:
+[Invalid ComputePipeline (unlabeled)] is invalid.
+ - While encoding [ComputePassEncoder (unlabeled)].SetPipeline([Invalid ComputePipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+
+WebGPU Error:
+[Invalid CommandBuffer] is invalid.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+
+test/unfilterable.t:41: expectation failed
 test/unfold-vector.t
 test/unspecified-template-destructor.t
 test/ushort-vector.t

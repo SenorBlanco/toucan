@@ -178,6 +178,7 @@ void CodeGenLLVM::Run(Stmts* stmts) {
   stmts->Accept(this);
   while (!pendingMethods_.empty()) {
     Method* m = pendingMethods_.front();
+    printf("generating code for %s\n", m->mangledName.c_str());
     pendingMethods_.pop_front();
     GenCodeForMethod(m);
   }
@@ -459,7 +460,6 @@ llvm::Function* CodeGenLLVM::GetOrCreateMethodStub(Method* method) {
   } else {
     if (auto function = functions_[method]) return function;
   }
-  pendingMethods_.push_back(method);
   std::vector<llvm::Type*> params;
   llvm::Intrinsic::ID      intrinsic = llvm::Intrinsic::not_intrinsic;
   bool skipFirst = false;
@@ -505,6 +505,8 @@ llvm::Function* CodeGenLLVM::GetOrCreateMethodStub(Method* method) {
   } else {
     functions_[method] = function;
   }
+  printf("appending method %s\n", method->mangledName.c_str());
+  pendingMethods_.push_back(method);
 
   return function;
 }
