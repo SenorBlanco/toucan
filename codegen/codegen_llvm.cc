@@ -176,7 +176,10 @@ CodeGenLLVM::CodeGenLLVM(llvm::LLVMContext*                 context,
 
 void CodeGenLLVM::Run(Stmts* stmts) {
   // Generate SPIR-V for shader entry points.
-  for (auto type : types_->GetTypes()) {
+  // An iterator can't be used here, since new types may be added (but won't need codegen).
+  int size = types_->GetTypes().size();
+  for (int i = 0; i < size; ++i) {
+    Type* type = types_->GetTypes()[i];
     if (type->IsClass()) {
       ClassType* classType = static_cast<ClassType*>(type);
       for (const auto& method : classType->GetMethods()) {
