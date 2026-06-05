@@ -175,6 +175,17 @@ CodeGenLLVM::CodeGenLLVM(llvm::LLVMContext*                 context,
 }
 
 void CodeGenLLVM::Run(Stmts* stmts) {
+  // Generate SPIR-V for shader entry points.
+  for (auto type : types_->GetTypes()) {
+    if (type->IsClass()) {
+      ClassType* classType = static_cast<ClassType*>(type);
+      for (const auto& method : classType->GetMethods()) {
+        if ((method->modifiers & (Method::Modifier::Vertex | Method::Modifier::Fragment | Method::Modifier::Compute)) != 0) {
+          GenCodeForMethod(method.get());
+        }
+      }
+    }
+  }
   stmts->Accept(this);
   while (!pendingMethods_.empty()) {
     Method* m = pendingMethods_.front();
