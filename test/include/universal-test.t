@@ -27,7 +27,7 @@ class HostTestBase {
       System.Print(file);
       System.Print(":");
       System.Print(String.From(line).Get());
-      System.PrintLine(": expectation failed");
+      System.PrintLine(": expectation failed (host)");
     }
   }
 }
@@ -61,9 +61,8 @@ device.GetQueue().Submit(encoder.Finish());
 
 var results = hostBuf.MapRead();
 for (var i = 0u; i < results.count; ++i) {
-  System.Print("device: ");
   System.Print(String.From(results.failures[i]).Get());
-  System.PrintLine(": expectation failed");
+  System.PrintLine(": expectation failed (device)");
 }
 
 var test : Test<HostTestBase>;
