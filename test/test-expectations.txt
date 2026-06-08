@@ -274,6 +274,9 @@ test/error-texture-from-buffer-incorrect-format.t
 error-texture-from-buffer-incorrect-format.t:12:  class Texture1D<RGBA8unorm> has no method CopyFromBuffer(*CommandEncoder, *hostwriteable Buffer<[]float<4>>, int)
 error-texture-from-buffer-incorrect-format.t:12:  Texture1D<RGBA8unorm>.CopyFromBuffer(&CommandEncoder, &Buffer<[]ubyte<4>>, uint, uint, uint) 
 test/error-uint-literal-too-large.t
+test/error-universal-test-failure.t
+device: 4: expectation failed
+test/error-universal-test-failure.t:4: expectation failed
 test/error-unknown-param-type.t
 error-unknown-param-type.t:2: syntax error
 test/error-unknown-return-type.t
@@ -472,6 +475,7 @@ test/templated-class-initializer.t
 test/templated-class-on-primitive-type.t
 test/templated-class-with-auto-field.t
 test/templated-class-with-auto-formal-arg.t
+test/templated-class-with-formal-template-arg-parent.t
 test/templated-class.t
 test/templated-constructor.t
 test/templated-derived-class-with-shader.t
@@ -488,6 +492,7 @@ test/uint.t
 test/unary-minus.t
 test/unfilterable.t
 test/unfold-vector.t
+test/universal-test-pass.t
 test/unspecified-template-destructor.t
 test/ushort-vector.t
 test/ushort.t

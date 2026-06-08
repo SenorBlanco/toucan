@@ -1,5 +1,6 @@
 #include "string.t"
 
+#def BEGIN_TEST
 class ExpectationResults {
   var count : int;
   var failures : [10]uint;
@@ -33,7 +34,9 @@ class HostTestBase {
 
 class Test<TestBase> : TestBase {
   RunTest() {
-    this.Expect(true);  // example
+#enddef
+
+#def END_TEST
   }
 }
 
@@ -58,9 +61,11 @@ device.GetQueue().Submit(encoder.Finish());
 
 var results = hostBuf.MapRead();
 for (var i = 0u; i < results.count; ++i) {
+  System.Print("device: ");
   System.Print(String.From(results.failures[i]).Get());
   System.PrintLine(": expectation failed");
 }
 
 var test : Test<HostTestBase>;
 test.RunTest();
+#enddef
