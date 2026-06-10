@@ -21,7 +21,8 @@ deps = {
   "third_party/llvm" : "https://github.com/llvm/llvm-project@216e85bdda22ae7eda3f3e04c51d9d6d82e2b617",
   "third_party/dawn" : "https://dawn.googlesource.com/dawn.git@e8fdf6b115d128adc6ad29e91d38d32f60eb91f0",
   "third_party/libjpeg-turbo" : "https://github.com/libjpeg-turbo/libjpeg-turbo@3b19db4e6e7493a748369974819b4c5fa84c7614",
-  "third_party/home-cube" : "https://github.com/SenorBlanco/home-cube@6d801739e9311f37826f08095d09b7345350ab59",
+  "third_party/home-cube" : "https://github.com/SenorBlanco/home-cube@21b23e4d7c46100652d59b320b633fd8a7edec3e",
+  "third_party/libultrahdr" : "https://github.com/google/libultrahdr.git@d52a0d13814ca399fc8a07e23de1d2c63f0e8404",
   "third_party/emscripten" : "https://github.com/emscripten-core/emscripten@6913738ec5371a88c4af5a80db0ab42bad3de681",
   "third_party/binaryen" : "https://github.com/WebAssembly/binaryen@6ec7b5f9c615d3b224c67ae221d6812c8f8e1a96",
 

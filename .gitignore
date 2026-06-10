@@ -8,4 +8,5 @@ third_party/home-cube
 third_party/libjpeg-turbo
 third_party/llvm
 third_party/ninja
+third_party/libultrahdr
 third_party/winflexbison
