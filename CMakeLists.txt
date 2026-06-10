@@ -138,6 +138,9 @@ set(TINT_BUILD_IR_BINARY False)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
+set(UHDR_BUILD_EXAMPLES OFF)
+set(UHDR_ENABLE_INSTALL OFF)
+
 if(NOT CMAKE_CROSSCOMPILING)
   if (NOT WIN32)
     set(LLVM_DIR "${CMAKE_SOURCE_DIR}/third_party/llvm/llvm/out/${CMAKE_BUILD_TYPE}")
@@ -236,6 +239,7 @@ include(ToucanExecutable)
 
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(third_party/dawn EXCLUDE_FROM_ALL)
+add_subdirectory(third_party/libultrahdr EXCLUDE_FROM_ALL)
 add_subdirectory(parser EXCLUDE_FROM_ALL)
 add_subdirectory(ast EXCLUDE_FROM_ALL)
 add_subdirectory(bindings EXCLUDE_FROM_ALL)
