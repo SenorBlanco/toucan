@@ -135,8 +135,18 @@ SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Win
   config.height = size[1];
   config.presentMode = wgpu::PresentMode::Fifo;
 
+  auto metalLayer = [window->view metalLayer];
+  if (config.format == wgpu::TextureFormat::RGBA16Float) {
+    [metalLayer setPixelFormat:MTLPixelFormatRGBA16Float];
+    [metalLayer setWantsExtendedDynamicRangeContent:YES];
+  } else {
+    [metalLayer setPixelFormat:MTLPixelFormatBGRA8Unorm];
+    [metalLayer setWantsExtendedDynamicRangeContent:NO];
+  }
+
   wgpu::SurfaceSourceMetalLayer metalLayerDesc;
-  metalLayerDesc.layer = [window->view metalLayer];
+  metalLayerDesc.layer = metalLayer;
+
   wgpu::SurfaceDescriptor desc;
   desc.nextInChain = &metalLayerDesc;
   static wgpu::Instance instance = wgpu::CreateInstance({});
@@ -284,7 +294,6 @@ int main(int argc, char** argv) {
 
   CAMetalLayer* layer = (CAMetalLayer*) primaryView.layer;
   [layer setDevice:MTLCreateSystemDefaultDevice()];
-  [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
   [layer setFramebufferOnly:YES];
 
   [self.view addSubview:primaryView];

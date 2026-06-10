@@ -126,10 +126,8 @@ Window* Window_Window(const uint32_t* size, const int32_t* position) {
 
   CAMetalLayer* layer = [CAMetalLayer layer];
   [layer setDevice:mtlDevice];
-  [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
   [layer setFramebufferOnly:YES];
   [layer setDrawableSize:CGSize(size[0], size[1])];
-  [layer setColorspace:CGColorSpaceCreateDeviceRGB()];
 
   NSView* view = [[NSView alloc] initWithFrame:windowRect];
   [view setWantsLayer:YES];
@@ -159,6 +157,14 @@ SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Win
   config.width = window->size[0];
   config.height = window->size[1];
   config.presentMode = wgpu::PresentMode::Fifo;
+
+  if (config.format == wgpu::TextureFormat::RGBA16Float) {
+    [window->layer setPixelFormat:MTLPixelFormatRGBA16Float];
+    [window->layer setWantsExtendedDynamicRangeContent:YES];
+  } else {
+    [window->layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
+    [window->layer setWantsExtendedDynamicRangeContent:NO];
+  }
 
   wgpu::SurfaceSourceMetalLayer metalLayerDesc;
   metalLayerDesc.layer = window->layer;
