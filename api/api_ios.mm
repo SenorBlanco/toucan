@@ -109,8 +109,9 @@ struct Window {
 const uint32_t* Window_GetSize(Window* This) {
   auto size = [This->view bounds].size;
   static uint32_t screenSize[2];
-  screenSize[0] = size.width;
-  screenSize[1] = size.height;
+  auto scale = This->view.traitCollection.displayScale;
+  screenSize[0] = size.width * scale;
+  screenSize[1] = size.height * scale;
   return screenSize;
 }
 
@@ -129,9 +130,9 @@ SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Win
   config.device = device->device;
   config.format = ToDawnTextureFormat(format);
 
-  auto size = [window->view bounds].size;
-  config.width = size.width;
-  config.height = size.height;
+  const uint32_t* size = Window_GetSize(window);
+  config.width = size[0];
+  config.height = size[1];
   config.presentMode = wgpu::PresentMode::Fifo;
 
   wgpu::SurfaceSourceMetalLayer metalLayerDesc;
@@ -184,8 +185,9 @@ const uint32_t* System_GetScreenSize() {
   auto primaryView = gApp->WaitForPrimaryView();
   auto size = [primaryView bounds].size;
   static uint32_t screenSize[2];
-  screenSize[0] = size.width;
-  screenSize[1] = size.height;
+  auto scale = primaryView.traitCollection.displayScale;
+  screenSize[0] = size.width * scale;
+  screenSize[1] = size.height * scale;
 
   return screenSize;
 }
@@ -318,9 +320,10 @@ int main(int argc, char** argv) {
   event->type = type;
   int i = 0;
   for (UITouch* touch : activeTouches) {
+    auto scale = self.traitCollection.displayScale;
     auto position = [touch locationInView:self];
-    event->touches[i][0] = position.x;
-    event->touches[i][1] = position.y;
+    event->touches[i][0] = position.x * scale;
+    event->touches[i][1] = position.y * scale;
     i++;
     if (i == 10) break;
   }

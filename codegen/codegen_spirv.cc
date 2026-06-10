@@ -141,6 +141,9 @@ spv::Op binOpToOpcode(BinOpNode::Op op,
       break;
     case BinOpNode::LOGICAL_AND: return spv::OpLogicalAnd;
     case BinOpNode::LOGICAL_OR: return spv::OpLogicalOr;
+    case BinOpNode::BITWISE_AND: return spv::OpBitwiseAnd;
+    case BinOpNode::BITWISE_OR: return spv::OpBitwiseOr;
+    case BinOpNode::BITWISE_XOR: return spv::OpBitwiseXor;
     default: NOTIMPLEMENTED();
   }
   return spv::OpNop;

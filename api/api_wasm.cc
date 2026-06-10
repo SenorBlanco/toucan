@@ -28,8 +28,9 @@ static std::unordered_map<int, Window*> gWindows;
 
 void copyMouseEvent(emscripten::val event, Event* result) {
   result->button = event["button"].as<int>();
-  result->position[0] = event["clientX"].as<int>();
-  result->position[1] = event["clientY"].as<int>();
+  auto ratio = EM_ASM_DOUBLE("return window.devicePixelRatio");
+  result->position[0] = (event["clientX"].as<float>() - EM_ASM_INT("return canvas.getBoundingClientRect().x")) * ratio;
+  result->position[1] = (event["clientY"].as<float>() - EM_ASM_INT("return canvas.getBoundingClientRect().y")) * ratio;
 }
 
 void copyTouches(emscripten::val touches, Event* result) {
@@ -65,6 +66,8 @@ EM_JS(int, createWindow, (int32_t x, int32_t y, int32_t width, int32_t height), 
       canvas = w.document.getElementById("canvas");
       canvas.width = width;
       canvas.height = height;
+      canvas.style.width = (width / window.devicePixelRatio) + 'px';
+      canvas.style.height = (height / window.devicePixelRatio) + 'px';
       Module.requestFullscreen = () => { canvas.requestFullscreen(); }
     } else {
       w = window.open("", "",
@@ -74,13 +77,14 @@ EM_JS(int, createWindow, (int32_t x, int32_t y, int32_t width, int32_t height), 
       canvas.style.display = "block";
       w.document.body.appendChild(canvas);
     }
-    const events = ["mousedown", "mousemove", "mouseup", "touchstart", "touchmove", "touchend", "resize"];
+    const events = ["mousedown", "mousemove", "mouseup", "touchstart", "touchmove", "touchend"];
     var inputListener = (e) => {
       e.preventDefault();
       Module.events.push(e);
       if (Module.newInput) Module.newInput();
     };
     events.forEach((eventType) => canvas.addEventListener(eventType, inputListener, { passive: false }));
+    w.addEventListener("resize", inputListener, { passive: false });
     w.oncontextmenu = (e) => { e.preventDefault() };
     specialHTMLTargets["!toucanvas"] = canvas;
     return w.id = Module.numWindows++;
@@ -156,8 +160,8 @@ Event* System_GetNextEvent() {
     result->type = EventType::TouchEnd;
   } else if (type == "resize") {
     if (Window* w = gWindows[EM_ASM_INT("window.id")]) {
-      w->size[0] = EM_ASM_INT("return window.innerWidth");
-      w->size[1] = EM_ASM_INT("return window.innerHeight");
+      w->size[0] = EM_ASM_INT("return window.innerWidth * window.devicePixelRatio");
+      w->size[1] = EM_ASM_INT("return window.innerHeight * window.devicePixelRatio");
     }
   }
   result->modifiers = 0;
@@ -167,8 +171,8 @@ Event* System_GetNextEvent() {
 }
 
 const uint32_t* System_GetScreenSize() {
-  gScreenSize[0] = static_cast<uint32_t>(EM_ASM_INT("return window.innerWidth"));
-  gScreenSize[1] = static_cast<uint32_t>(EM_ASM_INT("return window.innerHeight"));
+  gScreenSize[0] = static_cast<uint32_t>(EM_ASM_INT("return window.innerWidth * window.devicePixelRatio"));
+  gScreenSize[1] = static_cast<uint32_t>(EM_ASM_INT("return window.innerHeight * window.devicePixelRatio"));
   return gScreenSize;
 }
 
@@ -207,6 +211,22 @@ SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Win
 EM_ASYNC_JS(void, JSWaitForRAF, (), {
   await new Promise(resolve => { requestAnimationFrame(resolve); });
 });
+
+void SwapChain_Resize(SwapChain* swapChain, const uint32_t* size) {
+  wgpu::SurfaceConfiguration config;
+  config.device = swapChain->device;
+  config.format = swapChain->format;
+  config.width = size[0];
+  config.height = size[1];
+  config.presentMode = wgpu::PresentMode::Fifo;
+
+  swapChain->surface.Configure(&config);
+  swapChain->extent = {size[0], size[1], 1};
+  EM_ASM({
+    canvas.style.width = ($0 / window.devicePixelRatio) + 'px';
+    canvas.style.height = ($1 / window.devicePixelRatio) + 'px';
+  }, size[0], size[1]);
+}
 
 void SwapChain_Present(SwapChain* swapChain) { JSWaitForRAF(); }
 

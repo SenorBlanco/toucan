@@ -93,6 +93,12 @@ void Initialize() {
   if (![[NSRunningApplication currentApplication] isFinishedLaunching]) { [NSApp run]; }
 }
 
+void GetViewSize(NSView* view, uint32_t size[2]) {
+  auto backingRect = [[NSScreen mainScreen] convertRectToBacking:[view bounds]];
+  size[0] = backingRect.size.width;
+  size[1] = backingRect.size.height;
+}
+
 }  // namespace
 
 const uint32_t* Window_GetSize(Window* This) {
@@ -101,10 +107,11 @@ const uint32_t* Window_GetSize(Window* This) {
 
 Window* Window_Window(const uint32_t* size, const int32_t* position) {
   NSApplication* app = [NSApplication sharedApplication];
-  NSRect         rect = NSMakeRect(position[0], position[1], size[0], size[1]);
+  NSRect         backingRect = NSMakeRect(position[0], position[1], size[0], size[1]);
+  NSRect         windowRect = [[NSScreen mainScreen] convertRectFromBacking:backingRect];
   int mask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable |
              NSWindowStyleMaskResizable;
-  NSWindow* window = [[NSWindow alloc] initWithContentRect:rect
+  NSWindow* window = [[NSWindow alloc] initWithContentRect:windowRect
                                                  styleMask:mask
                                                    backing:NSBackingStoreBuffered
                                                      defer:NO];
@@ -113,24 +120,24 @@ Window* Window_Window(const uint32_t* size, const int32_t* position) {
   // this could be wrong on multi-GPU systems.
   id<MTLDevice> mtlDevice = MTLCreateSystemDefaultDevice();
 
-  CGSize cgSize;
-  cgSize.width = size[0];
-  cgSize.height = size[1];
   [window makeKeyAndOrderFront:NSApp];
 
   CAMetalLayer* layer = [CAMetalLayer layer];
   [layer setDevice:mtlDevice];
   [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
   [layer setFramebufferOnly:YES];
-  [layer setDrawableSize:cgSize];
+  [layer setDrawableSize:CGSize(size[0], size[1])];
   [layer setColorspace:CGColorSpaceCreateDeviceRGB()];
 
-  NSView* view = [[NSView alloc] initWithFrame:rect];
+  NSView* view = [[NSView alloc] initWithFrame:windowRect];
   [view setWantsLayer:YES];
   [view setLayer:layer];
 
   [window setContentView:view];
-  Window*       w = new Window(window, view, layer, mtlDevice, size);
+
+  uint32_t actualSize[2];
+  GetViewSize(view, actualSize);
+  Window*       w = new Window(window, view, layer, mtlDevice, actualSize);
   id            delegate = [[ToucanWindowDelegate alloc] initWithWindow:w];
   [window setDelegate:delegate];
   return w;
@@ -210,9 +217,11 @@ Event* System_GetNextEvent() {
                                         dequeue:YES];
   [NSApp sendEvent:nsEvent];
   Event* event = new Event();
-  int    height = [[nsEvent.window contentView] frame].size.height;
-  event->position[0] = nsEvent.locationInWindow.x;
-  event->position[1] = height - nsEvent.locationInWindow.y;
+  auto view = [nsEvent.window contentView];
+  auto backingRect = [[NSScreen mainScreen] convertRectToBacking:[view bounds]];
+  auto backingLocation = [view convertPointToBacking:nsEvent.locationInWindow];
+  event->position[0] = backingLocation.x;
+  event->position[1] = backingRect.size.height - backingLocation.y;
   event->modifiers = ToToucanEventModifiers(nsEvent.modifierFlags);
   event->button = 0;
   event->type = EventType::Unknown;
@@ -272,8 +281,10 @@ Event* System_GetNextEvent() {
 }
 
 const uint32_t* System_GetScreenSize() {
-  gScreenSize[0] = [[NSScreen mainScreen] frame].size.width;
-  gScreenSize[1] = [[NSScreen mainScreen] frame].size.height;
+  auto frame = [[NSScreen mainScreen] frame];
+  auto backingRect = [[NSScreen mainScreen] convertRectToBacking:frame];
+  gScreenSize[0] = backingRect.size.width;
+  gScreenSize[1] = backingRect.size.height;
   return gScreenSize;
 }
 
@@ -299,13 +310,7 @@ double System_GetCurrentTime() {
 }
 
 - (void)windowDidResize:(NSNotification*)notification {
-  const NSRect contentRect = [window->view frame];
-  const NSRect fbRect = [window->view convertRectToBacking:contentRect];
-
-  if (fbRect.size.width != window->size[0] || fbRect.size.height != window->size[1]) {
-    window->size[0] = fbRect.size.width;
-    window->size[1] = fbRect.size.height;
-  }
+  Toucan::GetViewSize(window->view, window->size);
 }
 
 @end
