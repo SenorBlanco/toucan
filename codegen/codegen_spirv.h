@@ -39,7 +39,7 @@ using BindGroupList = std::vector<VarVector>;
 
 class CodeGenSPIRV : public Visitor {
  public:
-  CodeGenSPIRV(TypeTable* types) : types_(types) {}
+  CodeGenSPIRV(TypeTable* types, bool invertGammaForFP16) : types_(types), invertGammaForFP16_(invertGammaForFP16) {}
   void     Run(Method* method);
   uint32_t GenerateSPIRV(ASTNode* node);
   void     GenCodeForMethod(Method* method, uint32_t functionId);
@@ -117,6 +117,7 @@ class CodeGenSPIRV : public Visitor {
   uint32_t CreateCast(Type* srcType, Type* dstType, uint32_t resultType, uint32_t valueId);
   uint32_t GetSampledImageType(Type* imageType);
 
+  bool                                         invertGammaForFP16_;
   uint32_t                                     nextID_ = 1;
   uint32_t                                     glslStd450Import_;
   TypeTable*                                   types_;
