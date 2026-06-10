@@ -1,0 +1,81 @@
+# Copyright 2026 The Toucan Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+source_set("libultrahdr") {
+  libultrahdr = "../../libultrahdr"
+  include_dirs = [
+    "$libultrahdr",
+    "$libultrahdr/lib/include",
+    "$libultrahdr/third_party",
+    "$libultrahdr/third_party/image_io/includes",
+    "$libultrahdr/third_party/image_io/src/modp_b64",
+    "$libultrahdr/third_party/image_io/src/modp_b64/modp_b64",
+  ]
+  deps = [
+    "//third_party/build/libjpeg-turbo",
+  ]
+  defines = [
+    "UHDR_WRITE_ISO"
+  ]
+  sources = [
+    "$libultrahdr/lib/src/editorhelper.cpp",
+    "$libultrahdr/lib/src/gainmapmath.cpp",
+    "$libultrahdr/lib/src/gainmapmetadata.cpp",
+    "$libultrahdr/lib/src/icc.cpp",
+    "$libultrahdr/lib/src/jpegdecoderhelper.cpp",
+    "$libultrahdr/lib/src/jpegencoderhelper.cpp",
+    "$libultrahdr/lib/src/jpegr.cpp",
+    "$libultrahdr/lib/src/jpegrutils.cpp",
+    "$libultrahdr/lib/src/multipictureformat.cpp",
+    "$libultrahdr/lib/src/ultrahdr_api.cpp",
+
+    "$libultrahdr/third_party/image_io/src/base/byte_buffer.cc",
+    "$libultrahdr/third_party/image_io/src/base/byte_pointer_data_destination.cc",
+    "$libultrahdr/third_party/image_io/src/base/data_context.cc",
+    "$libultrahdr/third_party/image_io/src/base/data_line_map.cc",
+    "$libultrahdr/third_party/image_io/src/base/data_range_tracking_destination.cc",
+    "$libultrahdr/third_party/image_io/src/base/data_scanner.cc",
+    "$libultrahdr/third_party/image_io/src/base/data_segment.cc",
+    "$libultrahdr/third_party/image_io/src/base/data_segment_data_source.cc",
+    "$libultrahdr/third_party/image_io/src/base/istream_ref_data_source.cc",
+    "$libultrahdr/third_party/image_io/src/base/message_handler.cc",
+    "$libultrahdr/third_party/image_io/src/base/message_writer.cc",
+    "$libultrahdr/third_party/image_io/src/base/ostream_ref_data_destination.cc",
+    "$libultrahdr/third_party/image_io/src/base/string_ref_data_source.cc",
+    "$libultrahdr/third_party/image_io/src/extras/base64_decoder_data_destination.cc",
+    "$libultrahdr/third_party/image_io/src/gcontainer/gcontainer.cc",
+    "$libultrahdr/third_party/image_io/src/jpeg/jpeg_image_extractor.cc",
+    "$libultrahdr/third_party/image_io/src/jpeg/jpeg_info_builder.cc",
+    "$libultrahdr/third_party/image_io/src/jpeg/jpeg_marker.cc",
+    "$libultrahdr/third_party/image_io/src/jpeg/jpeg_scanner.cc",
+    "$libultrahdr/third_party/image_io/src/jpeg/jpeg_segment_builder.cc",
+    "$libultrahdr/third_party/image_io/src/jpeg/jpeg_segment.cc",
+    "$libultrahdr/third_party/image_io/src/jpeg/jpeg_segment_lister.cc",
+    "$libultrahdr/third_party/image_io/src/jpeg/jpeg_xmp_data_extractor.cc",
+    "$libultrahdr/third_party/image_io/src/jpeg/jpeg_xmp_info_builder.cc",
+    "$libultrahdr/third_party/image_io/src/jpeg/jpeg_xmp_info.cc",
+    "$libultrahdr/third_party/image_io/src/modp_b64/modp_b64.cc",
+    "$libultrahdr/third_party/image_io/src/utils/file_utils.cc",
+    "$libultrahdr/third_party/image_io/src/xml/xml_attribute_rule.cc",
+    "$libultrahdr/third_party/image_io/src/xml/xml_cdata_and_comment_rules.cc",
+    "$libultrahdr/third_party/image_io/src/xml/xml_element_rules.cc",
+    "$libultrahdr/third_party/image_io/src/xml/xml_handler.cc",
+    "$libultrahdr/third_party/image_io/src/xml/xml_pi_rule.cc",
+    "$libultrahdr/third_party/image_io/src/xml/xml_reader.cc",
+    "$libultrahdr/third_party/image_io/src/xml/xml_rule.cc",
+    "$libultrahdr/third_party/image_io/src/xml/xml_token_context.cc",
+    "$libultrahdr/third_party/image_io/src/xml/xml_writer.cc",
+  ]
+}
+

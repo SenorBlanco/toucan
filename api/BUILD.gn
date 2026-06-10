@@ -42,6 +42,7 @@ source_set("api") {
   if (!is_wasm) {
     deps += [
       "//third_party/dawn/src/dawn/native:headers",
+      "//third_party/build/libultrahdr:libultrahdr",
     ]
   }
   sources = [
@@ -53,6 +54,7 @@ source_set("api") {
     target_gen_dir,
     "../third_party/libjpeg-turbo",
     "../third_party/build/libjpeg-turbo",
+    "../third_party/libultrahdr/include",
   ]
   if (is_wasm) {
     deps += [
