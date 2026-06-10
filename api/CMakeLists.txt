@@ -55,7 +55,13 @@ add_dependencies(api generate_api_header)
 target_include_directories(api PUBLIC
   ${CMAKE_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
+<<<<<<< HEAD
   ${JPEG_INCLUDE_DIR}
+=======
+  ${libjpeg-turbo_SOURCE_DIR}
+  ${libjpeg-turbo_BINARY_DIR}
+  ${CMAKE_SOURCE_DIR}/third_party/libultrahdr
+>>>>>>> 4a22c83 (Implement HDR, UltraHDR support)
 )
 
 if(EMSCRIPTEN)
@@ -71,3 +77,4 @@ else()
 endif()
 
 target_link_libraries(api PUBLIC JPEG::JPEG)
+target_link_libraries(api PUBLIC uhdr)
