@@ -51,6 +51,7 @@ uint32_t BytesPerPixel(wgpu::TextureFormat format) {
     case wgpu::TextureFormat::RGBA8Uint:
     case wgpu::TextureFormat::RGBA8Sint:
     case wgpu::TextureFormat::BGRA8Unorm: return 4;
+    case wgpu::TextureFormat::RGBA16Float: return 8;
     default: assert(!"unknown Format"); return 0;
   }
 }
