@@ -86,14 +86,14 @@ void Image_Decode(Image* This, Array* dest, uint32_t bufferWidth) {
     uhdr_dec_set_out_img_format(dec, UHDR_IMG_FMT_64bppRGBAHalfFloat);
 
     uhdr_error_info_t err = uhdr_decode(dec);
-   if (err.error_code != UHDR_CODEC_OK) {
+    if (err.error_code != UHDR_CODEC_OK) {
       assert(!"failed to decode ultrahdr image");
       uhdr_release_decoder(dec);
       return;
     }
 
     uhdr_raw_image_t* raw_img = uhdr_get_decoded_image(dec);
-   if (!raw_img || raw_img->fmt != UHDR_IMG_FMT_64bppRGBAHalfFloat) {
+    if (!raw_img || raw_img->fmt != UHDR_IMG_FMT_64bppRGBAHalfFloat) {
       assert(!"failed to get decoded ultrahdr image or unexpected format");
       uhdr_release_decoder(dec);
       return;
