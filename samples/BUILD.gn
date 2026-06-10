@@ -81,6 +81,14 @@ toucan_app("mipped-cube") {
   sources = [ "mipped-cube.t" ]
 }
 
+toucan_app("mipped-cube-hdr") {
+  sources = [ "mipped-cube-hdr.t" ]
+}
+
+toucan_app("hdr-image-explorer") {
+  sources = [ "hdr-image-explorer.t" ]
+}
+
 source_set("main") {
   sources = [ "main.cc" ]
   include_dirs = [ ".." ]

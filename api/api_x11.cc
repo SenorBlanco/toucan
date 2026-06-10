@@ -65,7 +65,7 @@ struct Window {
 
 static Display* gDisplay;
 
-Window* Window_Window(const uint32_t* size, const int32_t* position) {
+Window* Window_Window(const uint32_t* size, const int32_t* position, bool hdr) {
   if (!gDisplay) gDisplay = ::XOpenDisplay(0);
   if (!gDisplay) return nullptr;
   XWindow     rootWindow = RootWindow(gDisplay, DefaultScreen(gDisplay));

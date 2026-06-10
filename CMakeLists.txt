@@ -48,6 +48,8 @@ if(MSVC)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:4194304")
 endif()
 
+set(BUILD_SHARED_LIBS OFF)
+
 set(DAWN_FETCH_DEPENDENCIES ON)
 set(DAWN_BUILD_MONOLITHIC_LIBRARY SHARED)
 set(DAWN_SUPPORTS_CXX_MODULES False)
@@ -69,6 +71,9 @@ endif()
 set(TINT_BUILD_IR_BINARY False)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+set(UHDR_BUILD_EXAMPLES OFF)
+set(UHDR_ENABLE_INSTALL OFF)
 
 if(NOT CMAKE_CROSSCOMPILING)
   if (NOT WIN32)
@@ -188,6 +193,7 @@ set(ENABLE_STATIC ON CACHE BOOL "Build static libraries" FORCE)
 set(WITH_TURBOJPEG OFF CACHE BOOL "Include TurboJPEG API" FORCE)
 set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "Minimum policy version" FORCE)
 add_subdirectory(third_party/dawn EXCLUDE_FROM_ALL)
+add_subdirectory(third_party/libultrahdr EXCLUDE_FROM_ALL)
 add_subdirectory(parser EXCLUDE_FROM_ALL)
 add_subdirectory(ast EXCLUDE_FROM_ALL)
 add_subdirectory(bindings EXCLUDE_FROM_ALL)

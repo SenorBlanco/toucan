@@ -57,6 +57,7 @@ target_include_directories(api PUBLIC
   ${CMAKE_CURRENT_BINARY_DIR}
   ${libjpeg-turbo_SOURCE_DIR}
   ${libjpeg-turbo_BINARY_DIR}
+  ${CMAKE_SOURCE_DIR}/third_party/libultrahdr
 )
 
 if(EMSCRIPTEN)
@@ -72,3 +73,4 @@ else()
 endif()
 
 target_link_libraries(api PUBLIC jpeg-static)
+target_link_libraries(api PUBLIC uhdr)
