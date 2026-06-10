@@ -18,8 +18,10 @@
 #include <stdio.h>
 
 #include <memory>
+#include <string.h>
 
 #include <jpeglib.h>
+#include <ultrahdr_api.h>
 
 #include <ast/type.h>
 
@@ -65,6 +67,52 @@ Image* Image_Image(int qualifiers, Type* pixelFormat, Object* encodedImage) {
 const uint32_t* Image_GetSize(Image* This) { return This->size; }
 
 void Image_Decode(Image* This, Array* dest, uint32_t bufferWidth) {
+  auto pixelFormatName = static_cast<ClassType*>(This->pixelFormat)->GetName();
+  if (pixelFormatName == "RGBA16float") {
+    uhdr_compressed_image_t compressed_img;
+    compressed_img.data = This->encodedImage.ptr;
+    compressed_img.data_sz = This->encodedImage.controlBlock->arrayLength;
+    compressed_img.capacity = This->encodedImage.controlBlock->arrayLength;
+    compressed_img.cg = UHDR_CG_UNSPECIFIED;
+    compressed_img.ct = UHDR_CT_UNSPECIFIED;
+    compressed_img.range = UHDR_CR_UNSPECIFIED;
+
+    uhdr_codec_private_t* dec = uhdr_create_decoder();
+    if (!dec) {
+      assert(!"failed to create ultrahdr decoder");
+      return;
+    }
+    uhdr_dec_set_image(dec, &compressed_img);
+    uhdr_dec_set_out_img_format(dec, UHDR_IMG_FMT_64bppRGBAHalfFloat);
+
+    uhdr_error_info_t err = uhdr_decode(dec);
+   if (err.error_code != UHDR_CODEC_OK) {
+      assert(!"failed to decode ultrahdr image");
+      uhdr_release_decoder(dec);
+      return;
+    }
+
+    uhdr_raw_image_t* raw_img = uhdr_get_decoded_image(dec);
+   if (!raw_img || raw_img->fmt != UHDR_IMG_FMT_64bppRGBAHalfFloat) {
+      assert(!"failed to get decoded ultrahdr image or unexpected format");
+      uhdr_release_decoder(dec);
+      return;
+    }
+
+    uint16_t* src_ptr = static_cast<uint16_t*>(raw_img->planes[UHDR_PLANE_PACKED]);
+    uint16_t* dest_ptr = static_cast<uint16_t*>(dest->ptr);
+    unsigned int src_stride_pixels = raw_img->stride[UHDR_PLANE_PACKED];
+    unsigned int width = raw_img->w;
+    unsigned int height = raw_img->h;
+
+    for (unsigned int y = 0; y < height; ++y) {
+      uint16_t* src_row = src_ptr + y * src_stride_pixels * 4;
+      uint16_t* dest_row = dest_ptr + y * bufferWidth * 4;
+      memcpy(dest_row, src_row, width * 8); // 8 bytes per pixel (4 channels * 16-bit)
+    }
+    uhdr_release_decoder(dec);
+    return; 
+  }
   jpeg_start_decompress(&This->cinfo);
   uint32_t* p = static_cast<uint32_t*>(dest->ptr);
 

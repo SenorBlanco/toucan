@@ -81,6 +81,10 @@ toucan_app("mipped-cube") {
   sources = [ "mipped-cube.t" ]
 }
 
+toucan_app("ultrahdr-decode") {
+  sources = [ "ultrahdr-decode.t" ]
+}
+
 source_set("main") {
   sources = [ "main.cc" ]
   include_dirs = [ ".." ]

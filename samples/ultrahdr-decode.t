@@ -26,10 +26,10 @@ class Pipeline {
 };
 
 var device = new Device();
-var image = new Image<RGBA8unorm>(inline("third_party/home-cube/montreal-sunset-hdr.jpg"));
+var image = new Image<RGBA16float>(inline("third_party/home-cube/montreal-sunset-hdr.jpg"));
 var imageSize = image.GetSize();
-var texture = new sampleable Texture2D<RGBA8unorm>(device, imageSize);
-var buffer = new hostwriteable Buffer<[]ubyte<4>>(device, texture.MinBufferWidth() * imageSize.y);
+var texture = new sampleable Texture2D<RGBA16float>(device, imageSize);
+var buffer = new hostwriteable Buffer<[]ushort<4>>(device, texture.MinBufferWidth() * imageSize.y);
 image.Decode(buffer.MapWrite(), texture.MinBufferWidth());
 var copyEncoder = new CommandEncoder(device);
 texture.CopyFromBuffer(copyEncoder, buffer, imageSize);
