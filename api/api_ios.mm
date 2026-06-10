@@ -115,7 +115,7 @@ const uint32_t* Window_GetSize(Window* This) {
   return screenSize;
 }
 
-Window* Window_Window(const uint32_t* size, const int32_t* position) {
+Window* Window_Window(const uint32_t* size, const int32_t* position, bool hdr) {
   return new Window{gApp->WaitForPrimaryView()};
 }
 
@@ -284,8 +284,9 @@ int main(int argc, char** argv) {
 
   CAMetalLayer* layer = (CAMetalLayer*) primaryView.layer;
   [layer setDevice:MTLCreateSystemDefaultDevice()];
-  [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
+  [layer setPixelFormat:MTLPixelFormatRGBA16Float];
   [layer setFramebufferOnly:YES];
+  [layer setWantsExtendedDynamicRangeContent:YES];
 
   [self.view addSubview:primaryView];
   gApp->SetPrimaryView(primaryView);
