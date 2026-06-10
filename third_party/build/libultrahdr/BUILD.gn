@@ -21,6 +21,8 @@ source_set("libultrahdr") {
     "$libultrahdr/third_party/image_io/includes",
     "$libultrahdr/third_party/image_io/src/modp_b64",
     "$libultrahdr/third_party/image_io/src/modp_b64/modp_b64",
+    "../../libjpeg-turbo",
+    "../../build/libjpeg-turbo",
   ]
   deps = [
     "//third_party/build/libjpeg-turbo",
