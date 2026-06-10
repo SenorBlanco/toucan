@@ -100,6 +100,10 @@ const uint32_t* Window_GetSize(Window* This) {
 }
 
 Window* Window_Window(const uint32_t* size, const int32_t* position) {
+float Window_GetDevicePixelRatio(Window* This) {
+  return [This->window backingScaleFactor];
+}
+
   NSApplication* app = [NSApplication sharedApplication];
   NSRect         rect = NSMakeRect(position[0], position[1], size[0], size[1]);
   int mask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable |
@@ -299,13 +303,10 @@ double System_GetCurrentTime() {
 }
 
 - (void)windowDidResize:(NSNotification*)notification {
-  const NSRect contentRect = [window->view frame];
-  const NSRect fbRect = [window->view convertRectToBacking:contentRect];
+  const CGSize size = [window->view frame].size;
 
-  if (fbRect.size.width != window->size[0] || fbRect.size.height != window->size[1]) {
-    window->size[0] = fbRect.size.width;
-    window->size[1] = fbRect.size.height;
-  }
+  window->size[0] = size.width;
+  window->size[1] = size.height;
 }
 
 @end
