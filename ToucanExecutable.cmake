@@ -143,7 +143,7 @@ function(toucan_executable TARGET_NAME)
   elseif(EMSCRIPTEN)
     target_link_options(${TARGET_NAME} PRIVATE
       "--shell-file=${CMAKE_SOURCE_DIR}/emscripten/shell.html"
-      "-sINITIAL_MEMORY=67108864"
+      "-sINITIAL_MEMORY=268435456"
       "-sSTACK_SIZE=4194304"
       "-sASYNCIFY=2"
       "--no-wasm-opt"

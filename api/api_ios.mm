@@ -75,6 +75,9 @@ class IOSApp {
     return event;
   }
 
+  void SetHDR(bool hdr) { hdr_ = hdr; }
+  bool IsHDR() const { return hdr_; }
+
 private:
   ToucanMetalView        *primaryView_ = nullptr;
 
@@ -85,6 +88,8 @@ private:
 
   std::mutex              primaryViewMutex_;
   std::condition_variable primaryViewExists_;
+
+  bool                    hdr_;
 };
 
 namespace Toucan {
@@ -115,7 +120,8 @@ const uint32_t* Window_GetSize(Window* This) {
   return screenSize;
 }
 
-Window* Window_Window(const uint32_t* size, const int32_t* position) {
+Window* Window_Window(const uint32_t* size, const int32_t* position, bool hdr) {
+  gApp->SetHDR(hdr);
   return new Window{gApp->WaitForPrimaryView()};
 }
 
@@ -284,7 +290,12 @@ int main(int argc, char** argv) {
 
   CAMetalLayer* layer = (CAMetalLayer*) primaryView.layer;
   [layer setDevice:MTLCreateSystemDefaultDevice()];
-  [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
+  if (gApp->IsHDR()) {
+    [layer setPixelFormat:MTLPixelFormatRGBA16Float];
+    [layer setWantsExtendedDynamicRangeContent:YES];
+  } else {
+    [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
+  }
   [layer setFramebufferOnly:YES];
 
   [self.view addSubview:primaryView];

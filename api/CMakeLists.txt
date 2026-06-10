@@ -56,6 +56,7 @@ target_include_directories(api PUBLIC
   ${CMAKE_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
   ${JPEG_INCLUDE_DIR}
+  ${CMAKE_SOURCE_DIR}/third_party/libultrahdr
 )
 
 if(EMSCRIPTEN)
@@ -71,6 +72,8 @@ else()
 endif()
 
 target_link_libraries(api PUBLIC JPEG::JPEG)
-if(TARGET jpeg_turbo)
-  add_dependencies(api jpeg_turbo)
+if(TARGET libjpeg_turbo)
+  # If there's no system libjpeg, add a dependency on third_party/libjpeg-turbo
+  add_dependencies(api libjpeg_turbo)
 endif()
+target_link_libraries(api PUBLIC uhdr)

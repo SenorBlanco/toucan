@@ -50,9 +50,9 @@ endif()
 
 find_package(JPEG QUIET)
 if(JPEG_FOUND)
-  message(STATUS "Found system JPEG: ${JPEG_LIBRARIES}")
+  message(STATUS "Found system libjpeg: ${JPEG_LIBRARIES}")
 else()
-  message(STATUS "JPEG not found on system. Building libjpeg-turbo via ExternalProject.")
+  message(STATUS "System libjpeg not found. Building libjpeg-turbo via ExternalProject.")
 
   include(ExternalProject)
 
@@ -93,7 +93,7 @@ else()
     )
   endif()
 
-  ExternalProject_Add(jpeg_turbo
+  ExternalProject_Add(libjpeg_turbo
     SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third_party/libjpeg-turbo
     BUILD_BYPRODUCTS ${JPEG_LIBRARY}
     CMAKE_ARGS ${TOUCAN_CMAKE_ARGS}
@@ -136,6 +136,9 @@ endif()
 set(TINT_BUILD_IR_BINARY False)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+set(UHDR_BUILD_EXAMPLES OFF)
+set(UHDR_ENABLE_INSTALL OFF)
 
 if(NOT CMAKE_CROSSCOMPILING)
   if (NOT WIN32)
@@ -234,6 +237,11 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 include(ToucanExecutable)
 
 set(BUILD_SHARED_LIBS OFF)
+add_subdirectory(third_party/libultrahdr EXCLUDE_FROM_ALL)
+if(TARGET libjpeg_turbo)
+  # There's no system libjpeg, so add libjpeg_turbo as a dependency for libultrahdr's core
+  add_dependencies(core libjpeg_turbo)
+endif()
 add_subdirectory(third_party/dawn EXCLUDE_FROM_ALL)
 add_subdirectory(parser EXCLUDE_FROM_ALL)
 add_subdirectory(ast EXCLUDE_FROM_ALL)

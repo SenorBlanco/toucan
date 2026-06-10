@@ -134,7 +134,7 @@ std::string targetTripleStr;
               classname.c_str());
     }
     std::vector<uint32_t> output;
-    CodeGenSPIRV          codeGenSPIRV(&types);
+    CodeGenSPIRV          codeGenSPIRV(&types, false);
     codeGenSPIRV.Run(m);
     WriteCode(codeGenSPIRV.header());
     WriteCode(codeGenSPIRV.annotations());
