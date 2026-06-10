@@ -246,7 +246,7 @@ void CodeGenSPIRV::Run(Method* entryPoint) {
   assert(entryPoint->formalArgList.size() > 0);
 
   NodeVector     nodes;
-  ShaderPrepPass shaderPrepPass(&nodes, types_);
+  ShaderPrepPass shaderPrepPass(&nodes, types_, invertGammaForFP16_);
   entryPoint = shaderPrepPass.Run(entryPoint);
 
   Code interface;

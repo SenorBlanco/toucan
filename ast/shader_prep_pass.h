@@ -51,7 +51,7 @@ using BindGroupList = std::vector<VarVector>;
 
 class ShaderPrepPass : public CopyVisitor {
  public:
-  ShaderPrepPass(NodeVector* nodes, TypeTable* types);
+  ShaderPrepPass(NodeVector* nodes, TypeTable* types, bool invertGammaForFP16);
   Method*              Run(Method* entryPoint);
   Result               Visit(CastExpr* node) override;
   Result               Visit(FieldAccess* node) override;
@@ -86,6 +86,7 @@ class ShaderPrepPass : public CopyVisitor {
   bool    IsWrapper(Type* type) const;
 
   TypeTable*              types_;
+  bool                    invertGammaForFP16_;
   Stmts*                  rootStmts_ = nullptr;
   MethodMap               methodMap_;
   VarAliasMap             varAliases_;

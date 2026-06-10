@@ -107,7 +107,7 @@ const uint32_t* Window_GetSize(Window* This) {
   return This->size;
 }
 
-Window* Window_Window(const uint32_t* size, const int32_t* position) {
+Window* Window_Window(const uint32_t* size, const int32_t* position, bool hdr) {
   NSApplication* app = [NSApplication sharedApplication];
   NSRect         backingRect = NSMakeRect(position[0], position[1], size[0], size[1]);
   NSRect         windowRect = [[NSScreen mainScreen] convertRectFromBacking:backingRect];
@@ -124,12 +124,23 @@ Window* Window_Window(const uint32_t* size, const int32_t* position) {
 
   [window makeKeyAndOrderFront:NSApp];
 
+  CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+  MTLPixelFormat pixelFormat = MTLPixelFormatRGBA8Unorm;
+  auto wantsExtendedRange = NO;
+  if (hdr) {
+    CFStringRef colorSpaceString = kCGColorSpaceExtendedLinearSRGB;
+    colorSpace = CGColorSpaceCreateWithName(colorSpaceString);
+    pixelFormat = MTLPixelFormatRGBA16Float;
+    wantsExtendedRange = YES;
+  }
+
   CAMetalLayer* layer = [CAMetalLayer layer];
   [layer setDevice:mtlDevice];
-  [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
+  [layer setPixelFormat:pixelFormat];
+  [layer setWantsExtendedDynamicRangeContent:wantsExtendedRange];
   [layer setFramebufferOnly:YES];
   [layer setDrawableSize:CGSize(size[0], size[1])];
-  [layer setColorspace:CGColorSpaceCreateDeviceRGB()];
+  [layer setColorspace:colorSpace];
 
   NSView* view = [[NSView alloc] initWithFrame:windowRect];
   [view setWantsLayer:YES];
