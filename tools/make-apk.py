@@ -43,7 +43,7 @@ manifest = '''<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools"
           package="org.toucanlang.''' + package_name + '''">
-  <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="33"/>
+  <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="33"/>
   <application android:allowBackup="false"
                android:label="''' + target_name + '''"
                android:hasCode="false">
@@ -82,7 +82,7 @@ with open(manifest_file, "w") as f:
   f.write(manifest)
   f.close()
 
-subprocess.check_call([android_sdk_dir + '/build-tools/34.0.0/aapt', 'package', '-f' , '-M', manifest_file, '-I', android_sdk_dir + '/platforms/android-26/android.jar', '-F', outfile, apk_dir])
+subprocess.check_call([android_sdk_dir + '/build-tools/34.0.0/aapt', 'package', '-f' , '-M', manifest_file, '-I', android_sdk_dir + '/platforms/android-28/android.jar', '-F', outfile, apk_dir])
 ext = '.bat' if sys.platform == 'win32' else ''
 subprocess.check_call([android_sdk_dir + '/build-tools/34.0.0/apksigner' + ext, 'sign', '--ks', keystore, '--ks-pass', 'pass:toucan', outfile])
 shutil.rmtree(apk_dir)

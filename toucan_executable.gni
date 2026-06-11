@@ -105,7 +105,7 @@ template("toucan_executable") {
       ]
     }
     if (is_android) {
-      libs = [ "android", "log" ]
+      libs = [ "android", "nativewindow", "log" ]
     }
     if (is_wasm) {
       ldflags = [
@@ -145,7 +145,7 @@ template("toucan_android_main_lib") {
     ]
     include_dirs = [ ".." ]
     sources = get_target_outputs(":${make_action}")
-    libs = [ "android" ]
+    libs = [ "android", "nativewindow", "log" ]
     ldflags = [ "-static-libstdc++" ]
   }
 }
