@@ -118,12 +118,16 @@ Window* Window_Window(const uint32_t* size, const int32_t* position) {
   cgSize.height = size[1];
   [window makeKeyAndOrderFront:NSApp];
 
+  CFStringRef colorSpaceString = kCGColorSpaceExtendedLinearSRGB;
+  CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(colorSpaceString);
+
   CAMetalLayer* layer = [CAMetalLayer layer];
   [layer setDevice:mtlDevice];
-  [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
+  [layer setPixelFormat:MTLPixelFormatRGBA16Float];
+  [layer setWantsExtendedDynamicRangeContent:YES];
   [layer setFramebufferOnly:YES];
   [layer setDrawableSize:cgSize];
-  [layer setColorspace:CGColorSpaceCreateDeviceRGB()];
+  [layer setColorspace:colorSpace];
 
   NSView* view = [[NSView alloc] initWithFrame:rect];
   [view setWantsLayer:YES];
