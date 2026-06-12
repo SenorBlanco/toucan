@@ -43,12 +43,13 @@ manifest = '''<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools"
           package="org.toucanlang.''' + package_name + '''">
-  <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="33"/>
+  <uses-sdk android:minSdkVersion="34" android:targetSdkVersion="34"/>
   <application android:allowBackup="false"
                android:label="''' + target_name + '''"
                android:hasCode="false">
     <activity android:name="android.app.NativeActivity"
               android:label="''' + target_name + '''"
+              android:colorMode="hdr"
               android:configChanges="orientation|screenSize"
               android:exported="true">
       <meta-data android:name="android.app.lib_name"

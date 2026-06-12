@@ -17,7 +17,8 @@ class Pipeline {
         return v.texCoord;
     }
     fragment main(fb : &FragmentBuiltins, texCoord : float<2>) {
-      fragColor.Set(bindings.Get().textureView.Sample(bindings.Get().sampler, texCoord));
+//      fragColor.Set(bindings.Get().textureView.Sample(bindings.Get().sampler, texCoord));
+      fragColor.Set(float<4>(10.0, 1.0, 1.0, 1.0));
     }
     var vertices : *VertexInput<Vertex>;
     var indices : *index Buffer<[]uint>;
@@ -56,14 +57,14 @@ var encoder = new CommandEncoder(device);
 var p = Pipeline{
   vertices = new VertexInput<Vertex>(vb),
   indices = ib,
-  fragColor = swapChain.GetCurrentTexture().CreateColorOutput(LoadOp.Clear),
+  fragColor = swapChain.GetCurrentTexture().CreateColorOutput(LoadOp.Clear, StoreOp.Store, float<4>{10.0, 1.0, 1.0, 1.0}),
   bindings = bindGroup
 };
-var renderPass = new RenderPass<Pipeline>(encoder, &p);
-renderPass.SetPipeline(pipeline);
-renderPass.DrawIndexed(6, 1, 0, 0, 0);
-renderPass.End();
-device.GetQueue().Submit(encoder.Finish());
+//var renderPass = new RenderPass<Pipeline>(encoder, &p);
+//renderPass.SetPipeline(pipeline);
+//renderPass.DrawIndexed(6, 1, 0, 0, 0);
+//renderPass.End();
+//device.GetQueue().Submit(encoder.Finish());
 swapChain.Present();
 
 while (System.IsRunning()) System.GetNextEvent();

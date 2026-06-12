@@ -16,6 +16,7 @@
 
 #include <android/hardware_buffer.h>
 #include <android/data_space.h>
+#include <android/surface_control.h>
 #include <android/log.h>
 #include <android_native_app_glue.h>
 
@@ -69,17 +70,22 @@ Window* Window_Window(const uint32_t* size, const int32_t* position) {
   if (gNumWindows == 0) {
     WaitForMainWindow();
     window = gAndroidApp->window;
-    int dataSpace = ADATASPACE_STANDARD_BT709 |
-                    ADATASPACE_TRANSFER_LINEAR |
-                    ADATASPACE_RANGE_EXTENDED;
-    ANativeWindow_setBuffersDataSpace(window, dataSpace);
+    ANativeWindow_setBuffersDataSpace(window, ADATASPACE_SCRGB_LINEAR);
+
+    auto surfaceControl = ASurfaceControl_createFromWindow(window, "ToucanSurfaceControl");
+    ASurfaceTransaction* transaction = ASurfaceTransaction_create();
+    ASurfaceTransaction_setExtendedRangeBrightness(transaction, surfaceControl, 100000.0, 100000.0);
+//    ASurfaceTransaction_setBufferDataSpace(transaction, surfaceControl, ADATASPACE_SCRGB_LINEAR); // FIXME: do we need this?
+//    ASurfaceTransaction_setDesiredHdrHeadroom(transaction, surfaceControl, 10.0f); // only in SDK 35
+    ASurfaceTransaction_apply(transaction);
+    ASurfaceTransaction_delete(transaction);
   } else {
     // TODO: create a dialog of x, y, width, height
     window = nullptr;
   }
   if (!window) { return nullptr; }
   gNumWindows++;
-  return new Window(window);
+  return new Window(window /*, surfaceControl */);
 }
 
 void Window_Destroy(Window* This) { delete This; }
