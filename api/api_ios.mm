@@ -282,8 +282,9 @@ int main(int argc, char** argv) {
 
   CAMetalLayer* layer = (CAMetalLayer*) primaryView.layer;
   [layer setDevice:MTLCreateSystemDefaultDevice()];
-  [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
+  [layer setPixelFormat:MTLPixelFormatRGBA16Float];
   [layer setFramebufferOnly:YES];
+  [layer setWantsExtendedDynamicRangeContent:YES];
 
   [self.view addSubview:primaryView];
   gApp->SetPrimaryView(primaryView);
