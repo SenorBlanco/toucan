@@ -26,7 +26,7 @@ class Pipeline {
       var b = bindings.Get();
       var u = b.uniforms.MapRead();
       var color = b.textureView.Sample(b.sampler, texCoord);
-      var distanceToMouse = Math.length(u.mousePos * 2.333 - fb.fragCoord.xy);
+      var distanceToMouse = Math.length(u.mousePos - fb.fragCoord.xy);
       const maxDistance = 200.0;
       const minIntensity = 0.4;
       var scale = Math.max((maxDistance - distanceToMouse) * 0.7, minIntensity);
@@ -77,6 +77,7 @@ var p = Pipeline{
 };
 var clamp = 0u;
 var mousePos : float<2>;
+var touchMoved = false;
 do {
   var encoder = new CommandEncoder(device);
   p.fragColor = swapChain.GetCurrentTexture().CreateColorOutput(LoadOp.Clear);
@@ -90,8 +91,18 @@ do {
     var event = System.GetNextEvent();
     if (event.type == EventType.MouseDown) {
       clamp = 1u - clamp;
+    } else if (event.type == EventType.TouchStart) {
+      touchMoved = false;
+    } else if (event.type == EventType.TouchEnd) {
+      if (!touchMoved) {
+        clamp = 1u - clamp;
+      }
+      touchMoved = false;
     } else if (event.type == EventType.MouseMove) {
-      mousePos = event.position as float<2>;
+      mousePos = event.position as float<2> * 2.333;
+    } else if (event.type == EventType.TouchMove) {
+      mousePos = event.touches[0] as float<2>;
+      touchMoved = true;
     }
     bindings.uniforms.Set({mousePos = mousePos, clamp = clamp});
   } while (System.HasPendingEvents());
