@@ -72,7 +72,7 @@ var pipelineData = DrawPipeline{
   bindings = new BindGroup<Bindings>(device, &bindings)
 };
 
-var handler = EventHandler{ distance = 3.0 };
+var handler = EventHandler{ distance = 10.0 };
 var teapotQuat = Quaternion(float<3>(1.0, 0.0, 0.0), -Math.pi / 2.0);
 teapotQuat.normalize();
 var teapotRotation = teapotQuat.toMatrix();
@@ -88,14 +88,13 @@ while (System.IsRunning()) {
     swapChain.Resize(newSize);
     depthBuffer = new renderable Texture2D<Depth24Plus>(device, newSize);
     var aspectRatio = newSize.x as float / newSize.y as float;
-    uniforms.projection = Transform.projection(0.5, 200.0, -aspectRatio, aspectRatio, -1.0, 1.0);
+    uniforms.projection = Transform.projection(0.5, 1000.0, -aspectRatio * 0.25, aspectRatio * 0.25, -0.25, 0.25);
     prevWindowSize = newSize;
   }
   uniforms.view = Transform.translation({0.0, 0.0, -handler.distance});
   uniforms.view *= orientation.toMatrix();
-  uniforms.model = Transform.scale({1.0, 1.0, 1.0});
+  uniforms.model = Transform.identity();
   bindings.uniforms.Set(&uniforms);
-  uniforms.model = teapotRotation * Transform.scale({2.0, 2.0, 2.0});
   var encoder = new CommandEncoder(device);
   var fb = swapChain.GetCurrentTexture().CreateColorOutput(LoadOp.Clear);
   var db = depthBuffer.CreateDepthStencilOutput(LoadOp.Clear);
@@ -113,5 +112,6 @@ while (System.IsRunning()) {
 
   do {
     handler.Handle(System.GetNextEvent());
+    handler.distance = Math.max(handler.distance, 3.0);
   } while (System.HasPendingEvents());
 }
