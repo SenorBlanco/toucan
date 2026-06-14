@@ -5,9 +5,15 @@ class Vertex {
   var texCoord : float<2>;
 };
 
+class Uniforms {
+  var mousePos : float<2>;
+  var clamp    : uint;
+}
+
 class Bindings {
   var sampler : *Sampler;
   var textureView : *SampleableTexture2D<float>;
+  var uniforms : *uniform Buffer<Uniforms>;
 }
 
 class Pipeline {
@@ -17,7 +23,18 @@ class Pipeline {
         return v.texCoord;
     }
     fragment main(fb : &FragmentBuiltins, texCoord : float<2>) {
-      fragColor.Set(bindings.Get().textureView.Sample(bindings.Get().sampler, texCoord));
+      var b = bindings.Get();
+      var u = b.uniforms.MapRead();
+      var color = b.textureView.Sample(b.sampler, texCoord);
+      var distanceToMouse = Math.length(u.mousePos * 2.333 - fb.fragCoord.xy);
+      const maxDistance = 200.0;
+      const minIntensity = 0.4;
+      var scale = Math.max((maxDistance - distanceToMouse) * 0.7, minIntensity);
+      color *= scale;
+      if (u.clamp != 0u) {
+        color = Math.min(color, float<4>{1.0});
+      }
+      fragColor.Set(color);
     }
     var vertices : *VertexInput<Vertex>;
     var indices : *index Buffer<[]uint>;
@@ -49,21 +66,33 @@ var ib = new index Buffer<[]uint>(device, &indices);
 var pipeline = new RenderPipeline<Pipeline>(device);
 var bindings = Bindings{
   sampler = new Sampler(device),
-  textureView = texture.CreateSampleableView()
+  textureView = texture.CreateSampleableView(),
+  uniforms = new uniform Buffer<Uniforms>(device)
 };
 var bindGroup = new BindGroup<Bindings>(device, &bindings);
-var encoder = new CommandEncoder(device);
 var p = Pipeline{
   vertices = new VertexInput<Vertex>(vb),
   indices = ib,
-  fragColor = swapChain.GetCurrentTexture().CreateColorOutput(LoadOp.Clear),
   bindings = bindGroup
 };
-var renderPass = new RenderPass<Pipeline>(encoder, &p);
-renderPass.SetPipeline(pipeline);
-renderPass.DrawIndexed(6, 1, 0, 0, 0);
-renderPass.End();
-device.GetQueue().Submit(encoder.Finish());
-swapChain.Present();
-
-while (System.IsRunning()) System.GetNextEvent();
+var clamp = 0u;
+var mousePos : float<2>;
+do {
+  var encoder = new CommandEncoder(device);
+  p.fragColor = swapChain.GetCurrentTexture().CreateColorOutput(LoadOp.Clear);
+  var renderPass = new RenderPass<Pipeline>(encoder, &p);
+  renderPass.SetPipeline(pipeline);
+  renderPass.DrawIndexed(6, 1, 0, 0, 0);
+  renderPass.End();
+  device.GetQueue().Submit(encoder.Finish());
+  swapChain.Present();
+  do {
+    var event = System.GetNextEvent();
+    if (event.type == EventType.MouseDown) {
+      clamp = 1u - clamp;
+    } else if (event.type == EventType.MouseMove) {
+      mousePos = event.position as float<2>;
+    }
+    bindings.uniforms.Set({mousePos = mousePos, clamp = clamp});
+  } while (System.HasPendingEvents());
+} while (System.IsRunning());
