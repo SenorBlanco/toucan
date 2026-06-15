@@ -99,6 +99,10 @@ const uint32_t* Window_GetSize(Window* This) {
   return This->size;
 }
 
+float Window_GetDevicePixelRatio(Window* This) {
+  return [This->window backingScaleFactor];
+}
+
 Window* Window_Window(const uint32_t* size, const int32_t* position) {
   NSApplication* app = [NSApplication sharedApplication];
   NSRect         rect = NSMakeRect(position[0], position[1], size[0], size[1]);
