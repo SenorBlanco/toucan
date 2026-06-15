@@ -135,7 +135,7 @@ template("toucan_executable") {
     if (is_wasm) {
       ldflags = [
         "--shell-file", rebase_path("//emscripten/shell.html", root_build_dir),
-        "-sINITIAL_MEMORY=67108864",
+        "-sINITIAL_MEMORY=268435456",
         "-sSTACK_SIZE=" + stack_size,
         "-sASYNCIFY=2",
         "-Wno-experimental",

@@ -192,12 +192,17 @@ SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Win
 
   wgpu::Surface surface = instance.CreateSurface(&surfaceDesc);
 
+  wgpu::SurfaceColorManagement surfaceColorMgt;
+  surfaceColorMgt.colorSpace = wgpu::PredefinedColorSpace::SRGB;
+  surfaceColorMgt.toneMappingMode = wgpu::ToneMappingMode::Extended;
+
   wgpu::SurfaceConfiguration config;
   config.device = device->device;
   config.format = ToDawnTextureFormat(format);
   config.width = window->size[0];
   config.height = window->size[1];
   config.presentMode = wgpu::PresentMode::Fifo;
+  config.nextInChain = &surfaceColorMgt;
 
   surface.Configure(&config);
 
