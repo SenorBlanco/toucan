@@ -66,6 +66,20 @@ bool NeedsUnfolding(Type* type) {
   return false;
 }
 
+Method* FindMathPow(TypeTable* types, Type* returnType) {
+  for (auto& type : types->GetTypes()) {
+    if (!type->IsClass()) continue;
+    auto classType = static_cast<ClassType*>(type);
+    if (classType->GetName() != "Math") continue;
+    for (auto& method : classType->GetMethods()) {
+      if (method->name == "pow" && method->returnType == returnType) {
+        return method.get();
+      }
+    }
+  }
+  return nullptr;
+}
+
 }
 
 ShaderPrepPass::ShaderPrepPass(NodeVector* nodes, TypeTable* types)
@@ -392,13 +406,31 @@ Method* ShaderPrepPass::PrepMethod(Method* method, std::vector<Expr*> globalArgs
 
   return result;
 }
-
 Result ShaderPrepPass::ResolveNativeMethodCall(MethodCall* node) {
   Method*    method = node->GetMethod();
   auto       args = node->GetArgList()->Get();
   ClassType* classType = method->classType;
   if (classType->GetTemplate() == NativeClass::ColorOutput && method->name == "Set") {
-    auto store = Make<StoreStmt>(Resolve(args[0]), Resolve(args[1]));
+    auto color = Resolve(args[1]);
+#if TARGET_OS_IS_WASM
+    // Until "sRGB linear" (aka scrgb) is supported in Chrome by default,
+    // use sRGB colorspace and invert the gamma when writing to FP16 attachments.
+    auto format = classType->GetTemplateArgs()[0];
+    assert(format->IsClass());
+    if (static_cast<ClassType*>(format)->GetName().ends_with("RGBA16float")) {
+        auto float4 = types_->GetVector(types_->GetFloat(), 4);
+        static Method* mathPow = FindMathPow(types_, float4);
+        assert(mathPow);
+
+        auto invGamma = Make<FloatConstant>(1.0f / 2.2f);
+        auto zero = Make<FloatConstant>(0.0f);
+        std::vector<Expr*> powerArgs = {invGamma, invGamma, invGamma, zero};
+        auto powers = Make<Initializer>(float4, Make<ExprList>(std::move(powerArgs)));
+        std::vector<Expr*> exprs = {color, powers};
+        color = Make<MethodCall>(mathPow, Make<ExprList>(std::move(exprs)));
+    }
+#endif
+    auto store = Make<StoreStmt>(Resolve(args[0]), color);
     return Make<ExprWithStmt>(nullptr, store);
   } else if (classType->GetTemplate() == NativeClass::VertexInput ||
              (classType->GetTemplate() == NativeClass::Buffer && method->name == "Get")) {
