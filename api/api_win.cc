@@ -116,6 +116,10 @@ const uint32_t* Window_GetSize(Window* This) {
   return This->size;
 }
 
+float Window_GetDevicePixelRatio(Window* This) {
+  return static_cast<float>(GetDpiForWindow(This->wnd)) / 96.0f;
+}
+
 const uint32_t* System_GetScreenSize() {
   gScreenSize[0] = static_cast<uint32_t>(GetSystemMetrics(SM_CXSCREEN));
   gScreenSize[1] = static_cast<uint32_t>(GetSystemMetrics(SM_CYSCREEN));
