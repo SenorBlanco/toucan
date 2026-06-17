@@ -33,7 +33,7 @@ deps = {
   "third_party/Vulkan-Headers" : "https://github.com/KhronosGroup/Vulkan-Headers@65586d13fb197279942581ba9c2eb2c6b664487c",
   "third_party/Vulkan-Tools" : "https://github.com/KhronosGroup/Vulkan-Tools@2a3347d5e74d359e3ecb8e229917f3335bfa2dfa",
   "third_party/Vulkan-Utility-Libraries" : "https://github.com/KhronosGroup/Vulkan-Utility-Libraries@9aa2c08f82e3fb18d43e37e44015a79af7f3b672",
-  "third_party/home-cube" : "https://github.com/SenorBlanco/home-cube@e1a739a18ce41ab248be887ea93d565ce43b222e",
+  "third_party/home-cube" : "https://github.com/SenorBlanco/home-cube@1d7c8bb81b66b8e3b105076902c6cd0279816ad4",
   "third_party/emscripten" : "https://github.com/emscripten-core/emscripten@6913738ec5371a88c4af5a80db0ab42bad3de681",
   "third_party/binaryen" : "https://github.com/WebAssembly/binaryen@6ec7b5f9c615d3b224c67ae221d6812c8f8e1a96",
 
