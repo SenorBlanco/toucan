@@ -28,18 +28,20 @@ static std::unordered_map<int, Window*> gWindows;
 
 void copyMouseEvent(emscripten::val event, Event* result) {
   result->button = event["button"].as<int>();
-  result->position[0] = event["clientX"].as<int>();
-  result->position[1] = event["clientY"].as<int>();
+  result->position[0] = event["clientX"].as<int>() - EM_ASM_INT("return canvas.getBoundingClientRect().x");
+  result->position[1] = event["clientY"].as<int>() - EM_ASM_INT("return canvas.getBoundingClientRect().y");
 }
 
 void copyTouches(emscripten::val touches, Event* result) {
   int length = touches["length"].as<int>();
   if (length > 10) length = 10;
   result->numTouches = length;
+  int xOffset = EM_ASM_INT("return canvas.getBoundingClientRect().x");
+  int yOffset = EM_ASM_INT("return canvas.getBoundingClientRect().y");
   for (int i = 0; i < length; ++i) {
     emscripten::val touch = touches.call<emscripten::val>("item", i);
-    result->touches[i][0] = touch["clientX"].as<int>();
-    result->touches[i][1] = touch["clientY"].as<int>();
+    result->touches[i][0] = touch["clientX"].as<int>() - xOffset;
+    result->touches[i][1] = touch["clientY"].as<int>() - yOffset;
   }
 }
 
