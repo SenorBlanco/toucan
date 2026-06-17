@@ -28,8 +28,7 @@ class Pipeline {
       var color = b.textureView.Sample(b.sampler, texCoord);
       var distanceToMouse = Math.length(u.mousePos - fb.fragCoord.xy);
       const maxDistance = 200.0;
-      const minIntensity = 0.4;
-      var scale = Math.max((maxDistance - distanceToMouse) * 0.7, minIntensity);
+      var scale = Math.max((maxDistance - distanceToMouse) * 0.7, 1.0);
       color *= scale;
       if (u.clamp != 0u) {
         color = Math.min(color, float<4>{1.0});
@@ -87,7 +86,7 @@ do {
   renderPass.End();
   device.GetQueue().Submit(encoder.Finish());
   swapChain.Present();
-  var windowScale = imageSize as float<2> / window.GetSize() as float<2> * window.GetDevicePixelRatio();
+  var windowScale = imageSize as float<2> / window.GetSize() as float<2>;
   do {
     var event = System.GetNextEvent();
     if (event.type == EventType.MouseDown) {
