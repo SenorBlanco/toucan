@@ -85,8 +85,8 @@ toucan_app("mipped-cube-hdr") {
   sources = [ "mipped-cube-hdr.t" ]
 }
 
-toucan_app("hdr-image") {
-  sources = [ "hdr-image.t" ]
+toucan_app("hdr-image-explorer") {
+  sources = [ "hdr-image-explorer.t" ]
 }
 
 source_set("main") {

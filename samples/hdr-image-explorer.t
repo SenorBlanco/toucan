@@ -28,7 +28,7 @@ class Pipeline {
       var color = b.textureView.Sample(b.sampler, texCoord);
       var distanceToMouse = Math.length(u.mousePos - fb.fragCoord.xy);
       const maxDistance = 200.0;
-      var scale = Math.max((maxDistance - distanceToMouse) * 0.7, 1.0);
+      var scale = Math.max((maxDistance - distanceToMouse) * 0.5, 1.0);
       color *= scale;
       if (u.clamp != 0u) {
         color = Math.min(color, float<4>{1.0});
