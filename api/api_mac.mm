@@ -307,13 +307,10 @@ double System_GetCurrentTime() {
 }
 
 - (void)windowDidResize:(NSNotification*)notification {
-  const NSRect contentRect = [window->view frame];
-  const NSRect fbRect = [window->view convertRectToBacking:contentRect];
+  const CGSize size = [window->view frame].size;
 
-  if (fbRect.size.width != window->size[0] || fbRect.size.height != window->size[1]) {
-    window->size[0] = fbRect.size.width;
-    window->size[1] = fbRect.size.height;
-  }
+  window->size[0] = size.width;
+  window->size[1] = size.height;
 }
 
 @end
