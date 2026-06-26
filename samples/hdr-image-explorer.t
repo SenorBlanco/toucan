@@ -86,7 +86,7 @@ do {
   renderPass.End();
   device.GetQueue().Submit(encoder.Finish());
   swapChain.Present();
-  var windowScale = imageSize as float<2> / window.GetSize() as float<2>;
+  var windowScale = imageSize as float<2> / window.GetSize() as float<2> * window.GetDevicePixelRatio();
   do {
     var event = System.GetNextEvent();
     if (event.type == EventType.MouseDown) {
