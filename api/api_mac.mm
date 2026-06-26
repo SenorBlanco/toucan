@@ -103,7 +103,7 @@ float Window_GetDevicePixelRatio(Window* This) {
   return [This->window backingScaleFactor];
 }
 
-Window* Window_Window(const uint32_t* size, const int32_t* position) {
+Window* Window_Window(const uint32_t* size, const int32_t* position, bool hdr) {
   NSApplication* app = [NSApplication sharedApplication];
   NSRect         rect = NSMakeRect(position[0], position[1], size[0], size[1]);
   int mask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable |
@@ -122,12 +122,17 @@ Window* Window_Window(const uint32_t* size, const int32_t* position) {
   cgSize.height = size[1];
   [window makeKeyAndOrderFront:NSApp];
 
-  CFStringRef colorSpaceString = kCGColorSpaceExtendedLinearSRGB;
-  CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(colorSpaceString);
+  CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+  MTLPixelFormat pixelFormat = MTLPixelFormatRGBA8Unorm;
+  if (hdr) {
+    CFStringRef colorSpaceString = kCGColorSpaceExtendedLinearSRGB;
+    colorSpace = CGColorSpaceCreateWithName(colorSpaceString);
+    pixelFormat = MTLPixelFormatRGBA16Float;
+  }
 
   CAMetalLayer* layer = [CAMetalLayer layer];
   [layer setDevice:mtlDevice];
-  [layer setPixelFormat:MTLPixelFormatRGBA16Float];
+  [layer setPixelFormat:pixelFormat];
   [layer setWantsExtendedDynamicRangeContent:YES];
   [layer setFramebufferOnly:YES];
   [layer setDrawableSize:cgSize];
