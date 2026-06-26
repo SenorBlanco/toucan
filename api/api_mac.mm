@@ -160,8 +160,9 @@ SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Win
   config.device = device->device;
   config.format = ToDawnTextureFormat(format);
 
-  config.width = window->size[0];
-  config.height = window->size[1];
+  auto backingScaleFactor = [window->window backingScaleFactor];
+  config.width = window->size[0] * backingScaleFactor;
+  config.height = window->size[1] * backingScaleFactor;
   config.presentMode = wgpu::PresentMode::Fifo;
 
   wgpu::SurfaceSourceMetalLayer metalLayerDesc;
