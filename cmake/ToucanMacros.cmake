@@ -17,15 +17,21 @@ function(toucan_objects TARGET_NAME)
   endforeach()
 
   if(EMSCRIPTEN)
-    if(EXISTS "${CMAKE_SOURCE_DIR}/build/compilers/tc")
-      set(TC_CMD "${CMAKE_SOURCE_DIR}/build/compilers/tc")
+    if(EXISTS "${CMAKE_SOURCE_DIR}/out/Debug/compilers/tc")
+      set(TC_CMD "${CMAKE_SOURCE_DIR}/out/Debug/compilers/tc")
+    elseif(EXISTS "${CMAKE_SOURCE_DIR}/out/Release/compilers/tc")
+      set(TC_CMD "${CMAKE_SOURCE_DIR}/out/Release/compilers/tc")
     elseif(EXISTS "${CMAKE_SOURCE_DIR}/out/Debug/tc")
       set(TC_CMD "${CMAKE_SOURCE_DIR}/out/Debug/tc")
+    elseif(EXISTS "${CMAKE_SOURCE_DIR}/out/Release/tc")
+      set(TC_CMD "${CMAKE_SOURCE_DIR}/out/Release/tc")
     else()
       set(TC_CMD tc)
     endif()
+    set(TC_EXTRA_ARGS "-T" "wasm32-unknown-unknown")
   else()
     set(TC_CMD "$<TARGET_FILE:tc>")
+    set(TC_EXTRA_ARGS "")
   endif()
 
   add_custom_command(
@@ -36,6 +42,7 @@ function(toucan_objects TARGET_NAME)
             -t ${INIT_TYPES_CC}
             -I ${CMAKE_SOURCE_DIR}
             -I ${CMAKE_SOURCE_DIR}/samples/include
+            ${TC_EXTRA_ARGS}
             ${ABS_SOURCES}
     DEPENDS ${ABS_SOURCES} ${CMAKE_SOURCE_DIR}/tools/run.py
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -94,9 +101,11 @@ function(toucan_executable TARGET_NAME)
       "-sINITIAL_MEMORY=67108864"
       "-sSTACK_SIZE=4194304"
       "-sASYNCIFY=2"
+      "--no-wasm-opt"
       "-Wno-experimental"
       "-lembind"
       "-msimd128"
+      "--use-port=emdawnwebgpu"
     )
     set_target_properties(${TARGET_NAME} PROPERTIES SUFFIX ".html")
   endif()

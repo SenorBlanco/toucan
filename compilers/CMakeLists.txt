@@ -11,11 +11,7 @@ if(NOT EMSCRIPTEN)
     target_include_directories(tc PRIVATE ${LLVM_INCLUDE_DIRS})
   endif()
 
-  target_compile_definitions(tc PRIVATE
-    API_PATH="${CMAKE_SOURCE_DIR}/api"
-    TARGET_CPU_IS_WASM=1
-    TARGET_OS_IS_WASM=1
-  )
+  target_compile_definitions(tc PRIVATE API_PATH="${CMAKE_SOURCE_DIR}/api")
 
   target_link_libraries(tc PRIVATE
     ast

@@ -73,11 +73,12 @@ int main(int argc, char** argv) {
   bool spirv = false;
 
   int                      opt;
-  char                     optstring[] = "dsvc:m:o:t:I:";
+  char                     optstring[] = "dsvc:m:o:t:I:T:";
   std::string              classname = "Class";
   std::string              methodname = "method";
   std::string              outputFilename = "a.o";
   std::string              initTypesFilename = "init_types.cc";
+  std::string              targetTripleOverride;
   std::vector<std::string> includePaths;
   includePaths.push_back(API_PATH);
 
@@ -90,6 +91,7 @@ int main(int argc, char** argv) {
       case 'o': outputFilename = optarg; break;
       case 't': initTypesFilename = optarg; break;
       case 'I': includePaths.push_back(optarg); break;
+      case 'T': targetTripleOverride = optarg; break;
     }
   }
 
@@ -168,6 +170,10 @@ int main(int argc, char** argv) {
 #else
     std::string targetTripleStr = llvm::sys::getDefaultTargetTriple();
 #endif
+
+    if (!targetTripleOverride.empty()) {
+      targetTripleStr = targetTripleOverride;
+    }
 
     llvm::Triple targetTriple(targetTripleStr);
 

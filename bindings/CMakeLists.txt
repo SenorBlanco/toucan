@@ -26,6 +26,10 @@ target_link_libraries(api_header_generator PRIVATE
   parser
 )
 
+if(EMSCRIPTEN)
+  target_link_options(api_header_generator PRIVATE "--no-wasm-opt")
+endif()
+
 if(WIN32)
   target_include_directories(api_header_generator PRIVATE
     ${CMAKE_SOURCE_DIR}/third_party/getopt

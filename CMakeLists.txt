@@ -10,10 +10,13 @@ if(POLICY CMP0171)
   cmake_policy(SET CMP0171 OLD)
 endif()
 
-
-
 option(BUILD_SAMPLES "Build Toucan samples" ON)
 option(BUILD_TESTS "Build Toucan tests" ON)
+
+if(EMSCRIPTEN)
+  set(CMAKE_CXX_FLAGS_RELEASE "-O1" CACHE STRING "Flags used by the C++ compiler during Release builds." FORCE)
+  set(CMAKE_C_FLAGS_RELEASE "-O1" CACHE STRING "Flags used by the C compiler during Release builds." FORCE)
+endif()
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
