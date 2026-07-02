@@ -16,16 +16,31 @@ function(toucan_objects TARGET_NAME)
     endif()
   endforeach()
 
+  if(EMSCRIPTEN)
+    if(EXISTS "${CMAKE_SOURCE_DIR}/build/compilers/tc")
+      set(TC_CMD "${CMAKE_SOURCE_DIR}/build/compilers/tc")
+    elseif(EXISTS "${CMAKE_SOURCE_DIR}/out/Debug/tc")
+      set(TC_CMD "${CMAKE_SOURCE_DIR}/out/Debug/tc")
+    else()
+      set(TC_CMD tc)
+    endif()
+    set(TC_EXTRA_ARGS "-T" "wasm32-unknown-unknown")
+  else()
+    set(TC_CMD "$<TARGET_FILE:tc>")
+    set(TC_EXTRA_ARGS "")
+  endif()
+
   add_custom_command(
     OUTPUT ${OBJ_FILE} ${INIT_TYPES_CC}
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/run.py
-            $<TARGET_FILE:tc>
+            ${TC_CMD}
             -o ${OBJ_FILE}
             -t ${INIT_TYPES_CC}
             -I ${CMAKE_SOURCE_DIR}
             -I ${CMAKE_SOURCE_DIR}/samples/include
+            ${TC_EXTRA_ARGS}
             ${ABS_SOURCES}
-    DEPENDS tc ${ABS_SOURCES} ${CMAKE_SOURCE_DIR}/tools/run.py
+    DEPENDS ${ABS_SOURCES} ${CMAKE_SOURCE_DIR}/tools/run.py
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Compiling Toucan sources for ${TARGET_NAME}"
   )
@@ -57,11 +72,13 @@ function(toucan_executable TARGET_NAME)
     samples_main
     api
     ast
-    dawn_proc
-    dawn_native
   )
 
-  if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  if(NOT EMSCRIPTEN)
+    target_link_libraries(${TARGET_NAME} PRIVATE dawn_proc dawn_native)
+  endif()
+
+  if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT EMSCRIPTEN)
     target_link_libraries(${TARGET_NAME} PRIVATE X11 X11-xcb dl pthread)
   elseif(APPLE)
     find_library(APPKIT_FRAMEWORK AppKit)
@@ -74,6 +91,17 @@ function(toucan_executable TARGET_NAME)
     )
   elseif(WIN32)
     target_link_libraries(${TARGET_NAME} PRIVATE gdi32 user32)
+  elseif(EMSCRIPTEN)
+    target_link_options(${TARGET_NAME} PRIVATE
+      "--shell-file=${CMAKE_SOURCE_DIR}/emscripten/shell.html"
+      "-sINITIAL_MEMORY=67108864"
+      "-sSTACK_SIZE=4194304"
+      "-sASYNCIFY=2"
+      "-Wno-experimental"
+      "-lembind"
+      "-msimd128"
+    )
+    set_target_properties(${TARGET_NAME} PROPERTIES SUFFIX ".html")
   endif()
 endfunction()
 
