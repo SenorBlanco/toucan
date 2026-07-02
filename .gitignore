@@ -1,5 +1,6 @@
 buildtools
 out
+/build/
 bin
 third_party/abseil-cpp
 third_party/binaryen

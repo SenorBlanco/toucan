@@ -1,0 +1,22 @@
+# samples/CMakeLists.txt
+
+add_library(samples_main STATIC main.cc)
+target_include_directories(samples_main PUBLIC ${CMAKE_SOURCE_DIR})
+
+if(BUILD_SAMPLES)
+  toucan_app(decode SOURCES decode.t)
+  toucan_app(disco-dragon SOURCES disco-dragon.t)
+  toucan_app(skybox SOURCES skybox.t)
+  toucan_app(springy SOURCES springy.t)
+  toucan_app(springy-3d SOURCES springy-3d.t)
+  toucan_app(springy-compute SOURCES springy-compute.t)
+  toucan_app(springy-compute-3d SOURCES springy-compute-3d.t)
+  toucan_app(shiny SOURCES shiny.t)
+  toucan_app(shiny-anim SOURCES shiny-anim.t)
+  toucan_app(shiny-compute-anim SOURCES shiny-compute-anim.t)
+  toucan_app(shiny-dragon SOURCES shiny-dragon.t)
+  toucan_app(triangle SOURCES triangle.t)
+  toucan_app(gouraud SOURCES gouraud.t)
+  toucan_app(window SOURCES window.t)
+  toucan_app(mipped-cube SOURCES mipped-cube.t)
+endif()
