@@ -51,22 +51,26 @@ add_library(api STATIC ${API_SOURCES})
 
 add_dependencies(api generate_api_header)
 
-if(EMSCRIPTEN)
-  target_compile_definitions(api PUBLIC TARGET_OS_IS_WASM=1 TARGET_CPU_IS_WASM=1)
-endif()
-
 target_include_directories(api PUBLIC
   ${CMAKE_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_SOURCE_DIR}/third_party/dawn/include
-  ${CMAKE_SOURCE_DIR}/out/Debug/gen/third_party/dawn/include
-  ${CMAKE_SOURCE_DIR}/out/Release/gen/third_party/dawn/include
   ${CMAKE_SOURCE_DIR}/third_party/libjpeg-turbo
   ${CMAKE_SOURCE_DIR}/third_party/build/libjpeg-turbo
 )
 
-if(NOT EMSCRIPTEN)
+if(EMSCRIPTEN)
+  target_compile_definitions(api PUBLIC TARGET_OS_IS_WASM=1 TARGET_CPU_IS_WASM=1)
+  target_include_directories(api BEFORE PUBLIC
+    ${CMAKE_SOURCE_DIR}/third_party/emscripten/cache/ports/emdawnwebgpu/emdawnwebgpu_pkg/webgpu_cpp/include
+    ${CMAKE_SOURCE_DIR}/third_party/emscripten/cache/ports/emdawnwebgpu/emdawnwebgpu_pkg/webgpu/include
+  )
+  target_compile_options(api PUBLIC --use-port=emdawnwebgpu)
+  target_link_options(api PUBLIC --use-port=emdawnwebgpu)
+else()
   target_include_directories(api PUBLIC
+    ${CMAKE_SOURCE_DIR}/third_party/dawn/include
+    ${CMAKE_SOURCE_DIR}/out/Debug/gen/third_party/dawn/include
+    ${CMAKE_SOURCE_DIR}/out/Release/gen/third_party/dawn/include
     ${CMAKE_SOURCE_DIR}/third_party/Vulkan-Headers/include
   )
 endif()

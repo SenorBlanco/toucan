@@ -24,10 +24,8 @@ function(toucan_objects TARGET_NAME)
     else()
       set(TC_CMD tc)
     endif()
-    set(TC_EXTRA_ARGS "-T" "wasm32-unknown-unknown")
   else()
     set(TC_CMD "$<TARGET_FILE:tc>")
-    set(TC_EXTRA_ARGS "")
   endif()
 
   add_custom_command(
@@ -38,7 +36,6 @@ function(toucan_objects TARGET_NAME)
             -t ${INIT_TYPES_CC}
             -I ${CMAKE_SOURCE_DIR}
             -I ${CMAKE_SOURCE_DIR}/samples/include
-            ${TC_EXTRA_ARGS}
             ${ABS_SOURCES}
     DEPENDS ${ABS_SOURCES} ${CMAKE_SOURCE_DIR}/tools/run.py
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
