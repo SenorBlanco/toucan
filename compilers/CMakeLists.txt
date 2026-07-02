@@ -1,6 +1,37 @@
 # compilers/CMakeLists.txt
 
-if(NOT EMSCRIPTEN)
+if(EMSCRIPTEN)
+  set(TC_BINARY "${CMAKE_CURRENT_BINARY_DIR}/tc")
+
+  set(LLVM_DIR "${CMAKE_SOURCE_DIR}/third_party/llvm/llvm")
+  set(HOST_BUILD_DIR "${CMAKE_SOURCE_DIR}/out/Debug")
+
+  add_custom_command(
+    OUTPUT ${TC_BINARY}
+    COMMAND /usr/bin/c++ -std=c++20
+            -DAPI_PATH=\\\"${CMAKE_SOURCE_DIR}/api\\\"
+            -DTARGET_CPU_IS_WASM=1
+            -DTARGET_OS_IS_WASM=1
+            -I${CMAKE_SOURCE_DIR}
+            -I${LLVM_DIR}/include
+            -I${LLVM_DIR}/out/Debug/include
+            ${CMAKE_CURRENT_SOURCE_DIR}/tc.cc
+            -Wl,--start-group
+            ${HOST_BUILD_DIR}/ast/libast.a
+            ${HOST_BUILD_DIR}/bindings/libgen_bindings_sources.a
+            ${HOST_BUILD_DIR}/codegen/libcodegen.a
+            ${HOST_BUILD_DIR}/parser/libparser.a
+            -Wl,--end-group
+            ${LLVM_DIR}/out/Debug/lib/libLLVM.so
+            -Wl,-rpath,${LLVM_DIR}/out/Debug/lib
+            -o ${TC_BINARY}
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/tc.cc
+    COMMENT "Building host compiler tc (WASM target) for WASM build"
+  )
+
+  add_custom_target(tc DEPENDS ${TC_BINARY})
+
+else()
   add_executable(tc tc.cc)
 
   target_include_directories(tc PRIVATE

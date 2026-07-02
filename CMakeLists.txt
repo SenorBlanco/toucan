@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# CMake 3.31+ reserves "codegen" as a built-in target name. Set CMP0171 to OLD
+# to permit Toucan's target library named "codegen".
 if(POLICY CMP0171)
   cmake_policy(SET CMP0171 OLD)
 endif()
@@ -63,7 +65,16 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(ToucanMacros)
 
-add_subdirectory(third_party/build/libjpeg-turbo)
+# CMAKE_INSTALL_DOCDIR is set to satisfy libjpeg-turbo's configure-time
+# install() syntax check without requiring full GNUInstallDirs. Note that
+# libjpeg-turbo does not actually build docs during compilation.
+set(CMAKE_INSTALL_DOCDIR "doc")
+set(ENABLE_SHARED OFF CACHE BOOL "Build shared libraries" FORCE)
+set(ENABLE_STATIC ON CACHE BOOL "Build static libraries" FORCE)
+set(WITH_SIMD OFF CACHE BOOL "Include SIMD extensions" FORCE)
+set(WITH_TURBOJPEG OFF CACHE BOOL "Include TurboJPEG API" FORCE)
+set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "Minimum policy version" FORCE)
+add_subdirectory(third_party/libjpeg-turbo EXCLUDE_FROM_ALL)
 add_subdirectory(parser)
 add_subdirectory(ast)
 add_subdirectory(bindings)

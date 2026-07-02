@@ -3,28 +3,17 @@
 set(API_HEADER "${CMAKE_CURRENT_BINARY_DIR}/api.h")
 
 if(EMSCRIPTEN)
-  if(EXISTS "${CMAKE_SOURCE_DIR}/out/Debug/bindings/api_header_generator")
-    set(API_HEADER_GEN_CMD "${CMAKE_SOURCE_DIR}/out/Debug/bindings/api_header_generator")
-  elseif(EXISTS "${CMAKE_SOURCE_DIR}/out/Release/bindings/api_header_generator")
-    set(API_HEADER_GEN_CMD "${CMAKE_SOURCE_DIR}/out/Release/bindings/api_header_generator")
-  elseif(EXISTS "${CMAKE_SOURCE_DIR}/out/Debug/api_header_generator")
-    set(API_HEADER_GEN_CMD "${CMAKE_SOURCE_DIR}/out/Debug/api_header_generator")
-  elseif(EXISTS "${CMAKE_SOURCE_DIR}/out/Release/api_header_generator")
-    set(API_HEADER_GEN_CMD "${CMAKE_SOURCE_DIR}/out/Release/api_header_generator")
-  else()
-    set(API_HEADER_GEN_CMD node $<TARGET_FILE:api_header_generator>)
-  endif()
+  set(API_HEADER_GEN_CMD "${CMAKE_BINARY_DIR}/bindings/api_header_generator")
 else()
   set(API_HEADER_GEN_CMD $<TARGET_FILE:api_header_generator>)
 endif()
 
 add_custom_command(
   OUTPUT ${API_HEADER}
-  COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/run.py
-          ${API_HEADER_GEN_CMD}
+  COMMAND ${API_HEADER_GEN_CMD}
           -o ${API_HEADER}
           ${CMAKE_CURRENT_SOURCE_DIR}/api.t
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/api.t ${CMAKE_SOURCE_DIR}/tools/run.py
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/api.t api_header_generator
   COMMENT "Generating api.h from api.t"
 )
 
@@ -87,7 +76,7 @@ target_include_directories(api PUBLIC
   ${CMAKE_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_SOURCE_DIR}/third_party/libjpeg-turbo
-  ${CMAKE_SOURCE_DIR}/third_party/build/libjpeg-turbo
+  ${CMAKE_BINARY_DIR}/third_party/libjpeg-turbo
 )
 
 if(EMSCRIPTEN)
@@ -105,7 +94,7 @@ else()
   )
 endif()
 
-target_link_libraries(api PUBLIC libjpeg-turbo)
+target_link_libraries(api PUBLIC jpeg-static)
 
 if(TARGET dawn_native_headers)
   target_link_libraries(api PRIVATE dawn_native_headers)

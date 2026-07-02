@@ -17,34 +17,20 @@ function(toucan_objects TARGET_NAME)
   endforeach()
 
   if(EMSCRIPTEN)
-    if(EXISTS "${CMAKE_SOURCE_DIR}/out/Debug/compilers/tc")
-      set(TC_CMD "${CMAKE_SOURCE_DIR}/out/Debug/compilers/tc")
-    elseif(EXISTS "${CMAKE_SOURCE_DIR}/out/Release/compilers/tc")
-      set(TC_CMD "${CMAKE_SOURCE_DIR}/out/Release/compilers/tc")
-    elseif(EXISTS "${CMAKE_SOURCE_DIR}/out/Debug/tc")
-      set(TC_CMD "${CMAKE_SOURCE_DIR}/out/Debug/tc")
-    elseif(EXISTS "${CMAKE_SOURCE_DIR}/out/Release/tc")
-      set(TC_CMD "${CMAKE_SOURCE_DIR}/out/Release/tc")
-    else()
-      set(TC_CMD tc)
-    endif()
-    set(TC_EXTRA_ARGS "-T" "wasm32-unknown-unknown")
+    set(TC_CMD "${CMAKE_BINARY_DIR}/compilers/tc")
   else()
     set(TC_CMD "$<TARGET_FILE:tc>")
-    set(TC_EXTRA_ARGS "")
   endif()
 
   add_custom_command(
     OUTPUT ${OBJ_FILE} ${INIT_TYPES_CC}
-    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/run.py
-            ${TC_CMD}
+    COMMAND ${TC_CMD}
             -o ${OBJ_FILE}
             -t ${INIT_TYPES_CC}
             -I ${CMAKE_SOURCE_DIR}
             -I ${CMAKE_SOURCE_DIR}/samples/include
-            ${TC_EXTRA_ARGS}
             ${ABS_SOURCES}
-    DEPENDS ${ABS_SOURCES} ${CMAKE_SOURCE_DIR}/tools/run.py
+    DEPENDS ${ABS_SOURCES} tc
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Compiling Toucan sources for ${TARGET_NAME}"
   )
