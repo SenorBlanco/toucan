@@ -680,11 +680,11 @@ void Queue_Destroy(Queue* This) { delete This; }
 wgpu::ShaderModule createShaderModule(Device* device, Method* m) {
   wgpu::ShaderModuleDescriptor desc;
 #ifdef __EMSCRIPTEN__
-  wgpu::ShaderModuleWGSLDescriptor wgslDesc;
+  wgpu::ShaderSourceWGSL wgslDesc;
   wgslDesc.code = m->wgsl.data();
   desc.nextInChain = &wgslDesc;
 #else
-  wgpu::ShaderModuleSPIRVDescriptor spirvDesc;
+  wgpu::ShaderSourceSPIRV spirvDesc;
   spirvDesc.codeSize = m->spirv.size();
   spirvDesc.code = m->spirv.data();
   desc.nextInChain = &spirvDesc;
@@ -1461,7 +1461,15 @@ wgpu::Device CreateDawnDevice(wgpu::BackendType type, const wgpu::DeviceDescript
     dawnProcSetProcs(&backendProcs);
 #endif
     wgpu::InstanceDescriptor instanceDesc;
-    instanceDesc.capabilities.timedWaitAnyEnable = true;
+    static constexpr auto kRequiredFeatures = std::array{
+      wgpu::InstanceFeatureName::TimedWaitAny,
+#ifndef __EMSCRIPTEN__
+      wgpu::InstanceFeatureName::ShaderSourceSPIRV,
+#endif
+    };
+
+    instanceDesc.requiredFeatureCount = kRequiredFeatures.size();
+    instanceDesc.requiredFeatures = kRequiredFeatures.data();
     gInstance = wgpu::CreateInstance(&instanceDesc);
   }
 
