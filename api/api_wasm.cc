@@ -177,9 +177,7 @@ double System_GetCurrentTime() {
 }
 
 wgpu::TextureFormat GetPreferredPixelFormat() {
-  int format = EM_ASM_INT({
-    return WebGPU.Int_PreferredFormat[navigator.gpu.getPreferredCanvasFormat()];
-  });
+  int format = EM_ASM_INT("return {'rgba8unorm': $0, 'bgra8unorm': $1, }[navigator.gpu.getPreferredCanvasFormat()];", wgpu::TextureFormat::RGBA8Unorm, wgpu::TextureFormat::BGRA8Unorm);
   return static_cast<wgpu::TextureFormat>(format);
 }
 
