@@ -1461,7 +1461,9 @@ wgpu::Device CreateDawnDevice(wgpu::BackendType type, const wgpu::DeviceDescript
     dawnProcSetProcs(&backendProcs);
 #endif
     wgpu::InstanceDescriptor instanceDesc;
-    instanceDesc.capabilities.timedWaitAnyEnable = true;
+    static constexpr auto kTimedWaitAny = wgpu::InstanceFeatureName::TimedWaitAny;
+    instanceDesc.requiredFeatureCount = 1;
+    instanceDesc.requiredFeatures = &kTimedWaitAny;
     gInstance = wgpu::CreateInstance(&instanceDesc);
   }
 
