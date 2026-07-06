@@ -55,13 +55,16 @@ These will be retrieved by the git-sync-deps script.
    popd
 ```
 
+3. Run CMake:
+
+```
+   cmake -B out/Release-cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DDAWN_FETCH_DEPENDENCIES=ON
+```
+
 3. Build tc, tj and native samples:
 
 ```
-   mkdir -p out/Release
-   echo "is_debug=false" > out/Release/args.gn
-   gn gen out/Release
-   ninja -C out/Release
+   ninja -C out/Release-cmake
 ```
 
 ## Build instructions (Windows)

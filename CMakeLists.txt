@@ -13,7 +13,14 @@ if(POLICY CMP0171)
 endif()
 
 option(BUILD_SAMPLES "Build Toucan samples" ON)
-option(BUILD_TESTS "Build Toucan tests" ON)
+option(BUILD_TESTS "Build Toucan tests" OFF)
+
+set(DAWN_BUILD_TESTS OFF)
+set(DAWN_BUILD_SAMPLES OFF)
+set(DAWN_USE_GLFW OFF)
+
+set(TINT_BUILD_CMD_TOOLS OFF)
+set(TINT_BUILD_TESTS OFF)
 
 if(EMSCRIPTEN)
   set(CMAKE_CXX_FLAGS_RELEASE "-O1" CACHE STRING "Flags used by the C++ compiler during Release builds." FORCE)
@@ -74,6 +81,7 @@ set(ENABLE_STATIC ON CACHE BOOL "Build static libraries" FORCE)
 set(WITH_SIMD OFF CACHE BOOL "Include SIMD extensions" FORCE)
 set(WITH_TURBOJPEG OFF CACHE BOOL "Include TurboJPEG API" FORCE)
 set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "Minimum policy version" FORCE)
+add_subdirectory(third_party/dawn)
 add_subdirectory(third_party/libjpeg-turbo EXCLUDE_FROM_ALL)
 add_subdirectory(parser)
 add_subdirectory(ast)
