@@ -58,13 +58,13 @@ These will be retrieved by the git-sync-deps script.
 3. Run CMake:
 
 ```
-   cmake -B out/Release-cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DDAWN_FETCH_DEPENDENCIES=ON
+   cmake -B out/Release -G Ninja -DCMAKE_BUILD_TYPE=Release -DDAWN_FETCH_DEPENDENCIES=ON
 ```
 
 3. Build tc, tj and native samples:
 
 ```
-   ninja -C out/Release-cmake
+   ninja -C out/Release
 ```
 
 ## Build instructions (Windows)

@@ -4,7 +4,6 @@ if(EMSCRIPTEN)
   set(TC_BINARY "${CMAKE_CURRENT_BINARY_DIR}/tc")
 
   set(LLVM_DIR "${CMAKE_SOURCE_DIR}/third_party/llvm/llvm")
-  set(HOST_BUILD_DIR "${CMAKE_SOURCE_DIR}/out/Debug")
 
   add_custom_command(
     OUTPUT ${TC_BINARY}
