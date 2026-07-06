@@ -30,44 +30,26 @@ endif()
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 # Locate LLVM
-find_package(LLVM CONFIG HINTS
+find_package(LLVM REQUIRED CONFIG COMPONENTS engine mcjit x86codegen armcodegen aarch64codegen webassemblycodegen HINTS
   "${CMAKE_SOURCE_DIR}/third_party/llvm/llvm/out/Debug"
   "${CMAKE_SOURCE_DIR}/third_party/llvm/llvm/out/Release"
   "${CMAKE_SOURCE_DIR}/third_party/llvm/llvm/out"
   QUIET
 )
 
-if(LLVM_FOUND)
-  message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-  message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-  if(TARGET LLVM)
-    set(LLVM_LIBRARIES LLVM)
-  elseif(TARGET LLVM-dynamic)
-    set(LLVM_LIBRARIES LLVM-dynamic)
-  else()
-    list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
-    include(AddLLVM)
-    llvm_map_components_to_libnames(LLVM_LIBRARIES
-      core
-      support
-      executionengine
-      mcjit
-      target
-      native
-      webassemblycodegen
-      webassemblydesc
-      webassemblyinfo
-    )
-  endif()
-else()
-  message(STATUS "System/Prebuilt LLVM config not found directly via find_package. Setting fallback include paths.")
-  set(LLVM_INCLUDE_DIRS
-    "${CMAKE_SOURCE_DIR}/third_party/llvm/llvm/include"
-    "${CMAKE_SOURCE_DIR}/third_party/llvm/llvm/out/Debug/include"
-    "${CMAKE_SOURCE_DIR}/third_party/llvm/llvm/out/Release/include"
-  )
-  set(LLVM_LIBRARIES LLVM)
-endif()
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+set(LLVM_LIBS LLVM)
+#    list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
+#    include(AddLLVM)
+#  llvm_config(LLVM_LIBS
+#    engine
+#    mcjit
+#    x86codegen
+#    armcodegen
+#    aarch64codegen
+#    webassemblycodegen
+#  )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(ToucanMacros)

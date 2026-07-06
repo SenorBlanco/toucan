@@ -33,26 +33,11 @@ if(EMSCRIPTEN)
 else()
   add_executable(tc tc.cc)
 
-  target_include_directories(tc PRIVATE
-    ${CMAKE_SOURCE_DIR}
-  )
-
-  if(LLVM_INCLUDE_DIRS)
-    target_include_directories(tc PRIVATE ${LLVM_INCLUDE_DIRS})
-  endif()
+  target_include_directories(tc PRIVATE ${CMAKE_SOURCE_DIR} ${LLVM_INCLUDE_DIRS})
 
   target_compile_definitions(tc PRIVATE API_PATH="${CMAKE_SOURCE_DIR}/api")
 
-  target_link_libraries(tc PRIVATE
-    ast
-    gen_bindings_sources
-    codegen
-    parser
-  )
-
-  if(LLVM_LIBRARIES)
-    target_link_libraries(tc PRIVATE ${LLVM_LIBRARIES})
-  endif()
+  target_link_libraries(tc PRIVATE ast gen_bindings_sources codegen parser ${LLVM_LIBS})
 
   if(WIN32)
     target_include_directories(tc PRIVATE ${CMAKE_SOURCE_DIR}/third_party/getopt)
@@ -61,13 +46,7 @@ else()
   add_executable(tj tj.cc)
   set_target_properties(tj PROPERTIES ENABLE_EXPORTS TRUE)
 
-  target_include_directories(tj PRIVATE
-    ${CMAKE_SOURCE_DIR}
-  )
-
-  if(LLVM_INCLUDE_DIRS)
-    target_include_directories(tj PRIVATE ${LLVM_INCLUDE_DIRS})
-  endif()
+  target_include_directories(tj PRIVATE ${CMAKE_SOURCE_DIR} ${LLVM_INCLUDE_DIRS})
 
   target_compile_definitions(tj PRIVATE API_PATH="${CMAKE_SOURCE_DIR}/api")
 
@@ -85,9 +64,7 @@ else()
     dawn_native
   )
 
-  if(LLVM_LIBRARIES)
-    target_link_libraries(tj PRIVATE ${LLVM_LIBRARIES})
-  endif()
+  target_link_libraries(tj PRIVATE ${LLVM_LIBS})
 
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_link_libraries(tj PRIVATE X11 X11-xcb dl pthread z zstd curses)
