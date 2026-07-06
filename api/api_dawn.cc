@@ -680,11 +680,11 @@ void Queue_Destroy(Queue* This) { delete This; }
 wgpu::ShaderModule createShaderModule(Device* device, Method* m) {
   wgpu::ShaderModuleDescriptor desc;
 #ifdef __EMSCRIPTEN__
-  wgpu::ShaderModuleWGSLDescriptor wgslDesc;
+  wgpu::ShaderSourceWGSL wgslDesc;
   wgslDesc.code = m->wgsl.data();
   desc.nextInChain = &wgslDesc;
 #else
-  wgpu::ShaderModuleSPIRVDescriptor spirvDesc;
+  wgpu::ShaderSourceSPIRV spirvDesc;
   spirvDesc.codeSize = m->spirv.size();
   spirvDesc.code = m->spirv.data();
   desc.nextInChain = &spirvDesc;
