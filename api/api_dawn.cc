@@ -1461,9 +1461,13 @@ wgpu::Device CreateDawnDevice(wgpu::BackendType type, const wgpu::DeviceDescript
     dawnProcSetProcs(&backendProcs);
 #endif
     wgpu::InstanceDescriptor instanceDesc;
-    static constexpr auto kRequiredFeatures =
-      std::array{wgpu::InstanceFeatureName::TimedWaitAny,
-                 wgpu::InstanceFeatureName::ShaderSourceSPIRV};
+    static constexpr auto kRequiredFeatures = std::array{
+      wgpu::InstanceFeatureName::TimedWaitAny,
+#ifndef __EMSCRIPTEN__
+      wgpu::InstanceFeatureName::ShaderSourceSPIRV,
+#endif
+    };
+
     instanceDesc.requiredFeatureCount = kRequiredFeatures.size();
     instanceDesc.requiredFeatures = kRequiredFeatures.data();
     gInstance = wgpu::CreateInstance(&instanceDesc);

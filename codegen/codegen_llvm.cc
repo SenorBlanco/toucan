@@ -586,13 +586,13 @@ void CodeGenLLVM::GenCodeForMethod(Method* method) {
 
     if (module_->getTargetTriple().isWasm()) {
       tint::spirv::reader::Options spirvOptions;
-      tint::Program                program = tint::spirv::reader::Read(spirv, spirvOptions);
-      if (!program.IsValid()) {
-        std::cerr << "Tint SPIR-V reader failure:\n" << program.Diagnostics() << "\n";
+      tint::Result<tint::core::ir::Module>       ir = tint::spirv::reader::ReadIR(spirv, spirvOptions);
+      if (ir != tint::Success) {
+        std::cerr << "Tint SPIR-V reader failure:\n" << ir.Failure().reason << "\n";
         return;
       }
       tint::wgsl::writer::Options wgslOptions;
-      auto                        result = tint::wgsl::writer::Generate(program, wgslOptions);
+      auto                        result = tint::wgsl::writer::WgslFromIR(ir.Get(), wgslOptions);
       if (result != tint::Success) {
         std::cerr << "Tint WGSL writer failure:\n" << result.Failure() << "\n";
         return;
