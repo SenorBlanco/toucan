@@ -44,17 +44,87 @@ find_package(LLVM REQUIRED CONFIG COMPONENTS engine mcjit x86codegen armcodegen 
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-set(LLVM_LIBS LLVM)
-#    list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
-#    include(AddLLVM)
-#  llvm_config(LLVM_LIBS
-#    engine
-#    mcjit
-#    x86codegen
-#    armcodegen
-#    aarch64codegen
-#    webassemblycodegen
-#  )
+if (NOT WIN32)
+  set(LLVM_LIBS LLVM)
+else()
+  set(LLVM_LIBS
+    LLVMWebAssemblyCodeGen
+    LLVMWebAssemblyUtils
+    LLVMWebAssemblyDesc
+    LLVMWebAssemblyInfo
+    LLVMAArch64CodeGen
+    LLVMPasses
+    LLVMHipStdPar
+    LLVMCoroutines
+    LLVMAArch64Desc
+    LLVMAArch64Utils
+    LLVMAArch64Info
+    LLVMARMCodeGen
+    LLVMipo
+    LLVMVectorize
+    LLVMSandboxIR
+    LLVMLinker
+    LLVMFrontendOpenMP
+    LLVMFrontendDirective
+    LLVMFrontendAtomic
+    LLVMFrontendOffloading
+    LLVMObjectYAML
+    LLVMARMDesc
+    LLVMARMUtils
+    LLVMARMInfo
+    LLVMX86CodeGen
+    LLVMX86Desc
+    LLVMX86Info
+    LLVMMCDisassembler
+    LLVMInstrumentation
+    LLVMIRPrinter
+    LLVMGlobalISel
+    LLVMSelectionDAG
+    LLVMCFGuard
+    LLVMAsmPrinter
+    LLVMMCJIT
+    LLVMInterpreter
+    LLVMExecutionEngine
+    LLVMRuntimeDyld
+    LLVMOrcTargetProcess
+    LLVMOrcShared
+    LLVMCodeGen
+    LLVMTarget
+    LLVMScalarOpts
+    LLVMInstCombine
+    LLVMAggressiveInstCombine
+    LLVMObjCARCOpts
+    LLVMTransformUtils
+    LLVMCodeGenTypes
+    LLVMCGData
+    LLVMBitWriter
+    LLVMAnalysis
+    LLVMProfileData
+    LLVMSymbolize
+    LLVMDebugInfoBTF
+    LLVMDebugInfoPDB
+    LLVMDebugInfoMSF
+    LLVMDebugInfoCodeView
+    LLVMDebugInfoGSYM
+    LLVMDebugInfoDWARF
+    LLVMObject
+    LLVMTextAPI
+    LLVMMCParser
+    LLVMIRReader
+    LLVMAsmParser
+    LLVMMC
+    LLVMDebugInfoDWARFLowLevel
+    LLVMBitReader
+    LLVMFrontendHLSL
+    LLVMCore
+    LLVMRemarks
+    LLVMBitstreamReader
+    LLVMBinaryFormat
+    LLVMTargetParser
+    LLVMSupport
+    LLVMDemangle
+  )
+endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(ToucanMacros)

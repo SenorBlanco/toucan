@@ -39,6 +39,7 @@ add_custom_command(
           --output-dir ${DAWN_GEN_DIR}
           --dawn-json ${CMAKE_SOURCE_DIR}/third_party/dawn/src/dawn/dawn.json
           --wire-json ${CMAKE_SOURCE_DIR}/third_party/dawn/src/dawn/dawn_wire.json
+          --jinja2-path ${CMAKE_SOURCE_DIR}/third_party/dawn/third_party/jinja2
           --targets headers,cpp_headers,emdawnwebgpu_headers
   DEPENDS ${CMAKE_SOURCE_DIR}/third_party/dawn/src/dawn/dawn.json
           ${CMAKE_SOURCE_DIR}/third_party/dawn/src/dawn/dawn_wire.json
