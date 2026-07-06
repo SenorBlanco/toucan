@@ -151,7 +151,7 @@ SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Win
   config.height = window->size[1];
   config.presentMode = wgpu::PresentMode::Fifo;
 
-  wgpu::SurfaceDescriptorFromMetalLayer metalLayerDesc;
+  wgpu::SurfaceSourceMetalLayer metalLayerDesc;
   metalLayerDesc.layer = window->layer;
   wgpu::SurfaceDescriptor desc;
   desc.nextInChain = &metalLayerDesc;
