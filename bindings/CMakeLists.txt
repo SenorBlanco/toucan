@@ -6,21 +6,21 @@ target_include_directories(gen_bindings_sources PUBLIC
   ${CMAKE_SOURCE_DIR}
 )
 
-target_link_libraries(gen_bindings_sources PUBLIC
-  ast
-)
+target_link_libraries(gen_bindings_sources PUBLIC ast)
 
 if(CMAKE_CROSSCOMPILING)
   include(ExternalProject)
   ExternalProject_Add(api_header_generator
-      SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}
-      CMAKE_ARGS -DCMAKE_CROSSCOMPILING=OFF  # Force host compiler
-      BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/host
+      SOURCE_DIR ${CMAKE_SOURCE_DIR}
+      CMAKE_ARGS -DCMAKE_CROSSCOMPILING=OFF -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -UCMAKE_TOOLCHAIN_FILE
+      BINARY_DIR ${CMAKE_BINARY_DIR}/host
       INSTALL_COMMAND ""                    # No install step needed
-      BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/host/api_header_generator
+      BUILD_COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/host --target api_header_generator
+      BUILD_BYPRODUCTS ${CMAKE_BINARY_DIR}/host/bindings/api_header_generator
+      USES_TERMINAL_BUILD TRUE
   )
 
-  set(HOST_GENERATOR_EXE ${CMAKE_CURRENT_BINARY_DIR}/host/api_header_generator)
+  set(HOST_GENERATOR_EXE ${CMAKE_BINARY_DIR}/host/bindings/api_header_generator)
 
   # 4. Define custom command to generate files using the host tool
   set(GENERATED_OUTPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/api.h)

@@ -1,15 +1,13 @@
-cmake_minimum_required(VERSION 3.20)
-
-project(tc)
-
 if(CMAKE_CROSSCOMPILING)
   include(ExternalProject)
   ExternalProject_Add(tc
-      SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}
-      CMAKE_ARGS -DCMAKE_CROSSCOMPILING=OFF
-      BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/host
+      SOURCE_DIR ${CMAKE_SOURCE_DIR}
+      CMAKE_ARGS -DCMAKE_CROSSCOMPILING=OFF -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -UCMAKE_TOOLCHAIN_FILE
+      BINARY_DIR ${CMAKE_BINARY_DIR}/host
       INSTALL_COMMAND ""  # FIXME: is this needed?
-      BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/host/tc
+      BUILD_COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/host --target tc
+      BUILD_BYPRODUCTS ${CMAKE_BINARY_DIR}/host/tc
+      USES_TERMINAL_BUILD TRUE
   )
 else()
   add_executable(tc tc.cc)

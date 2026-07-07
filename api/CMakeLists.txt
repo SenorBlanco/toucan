@@ -1,9 +1,7 @@
-# api/CMakeLists.txt
-
 set(API_HEADER "${CMAKE_CURRENT_BINARY_DIR}/api.h")
 
-if(EMSCRIPTEN)
-  set(API_HEADER_GEN_CMD "${CMAKE_BINARY_DIR}/bindings/api_header_generator")
+if(CMAKE_CROSSCOMPILING)
+  set(API_HEADER_GEN_CMD "${CMAKE_BINARY_DIR}/host/bindings/api_header_generator")
 else()
   set(API_HEADER_GEN_CMD $<TARGET_FILE:api_header_generator>)
 endif()
@@ -81,7 +79,6 @@ target_include_directories(api PUBLIC
 )
 
 if(EMSCRIPTEN)
-  target_compile_definitions(api PUBLIC TARGET_OS_IS_WASM=1 TARGET_CPU_IS_WASM=1)
   target_include_directories(api BEFORE PUBLIC
     ${DAWN_GEN_DIR}/src/emdawnwebgpu/include
     ${DAWN_GEN_DIR}/include
@@ -96,7 +93,3 @@ else()
 endif()
 
 target_link_libraries(api PUBLIC jpeg-static)
-
-if(TARGET dawn_native_headers)
-  target_link_libraries(api PRIVATE dawn_native_headers)
-endif()
