@@ -5,6 +5,21 @@ project(Toucan CXX C)
 if(WIN32)
   set(FLEX_EXECUTABLE ${CMAKE_SOURCE_DIR}/third_party/winflexbison/win_flex.exe)
   set(BISON_EXECUTABLE ${CMAKE_SOURCE_DIR}/third_party/winflexbison/win_bison.exe)
+  add_compile_definitions(TARGET_OS_IS_WIN=1)
+elseif(APPLE)
+  if(IOS)
+    add_compile_definitions(TARGET_OS_IS_IOS=1)
+  elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    add_compile_definitions(TARGET_OS_IS_MAC=1)
+  endif()
+elseif(EMSCRIPTEN)
+  add_compile_definitions(TARGET_OS_IS_WASM=1)
+elseif(IOS)
+  add_compile_definitions(TARGET_OS_IS_IOS=1)
+elseif(ANDROID)
+  add_compile_definitions(TARGET_OS_IS_ANDROID=1)
+elseif(UNIX)
+  add_compile_definitions(TARGET_OS_IS_LINUX=1)
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
@@ -26,6 +41,9 @@ set(DAWN_USE_GLFW OFF)
 
 set(TINT_BUILD_CMD_TOOLS OFF)
 set(TINT_BUILD_TESTS OFF)
+if(NOT EMSCRIPTEN)
+  set(TINT_BUILD_SPV_READER ON)
+endif()
 
 if(EMSCRIPTEN)
   set(CMAKE_CXX_FLAGS_RELEASE "-O1" CACHE STRING "Flags used by the C++ compiler during Release builds." FORCE)
@@ -34,96 +52,94 @@ endif()
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
-# Locate LLVM
-find_package(LLVM REQUIRED CONFIG COMPONENTS engine mcjit x86codegen armcodegen aarch64codegen webassemblycodegen HINTS
-  "${CMAKE_SOURCE_DIR}/third_party/llvm/llvm/out/Debug"
-  "${CMAKE_SOURCE_DIR}/third_party/llvm/llvm/out/Release"
-  "${CMAKE_SOURCE_DIR}/third_party/llvm/llvm/out"
-  QUIET
-)
-
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-if (NOT WIN32)
-  set(LLVM_LIBS LLVM)
-else()
-  set(LLVM_LIBS
-    LLVMWebAssemblyCodeGen
-    LLVMWebAssemblyUtils
-    LLVMWebAssemblyDesc
-    LLVMWebAssemblyInfo
-    LLVMAArch64CodeGen
-    LLVMPasses
-    LLVMHipStdPar
-    LLVMCoroutines
-    LLVMAArch64Desc
-    LLVMAArch64Utils
-    LLVMAArch64Info
-    LLVMARMCodeGen
-    LLVMipo
-    LLVMVectorize
-    LLVMSandboxIR
-    LLVMLinker
-    LLVMFrontendOpenMP
-    LLVMFrontendDirective
-    LLVMFrontendAtomic
-    LLVMFrontendOffloading
-    LLVMObjectYAML
-    LLVMARMDesc
-    LLVMARMUtils
-    LLVMARMInfo
-    LLVMX86CodeGen
-    LLVMX86Desc
-    LLVMX86Info
-    LLVMMCDisassembler
-    LLVMInstrumentation
-    LLVMIRPrinter
-    LLVMGlobalISel
-    LLVMSelectionDAG
-    LLVMCFGuard
-    LLVMAsmPrinter
-    LLVMMCJIT
-    LLVMInterpreter
-    LLVMExecutionEngine
-    LLVMRuntimeDyld
-    LLVMOrcTargetProcess
-    LLVMOrcShared
-    LLVMCodeGen
-    LLVMTarget
-    LLVMScalarOpts
-    LLVMInstCombine
-    LLVMAggressiveInstCombine
-    LLVMObjCARCOpts
-    LLVMTransformUtils
-    LLVMCodeGenTypes
-    LLVMCGData
-    LLVMBitWriter
-    LLVMAnalysis
-    LLVMProfileData
-    LLVMSymbolize
-    LLVMDebugInfoBTF
-    LLVMDebugInfoPDB
-    LLVMDebugInfoMSF
-    LLVMDebugInfoCodeView
-    LLVMDebugInfoGSYM
-    LLVMDebugInfoDWARF
-    LLVMObject
-    LLVMTextAPI
-    LLVMMCParser
-    LLVMIRReader
-    LLVMAsmParser
-    LLVMMC
-    LLVMDebugInfoDWARFLowLevel
-    LLVMBitReader
-    LLVMFrontendHLSL
-    LLVMCore
-    LLVMRemarks
-    LLVMBitstreamReader
-    LLVMBinaryFormat
-    LLVMTargetParser
-    LLVMSupport
-    LLVMDemangle
+if(NOT EMSCRIPTEN)
+  find_package(LLVM REQUIRED CONFIG COMPONENTS engine mcjit x86codegen armcodegen aarch64codegen webassemblycodegen HINTS
+    "${CMAKE_SOURCE_DIR}/third_party/llvm/llvm/out/${CMAKE_BUILD_TYPE}"
   )
+
+  message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+  message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+  if (NOT WIN32)
+    set(LLVM_LIBS LLVM)
+  else()
+    set(LLVM_LIBS
+      LLVMWebAssemblyCodeGen
+      LLVMWebAssemblyUtils
+      LLVMWebAssemblyDesc
+      LLVMWebAssemblyInfo
+      LLVMAArch64CodeGen
+      LLVMPasses
+      LLVMHipStdPar
+      LLVMCoroutines
+      LLVMAArch64Desc
+      LLVMAArch64Utils
+      LLVMAArch64Info
+      LLVMARMCodeGen
+      LLVMipo
+      LLVMVectorize
+      LLVMSandboxIR
+      LLVMLinker
+      LLVMFrontendOpenMP
+      LLVMFrontendDirective
+      LLVMFrontendAtomic
+      LLVMFrontendOffloading
+      LLVMObjectYAML
+      LLVMARMDesc
+      LLVMARMUtils
+      LLVMARMInfo
+      LLVMX86CodeGen
+      LLVMX86Desc
+      LLVMX86Info
+      LLVMMCDisassembler
+      LLVMInstrumentation
+      LLVMIRPrinter
+      LLVMGlobalISel
+      LLVMSelectionDAG
+      LLVMCFGuard
+      LLVMAsmPrinter
+      LLVMMCJIT
+      LLVMInterpreter
+      LLVMExecutionEngine
+      LLVMRuntimeDyld
+      LLVMOrcTargetProcess
+      LLVMOrcShared
+      LLVMCodeGen
+      LLVMTarget
+      LLVMScalarOpts
+      LLVMInstCombine
+      LLVMAggressiveInstCombine
+      LLVMObjCARCOpts
+      LLVMTransformUtils
+      LLVMCodeGenTypes
+      LLVMCGData
+      LLVMBitWriter
+      LLVMAnalysis
+      LLVMProfileData
+      LLVMSymbolize
+      LLVMDebugInfoBTF
+      LLVMDebugInfoPDB
+      LLVMDebugInfoMSF
+      LLVMDebugInfoCodeView
+      LLVMDebugInfoGSYM
+      LLVMDebugInfoDWARF
+      LLVMObject
+      LLVMTextAPI
+      LLVMMCParser
+      LLVMIRReader
+      LLVMAsmParser
+      LLVMMC
+      LLVMDebugInfoDWARFLowLevel
+      LLVMBitReader
+      LLVMFrontendHLSL
+      LLVMCore
+      LLVMRemarks
+      LLVMBitstreamReader
+      LLVMBinaryFormat
+      LLVMTargetParser
+      LLVMSupport
+      LLVMDemangle
+    )
+  endif()
 endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")

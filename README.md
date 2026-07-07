@@ -201,14 +201,18 @@ cmake . && cmake --build . --parallel
 popd
 ```
 
+2a. Workaround missing generator file (FIXME):
+
+```
+mkdir -p out/Release-wasm/third_party/dawn/gen/src/emdawnwebgpu/include/webgpu/
+cp third_party/dawn/include/webgpu/webgpu_enum_class_bitmasks.h out/Release-wasm/third_party/dawn/gen/src/emdawnwebgpu/include/webgpu/
+```
+
+
 3. Build WASM targets
 
 ```
-mkdir -p out/Release-wasm
-echo 'is_debug=false\
-target_os="wasm"\
-target_cpu="wasm"' > out/Release-wasm/args.gn
-gn gen out/Release-wasm
+cmake -B out/Release-wasm -G Ninja -DCMAKE_BUILD_TYPE=Release -DDAWN_FETCH_DEPENDENCIES=ON -DCMAKE_TOOLCHAIN_FILE=third_party/emscripten/cmake/Modules/Platform/Emscripten.cmake
 ninja -C out/Release-wasm
 ```
 
