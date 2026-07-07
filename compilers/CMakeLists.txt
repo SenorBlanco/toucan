@@ -31,10 +31,7 @@ else()
 
   target_compile_definitions(tj PRIVATE API_PATH="${CMAKE_SOURCE_DIR}/api")
 
-  target_link_directories(tj PRIVATE
-    ${CMAKE_SOURCE_DIR}/out/Debug
-    ${CMAKE_SOURCE_DIR}/out/Release
-  )
+  target_link_directories(tj PRIVATE ${CMAKE_BINARY_DIR})
 
   target_link_libraries(tj PRIVATE
     api

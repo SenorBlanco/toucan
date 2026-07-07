@@ -1,5 +1,3 @@
-# samples/CMakeLists.txt
-
 add_library(samples_main STATIC main.cc)
 target_include_directories(samples_main PUBLIC ${CMAKE_SOURCE_DIR})
 

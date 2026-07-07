@@ -1,5 +1,3 @@
-# bindings/CMakeLists.txt
-
 add_library(gen_bindings_sources STATIC
   gen_bindings.cc
 )
