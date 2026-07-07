@@ -73,13 +73,45 @@ int main(int argc, char** argv) {
   bool spirv = false;
 
   int                      opt;
-  char                     optstring[] = "dsvc:m:o:t:I:";
+  char                     optstring[] = "dsvc:m:o:t:I:a:f:";
   std::string              classname = "Class";
   std::string              methodname = "method";
   std::string              outputFilename = "a.o";
   std::string              initTypesFilename = "init_types.cc";
   std::vector<std::string> includePaths;
   includePaths.push_back(API_PATH);
+  std::string targetTripleStr;
+
+#if TARGET_OS_IS_WASM
+  targetTripleStr = "wasm32-unknown-unknown";
+#elif TARGET_OS_IS_ANDROID
+#if TARGET_CPU_IS_ARM64
+  targetTripleStr = "aarch64-linux-android";
+#elif TARGET_CPU_IS_ARM32
+  targetTripleStr = "armv7a-linux-androideabi";
+#elif TARGET_CPU_IS_X64
+  targetTripleStr = "x86_64-linux-android";
+#elif TARGET_CPU_IS_X86
+  targetTripleStr = "i686-linux-android";
+#else
+#error unsupported Android CPU
+#endif
+#elif TARGET_OS_IS_IOS
+#if TARGET_CPU_IS_ARM64
+  targetTripleStr = "arm64-apple-ios15.0";
+#elif TARGET_CPU_IS_ARM32
+  targetTripleStr = "armv7-apple-ios15.0";
+#else
+#error unsupported iOS CPU
+#endif
+#else
+  targetTripleStr = llvm::sys::getDefaultTargetTriple();
+#endif
+
+const char* features = "";
+#if TARGET_CPU_IS_WASM
+  features = "+simd128";
+#endif
 
   while ((opt = getopt(argc, argv, optstring)) > 0) {
     switch (opt) {
@@ -90,6 +122,8 @@ int main(int argc, char** argv) {
       case 'o': outputFilename = optarg; break;
       case 't': initTypesFilename = optarg; break;
       case 'I': includePaths.push_back(optarg); break;
+      case 'a': targetTripleStr = optarg; break;
+      case 'f': features = optarg; break;
     }
   }
 
@@ -143,32 +177,6 @@ int main(int argc, char** argv) {
     LLVMInitializeNativeTarget();
     LLVMInitializeNativeAsmPrinter();
 
-#if TARGET_CPU_IS_WASM
-    std::string targetTripleStr = "wasm32-unknown-unknown";
-#elif TARGET_OS_IS_ANDROID
-#if TARGET_CPU_IS_ARM64
-    std::string targetTripleStr = "aarch64-linux-android";
-#elif TARGET_CPU_IS_ARM32
-    std::string targetTripleStr = "armv7a-linux-androideabi";
-#elif TARGET_CPU_IS_X64
-    std::string targetTripleStr = "x86_64-linux-android";
-#elif TARGET_CPU_IS_X86
-    std::string targetTripleStr = "i686-linux-android";
-#else
-#error unsupported Android CPU
-#endif
-#elif TARGET_OS_IS_IOS
-#if TARGET_CPU_IS_ARM64
-    std::string targetTripleStr = "arm64-apple-ios15.0";
-#elif TARGET_CPU_IS_ARM32
-    std::string targetTripleStr = "armv7-apple-ios15.0";
-#else
-#error unsupported iOS CPU
-#endif
-#else
-    std::string targetTripleStr = llvm::sys::getDefaultTargetTriple();
-#endif
-
     llvm::Triple targetTriple(targetTripleStr);
 
     std::string error;
@@ -182,11 +190,6 @@ int main(int argc, char** argv) {
     module->setTargetTriple(targetTriple);
 
     auto cpu = "generic";
-#if TARGET_OS_IS_WASM
-    auto features = "+simd128";
-#else
-    auto features = "";
-#endif
 
     llvm::TargetOptions opt;
     auto                rm = std::optional<llvm::Reloc::Model>(llvm::Reloc::Model::PIC_);

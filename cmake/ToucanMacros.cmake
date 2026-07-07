@@ -22,6 +22,11 @@ function(toucan_objects TARGET_NAME)
     set(TC_CMD "$<TARGET_FILE:tc>")
   endif()
 
+  if(EMSCRIPTEN)
+    set(TARGET_TRIPLE_ARG -a wasm32-unknown-unknown)
+    set(FEATURES_ARG -f +simd128)
+  endif()
+
   add_custom_command(
     OUTPUT ${OBJ_FILE} ${INIT_TYPES_CC}
     COMMAND ${TC_CMD}
@@ -29,6 +34,8 @@ function(toucan_objects TARGET_NAME)
             -t ${INIT_TYPES_CC}
             -I ${CMAKE_SOURCE_DIR}
             -I ${CMAKE_SOURCE_DIR}/samples/include
+            ${TARGET_TRIPLE_ARG}
+            ${FEATURES_ARG}
             ${ABS_SOURCES}
     DEPENDS ${ABS_SOURCES} tc
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
