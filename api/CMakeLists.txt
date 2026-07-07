@@ -84,6 +84,7 @@ if(EMSCRIPTEN)
     ${DAWN_GEN_DIR}/include
     ${CMAKE_SOURCE_DIR}/third_party/dawn/include
   )
+  target_link_libraries(api PUBLIC emdawnwebgpu_cpp)
 else()
   target_include_directories(api PUBLIC
     ${CMAKE_SOURCE_DIR}/third_party/dawn/include

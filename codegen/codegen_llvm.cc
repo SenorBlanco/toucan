@@ -26,9 +26,7 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Type.h>
 #include <llvm/IR/Verifier.h>
-#if TARGET_OS_IS_WASM
 #include <tint/tint.h>
-#endif
 
 #include <ast/constant_folder.h>
 #include "codegen_spirv.h"
@@ -148,13 +146,15 @@ CodeGenLLVM::CodeGenLLVM(llvm::LLVMContext*                 context,
                          TypeTable*                         types,
                          llvm::Module*                      module,
                          LLVMBuilder*                       builder,
-                         llvm::legacy::FunctionPassManager* fpm)
+                         llvm::legacy::FunctionPassManager* fpm,
+                         TargetShaderLanguage               targetShaderLanguage)
     : types_(types),
       context_(context),
       module_(module),
       builder_(builder),
       fpm_(fpm),
-      debugOutput_(false) {
+      debugOutput_(false),
+      targetShaderLanguage_(targetShaderLanguage) {
   boolType_ = llvm::Type::getInt1Ty(*context_);
   intType_ = llvm::Type::getInt32Ty(*context_);
   floatType_ = llvm::Type::getFloatTy(*context_);
@@ -589,23 +589,23 @@ void CodeGenLLVM::GenCodeForMethod(Method* method) {
     spirv.insert(spirv.end(), codeGenSPIRV.decl().begin(), codeGenSPIRV.decl().end());
     spirv.insert(spirv.end(), codeGenSPIRV.GetBody().begin(), codeGenSPIRV.GetBody().end());
 
-#if TARGET_OS_IS_WASM
-    tint::spirv::reader::Options spirvOptions;
-    tint::Program                program = tint::spirv::reader::Read(spirv, spirvOptions);
-    if (!program.IsValid()) {
-      std::cerr << "Tint SPIR-V reader failure:\n" << program.Diagnostics() << "\n";
-      return;
+    if (targetShaderLanguage_ == TargetShaderLanguage::WGSL) {
+      tint::spirv::reader::Options spirvOptions;
+      tint::Program                program = tint::spirv::reader::Read(spirv, spirvOptions);
+      if (!program.IsValid()) {
+        std::cerr << "Tint SPIR-V reader failure:\n" << program.Diagnostics() << "\n";
+        return;
+      }
+      tint::wgsl::writer::Options wgslOptions;
+      auto                        result = tint::wgsl::writer::Generate(program, wgslOptions);
+      if (result != tint::Success) {
+        std::cerr << "Tint WGSL writer failure:\n" << result.Failure() << "\n";
+        return;
+      }
+      method->wgsl = result.Get().wgsl;
+    } else {
+      method->spirv = spirv;
     }
-    tint::wgsl::writer::Options wgslOptions;
-    auto                        result = tint::wgsl::writer::Generate(program, wgslOptions);
-    if (result != tint::Success) {
-      std::cerr << "Tint WGSL writer failure:\n" << result.Failure() << "\n";
-      return;
-    }
-    method->wgsl = result.Get().wgsl;
-#else
-    method->spirv = spirv;
-#endif
     return;
   }
   if (method->modifiers & Method::Modifier::DeviceOnly) { return; }

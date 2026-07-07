@@ -11,4 +11,4 @@ target_include_directories(codegen PUBLIC
 
 target_include_directories(codegen PUBLIC ${LLVM_INCLUDE_DIRS})
 
-target_link_libraries(codegen PUBLIC ast)
+target_link_libraries(codegen PUBLIC ast tint_api)

@@ -93,7 +93,6 @@ function(toucan_executable TARGET_NAME)
       "-Wno-experimental"
       "-lembind"
       "-msimd128"
-      "--use-port=emdawnwebgpu"
     )
     set_target_properties(${TARGET_NAME} PROPERTIES SUFFIX ".html")
   endif()
