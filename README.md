@@ -58,7 +58,7 @@ These will be retrieved by the git-sync-deps script.
 3. Run CMake:
 
 ```
-   cmake -B out/Release -G Ninja -DCMAKE_BUILD_TYPE=Release -DDAWN_FETCH_DEPENDENCIES=ON
+   cmake -B out/Release -G Ninja -DCMAKE_BUILD_TYPE=Release
 ```
 
 3. Build tc, tj and native samples:
@@ -212,7 +212,7 @@ cp third_party/dawn/include/webgpu/webgpu_enum_class_bitmasks.h out/Release-wasm
 3. Build WASM targets
 
 ```
-cmake -B out/Release-wasm -G Ninja -DCMAKE_BUILD_TYPE=Release -DDAWN_FETCH_DEPENDENCIES=ON -DCMAKE_TOOLCHAIN_FILE=third_party/emscripten/cmake/Modules/Platform/Emscripten.cmake
+cmake -B out/Release-wasm -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=third_party/emscripten/cmake/Modules/Platform/Emscripten.cmake
 ninja -C out/Release-wasm
 ```
 
