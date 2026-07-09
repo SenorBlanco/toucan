@@ -67,7 +67,7 @@ function(toucan_executable TARGET_NAME)
   )
 
   if(NOT EMSCRIPTEN)
-    target_link_libraries(${TARGET_NAME} PRIVATE dawn_proc dawn_native)
+    target_link_libraries(${TARGET_NAME} PRIVATE dawn_proc webgpu_dawn)
   endif()
 
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT EMSCRIPTEN)

@@ -37,7 +37,7 @@ else()
     codegen
     parser
     dawn_proc
-    dawn_native
+    webgpu_dawn
   )
 
   target_link_libraries(tj PRIVATE ${LLVM_LIBS})
