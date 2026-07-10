@@ -212,7 +212,7 @@ cp third_party/dawn/include/webgpu/webgpu_enum_class_bitmasks.h out/Release-wasm
 3. Build WASM targets
 
 ```
-cmake -B out/Release-wasm -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=third_party/emscripten/cmake/Modules/Platform/Emscripten.cmake
+cmake -B out/Release-wasm -DCMAKE_BUILD_TYPE=Release -G Ninja -DCMAKE_TOOLCHAIN_FILE=third_party/emscripten/cmake/Modules/Platform/Emscripten.cmake
 ninja -C out/Release-wasm
 ```
 
