@@ -53,13 +53,13 @@ endif()
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 if(NOT CMAKE_CROSSCOMPILING)
-  find_package(LLVM REQUIRED CONFIG COMPONENTS engine mcjit x86codegen armcodegen aarch64codegen webassemblycodegen HINTS
-    "${CMAKE_SOURCE_DIR}/third_party/llvm/llvm/out/${CMAKE_BUILD_TYPE}"
-  )
-
-  message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-  message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
   if (NOT WIN32)
+    find_package(LLVM REQUIRED CONFIG COMPONENTS engine mcjit x86codegen armcodegen aarch64codegen webassemblycodegen HINTS
+      "${CMAKE_SOURCE_DIR}/third_party/llvm/llvm/out/${CMAKE_BUILD_TYPE}"
+    )
+
+    message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+    message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
     set(LLVM_LIBS LLVM)
   else()
     set(LLVM_LIBS
@@ -139,6 +139,7 @@ if(NOT CMAKE_CROSSCOMPILING)
       LLVMSupport
       LLVMDemangle
     )
+    set(LLVM_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/third_party/llvm/llvm/include ${CMAKE_SOURCE_DIR}/third_party/llvm/llvm/out/include)
   endif()
 endif()
 

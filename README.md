@@ -86,13 +86,13 @@ These will be retrieved by the git-sync-deps script.
    python3 tools/fetch-win-flex-bison.py
 ```
 
-4. Build tc, tj and native samples:
+4. Open Visual Studio's "Developer Command Prompt for VS ####".
+
+5. Build tc, tj and native samples:
 
 ```
-   mkdir out\Release
-   echo is_debug=false > out\Release\args.gn
-   gn gen out\Release
-   ninja -C out\Release
+   cmake -B out/Release -DCMAKE_BUILD_TYPE=Release mkdir out\Release
+   cmake --build out/Release
 ```
 
 ## Build instructions (Android)
