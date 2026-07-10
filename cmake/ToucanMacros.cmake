@@ -54,6 +54,7 @@ function(toucan_executable TARGET_NAME)
   set(INIT_TYPES_CC "${CMAKE_CURRENT_BINARY_DIR}/init_types_${TARGET_NAME}.cc")
 
   add_executable(${TARGET_NAME} ${INIT_TYPES_CC})
+  set_target_properties(${TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/..")
 
   # Set object files as extra source/object input
   target_sources(${TARGET_NAME} PRIVATE ${OBJ_FILE})

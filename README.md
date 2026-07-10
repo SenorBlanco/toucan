@@ -58,7 +58,7 @@ These will be retrieved by the git-sync-deps script.
 3. Run CMake:
 
 ```
-   cmake -B out/Release -G Ninja -DCMAKE_BUILD_TYPE=Release
+   cmake -B out/Release -D CMAKE_BUILD_TYPE=Release -G Ninja
 ```
 
 3. Build tc, tj and native samples:

@@ -22,9 +22,9 @@ files = glob.glob(os.path.relpath(os.path.join(os.path.dirname(__file__), '*.t')
 files = sorted(files)
 debug_or_release = 'Release'
 if sys.platform == 'win32':
-  exe_path = os.path.join('out', debug_or_release, 'compilers', 'tj.exe');
+  exe_path = os.path.join('out', debug_or_release, 'tj.exe');
 else:
-  exe_path = os.path.join('out', debug_or_release, 'compilers', 'tj');
+  exe_path = os.path.join('out', debug_or_release, 'tj');
 
 for file in files:
   print('test/' + os.path.basename(file));
