@@ -31,16 +31,7 @@ else()
 
   target_link_directories(tj PRIVATE ${CMAKE_BINARY_DIR})
 
-  target_link_libraries(tj PRIVATE
-    api
-    ast
-    codegen
-    parser
-    dawn_proc
-    webgpu_dawn
-  )
-
-  target_link_libraries(tj PRIVATE ${LLVM_LIBS})
+  target_link_libraries(tj PRIVATE api ast codegen parser dawn_proc webgpu_dawn ${LLVM_LIBS})
 
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_link_libraries(tj PRIVATE X11 X11-xcb dl pthread z zstd curses)

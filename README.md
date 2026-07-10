@@ -86,7 +86,7 @@ These will be retrieved by the git-sync-deps script.
    python3 tools/fetch-win-flex-bison.py
 ```
 
-4. Open Visual Studio's "Developer Command Prompt for VS ####".
+4. Open Visual Studio's "x64 Native Tools Command Prompt for VS 20XX".
 
 5. Build tc, tj and native samples:
 
