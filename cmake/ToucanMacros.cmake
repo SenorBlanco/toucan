@@ -69,6 +69,15 @@ function(toucan_executable TARGET_NAME)
 
   if(NOT EMSCRIPTEN)
     target_link_libraries(${TARGET_NAME} PRIVATE dawn_proc webgpu_dawn)
+    if(WIN32)
+      add_custom_command(
+        TARGET ${TARGET_NAME}
+        DEPENDS ${CMAKE_BINARY_DIR}/webgpu_dawn.dll
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          ${CMAKE_BINARY_DIR}/third_party/dawn/webgpu_dawn.dll
+          ${CMAKE_BINARY_DIR}/webgpu_dawn.dll
+      )
+    endif()
   endif()
 
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT EMSCRIPTEN)
