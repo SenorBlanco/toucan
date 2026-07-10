@@ -59,7 +59,7 @@ These will be retrieved by the git-sync-deps script.
 
 ```
    cmake -B out/Release -D CMAKE_BUILD_TYPE=Release -G Ninja
-   ninja -C out/Release
+   cmake --build out/Release
 ```
 
 ## Build instructions (Windows)
