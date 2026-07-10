@@ -17,6 +17,7 @@ if(CMAKE_CROSSCOMPILING)
       INSTALL_COMMAND ""                    # No install step needed
       BUILD_COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/host --target api_header_generator
       BUILD_BYPRODUCTS ${CMAKE_BINARY_DIR}/host/bindings/api_header_generator
+      USES_TERMINAL_CONFIGURE TRUE
       USES_TERMINAL_BUILD TRUE
   )
 

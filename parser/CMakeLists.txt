@@ -1,4 +1,6 @@
-# parser/CMakeLists.txt
+if(CMAKE_CROSSCOMPILING)
+  return()
+endif()
 
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)

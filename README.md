@@ -55,15 +55,10 @@ These will be retrieved by the git-sync-deps script.
    popd
 ```
 
-3. Run CMake:
-
-```
-   cmake -B out/Release -D CMAKE_BUILD_TYPE=Release -G Ninja
-```
-
 3. Build tc, tj and native samples:
 
 ```
+   cmake -B out/Release -D CMAKE_BUILD_TYPE=Release -G Ninja
    ninja -C out/Release
 ```
 

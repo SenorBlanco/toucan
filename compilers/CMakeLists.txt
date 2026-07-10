@@ -7,6 +7,7 @@ if(CMAKE_CROSSCOMPILING)
       INSTALL_COMMAND ""  # FIXME: is this needed?
       BUILD_COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/host --target tc --verbose
       BUILD_BYPRODUCTS ${CMAKE_BINARY_DIR}/host/tc
+      USES_TERMINAL_CONFIGURE TRUE
       USES_TERMINAL_BUILD TRUE
   )
 else()
