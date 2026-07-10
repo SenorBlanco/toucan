@@ -17,7 +17,7 @@ function(toucan_objects TARGET_NAME)
   endforeach()
 
   if(CMAKE_CROSSCOMPILING)
-    set(TC_CMD "${CMAKE_BINARY_DIR}/host/compilers/tc")
+    set(TC_CMD "${CMAKE_BINARY_DIR}/host/tc")
   else()
     set(TC_CMD "$<TARGET_FILE:tc>")
   endif()
