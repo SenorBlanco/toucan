@@ -27,6 +27,10 @@ function(toucan_objects TARGET_NAME)
     set(FEATURES_ARG -f +simd128)
   endif()
 
+  if(ANDROID)
+    set(TARGET_TRIPLE_ARG -a aarch64-linux-android)
+  endif()
+
   add_custom_command(
     OUTPUT ${OBJ_FILE} ${INIT_TYPES_CC}
     COMMAND ${TC_CMD}

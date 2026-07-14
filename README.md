@@ -124,14 +124,8 @@ or on Windows:
 7. Build tc and native samples:
 
 ```
-   mkdir -p out/Release-android
-   echo is_debug=false > out/Release-android/args.gn
-   echo target_os=\"android\" >> out/Release-android/args.gn
-   echo target_cpu=\"arm64\" >> out/Release-android/args.gn
-   echo android_ndk_dir=\"$ANDROID_NDK_ROOT\" >> out/Release-android/args.gn
-   echo android_sdk_dir=\"$ANDROID_SDK_ROOT\" >> out/Release-android/args.gn
-   gn gen out/Release-android
-   ninja -C out/Release-android
+   cmake -B out\Release-android -D CMAKE_BUILD_TYPE=Release -D CMAKE_TOOLCHAIN_FILE=C:\Users\Stephen\android-sdk\ndk\26.3.11579264\build\cmake\android-legacy.toolchain.cmake -G NinjaC:\Users\Stephen\android-sdk\ndk\26.3.11579264
+   cmake --build out\Release-android
 ```
 
 ## Build instructions (iOS)
