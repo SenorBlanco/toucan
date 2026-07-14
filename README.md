@@ -124,8 +124,8 @@ or on Windows:
 7. Build tc and native samples:
 
 ```
-   cmake -B out\Release-android -D CMAKE_BUILD_TYPE=Release -D CMAKE_TOOLCHAIN_FILE=C:\Users\Stephen\android-sdk\ndk\26.3.11579264\build\cmake\android-legacy.toolchain.cmake -G NinjaC:\Users\Stephen\android-sdk\ndk\26.3.11579264
-   cmake --build out\Release-android
+   cmake -B out/Release-android -D CMAKE_BUILD_TYPE=Release -D CMAKE_TOOLCHAIN_FILE=$ANDROID_SDK_ROOT/ndk/26.3.11579264/build/cmake/android-legacy.toolchain.cmake -G Ninja
+   cmake --build out/Release-android
 ```
 
 ## Build instructions (iOS)
