@@ -128,6 +128,13 @@ or on Windows:
    cmake --build out/Release-android
 ```
 
+or on Windows:
+
+```
+   cmake -B out\Release-android -D CMAKE_BUILD_TYPE=Release -D CMAKE_TOOLCHAIN_FILE=%ANDROID_SDK_ROOT%\ndk\26.3.11579264\build\cmake\android-legacy.toolchain.cmake -G Ninja
+   cmake --build out\Release-android
+```
+
 ## Build instructions (iOS)
 
 1. Run `tools/git-sync-deps` to update `third_party` dependencies
