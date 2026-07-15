@@ -151,8 +151,8 @@ if(NOT CMAKE_CROSSCOMPILING)
   endif()
 endif()
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-include(ToucanMacros)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
+include(ToucanExecutable)
 
 # CMAKE_INSTALL_DOCDIR is set to satisfy libjpeg-turbo's configure-time
 # install() syntax check without requiring full GNUInstallDirs. Note that
