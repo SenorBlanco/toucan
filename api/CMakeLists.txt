@@ -93,4 +93,8 @@ else()
   )
 endif()
 
+if(ANDROID)
+  target_include_directories(api PUBLIC ${CMAKE_SOURCE_DIR}/third_party/android_native_app_glue)
+endif()
+
 target_link_libraries(api PUBLIC jpeg-static)

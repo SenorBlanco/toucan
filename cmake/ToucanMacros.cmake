@@ -28,7 +28,17 @@ function(toucan_objects TARGET_NAME)
   endif()
 
   if(ANDROID)
-    set(TARGET_TRIPLE_ARG -a aarch64-linux-android)
+    if("${CMAKE_ANDROID_ARCH_ABI}" STREQUAL "arm64-v8a")
+      set(TARGET_TRIPLE_ARG -a aarch64-linux-android)
+    elseif("${CMAKE_ANDROID_ARCH_ABI}" STREQUAL "armeabi-v7a")
+      set(TARGET_TRIPLE_ARG -a armv7a-linux-androideabi)
+    elseif("${CMAKE_ANDROID_ARCH_ABI}" STREQUAL "x86_64")
+      set(TARGET_TRIPLE_ARG -a x86_64-linux-android)
+    elseif("${CMAKE_ANDROID_ARCH_ABI}" STREQUAL "x86")
+      set(TARGET_TRIPLE_ARG -a i686-linux-android)
+    else()
+      set(TARGET_TRIPLE_ARG -a aarch64-linux-android)
+    endif()
   endif()
 
   add_custom_command(
