@@ -125,3 +125,15 @@ endfunction()
 function(toucan_app TARGET_NAME)
   toucan_executable(${TARGET_NAME} ${ARGN})
 endfunction()
+
+function(toucan_android_main_lib TARGET_NAME)
+  cmake_parse_arguments(ARG "" "" "SOURCES" ${ARGN})
+  toucan_objects(${TARGET_NAME} SOURCES ${ARG_SOURCES})
+
+  set(INIT_TYPES_CC "${CMAKE_CURRENT_BINARY_DIR}/init_types_${TARGET_NAME}.cc")
+  add_library(${TARGET_NAME} SHARED ${INIT_TYPES_CC})
+#    include_dirs = [ ".." ]
+#    sources = get_target_outputs(":${make_action}")
+#    libs = [ "android" ]
+#    ldflags = [ "-static-libstdc++" ]
+endfunction()
