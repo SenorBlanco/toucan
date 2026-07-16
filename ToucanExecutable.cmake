@@ -1,4 +1,16 @@
-# Toucan CMake helper macros and functions
+# Copyright 2026 The Toucan Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 function(toucan_objects TARGET_NAME)
   cmake_parse_arguments(ARG "" "" "SOURCES" ${ARGN})
@@ -70,19 +82,18 @@ function(toucan_executable TARGET_NAME)
   add_executable(${TARGET_NAME} ${INIT_TYPES_CC})
   set_target_properties(${TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/..")
 
-  # Set object files as extra source/object input
   target_sources(${TARGET_NAME} PRIVATE ${OBJ_FILE})
 
   target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
 
-  target_link_libraries(${TARGET_NAME} PRIVATE
-    samples_main
-    api
-    ast
-  )
+  target_link_libraries(${TARGET_NAME} PRIVATE samples_main api ast)
 
   if(NOT EMSCRIPTEN)
-    target_link_libraries(${TARGET_NAME} PRIVATE dawn_proc webgpu_dawn)
+    if(ANDROID)
+      target_link_libraries(${TARGET_NAME} PRIVATE dawn_proc dawn_native)
+    else()
+      target_link_libraries(${TARGET_NAME} PRIVATE dawn_proc webgpu_dawn)
+    endif()
     if(WIN32)
       add_custom_command(
         TARGET ${TARGET_NAME}
@@ -122,18 +133,22 @@ function(toucan_executable TARGET_NAME)
   endif()
 endfunction()
 
-function(toucan_app TARGET_NAME)
-  toucan_executable(${TARGET_NAME} ${ARGN})
-endfunction()
-
 function(toucan_android_main_lib TARGET_NAME)
   cmake_parse_arguments(ARG "" "" "SOURCES" ${ARGN})
   toucan_objects(${TARGET_NAME} SOURCES ${ARG_SOURCES})
 
   set(INIT_TYPES_CC "${CMAKE_CURRENT_BINARY_DIR}/init_types_${TARGET_NAME}.cc")
   add_library(${TARGET_NAME} SHARED ${INIT_TYPES_CC})
-#    include_dirs = [ ".." ]
-#    sources = get_target_outputs(":${make_action}")
-#    libs = [ "android" ]
-#    ldflags = [ "-static-libstdc++" ]
+  set(OBJ_FILE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}.o")
+  target_sources(${TARGET_NAME} PRIVATE ${OBJ_FILE})
+  target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
+  target_link_libraries(${TARGET_NAME} PRIVATE api ast dawn_proc dawn_native android)
+endfunction()
+
+function(toucan_app TARGET_NAME)
+  if(ANDROID)
+    toucan_android_main_lib(${TARGET_NAME} ${ARGN})
+  else()
+    toucan_executable(${TARGET_NAME} ${ARGN})
+  endif()
 endfunction()
