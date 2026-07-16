@@ -142,12 +142,34 @@ function(toucan_android_main_lib TARGET_NAME)
   set(OBJ_FILE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}.o")
   target_sources(${TARGET_NAME} PRIVATE ${OBJ_FILE})
   target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
-  target_link_libraries(${TARGET_NAME} PRIVATE api ast dawn_proc dawn_native android)
+  target_link_libraries(${TARGET_NAME} PRIVATE android_main api ast dawn_proc dawn_native android)
+endfunction()
+
+function(toucan_android_apk)
+  cmake_parse_arguments(ARG "" "" "SOURCES" ${ARGN})
+
+  set(TARGET_APK ${CMAKE_BINARY_DIR}/${TARGET_NAME}.apk)
+  set(MAKE_ACTION "make_apk_${TARGET_NAME}")
+  set(MAIN_LIB ${CMAKE_BINARY_DIR}/lib${TARGET_NAME}.so)
+  toucan_android_main_lib(${TARGET_NAME} SOURCES ${ARG_SOURCES})
+  add_custom_command(
+    OUTPUT ${TARGET_APK}
+    COMMAND ${CMAKE_COMMAND} -E env
+            ${Python3_EXECUTABLE}
+            --target-name ${TARGET_NAME}
+            --sdk-dir ${ANDROID_SDK_ROOT}
+            --target-abi ${CMAKE_ANDROID_ABI}
+            --source-lib ${MAIN_LIB}
+            --keystore ${CMAKE_SOURCE_DIR}/tools/toucan.keystore
+            --out ${CMAKE_BINARY_DIR}/${TARGET_NAME}.apk
+    DEPENDS ${MAIN_LIB}
+  )
+  add_custom_target(${MAKE_ACTION} DEPENDS ${TARGET_APK})
 endfunction()
 
 function(toucan_app TARGET_NAME)
   if(ANDROID)
-    toucan_android_main_lib(${TARGET_NAME} ${ARGN})
+    toucan_android_apk(${TARGET_NAME} ${ARGN})
   else()
     toucan_executable(${TARGET_NAME} ${ARGN})
   endif()
