@@ -173,9 +173,49 @@ function(toucan_android_apk)
   add_custom_target("make_apk${TARGET_NAME}" ALL DEPENDS ${TARGET_APK})
 endfunction()
 
+function(toucan_apple_app)
+  cmake_parse_arguments(ARG "" "" "SOURCES" ${ARGN})
+
+  toucan_executable(${TARGET_NAME} ${ARGN})
+  set(MAKE_ACTION "make_apple_app_${TARGET_NAME}")
+  set(TARGET_APP ${CMAKE_BINARY_DIR}/${TARGET_NAME}.app)
+  list(APPEND MAKE_APP_ARGS
+    --target-name ${TARGET_NAME}
+    --app-icon "${CMAKE_SOURCE_DIR}/emscripten/toucan-logo.svg"
+    --minimum-deployment-target "15.0"
+  )
+  if(IOS)
+    list(APPEND MAKE_APP_ARGS
+      --target-os ios
+      --mobile-provision ${MOBILE_PROVISION}
+      --codesign-identity ${CODESIGN_IDENTITY}
+      --team-identifier ${TEAM_IDENTIFIER}
+    )
+    if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+      list(APPEND MAKE_APP_ARGS --enable-debugging)
+    endif()
+  else()
+    list(APPEND MAKE_APP_ARGS
+      --target-os mac
+    )
+  endif()
+  add_custom_command(
+    OUTPUT ${TARGET_APP}
+    COMMAND ${CMAKE_COMMAND} -E env
+            ${Python3_EXECUTABLE}
+            "${CMAKE_SOURCE_DIR}/tools/make-app.py"
+            ${MAKE_APP_ARGS}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    DEPENDS ${TARGET_NAME} "${CMAKE_SOURCE_DIR}/emscripten/toucan-logo.svg"
+  )
+  add_custom_target("make_app${TARGET_NAME}" ALL DEPENDS ${TARGET_APP})
+endfunction()
+
 function(toucan_app TARGET_NAME)
   if(ANDROID)
     toucan_android_apk(${TARGET_NAME} ${ARGN})
+  elseif(APPLE)
+    toucan_apple_app(${TARGET_NAME} ${ARGN})
   else()
     toucan_executable(${TARGET_NAME} ${ARGN})
   endif()
