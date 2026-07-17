@@ -79,9 +79,7 @@ function(toucan_executable TARGET_NAME)
   set(OBJ_FILE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}.o")
   set(INIT_TYPES_CC "${CMAKE_CURRENT_BINARY_DIR}/init_types_${TARGET_NAME}.cc")
 
-  add_executable(${TARGET_NAME} ${INIT_TYPES_CC})
-
-  target_sources(${TARGET_NAME} PRIVATE ${OBJ_FILE})
+  add_executable(${TARGET_NAME} ${OBJ_FILE} ${INIT_TYPES_CC})
 
   target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
 
