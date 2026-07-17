@@ -136,6 +136,12 @@ function(toucan_android_main_lib TARGET_NAME)
 
   set(INIT_TYPES_CC "${CMAKE_CURRENT_BINARY_DIR}/init_types_${TARGET_NAME}.cc")
   add_library(${TARGET_NAME} SHARED ${INIT_TYPES_CC})
+
+  # Strip debug info from non-Debug builds
+  # FIXME: try to use installed Dawn builds so the libs will be automatically stripped
+  if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    target_link_options(${TARGET_NAME} PRIVATE "-Wl,--strip-debug")
+  endif()
   set(OBJ_FILE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}.o")
   target_sources(${TARGET_NAME} PRIVATE ${OBJ_FILE} $<TARGET_OBJECTS:android_native_app_glue>)
   target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
