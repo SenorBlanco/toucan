@@ -46,28 +46,24 @@ add_custom_command(
 
 add_custom_target(generate_dawn_headers DEPENDS ${DAWN_GEN_HEADERS})
 
-set(API_SOURCES
-  api_dawn.cc
-  api_image_codecs.cc
-)
+add_library(api STATIC api_dawn.cc api_image_codecs.cc)
 
 if(WIN32)
-  list(APPEND API_SOURCES api_win.cc)
+  target_sources(api PRIVATE api_win.cc)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT EMSCRIPTEN)
-  list(APPEND API_SOURCES api_x11.cc)
+  target_sources(api PRIVATE api_x11.cc)
 elseif(APPLE)
   if(IOS)
-    list(APPEND API_SOURCES api_ios.mm)
+    target_sources(api PRIVATE api_ios.mm)
   else()
-    list(APPEND API_SOURCES api_mac.mm)
+    target_sources(api PRIVATE api_mac.mm)
   endif()
 elseif(EMSCRIPTEN)
-  list(APPEND API_SOURCES api_wasm.cc)
+  target_sources(api PRIVATE api_wasm.cc)
 elseif(ANDROID)
-  list(APPEND API_SOURCES api_android.cc)
+  target_sources(api PRIVATE api_android.cc)
+  target_include_directories(api PUBLIC ${CMAKE_SOURCE_DIR}/third_party/android_native_app_glue)
 endif()
-
-add_library(api STATIC ${API_SOURCES})
 
 add_dependencies(api generate_api_header generate_dawn_headers)
 
@@ -91,10 +87,6 @@ else()
     ${DAWN_GEN_DIR}/include
     ${CMAKE_SOURCE_DIR}/third_party/Vulkan-Headers/include
   )
-endif()
-
-if(ANDROID)
-  target_include_directories(api PUBLIC ${CMAKE_SOURCE_DIR}/third_party/android_native_app_glue)
 endif()
 
 target_link_libraries(api PUBLIC jpeg-static)
