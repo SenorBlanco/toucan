@@ -80,7 +80,6 @@ function(toucan_executable TARGET_NAME)
   set(INIT_TYPES_CC "${CMAKE_CURRENT_BINARY_DIR}/init_types_${TARGET_NAME}.cc")
 
   add_executable(${TARGET_NAME} ${INIT_TYPES_CC})
-  set_target_properties(${TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/..")
 
   target_sources(${TARGET_NAME} PRIVATE ${OBJ_FILE})
 
@@ -150,7 +149,7 @@ function(toucan_android_apk)
 
   toucan_android_main_lib("${TARGET_NAME}" SOURCES ${ARG_SOURCES})
   set(TARGET_APK ${CMAKE_BINARY_DIR}/${TARGET_NAME}.apk)
-  set(MAIN_LIB ${CMAKE_BINARY_DIR}/samples/lib${TARGET_NAME}.so)
+  set(MAIN_LIB ${CMAKE_BINARY_DIR}/lib${TARGET_NAME}.so)
   get_filename_component(ANDROID_NDK_VERSION_DIR "${CMAKE_ANDROID_NDK}" DIRECTORY)
   get_filename_component(ANDROID_SDK_ROOT "${ANDROID_NDK_VERSION_DIR}" DIRECTORY)
 

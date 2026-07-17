@@ -12,7 +12,6 @@ if(CMAKE_CROSSCOMPILING)
   )
 else()
   add_executable(tc tc.cc)
-  set_target_properties(tc PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/..")
 
   target_include_directories(tc PRIVATE ${CMAKE_SOURCE_DIR} ${LLVM_INCLUDE_DIRS})
 
@@ -26,7 +25,6 @@ else()
 
   add_executable(tj tj.cc)
   set_target_properties(tj PROPERTIES ENABLE_EXPORTS TRUE)
-  set_target_properties(tj PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/..")
 
   target_include_directories(tj PRIVATE ${CMAKE_SOURCE_DIR} ${LLVM_INCLUDE_DIRS})
 
