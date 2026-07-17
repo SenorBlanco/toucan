@@ -148,23 +148,26 @@ endfunction()
 function(toucan_android_apk)
   cmake_parse_arguments(ARG "" "" "SOURCES" ${ARGN})
 
+  toucan_android_main_lib("${TARGET_NAME}" SOURCES ${ARG_SOURCES})
   set(TARGET_APK ${CMAKE_BINARY_DIR}/${TARGET_NAME}.apk)
-  set(MAKE_ACTION "make_apk_${TARGET_NAME}")
   set(MAIN_LIB ${CMAKE_BINARY_DIR}/lib${TARGET_NAME}.so)
-  toucan_android_main_lib(${TARGET_NAME} SOURCES ${ARG_SOURCES})
+  get_filename_component(ANDROID_NDK_VERSION_DIR "${CMAKE_ANDROID_NDK}" DIRECTORY)
+  get_filename_component(ANDROID_SDK_ROOT "${ANDROID_NDK_VERSION_DIR}" DIRECTORY)
+
   add_custom_command(
     OUTPUT ${TARGET_APK}
     COMMAND ${CMAKE_COMMAND} -E env
             ${Python3_EXECUTABLE}
+            ${CMAKE_SOURCE_DIR}/tools/make-apk.py
             --target-name ${TARGET_NAME}
             --sdk-dir ${ANDROID_SDK_ROOT}
-            --target-abi ${CMAKE_ANDROID_ABI}
+            --target-abi ${CMAKE_ANDROID_ARCH_ABI}
             --source-lib ${MAIN_LIB}
             --keystore ${CMAKE_SOURCE_DIR}/tools/toucan.keystore
             --out ${CMAKE_BINARY_DIR}/${TARGET_NAME}.apk
     DEPENDS ${MAIN_LIB}
   )
-  add_custom_target(${MAKE_ACTION} DEPENDS ${TARGET_APK})
+  add_custom_target("make_apk${TARGET_NAME}" ALL DEPENDS ${TARGET_APK})
 endfunction()
 
 function(toucan_app TARGET_NAME)
