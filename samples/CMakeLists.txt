@@ -1,7 +1,6 @@
 if(ANDROID)
   add_library(android_main STATIC android_main.cc)
   target_include_directories(android_main PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/third_party/android_native_app_glue)
-  target_link_libraries(android_main android_native_app_glue)
 endif()
 add_library(samples_main STATIC main.cc)
 target_include_directories(samples_main PUBLIC ${CMAKE_SOURCE_DIR})
