@@ -1,7 +1,7 @@
 set(API_HEADER "${CMAKE_CURRENT_BINARY_DIR}/api.h")
 
 if(CMAKE_CROSSCOMPILING)
-  set(API_HEADER_GEN_CMD "${CMAKE_BINARY_DIR}/host/bindings/api_header_generator")
+  set(API_HEADER_GEN_CMD "${CMAKE_BINARY_DIR}/host/api_header_generator")
 else()
   set(API_HEADER_GEN_CMD $<TARGET_FILE:api_header_generator>)
 endif()
