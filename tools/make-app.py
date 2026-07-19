@@ -56,7 +56,9 @@ if target_os == "mac":
   for dylib in dylibs:
     shutil.copy2(dylib, dest_os_path + dylib)
 
-shutil.copy2(target_name, dest_os_path + target_name)
+# For GN build only; CMake build links executable in-place
+if os.path.exists(target_name):
+  shutil.copy2(target_name, dest_os_path + target_name)
 
 assets_dir_name = tempfile.mkdtemp()
 

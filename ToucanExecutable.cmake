@@ -51,6 +51,14 @@ function(toucan_objects TARGET_NAME)
     else()
       set(TARGET_TRIPLE_ARG -a aarch64-linux-android)
     endif()
+  elseif(IOS)
+    if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "arm64")
+      set(TARGET_TRIPLE_ARG -a arm64-apple-ios15.0)
+    elseif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "arm")
+      set(TARGET_TRIPLE_ARG -a armv7-apple-ios15.0)
+    else()
+      set(TARGET_TRIPLE_ARG -a arm64-apple-ios15.0)
+    endif()
   endif()
 
   add_custom_command(
@@ -105,14 +113,27 @@ function(toucan_executable TARGET_NAME)
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT EMSCRIPTEN)
     target_link_libraries(${TARGET_NAME} PRIVATE X11 X11-xcb dl pthread)
   elseif(APPLE)
-    find_library(APPKIT_FRAMEWORK AppKit)
-    find_library(METAL_FRAMEWORK Metal)
-    find_library(QUARTZCORE_FRAMEWORK QuartzCore)
-    target_link_libraries(${TARGET_NAME} PRIVATE
-      ${APPKIT_FRAMEWORK}
-      ${METAL_FRAMEWORK}
-      ${QUARTZCORE_FRAMEWORK}
-    )
+    if(MAC)
+      find_library(APPKIT_FRAMEWORK AppKit)
+      find_library(METAL_FRAMEWORK Metal)
+      find_library(QUARTZCORE_FRAMEWORK QuartzCore)
+      target_link_libraries(${TARGET_NAME} PRIVATE
+        ${APPKIT_FRAMEWORK}
+        ${METAL_FRAMEWORK}
+        ${QUARTZCORE_FRAMEWORK}
+      )
+    elseif(IOS)
+      find_library(UIKIT_FRAMEWORK UIKit)
+      find_library(METAL_FRAMEWORK Metal)
+      find_library(QUARTZCORE_FRAMEWORK QuartzCore)
+      find_library(FOUNDATION_FRAMEWORK Foundation)
+      target_link_libraries(${TARGET_NAME} PRIVATE
+        ${UIKIT_FRAMEWORK}
+        ${METAL_FRAMEWORK}
+        ${QUARTZCORE_FRAMEWORK}
+        ${FOUNDATION_FRAMEWORK}
+      )
+    endif()
   elseif(WIN32)
     target_link_libraries(${TARGET_NAME} PRIVATE gdi32 user32)
   elseif(EMSCRIPTEN)
@@ -174,8 +195,6 @@ function(toucan_android_apk)
 endfunction()
 
 function(toucan_apple_app)
-  cmake_parse_arguments(ARG "" "" "SOURCES" ${ARGN})
-
   toucan_executable(${TARGET_NAME} ${ARGN})
   set(MAKE_ACTION "make_apple_app_${TARGET_NAME}")
   set(TARGET_APP ${CMAKE_BINARY_DIR}/${TARGET_NAME}.app)
@@ -187,7 +206,7 @@ function(toucan_apple_app)
   if(IOS)
     list(APPEND MAKE_APP_ARGS
       --target-os ios
-      --mobile-provision ${MOBILE_PROVISION}
+      --mobile-provision ${MOBILE_PROVISION_FILE}
       --codesign-identity ${CODESIGN_IDENTITY}
       --team-identifier ${TEAM_IDENTIFIER}
     )
@@ -206,16 +225,37 @@ function(toucan_apple_app)
             "${CMAKE_SOURCE_DIR}/tools/make-app.py"
             ${MAKE_APP_ARGS}
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    DEPENDS ${TARGET_NAME} "${CMAKE_SOURCE_DIR}/emscripten/toucan-logo.svg"
+    DEPENDS "${TARGET_APP}/${TARGET_NAME}" "${CMAKE_SOURCE_DIR}/emscripten/toucan-logo.svg"
   )
   add_custom_target("make_app${TARGET_NAME}" ALL DEPENDS ${TARGET_APP})
+endfunction()
+
+function("toucan_apple_ipa")
+  toucan_apple_app(target_name ${ARGN})
+  set(TARGET_APP "${CMAKE_BINARY_DIR}/${TARGET_NAME}.app")
+  set(TARGET_IPA "${CMAKE_BINARY_DIR}/${TARGET_NAME}.ipa")
+  add_custom_command(
+    OUTPUT ${TARGET_IPA}
+    COMMAND ${CMAKE_COMMAND} -E env
+            ${Python3_EXECUTABLE}
+            "${CMAKE_SOURCE_DIR}/tools/make-ipa.py"
+            --app-file ${TARGET_APP}
+            --ipa-file ${TARGET_IPA}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    DEPENDS ${TARGET_APP}
+  )
+  add_custom_target("make_ipa${TARGET_NAME}" ALL DEPENDS ${TARGET_IPA})
 endfunction()
 
 function(toucan_app TARGET_NAME)
   if(ANDROID)
     toucan_android_apk(${TARGET_NAME} ${ARGN})
   elseif(APPLE)
-    toucan_apple_app(${TARGET_NAME} ${ARGN})
+    if(MAC)
+      toucan_apple_app(${TARGET_NAME} ${ARGN})
+    elseif(IOS)
+      toucan_apple_ipa(${TARGET_NAME} ${ARGN})
+    endif()
   else()
     toucan_executable(${TARGET_NAME} ${ARGN})
   endif()

@@ -168,14 +168,8 @@ or on Windows:
 11. Build tc and native samples:
 
 ```
-   mkdir -p out/Release-ios
-   echo is_debug=false > out/Release-ios/args.gn
-   echo target_os=\"ios\" >> out/Release-ios/args.gn
-   echo mobile_provision=\"$MOBILE_PROVISION_FILE\" >> out/Release-ios/args.gn
-   echo codesign_identity=\"$CODESIGN_IDENTITY\" >> out/Release-ios/args.gn
-   echo team_identifier=\"$TEAM_IDENTIFIER\" >> out/Release-ios/args.gn
-   gn gen out/Release-ios
-   ninja -C out/Release-ios
+   cmake -B out/Release-ios -D CMAKE_BUILD_TYPE=Release -D MOBILE_PROVISION_FILE=$MOBILE_PROVISION_FILE -D CODESIGN_IDENTITY=$CODESIGN_IDENTITY -D TEAM_IDENTIFIER=$TEAM_IDENTIFIER -D CMAKE_SYSTEM_NAME=iOS -D CMAKE_SYSTEM_PROCESSOR=arm -G Ninja
+   cmake --build out/Release
 ```
 
 ## Build instructions (WebAssembly)
