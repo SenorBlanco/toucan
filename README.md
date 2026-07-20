@@ -28,8 +28,7 @@ If you simply wish to try some live Toucan demos without building the toolchain,
 - GNU bison
 - node.js and npm (for the WebAssembly build)
 
-Toucan uses the GN and ninja build systems from the Chromium project.
-These will be retrieved by the git-sync-deps script.
+Toucan uses the ninja build system from the Chromium project. It will be retrieved by the git-sync-deps script.
 
 ### Target executables
 
