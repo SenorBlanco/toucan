@@ -147,14 +147,14 @@ CodeGenLLVM::CodeGenLLVM(llvm::LLVMContext*                 context,
                          llvm::Module*                      module,
                          LLVMBuilder*                       builder,
                          llvm::legacy::FunctionPassManager* fpm,
-                         TargetShaderLanguage               targetShaderLanguage)
+                         TargetShadingLanguage              targetShadingLanguage)
     : types_(types),
       context_(context),
       module_(module),
       builder_(builder),
       fpm_(fpm),
       debugOutput_(false),
-      targetShaderLanguage_(targetShaderLanguage) {
+      targetShadingLanguage_(targetShadingLanguage) {
   boolType_ = llvm::Type::getInt1Ty(*context_);
   intType_ = llvm::Type::getInt32Ty(*context_);
   floatType_ = llvm::Type::getFloatTy(*context_);
@@ -589,7 +589,7 @@ void CodeGenLLVM::GenCodeForMethod(Method* method) {
     spirv.insert(spirv.end(), codeGenSPIRV.decl().begin(), codeGenSPIRV.decl().end());
     spirv.insert(spirv.end(), codeGenSPIRV.GetBody().begin(), codeGenSPIRV.GetBody().end());
 
-    if (targetShaderLanguage_ == TargetShaderLanguage::WGSL) {
+    if (targetShadingLanguage_ == TargetShadingLanguage::WGSL) {
       tint::spirv::reader::Options spirvOptions;
       tint::Program                program = tint::spirv::reader::Read(spirv, spirvOptions);
       if (!program.IsValid()) {

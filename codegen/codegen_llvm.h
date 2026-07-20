@@ -55,7 +55,7 @@ using DerefList = std::vector<ValueTypePair>;
 using RefPtrTemporaries = std::unordered_map<llvm::Value*, ValueTypePair>;
 using BuiltinCall = llvm::Value* (CodeGenLLVM::*)(const FileLocation& location);
 
-enum class TargetShaderLanguage {
+enum class TargetShadingLanguage {
   SPIRV,
   WGSL,
 };
@@ -67,7 +67,7 @@ class CodeGenLLVM : public Visitor {
               llvm::Module*                      module,
               LLVMBuilder*                       builder,
               llvm::legacy::FunctionPassManager* fpm,
-              TargetShaderLanguage               targetShaderLanguage);
+              TargetShadingLanguage              targetShadingLanguage);
   void            Run(Stmts* stmts);
   llvm::Type*     ConvertType(Type* type);
   llvm::Type*     ConvertArrayElementType(ArrayType* type);
@@ -184,7 +184,7 @@ class CodeGenLLVM : public Visitor {
   llvm::Module*                                         module_;
   LLVMBuilder*                                          builder_;
   llvm::legacy::FunctionPassManager*                    fpm_;
-  TargetShaderLanguage                                  targetShaderLanguage_;
+  TargetShadingLanguage                                 targetShadingLanguage_;
   DataVars                                              dataVars_;
   llvm::Type*                                           intType_;
   llvm::Type*                                           floatType_;
