@@ -122,6 +122,8 @@ function(toucan_executable TARGET_NAME)
         ${QUARTZCORE_FRAMEWORK}
         ${FOUNDATION_FRAMEWORK}
       )
+      # Turn off auto-bundling; the .app file will be created manually
+      set_target_properties(${TARGET_NAME} PROPERTIES MACOSX_BUNDLE FALSE)
     else()
       find_library(APPKIT_FRAMEWORK AppKit)
       find_library(METAL_FRAMEWORK Metal)
