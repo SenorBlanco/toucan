@@ -22,7 +22,7 @@ If you simply wish to try some live Toucan demos without building the toolchain,
 ### Prerequisites
 
 - Python 3.0
-- CMake
+- CMake 3.2
 - A C++20 toolchain (clang, gcc, or MSVC)
 - GNU flex
 - GNU bison
