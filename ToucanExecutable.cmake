@@ -92,7 +92,7 @@ function(toucan_executable TARGET_NAME)
   target_link_libraries(${TARGET_NAME} PRIVATE samples_main api ast)
 
   if(NOT EMSCRIPTEN)
-    if(ANDROID)
+    if(ANDROID OR IOS)
       target_link_libraries(${TARGET_NAME} PRIVATE dawn_proc dawn_native)
     else()
       target_link_libraries(${TARGET_NAME} PRIVATE dawn_proc webgpu_dawn)
