@@ -201,11 +201,20 @@ function(toucan_apple_app)
     --minimum-deployment-target "15.0"
   )
   if(IOS)
+    if("$ENV{MOBILE_PROVISION_FILE}" STREQUAL "")
+      message(FATAL_ERROR "Error: MOBILE_PROVISION_FILE not specified")
+    endif()
+    if("$ENV{CODESIGN_IDENTITY}" STREQUAL "")
+      message(FATAL_ERROR "Error: CODESIGN_IDENTITY not specified")
+    endif()
+    if("$ENV{TEAM_IDENTIFIER}" STREQUAL "")
+      message(FATAL_ERROR "Error: TEAM_IDENTIFIER not specified")
+    endif()
     list(APPEND MAKE_APP_ARGS
       --target-os ios
-      --mobile-provision ${MOBILE_PROVISION_FILE}
-      --codesign-identity ${CODESIGN_IDENTITY}
-      --team-identifier ${TEAM_IDENTIFIER}
+      --mobile-provision $ENV{MOBILE_PROVISION_FILE}
+      --codesign-identity $ENV{CODESIGN_IDENTITY}
+      --team-identifier $ENV{TEAM_IDENTIFIER}
     )
     if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
       list(APPEND MAKE_APP_ARGS --enable-debugging)
