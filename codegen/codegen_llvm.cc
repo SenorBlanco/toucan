@@ -164,7 +164,7 @@ CodeGenLLVM::CodeGenLLVM(llvm::LLVMContext*                 context,
   llvm::Type* voidType = llvm::Type::getVoidTy(*context_);
   ptrType_ = llvm::PointerType::get(*context_, 0);
   deleterType_ = llvm::FunctionType::get(voidType, { ptrType_ }, false);
-#if TARGET_OS_IS_WIN && TARGET_CPU_IS_X86
+#if defined(_WIN32) && (defined(_M_IX86) || defined(__i386__))
   freeFunc_ = module_->getOrInsertFunction("_aligned_free", deleterType_);
 #else
   freeFunc_ = module_->getOrInsertFunction("free", deleterType_);
@@ -636,7 +636,7 @@ llvm::Value* CodeGenLLVM::CreateMalloc(llvm::Type* type, llvm::Value* arraySize)
   // TODO(senorblanco):  initialize this once, not every time
   std::vector<llvm::Type*> args;
   args.push_back(intType_);
-#if TARGET_OS_IS_WIN && TARGET_CPU_IS_X86
+#if defined(_WIN32) && (defined(_M_IX86) || defined(__i386__))
   args.push_back(intType_);
 #endif
   llvm::FunctionType* ft = llvm::FunctionType::get(ptrType_, args, false);
@@ -644,7 +644,7 @@ llvm::Value* CodeGenLLVM::CreateMalloc(llvm::Type* type, llvm::Value* arraySize)
   llvm::Value*        nullPtr = llvm::ConstantPointerNull::get(ptrType_);
   llvm::Value*        size = builder_->CreateGEP(type, nullPtr, indices);
   llvm::Value*        sizeInt = builder_->CreatePtrToInt(size, intType_);
-#if TARGET_OS_IS_WIN && TARGET_CPU_IS_X86
+#if defined(_WIN32) && (defined(_M_IX86) || defined(__i386__))
   llvm::FunctionCallee alignedMalloc = module_->getOrInsertFunction("_aligned_malloc", ft);
   llvm::Value*         sixteen = llvm::ConstantInt::get(intType_, 16);
   llvm::Value*         ptr = builder_->CreateCall(alignedMalloc, {sizeInt, sixteen});

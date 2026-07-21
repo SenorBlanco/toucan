@@ -38,6 +38,26 @@ template("toucan_objects") {
       "-I", "../..",
       "-I", "../../samples/include",
     ] + rebase_path(sources, root_build_dir)
+
+    if (is_wasm) {
+      args += [ "-a", "wasm32-unknown-unknown" ]
+    } else if (is_android) {
+      if (target_cpu == "arm64") {
+        args += [ "-a", "aarch64-linux-androi" ]
+      } else if (target_cpu == "arm") {
+        args += [ "-a", "armv7a-linux-androideabi" ]
+      } else if (target_cpu == "x86") {
+        args += [ "-a", "x86_64-linux-android" ]
+      } else if (target_cpu == "x64") {
+        args += [ "-a", "i686-linux-android" ]
+      }
+    } else if (is_ios) {
+      if (target_cpu == "arm64") {
+        args += [ "-a", "arm64-apple-ios15.0" ]
+      } else if (target_cpu == "arm") {
+        args += [ "-a", "armv7-apple-ios15.0" ]
+      }
+    }
   }
 }
 
