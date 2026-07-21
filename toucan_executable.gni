@@ -37,7 +37,7 @@ template("toucan_objects") {
       "-t", rebase_path(target_gen_dir, root_build_dir) + "/init_types_${outer_target}.cc",
       "-I", "../..",
       "-I", "../../samples/include",
-    ] + rebase_path(sources, root_build_dir)
+    ]
 
     if (is_wasm) {
       args += [ "-a", "wasm32-unknown-unknown" ]
@@ -58,6 +58,7 @@ template("toucan_objects") {
         args += [ "-a", "armv7-apple-ios15.0" ]
       }
     }
+    args += rebase_path(sources, root_build_dir)
   }
 }
 
