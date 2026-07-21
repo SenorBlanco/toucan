@@ -43,7 +43,7 @@ template("toucan_objects") {
       args += [ "-a", "wasm32-unknown-unknown" ]
     } else if (is_android) {
       if (target_cpu == "arm64") {
-        args += [ "-a", "aarch64-linux-androi" ]
+        args += [ "-a", "aarch64-linux-android" ]
       } else if (target_cpu == "arm") {
         args += [ "-a", "armv7a-linux-androideabi" ]
       } else if (target_cpu == "x86") {
