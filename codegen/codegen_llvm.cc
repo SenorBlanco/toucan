@@ -164,11 +164,8 @@ CodeGenLLVM::CodeGenLLVM(llvm::LLVMContext*                 context,
   llvm::Type* voidType = llvm::Type::getVoidTy(*context_);
   ptrType_ = llvm::PointerType::get(*context_, 0);
   deleterType_ = llvm::FunctionType::get(voidType, { ptrType_ }, false);
-#if defined(_WIN32) && (defined(_M_IX86) || defined(__i386__))
-  freeFunc_ = module_->getOrInsertFunction("_aligned_free", deleterType_);
-#else
-  freeFunc_ = module_->getOrInsertFunction("free", deleterType_);
-#endif
+  const char* freeFuncName = NeedsAlignedMalloc() ? "_aligned_free" : "free";
+  freeFunc_ = module_->getOrInsertFunction(freeFuncName, deleterType_);
   controlBlockType_ = ControlBlockType();
   typeList_ = new llvm::GlobalVariable(
       *module_, ptrType_, true, llvm::GlobalVariable::ExternalLinkage, nullptr, "_type_list");
@@ -632,26 +629,32 @@ void CodeGenLLVM::GenCodeForMethod(Method* method) {
 #endif
 }
 
+bool CodeGenLLVM::NeedsAlignedMalloc() const {
+  llvm::Triple targetTriple(module_->getTargetTriple());
+  return targetTriple.isOSWindows() && targetTriple.isArch32Bit();
+}
+
 llvm::Value* CodeGenLLVM::CreateMalloc(llvm::Type* type, llvm::Value* arraySize) {
   // TODO(senorblanco):  initialize this once, not every time
   std::vector<llvm::Type*> args;
   args.push_back(intType_);
-#if defined(_WIN32) && (defined(_M_IX86) || defined(__i386__))
-  args.push_back(intType_);
-#endif
+  if (NeedsAlignedMalloc()) {
+    args.push_back(intType_);
+  }
   llvm::FunctionType* ft = llvm::FunctionType::get(ptrType_, args, false);
   llvm::Value*        indices[] = {arraySize ? arraySize : llvm::ConstantInt::get(intType_, 1)};
   llvm::Value*        nullPtr = llvm::ConstantPointerNull::get(ptrType_);
   llvm::Value*        size = builder_->CreateGEP(type, nullPtr, indices);
   llvm::Value*        sizeInt = builder_->CreatePtrToInt(size, intType_);
-#if defined(_WIN32) && (defined(_M_IX86) || defined(__i386__))
-  llvm::FunctionCallee alignedMalloc = module_->getOrInsertFunction("_aligned_malloc", ft);
-  llvm::Value*         sixteen = llvm::ConstantInt::get(intType_, 16);
-  llvm::Value*         ptr = builder_->CreateCall(alignedMalloc, {sizeInt, sixteen});
-#else
-  llvm::FunctionCallee malloc = module_->getOrInsertFunction("malloc", ft);
-  llvm::Value*         ptr = builder_->CreateCall(malloc, sizeInt);
-#endif
+  llvm::Value*        ptr;
+  if (NeedsAlignedMalloc()) {
+    llvm::FunctionCallee alignedMalloc = module_->getOrInsertFunction("_aligned_malloc", ft);
+    llvm::Value*         sixteen = llvm::ConstantInt::get(intType_, 16);
+    ptr = builder_->CreateCall(alignedMalloc, {sizeInt, sixteen});
+  } else {
+    llvm::FunctionCallee malloc = module_->getOrInsertFunction("malloc", ft);
+    ptr = builder_->CreateCall(malloc, sizeInt);
+  }
   return builder_->CreateBitCast(ptr, ptrType_);
 }
 
