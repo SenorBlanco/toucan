@@ -167,7 +167,7 @@ int main(int argc, char** argv) {
   fpm.add(llvm::createReassociatePass());
   fpm.add(llvm::createGVNPass());
   fpm.add(llvm::createCFGSimplificationPass());
-  CodeGenLLVM codeGenLLVM(&context, &types, module.get(), &builder, &fpm, TargetShadingLanguage::SPIRV);
+  CodeGenLLVM codeGenLLVM(&context, &types, module.get(), &builder, &fpm);
   codeGenLLVM.SetDebugOutput(dump);
   std::string            errStr;
   llvm::ExecutionEngine* engine = llvm::EngineBuilder(std::move(module))

@@ -146,15 +146,13 @@ CodeGenLLVM::CodeGenLLVM(llvm::LLVMContext*                 context,
                          TypeTable*                         types,
                          llvm::Module*                      module,
                          LLVMBuilder*                       builder,
-                         llvm::legacy::FunctionPassManager* fpm,
-                         TargetShadingLanguage              targetShadingLanguage)
+                         llvm::legacy::FunctionPassManager* fpm)
     : types_(types),
       context_(context),
       module_(module),
       builder_(builder),
       fpm_(fpm),
-      debugOutput_(false),
-      targetShadingLanguage_(targetShadingLanguage) {
+      debugOutput_(false) {
   boolType_ = llvm::Type::getInt1Ty(*context_);
   intType_ = llvm::Type::getInt32Ty(*context_);
   floatType_ = llvm::Type::getFloatTy(*context_);
@@ -586,7 +584,7 @@ void CodeGenLLVM::GenCodeForMethod(Method* method) {
     spirv.insert(spirv.end(), codeGenSPIRV.decl().begin(), codeGenSPIRV.decl().end());
     spirv.insert(spirv.end(), codeGenSPIRV.GetBody().begin(), codeGenSPIRV.GetBody().end());
 
-    if (targetShadingLanguage_ == TargetShadingLanguage::WGSL) {
+    if (module_->getTargetTriple().isWasm()) {
       tint::spirv::reader::Options spirvOptions;
       tint::Program                program = tint::spirv::reader::Read(spirv, spirvOptions);
       if (!program.IsValid()) {
@@ -638,9 +636,7 @@ llvm::Value* CodeGenLLVM::CreateMalloc(llvm::Type* type, llvm::Value* arraySize)
   // TODO(senorblanco):  initialize this once, not every time
   std::vector<llvm::Type*> args;
   args.push_back(intType_);
-  if (NeedsAlignedMalloc()) {
-    args.push_back(intType_);
-  }
+  if (NeedsAlignedMalloc()) args.push_back(intType_);
   llvm::FunctionType* ft = llvm::FunctionType::get(ptrType_, args, false);
   llvm::Value*        indices[] = {arraySize ? arraySize : llvm::ConstantInt::get(intType_, 1)};
   llvm::Value*        nullPtr = llvm::ConstantPointerNull::get(ptrType_);
