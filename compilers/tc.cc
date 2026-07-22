@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
   bool spirv = false;
 
   int                      opt;
-  char                     optstring[] = "dsvc:m:o:t:I:a:f:";
+  char                     optstring[] = "dsvc:m:o:i:I:t:f:";
   std::string              classname = "Class";
   std::string              methodname = "method";
   std::string              outputFilename = "a.o";
@@ -91,9 +91,9 @@ std::string targetTripleStr;
       case 'c': classname = optarg; break;
       case 'm': methodname = optarg; break;
       case 'o': outputFilename = optarg; break;
-      case 't': initTypesFilename = optarg; break;
+      case 'i': initTypesFilename = optarg; break;
       case 'I': includePaths.push_back(optarg); break;
-      case 'a': targetTripleStr = optarg; break;
+      case 't': targetTripleStr = optarg; break;
       case 'f': features = optarg; break;
     }
   }

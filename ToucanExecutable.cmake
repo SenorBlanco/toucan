@@ -35,29 +35,29 @@ function(toucan_objects TARGET_NAME)
   endif()
 
   if(EMSCRIPTEN)
-    set(TARGET_TRIPLE_ARG -a wasm32-unknown-unknown)
+    set(TARGET_TRIPLE_ARG -t wasm32-unknown-unknown)
     set(FEATURES_ARG -f +simd128)
   endif()
 
   if(ANDROID)
     if("${CMAKE_ANDROID_ARCH_ABI}" STREQUAL "arm64-v8a")
-      set(TARGET_TRIPLE_ARG -a aarch64-linux-android)
+      set(TARGET_TRIPLE_ARG -t aarch64-linux-android)
     elseif("${CMAKE_ANDROID_ARCH_ABI}" STREQUAL "armeabi-v7a")
-      set(TARGET_TRIPLE_ARG -a armv7a-linux-androideabi)
+      set(TARGET_TRIPLE_ARG -t armv7a-linux-androideabi)
     elseif("${CMAKE_ANDROID_ARCH_ABI}" STREQUAL "x86_64")
-      set(TARGET_TRIPLE_ARG -a x86_64-linux-android)
+      set(TARGET_TRIPLE_ARG -t x86_64-linux-android)
     elseif("${CMAKE_ANDROID_ARCH_ABI}" STREQUAL "x86")
-      set(TARGET_TRIPLE_ARG -a i686-linux-android)
+      set(TARGET_TRIPLE_ARG -t i686-linux-android)
     else()
-      set(TARGET_TRIPLE_ARG -a aarch64-linux-android)
+      set(TARGET_TRIPLE_ARG -t aarch64-linux-android)
     endif()
   elseif(IOS)
     if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "arm64")
-      set(TARGET_TRIPLE_ARG -a arm64-apple-ios15.0)
+      set(TARGET_TRIPLE_ARG -t arm64-apple-ios15.0)
     elseif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "arm")
-      set(TARGET_TRIPLE_ARG -a armv7-apple-ios15.0)
+      set(TARGET_TRIPLE_ARG -t armv7-apple-ios15.0)
     else()
-      set(TARGET_TRIPLE_ARG -a arm64-apple-ios15.0)
+      set(TARGET_TRIPLE_ARG -t arm64-apple-ios15.0)
     endif()
   endif()
 
@@ -65,7 +65,7 @@ function(toucan_objects TARGET_NAME)
     OUTPUT ${OBJ_FILE} ${INIT_TYPES_CC}
     COMMAND ${TC_CMD}
             -o ${OBJ_FILE}
-            -t ${INIT_TYPES_CC}
+            -i ${INIT_TYPES_CC}
             -I ${CMAKE_SOURCE_DIR}
             -I ${CMAKE_SOURCE_DIR}/samples/include
             ${TARGET_TRIPLE_ARG}
