@@ -150,7 +150,7 @@ SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Win
   config.height = window->size[1];
   config.presentMode = wgpu::PresentMode::Fifo;
 
-  wgpu::SurfaceDescriptorFromWindowsHWND winSurfaceDesc;
+  wgpu::SurfaceSourceWindowsHWND winSurfaceDesc;
   winSurfaceDesc.hwnd = window->wnd;
   wgpu::SurfaceDescriptor surfaceDesc;
   surfaceDesc.nextInChain = &winSurfaceDesc;
