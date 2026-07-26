@@ -91,21 +91,21 @@ function(toucan_executable TARGET_NAME)
 
   target_link_libraries(${TARGET_NAME} PRIVATE samples_main api ast)
 
-  if(NOT EMSCRIPTEN)
-    if(ANDROID OR IOS)
-      target_link_libraries(${TARGET_NAME} PRIVATE dawn_proc dawn_native)
-    else()
-      target_link_libraries(${TARGET_NAME} PRIVATE dawn_proc webgpu_dawn)
-    endif()
-    if(WIN32)
-      add_custom_command(
-        TARGET ${TARGET_NAME}
-        DEPENDS ${CMAKE_BINARY_DIR}/webgpu_dawn.dll
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-          ${CMAKE_BINARY_DIR}/third_party/dawn/webgpu_dawn.dll
-          ${CMAKE_BINARY_DIR}/webgpu_dawn.dll
-      )
-    endif()
+  if(EMSCRIPTEN)
+    target_link_libraries(${TARGET_NAME} PRIVATE emdawnwebgpu_cpp)
+  elseif(ANDROID OR IOS)
+    target_link_libraries(${TARGET_NAME} PRIVATE dawn_proc dawn_native)
+  else()
+    target_link_libraries(${TARGET_NAME} PRIVATE dawn_proc webgpu_dawn)
+  endif()
+  if(WIN32)
+    add_custom_command(
+      TARGET ${TARGET_NAME}
+      DEPENDS ${CMAKE_BINARY_DIR}/webgpu_dawn.dll
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_BINARY_DIR}/third_party/dawn/webgpu_dawn.dll
+        ${CMAKE_BINARY_DIR}/webgpu_dawn.dll
+    )
   endif()
 
   if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT EMSCRIPTEN)

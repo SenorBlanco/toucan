@@ -31,35 +31,6 @@ add_custom_command(
 
 add_custom_target(generate_api_header DEPENDS ${API_HEADER})
 
-set(DAWN_GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/gen/third_party/dawn")
-set(DAWN_GEN_HEADERS
-  "${DAWN_GEN_DIR}/include/dawn/webgpu_cpp.h"
-  "${DAWN_GEN_DIR}/include/dawn/webgpu.h"
-  "${DAWN_GEN_DIR}/include/dawn/dawn_proc_table.h"
-  "${DAWN_GEN_DIR}/include/dawn/webgpu_cpp_print.h"
-  "${DAWN_GEN_DIR}/include/webgpu/webgpu_cpp_chained_struct.h"
-  "${DAWN_GEN_DIR}/src/emdawnwebgpu/include/webgpu/webgpu_cpp.h"
-)
-
-add_custom_command(
-  OUTPUT ${DAWN_GEN_HEADERS}
-  COMMAND ${CMAKE_COMMAND} -E env
-          "PYTHONPATH=${CMAKE_SOURCE_DIR}/third_party:${CMAKE_SOURCE_DIR}/third_party/jinja2:${CMAKE_SOURCE_DIR}/third_party/markupsafe"
-          ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/third_party/dawn/generator/dawn_json_generator.py
-          --template-dir ${CMAKE_SOURCE_DIR}/third_party/dawn/generator/templates
-          --root-dir ${CMAKE_SOURCE_DIR}/third_party/dawn
-          --output-dir ${DAWN_GEN_DIR}
-          --dawn-json ${CMAKE_SOURCE_DIR}/third_party/dawn/src/dawn/dawn.json
-          --wire-json ${CMAKE_SOURCE_DIR}/third_party/dawn/src/dawn/dawn_wire.json
-          --jinja2-path ${CMAKE_SOURCE_DIR}/third_party/dawn/third_party/jinja2
-          --targets headers,cpp_headers,emdawnwebgpu_headers
-  DEPENDS ${CMAKE_SOURCE_DIR}/third_party/dawn/src/dawn/dawn.json
-          ${CMAKE_SOURCE_DIR}/third_party/dawn/src/dawn/dawn_wire.json
-  COMMENT "Generating Dawn WebGPU headers"
-)
-
-add_custom_target(generate_dawn_headers DEPENDS ${DAWN_GEN_HEADERS})
-
 add_library(api STATIC api_dawn.cc api_image_codecs.cc)
 
 if(WIN32)
@@ -79,7 +50,7 @@ elseif(ANDROID)
   target_include_directories(api PUBLIC ${CMAKE_SOURCE_DIR}/third_party/android_native_app_glue)
 endif()
 
-add_dependencies(api generate_api_header generate_dawn_headers)
+add_dependencies(api generate_api_header)
 
 target_include_directories(api PUBLIC
   ${CMAKE_SOURCE_DIR}
@@ -89,17 +60,14 @@ target_include_directories(api PUBLIC
 )
 
 if(EMSCRIPTEN)
-  target_include_directories(api BEFORE PUBLIC
-    ${DAWN_GEN_DIR}/src/emdawnwebgpu/include
-    ${DAWN_GEN_DIR}/include
-    ${CMAKE_SOURCE_DIR}/third_party/dawn/include
-  )
-  target_link_libraries(api PUBLIC emdawnwebgpu_cpp)
+  add_dependencies(api emdawnwebgpu_pkg)
+  target_include_directories(api PUBLIC ${CMAKE_BINARY_DIR}/emdawnwebgpu_pkg/webgpu_cpp/include)
+  target_include_directories(api PUBLIC ${CMAKE_BINARY_DIR}/emdawnwebgpu_pkg/webgpu/include)
 else()
+  add_dependencies(api webgpu_headers_gen)
   target_include_directories(api PUBLIC
     ${CMAKE_SOURCE_DIR}/third_party/dawn/include
-    ${DAWN_GEN_DIR}/include
-    ${CMAKE_SOURCE_DIR}/third_party/Vulkan-Headers/include
+    ${CMAKE_BINARY_DIR}/third_party/dawn/gen/include
   )
 endif()
 
