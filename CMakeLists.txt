@@ -44,6 +44,9 @@ option(BUILD_SAMPLES "Build Toucan samples" ON)
 option(BUILD_TESTS "Build Toucan tests" ON)
 
 add_compile_definitions("STACK_SIZE=4194304")
+if(MSVC)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:4194304")
+endif()
 
 set(DAWN_FETCH_DEPENDENCIES ON)
 set(DAWN_BUILD_MONOLITHIC_LIBRARY SHARED)
