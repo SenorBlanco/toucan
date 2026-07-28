@@ -100,15 +100,15 @@ Toucan uses the ninja build system from the Chromium project. It will be retriev
 4. Install all required Android SDK components:
 
 ```
-$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install 'platforms;android-26' 'ndk;26.3.11579264' 'build-tools;34.0.0' platform-tools
+$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install 'platforms;android-27' 'ndk;27.3.13750724' 'build-tools;34.0.0' platform-tools
 ```
 or on Windows:
 
 ```
-%ANDROID_SDK_ROOT%\cmdline-tools\latest\bin\sdkmanager --install platforms;android-26 ndk;26.3.11579264 build-tools;34.0.0 platform-tools
+%ANDROID_SDK_ROOT%\cmdline-tools\latest\bin\sdkmanager --install platforms;android-27 ndk;27.3.13750724 build-tools;34.0.0 platform-tools
 ```
 
-5. Set `ANDROID_NDK_ROOT` to `$ANDROID_SDK_ROOT/ndk/26.3.11579264`.
+5. Set `ANDROID_NDK_ROOT` to `$ANDROID_SDK_ROOT/ndk/27.3.13750724'.
 
 6. Build LLVM (Makefiles):
 ```
@@ -123,14 +123,14 @@ or on Windows:
 7. Build tc and native samples:
 
 ```
-   cmake -B out/Release-android -D CMAKE_BUILD_TYPE=Release -D ANDROID_ABI=arm64-v8a -D ANDROID_PLATFORM=android-26 -D CMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android-legacy.toolchain.cmake -G Ninja
+   cmake -B out/Release-android -D CMAKE_BUILD_TYPE=Release -D ANDROID_ABI=arm64-v8a -D ANDROID_PLATFORM=android-27 -D CMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android-legacy.toolchain.cmake -G Ninja
    cmake --build out/Release-android
 ```
 
 or on Windows:
 
 ```
-   cmake -B out\Release-android -D CMAKE_BUILD_TYPE=Release -D ANDROID_ABI=arm64-v8a -D ANDROID_PLATFORM=android-26 -D CMAKE_TOOLCHAIN_FILE=%ANDROID_NDK_ROOT%\build\cmake\android-legacy.toolchain.cmake -G Ninja
+   cmake -B out\Release-android -D CMAKE_BUILD_TYPE=Release -D ANDROID_ABI=arm64-v8a -D ANDROID_PLATFORM=android-27 -D CMAKE_TOOLCHAIN_FILE=%ANDROID_NDK_ROOT%\build\cmake\android-legacy.toolchain.cmake -G Ninja
    cmake --build out\Release-android
 ```
 

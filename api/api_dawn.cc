@@ -1477,7 +1477,7 @@ wgpu::Device CreateDawnDevice(wgpu::BackendType type, const wgpu::DeviceDescript
   wgpu::RequestAdapterOptions adapterOptions;
   adapterOptions.backendType = type;
   auto adapterFuture = gInstance.RequestAdapter(&adapterOptions, wgpu::CallbackMode::WaitAnyOnly,
-      [&adapter](wgpu::RequestAdapterStatus status, wgpu::Adapter a, const char *msg) {
+      [&adapter](wgpu::RequestAdapterStatus status, wgpu::Adapter a, wgpu::StringView message) {
     adapter = a;
   });
   wgpu::FutureWaitInfo aWaitInfo = { adapterFuture };
@@ -1486,7 +1486,7 @@ wgpu::Device CreateDawnDevice(wgpu::BackendType type, const wgpu::DeviceDescript
 
   wgpu::Device device;
   auto deviceFuture = adapter.RequestDevice(desc, wgpu::CallbackMode::WaitAnyOnly,
-      [&device](wgpu::RequestDeviceStatus status, wgpu::Device d, const char* msg) {
+      [&device](wgpu::RequestDeviceStatus status, wgpu::Device d, wgpu::StringView message) {
     device = d;
   });
   wgpu::FutureWaitInfo dWaitInfo = { deviceFuture };
