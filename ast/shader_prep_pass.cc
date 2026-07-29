@@ -412,7 +412,7 @@ Result ShaderPrepPass::ResolveNativeMethodCall(MethodCall* node) {
   ClassType* classType = method->classType;
   if (classType->GetTemplate() == NativeClass::ColorOutput && method->name == "Set") {
     auto color = Resolve(args[1]);
-#if TARGET_OS_IS_WASM
+#ifdef __EMSCRIPTEN__
     // Until "sRGB linear" (aka scrgb) is supported in Chrome by default,
     // use sRGB colorspace and invert the gamma when writing to FP16 attachments.
     auto format = classType->GetTemplateArgs()[0];
