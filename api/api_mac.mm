@@ -101,10 +101,11 @@ const uint32_t* Window_GetSize(Window* This) {
 
 Window* Window_Window(const uint32_t* size, const int32_t* position) {
   NSApplication* app = [NSApplication sharedApplication];
-  NSRect         rect = NSMakeRect(position[0], position[1], size[0], size[1]);
+  NSRect         backingRect = NSMakeRect(position[0], position[1], size[0], size[1]);
+  NSRect         windowRect = [[NSScreen mainScreen] convertRectFromBacking:backingRect];
   int mask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable |
              NSWindowStyleMaskResizable;
-  NSWindow* window = [[NSWindow alloc] initWithContentRect:rect
+  NSWindow* window = [[NSWindow alloc] initWithContentRect:windowRect
                                                  styleMask:mask
                                                    backing:NSBackingStoreBuffered
                                                      defer:NO];
@@ -125,7 +126,7 @@ Window* Window_Window(const uint32_t* size, const int32_t* position) {
   [layer setDrawableSize:cgSize];
   [layer setColorspace:CGColorSpaceCreateDeviceRGB()];
 
-  NSView* view = [[NSView alloc] initWithFrame:rect];
+  NSView* view = [[NSView alloc] initWithFrame:windowRect];
   [view setWantsLayer:YES];
   [view setLayer:layer];
 
@@ -276,8 +277,10 @@ Event* System_GetNextEvent() {
 }
 
 const uint32_t* System_GetScreenSize() {
-  gScreenSize[0] = [[NSScreen mainScreen] frame].size.width;
-  gScreenSize[1] = [[NSScreen mainScreen] frame].size.height;
+  auto frame = [[NSScreen mainScreen] frame];
+  auto backingRect = [[NSScreen mainScreen] convertRectToBacking:frame];
+  gScreenSize[0] = backingRect.size.width;
+  gScreenSize[1] = backingRect.size.height;
   return gScreenSize;
 }
 
