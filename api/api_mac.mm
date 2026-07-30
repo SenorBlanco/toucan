@@ -100,10 +100,6 @@ const uint32_t* Window_GetSize(Window* This) {
 }
 
 Window* Window_Window(const uint32_t* size, const int32_t* position) {
-float Window_GetDevicePixelRatio(Window* This) {
-  return [This->window backingScaleFactor];
-}
-
   NSApplication* app = [NSApplication sharedApplication];
   NSRect         rect = NSMakeRect(position[0], position[1], size[0], size[1]);
   int mask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable |
@@ -141,6 +137,10 @@ float Window_GetDevicePixelRatio(Window* This) {
 }
 
 void Window_Destroy(Window* This) { delete This; }
+
+float Window_GetDevicePixelRatio(Window* This) {
+  return [This->window backingScaleFactor];
+}
 
 wgpu::TextureFormat GetPreferredPixelFormat() {
   return wgpu::TextureFormat::BGRA8Unorm;
