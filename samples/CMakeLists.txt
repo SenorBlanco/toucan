@@ -23,7 +23,6 @@ add_library(samples_main STATIC main.cc)
 target_include_directories(samples_main PUBLIC ${CMAKE_SOURCE_DIR})
 
 if(BUILD_SAMPLES)
-  toucan_app(checkerboard SOURCES checkerboard.t)
   toucan_app(decode SOURCES decode.t)
   toucan_app(disco-dragon SOURCES disco-dragon.t)
   toucan_app(skybox SOURCES skybox.t)
