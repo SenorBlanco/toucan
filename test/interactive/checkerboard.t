@@ -2,8 +2,12 @@
 class Pipeline {
   vertex main(vb : &VertexBuiltins) { vb.position = {@vertices.Get(), 0.0, 1.0}; }
   fragment main(fb : &FragmentBuiltins) {
-    var color = (((fb.fragCoord.x as int) ^ (fb.fragCoord.y as int)) & 1) as float;
-    fragColor.Set( {color, color, color, 1.0} );
+    var rem = fb.fragCoord.xy as int<2> % int<2>{2};
+    if (rem.x != rem.y) {
+      fragColor.Set( {@float<3>{1.0}, 1.0} );
+    } else {
+      fragColor.Set( {@float<3>{0.0}, 1.0} );
+    }
   }
   var vertices : *VertexInput<float<2>>;
   var fragColor : *ColorOutput<PreferredPixelFormat>;
