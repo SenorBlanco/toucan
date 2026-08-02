@@ -94,9 +94,9 @@ void Initialize() {
 }
 
 void GetViewSize(NSView* view, uint32_t size[2]) {
-  auto backingSize = [[NSScreen mainScreen] convertRectToBacking:[view bounds]].size;
-  size[0] = backingSize.width;
-  size[1] = backingSize.height;
+  auto backingRect = [[NSScreen mainScreen] convertRectToBacking:[view bounds]];
+  size[0] = backingRect.size.width;
+  size[1] = backingRect.size.height;
 }
 
 }  // namespace
@@ -221,9 +221,11 @@ Event* System_GetNextEvent() {
                                         dequeue:YES];
   [NSApp sendEvent:nsEvent];
   Event* event = new Event();
-  int    height = [[nsEvent.window contentView] bounds].size.height;
-  event->position[0] = nsEvent.locationInWindow.x;
-  event->position[1] = height - nsEvent.locationInWindow.y;
+  auto view = [nsEvent.window contentView];
+  auto backingRect = [[NSScreen mainScreen] convertRectToBacking:[view bounds]];
+  auto backingLocation = [view convertPointToBacking:nsEvent.locationInWindow];
+  event->position[0] = backingLocation.x;
+  event->position[1] = backingRect.size.height - backingLocation.y;
   event->modifiers = ToToucanEventModifiers(nsEvent.modifierFlags);
   event->button = 0;
   event->type = EventType::Unknown;
