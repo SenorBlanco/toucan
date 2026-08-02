@@ -93,6 +93,12 @@ void Initialize() {
   if (![[NSRunningApplication currentApplication] isFinishedLaunching]) { [NSApp run]; }
 }
 
+void GetViewSize(NSView* view, uint32_t size[2]) {
+  auto backingSize = [[NSScreen mainScreen] convertRectToBacking:[view bounds]].size;
+  size[0] = backingSize.width;
+  size[1] = backingSize.height;
+}
+
 }  // namespace
 
 const uint32_t* Window_GetSize(Window* This) {
@@ -114,16 +120,13 @@ Window* Window_Window(const uint32_t* size, const int32_t* position) {
   // this could be wrong on multi-GPU systems.
   id<MTLDevice> mtlDevice = MTLCreateSystemDefaultDevice();
 
-  CGSize cgSize;
-  cgSize.width = size[0];
-  cgSize.height = size[1];
   [window makeKeyAndOrderFront:NSApp];
 
   CAMetalLayer* layer = [CAMetalLayer layer];
   [layer setDevice:mtlDevice];
   [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
   [layer setFramebufferOnly:YES];
-  [layer setDrawableSize:cgSize];
+  [layer setDrawableSize:CGSize(size[0], size[1])];
   [layer setColorspace:CGColorSpaceCreateDeviceRGB()];
 
   NSView* view = [[NSView alloc] initWithFrame:windowRect];
@@ -131,7 +134,10 @@ Window* Window_Window(const uint32_t* size, const int32_t* position) {
   [view setLayer:layer];
 
   [window setContentView:view];
-  Window*       w = new Window(window, view, layer, mtlDevice, size);
+
+  uint32_t actualSize[2];
+  GetViewSize(view, actualSize);
+  Window*       w = new Window(window, view, layer, mtlDevice, actualSize);
   id            delegate = [[ToucanWindowDelegate alloc] initWithWindow:w];
   [window setDelegate:delegate];
   return w;
@@ -215,7 +221,7 @@ Event* System_GetNextEvent() {
                                         dequeue:YES];
   [NSApp sendEvent:nsEvent];
   Event* event = new Event();
-  int    height = [[nsEvent.window contentView] frame].size.height;
+  int    height = [[nsEvent.window contentView] bounds].size.height;
   event->position[0] = nsEvent.locationInWindow.x;
   event->position[1] = height - nsEvent.locationInWindow.y;
   event->modifiers = ToToucanEventModifiers(nsEvent.modifierFlags);
@@ -306,10 +312,7 @@ double System_GetCurrentTime() {
 }
 
 - (void)windowDidResize:(NSNotification*)notification {
-  const CGSize size = [window->view frame].size;
-
-  window->size[0] = size.width;
-  window->size[1] = size.height;
+  Toucan::GetViewSize(window->view, window->size);
 }
 
 @end
