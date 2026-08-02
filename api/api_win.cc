@@ -35,6 +35,13 @@ unsigned ToToucanEventModifiers(WPARAM wParam) {
   return result;
 }
 
+void GetWindowSize(HWND hWnd, uint32_t result[2]) {
+  RECT rect;
+  GetClientRect(hWnd, &rect);
+  result[0] = rect.right - rect.left;
+  result[1] = rect.bottom - rect.top;
+}
+
 }  // namespace
 
 struct Window {
@@ -61,10 +68,7 @@ static LRESULT CALLBACK mainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
       break;
     case WM_SIZE:
       if (Window* w = reinterpret_cast<Window*>(GetWindowLongPtr(hWnd, GWLP_USERDATA))) {
-        RECT rect;
-        GetWindowRect(hWnd, &rect);
-        w->size[0] = rect.right - rect.left;
-        w->size[1] = rect.bottom - rect.top;
+        GetWindowSize(hWnd, w->size);
       }
     default:
       rc = DefWindowProc(hWnd, message, wParam, lParam);
@@ -106,7 +110,9 @@ Window* Window_Window(const uint32_t* size, const int32_t* position) {
 
   ::ShowWindow(hwnd, SW_SHOW);
 
-  Window* w = new Window(hwnd, size);
+  uint32_t adjustedSize[2];
+  GetWindowSize(hwnd, adjustedSize);
+  Window* w = new Window(hwnd, adjustedSize);
   SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(w));
   gNumWindows++;
   return w;
