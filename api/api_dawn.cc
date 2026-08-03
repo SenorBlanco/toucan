@@ -1413,6 +1413,7 @@ void SwapChain_Present(SwapChain* swapChain) { swapChain->surface.Present(); }
 void SwapChain_Destroy(SwapChain* This) { delete This; }
 #endif
 
+#ifndef __EMSCRIPTEN__
 void SwapChain_Resize(SwapChain* swapChain, const uint32_t* size) {
   wgpu::SurfaceConfiguration config;
   config.device = swapChain->device;
@@ -1424,6 +1425,7 @@ void SwapChain_Resize(SwapChain* swapChain, const uint32_t* size) {
   swapChain->surface.Configure(&config);
   swapChain->extent = {size[0], size[1], 1};
 }
+#endif
 
 float Math_rand() { return (float)(rand() % 100) / 100.0f; }
 

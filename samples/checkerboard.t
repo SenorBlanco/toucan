@@ -11,13 +11,8 @@ class Pipeline {
 var device = new Device();
 var window = new Window(System.GetScreenSize());
 var swapChain = new SwapChain<PreferredPixelFormat>(device, window);
-var prevWindowSize = window.GetSize();
 while (System.IsRunning()) {
-  var newSize = window.GetSize();
-  if (Math.any(newSize != prevWindowSize)) {
-    swapChain.Resize(newSize);
-    prevWindowSize = newSize;
-  }
+  swapChain.Resize(window.GetSize());
   var verts = [3]float<2>{ { 0.0, 1.0 }, {-1.0, -1.0 }, { 1.0, -1.0 } };
   var vb = new vertex Buffer<[]float<2>>(device, &verts);
   var vi = new VertexInput<float<2>>(vb);
