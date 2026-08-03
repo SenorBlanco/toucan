@@ -366,7 +366,7 @@ class Image<PF> {
   Decode(buffer : &writeonly []PF:HostType, bufferWidth : uint);
 }
 
-enum EventType { MouseMove, MouseDown, MouseUp, TouchStart, TouchMove, TouchEnd, Unknown }
+enum EventType { MouseMove, MouseDown, MouseUp, TouchStart, TouchMove, TouchEnd, Resize, Unknown }
 
 enum EventModifiers { Shift = 0x01, Control = 0x02, Alt = 0x04 }
 

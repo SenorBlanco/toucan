@@ -148,6 +148,7 @@ Event* System_GetNextEvent() {
         window->size[0] = event.xconfigure.width;
         window->size[1] = event.xconfigure.height;
       }
+      result->type = EventType::Resize;
       break;
     case DestroyNotify: gNumWindows--; break;
     case ClientMessage:
