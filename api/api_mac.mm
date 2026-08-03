@@ -27,6 +27,7 @@
 #include "api_internal.h"
 
 @interface ToucanWindowDelegate : NSObject {
+  @public
   Toucan::Window* window;
 }
 - (instancetype)initWithWindow:(Toucan::Window*)w;
@@ -54,6 +55,7 @@ struct Window {
   CAMetalLayer* layer;
   id<MTLDevice> mtlDevice;
   uint32_t      size[2];
+  bool          wasResized = false;
 };
 
 namespace {
@@ -216,6 +218,12 @@ Event* System_GetNextEvent() {
                                          inMode:NSDefaultRunLoopMode
                                         dequeue:YES];
   [NSApp sendEvent:nsEvent];
+  Window* window = nullptr;
+  auto delegate = nsEvent.window.delegate;
+  if ([delegate isKindOfClass:[ToucanWindowDelegate class]]) {
+    window = static_cast<ToucanWindowDelegate*>(delegate)->window;
+  }
+
   Event* event = new Event();
   auto view = [nsEvent.window contentView];
   auto backingRect = [[NSScreen mainScreen] convertRectToBacking:[view bounds]];
@@ -226,7 +234,10 @@ Event* System_GetNextEvent() {
   event->button = 0;
   event->type = EventType::Unknown;
 
-  switch (nsEvent.type) {
+  if (window && window->wasResized) {
+    event->type = EventType::Resize;
+    window->wasResized = false;
+  } else switch (nsEvent.type) {
     case NSEventTypeLeftMouseDown:
       event->type = EventType::MouseDown;
       event->button = 0;
@@ -313,6 +324,17 @@ double System_GetCurrentTime() {
   Toucan::GetViewSize(window->view, window->size);
 }
 
+- (void)windowDidEndLiveResize:(NSNotification*)notification {
+  window->wasResized = true;
+}
+
+- (void)windowDidEnterFullScreen:(NSNotification *)notification {
+  window->wasResized = true;
+}
+
+- (void)windowDidExitFullScreen:(NSNotification *)notification {
+  window->wasResized = true;
+}
 @end
 
 @implementation ToucanAppDelegate : NSObject

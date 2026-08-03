@@ -18,6 +18,7 @@
 #include <android_native_app_glue.h>
 
 #include <cassert>
+#include <queue>
 
 #include <webgpu/webgpu_cpp.h>
 
@@ -30,6 +31,7 @@ namespace Toucan {
 static int          gNumWindows = 0;
 static android_app* gAndroidApp;
 static uint32_t     gScreenSize[2];
+std::queue<Event*>  gEventQueue;
 
 namespace {
 
@@ -52,6 +54,31 @@ EventType ToToucanEventType(AInputEvent* inputEvent) {
     case AMOTION_EVENT_ACTION_UP: return EventType::TouchEnd;
     default: return EventType::TouchMove;
   }
+}
+
+void OnAppCmd(struct android_app* app, int32_t cmd) {
+  if (cmd == APP_CMD_WINDOW_RESIZED) {
+    auto* event = new Event();
+    event->type = EventType::Resize;
+    gEventQueue.push(event);
+  }
+}
+
+int32_t OnInputEvent(struct android_app* app, AInputEvent* inputEvent) {
+  switch (AInputEvent_getType(inputEvent)) {
+    case AINPUT_EVENT_TYPE_MOTION:
+      auto* event = new Event();
+      event->type = ToToucanEventType(inputEvent);
+      event->numTouches =
+          std::min(static_cast<int>(AMotionEvent_getPointerCount(inputEvent)), 10);
+      for (int i = 0; i < event->numTouches; ++i) {
+        event->touches[i][0] = AMotionEvent_getX(inputEvent, i);
+        event->touches[i][1] = AMotionEvent_getY(inputEvent, i);
+      }
+      gEventQueue.push(event);
+      break;
+  }
+  return 1;
 }
 
 }  // namespace
@@ -99,30 +126,20 @@ Device* Device_Device() {
 
 bool System_IsRunning() { return true; }
 
-bool System_HasPendingEvents() { return AInputQueue_hasEvents(gAndroidApp->inputQueue); }
+bool System_HasPendingEvents() { return !gEventQueue.empty() || AInputQueue_hasEvents(gAndroidApp->inputQueue); }
 
 Event* System_GetNextEvent() {
-  Event* event = new Event();
-  event->type = EventType::Unknown;
   int                  events;
   void*                data;
-  android_poll_source* source = nullptr;
-  int          ident = ALooper_pollOnce(-1, nullptr, &events, reinterpret_cast<void**>(&source));
-  AInputEvent* inputEvent = NULL;
-  if (AInputQueue_getEvent(gAndroidApp->inputQueue, &inputEvent) >= 0) {
-    switch (AInputEvent_getType(inputEvent)) {
-      case AINPUT_EVENT_TYPE_MOTION:
-        event->type = ToToucanEventType(inputEvent);
-        event->numTouches =
-            std::min(static_cast<int>(AMotionEvent_getPointerCount(inputEvent)), 10);
-        for (int i = 0; i < event->numTouches; ++i) {
-          event->touches[i][0] = AMotionEvent_getX(inputEvent, i);
-          event->touches[i][1] = AMotionEvent_getY(inputEvent, i);
-        }
-        break;
-    }
-    AInputQueue_finishEvent(gAndroidApp->inputQueue, inputEvent, 1);
+
+  while (gEventQueue.empty()) {
+    android_poll_source* source = nullptr;
+    int          ident = ALooper_pollOnce(-1, nullptr, &events, reinterpret_cast<void**>(&source));
+    if (source != nullptr) source->process(gAndroidApp, source);
   }
+
+  Event* event = gEventQueue.front();
+  gEventQueue.pop();
   return event;
 }
 
@@ -165,6 +182,10 @@ double System_GetCurrentTime() {
   return static_cast<double>(now.tv_sec) + static_cast<double>(now.tv_usec) / 1000000.0;
 }
 
-void SetAndroidApp(struct android_app* app) { gAndroidApp = app; }
+void SetAndroidApp(struct android_app* app) {
+  gAndroidApp = app;
+  gAndroidApp->onAppCmd = OnAppCmd;
+  gAndroidApp->onInputEvent = OnInputEvent;
+}
 
 };  // namespace Toucan

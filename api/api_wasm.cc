@@ -47,10 +47,8 @@ void copyTouches(emscripten::val touches, Event* result) {
 }  // namespace
 
 struct Window {
-  Window(int i, const uint32_t sz[2])
-      : id(i) { size[0] = sz[0]; size[1] = sz[1]; }
-  int           id;
-  uint32_t      size[2];
+  Window(int i) : id(i) {}
+  int id;
 };
 
 EM_JS(int, createWindow, (int32_t x, int32_t y, int32_t width, int32_t height), {
@@ -93,13 +91,16 @@ EM_JS(int, createWindow, (int32_t x, int32_t y, int32_t width, int32_t height), 
 Window* Window_Window(const uint32_t* size, const int32_t* position) {
   int id = EM_ASM_INT({ createWindow($0, $1, $2, $3) }, position[0], position[1], size[0], size[1]);
 
-  return gWindows[id] = new Window(id, size);
+  return gWindows[id] = new Window(id);
 }
 
 void Window_Destroy(Window* This) { delete This; }
 
 const uint32_t* Window_GetSize(Window* This) {
-  return This->size;
+  static uint32_t size[2];
+  size[0] = EM_ASM_INT("return window.innerWidth * window.devicePixelRatio");
+  size[1] = EM_ASM_INT("return window.innerHeight * window.devicePixelRatio");
+  return size;
 }
 
 Device* Device_Device() {
@@ -159,10 +160,7 @@ Event* System_GetNextEvent() {
   } else if (type == "touchend") {
     result->type = EventType::TouchEnd;
   } else if (type == "resize") {
-    if (Window* w = gWindows[EM_ASM_INT("window.id")]) {
-      w->size[0] = EM_ASM_INT("return window.innerWidth * window.devicePixelRatio");
-      w->size[1] = EM_ASM_INT("return window.innerHeight * window.devicePixelRatio");
-    }
+    result->type = EventType::Resize;
   }
   result->modifiers = 0;
   if (event["shiftKey"].as<bool>()) { result->modifiers |= static_cast<uint32_t>(EventModifiers::Shift); }
@@ -199,8 +197,9 @@ SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Win
   wgpu::SurfaceConfiguration config;
   config.device = device->device;
   config.format = ToDawnTextureFormat(format);
-  config.width = window->size[0];
-  config.height = window->size[1];
+  const uint32_t* size = Window_GetSize(window);
+  config.width = size[0];
+  config.height = size[1];
   config.presentMode = wgpu::PresentMode::Fifo;
 
   surface.Configure(&config);

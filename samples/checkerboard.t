@@ -2,7 +2,7 @@
 class Pipeline {
   vertex main(vb : &VertexBuiltins) { vb.position = {@vertices.Get(), 0.0, 1.0}; }
   fragment main(fb : &FragmentBuiltins) {
-    var color = (((fb.fragCoord.x as int) ^ (fb.fragCoord.y as int)) & 1) as float;
+    var color = (((fb.fragCoord.x as int) ^ (fb.fragCoord.y as int)) & 32) as float;
     fragColor.Set( {color, color, color, 1.0} );
   }
   var vertices : *VertexInput<float<2>>;
@@ -12,7 +12,6 @@ var device = new Device();
 var window = new Window(System.GetScreenSize());
 var swapChain = new SwapChain<PreferredPixelFormat>(device, window);
 while (System.IsRunning()) {
-  swapChain.Resize(window.GetSize());
   var verts = [3]float<2>{ { 0.0, 1.0 }, {-1.0, -1.0 }, { 1.0, -1.0 } };
   var vb = new vertex Buffer<[]float<2>>(device, &verts);
   var vi = new VertexInput<float<2>>(vb);
@@ -26,6 +25,8 @@ while (System.IsRunning()) {
   device.GetQueue().Submit(encoder.Finish());
   swapChain.Present();
   do {
-    System.GetNextEvent();
+    if (System.GetNextEvent().type == EventType.Resize) {
+      swapChain.Resize(window.GetSize());
+    }
   } while (System.HasPendingEvents());
 }

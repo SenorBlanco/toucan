@@ -291,6 +291,17 @@ int main(int argc, char** argv) {
   gApp->SetPrimaryView(primaryView);
 }
 
+- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
+  [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
+
+  [coordinator animateAlongsideTransition:nil
+               completion:^(id<UIViewControllerTransitionCoordinatorContext>  _Nonnull context) {
+    auto* event = new Event();
+    event->type = EventType::Resize;
+    gApp->PushEvent(event);
+  }];
+}
+
 @end
 
 @implementation ToucanMetalView
@@ -307,12 +318,6 @@ int main(int argc, char** argv) {
     self.multipleTouchEnabled = true;
     self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     return self;
-}
-
-- (void) layoutSubviews {
-  [super layoutSubviews];
-
-  gApp->PushEvent(new Event{.type = EventType::Unknown});
 }
 
 - (void) touchEvent:(EventType) type {

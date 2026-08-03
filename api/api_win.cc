@@ -51,6 +51,7 @@ struct Window {
   }
   HWND     wnd;
   uint32_t size[2];
+  bool     wasResized = false;
 };
 
 static int gNumWindows = 0;
@@ -69,6 +70,7 @@ static LRESULT CALLBACK mainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
     case WM_SIZE:
       if (Window* w = reinterpret_cast<Window*>(GetWindowLongPtr(hWnd, GWLP_USERDATA))) {
         GetWindowSize(hWnd, w->size);
+        w->wasResized = true;
       }
     default:
       rc = DefWindowProc(hWnd, message, wParam, lParam);
@@ -182,12 +184,16 @@ Event* System_GetNextEvent() {
   TranslateMessage(&msg);
   DispatchMessage(&msg);
 
+  Window* window = msg.hwnd ? reinterpret_cast<Window*>(GetWindowLongPtr(msg.hwnd, GWLP_USERDATA)) : nullptr;
   LONG rc = 0L;
   event->position[0] = LOWORD(msg.lParam);
   event->position[1] = HIWORD(msg.lParam);
   event->modifiers = ToToucanEventModifiers(msg.wParam);
   event->button = 0;
-  switch (msg.message) {
+  if (window && window->wasResized) {
+    event->type = EventType::Resize;
+    window->wasResized = false;
+  } else switch (msg.message) {
     case WM_LBUTTONDOWN:
       event->button = 0;
       event->type = EventType::MouseDown;

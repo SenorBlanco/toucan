@@ -1,4 +1,3 @@
-- implement window resize event
 - implement foreach
 - implement Math.inverse() on CPU side
 - use O1 optimization in TC
