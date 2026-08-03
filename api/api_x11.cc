@@ -100,10 +100,6 @@ const uint32_t* Window_GetSize(Window* This) {
   return This->size;
 }
 
-float Window_GetDevicePixelRatio(Window* This) {
-  return 1.0f;
-}
-
 void Window_Destroy(Window* This) {
   if (This->window) ::XDestroyWindow(gDisplay, This->window);
   delete This;

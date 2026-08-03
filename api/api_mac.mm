@@ -145,10 +145,6 @@ Window* Window_Window(const uint32_t* size, const int32_t* position) {
 
 void Window_Destroy(Window* This) { delete This; }
 
-float Window_GetDevicePixelRatio(Window* This) {
-  return [This->window backingScaleFactor];
-}
-
 wgpu::TextureFormat GetPreferredPixelFormat() {
   return wgpu::TextureFormat::BGRA8Unorm;
 }
