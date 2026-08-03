@@ -46,8 +46,8 @@ while (System.IsRunning()) {
     var event = System.GetNextEvent();
     if (event.type == EventType.MouseMove) {
       var s = stagingBuffer.MapWrite();
-      var size = window.GetSize();
-      s.color = float<4>(event.position.x as float / size.x as float, event.position.y as float / size.y as float, 0.0, 1.0);
+      var position = event.position as float<2> / window.GetSize() as float<2>;
+      s.color = float<4>(@position, 0.0, 1.0);
     }
   }
 }
