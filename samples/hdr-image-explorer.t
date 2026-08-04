@@ -101,7 +101,7 @@ do {
     } else if (event.type == EventType.MouseMove) {
       mousePos = event.position as float<2> * windowScale;
     } else if (event.type == EventType.TouchMove) {
-      mousePos = event.touches[0] as float<2> * windowScale;
+      mousePos = event.touches[0] as float<2>;
       touchMoved = true;
     }
     bindings.uniforms.Set({mousePos = mousePos, clamp = clamp});
