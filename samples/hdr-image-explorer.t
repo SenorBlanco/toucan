@@ -86,7 +86,6 @@ do {
   renderPass.End();
   device.GetQueue().Submit(encoder.Finish());
   swapChain.Present();
-  var windowScale = imageSize as float<2> / window.GetSize() as float<2>;
   do {
     var event = System.GetNextEvent();
     if (event.type == EventType.MouseDown) {
@@ -99,7 +98,7 @@ do {
       }
       touchMoved = false;
     } else if (event.type == EventType.MouseMove) {
-      mousePos = event.position as float<2> * windowScale;
+      mousePos = event.position as float<2>;
     } else if (event.type == EventType.TouchMove) {
       mousePos = event.touches[0] as float<2>;
       touchMoved = true;
