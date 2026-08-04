@@ -15,7 +15,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 if(CMAKE_GENERATOR STREQUAL "Ninja")
-  set(CMAKE_MAKE_PROGRAM ${CMAKE_SOURCE_DIR}/third_party/ninja/ninja CACHE FILEPATH "" FORCE)
+  set(CMAKE_MAKE_PROGRAM ${CMAKE_SOURCE_DIR}/third_party/ninja/ninja CACHE FILEPATH "")
 endif()
 
 project(Toucan CXX C)
