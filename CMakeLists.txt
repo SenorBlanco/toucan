@@ -183,7 +183,11 @@ set(WITH_JPEG8 ON CACHE BOOL "Emulate libjpeg v8 API/ABI")
 set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "Minimum policy version")
 add_subdirectory(third_party/libjpeg-turbo EXCLUDE_FROM_ALL)
 set(JPEG_FOUND TRUE)
-set(JPEG_LIBRARIES ${CMAKE_BINARY_DIR}/third_party/libjpeg-turbo/libjpeg.a)
+if(MSVC)
+  set(JPEG_LIBRARIES ${CMAKE_BINARY_DIR}/third_party/libjpeg-turbo/jpeg-static.lib)
+else()
+  set(JPEG_LIBRARIES ${CMAKE_BINARY_DIR}/third_party/libjpeg-turbo/libjpeg.a)
+endif()
 set(JPEG_INCLUDE_DIRS
   ${CMAKE_SOURCE_DIR}/third_party/libjpeg-turbo
   ${CMAKE_BINARY_DIR}/third_party/libjpeg-turbo
