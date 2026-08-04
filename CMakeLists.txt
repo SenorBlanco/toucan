@@ -15,7 +15,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 if(CMAKE_GENERATOR STREQUAL "Ninja")
-  set(CMAKE_MAKE_PROGRAM ${CMAKE_SOURCE_DIR}/third_party/ninja/ninja CACHE FILEPATH "" FORCE)
+  set(CMAKE_MAKE_PROGRAM ${CMAKE_SOURCE_DIR}/third_party/ninja/ninja CACHE FILEPATH "")
 endif()
 
 project(Toucan CXX C)
@@ -175,12 +175,12 @@ include(ToucanExecutable)
 # install() syntax check without requiring full GNUInstallDirs. Note that
 # libjpeg-turbo does not actually build docs during compilation.
 set(CMAKE_INSTALL_DOCDIR "doc")
-set(ENABLE_SHARED OFF CACHE BOOL "Build shared libraries" FORCE)
-set(ENABLE_STATIC ON CACHE BOOL "Build static libraries" FORCE)
-set(WITH_SIMD OFF CACHE BOOL "Include SIMD extensions" FORCE)
-set(WITH_TURBOJPEG OFF CACHE BOOL "Include TurboJPEG API" FORCE)
-set(WITH_JPEG8 ON CACHE BOOL "Emulate libjpeg v8 API/ABI" FORCE )
-set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "Minimum policy version" FORCE)
+set(ENABLE_SHARED OFF CACHE BOOL "Build shared libraries")
+set(ENABLE_STATIC ON CACHE BOOL "Build static libraries")
+set(WITH_SIMD OFF CACHE BOOL "Include SIMD extensions")
+set(WITH_TURBOJPEG OFF CACHE BOOL "Include TurboJPEG API")
+set(WITH_JPEG8 ON CACHE BOOL "Emulate libjpeg v8 API/ABI")
+set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "Minimum policy version")
 add_subdirectory(third_party/libjpeg-turbo EXCLUDE_FROM_ALL)
 set(JPEG_FOUND TRUE)
 set(JPEG_LIBRARIES ${CMAKE_BINARY_DIR}/third_party/libjpeg-turbo/libjpeg.a)
