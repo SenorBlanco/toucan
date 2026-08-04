@@ -75,13 +75,6 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter)
 set(UHDR_BUILD_EXAMPLES OFF)
 set(UHDR_ENABLE_INSTALL OFF)
 
-set(JPEG_FOUND TRUE)
-set(JPEG_LIBRARIES ${CMAKE_BINARY_DIR}/third_party/libjpeg-turbo)
-set(JPEG_INCLUDE_DIRS
-  ${CMAKE_SOURCE_DIR}/third_party/libjpeg-turbo
-  ${CMAKE_BINARY_DIR}/third_party/libjpeg-turbo
-)
-
 if(NOT CMAKE_CROSSCOMPILING)
   if (NOT WIN32)
     set(LLVM_DIR "${CMAKE_SOURCE_DIR}/third_party/llvm/llvm/out/${CMAKE_BUILD_TYPE}")
@@ -182,15 +175,21 @@ include(ToucanExecutable)
 # install() syntax check without requiring full GNUInstallDirs. Note that
 # libjpeg-turbo does not actually build docs during compilation.
 set(CMAKE_INSTALL_DOCDIR "doc")
-set(ENABLE_SHARED OFF)
-set(ENABLE_STATIC ON)
-set(WITH_SIMD OFF)
-set(WITH_TURBOJPEG OFF)
-set(WITH_JPEG8 ON)
+set(ENABLE_SHARED OFF CACHE BOOL "Build shared libraries" FORCE)
+set(ENABLE_STATIC ON CACHE BOOL "Build static libraries" FORCE)
+set(WITH_SIMD OFF CACHE BOOL "Include SIMD extensions" FORCE)
+set(WITH_TURBOJPEG OFF CACHE BOOL "Include TurboJPEG API" FORCE)
+set(WITH_JPEG8 ON CACHE BOOL "Emulate libjpeg v8 API/ABI" FORCE )
 set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "Minimum policy version" FORCE)
-add_subdirectory(third_party/dawn EXCLUDE_FROM_ALL)
 add_subdirectory(third_party/libjpeg-turbo EXCLUDE_FROM_ALL)
+set(JPEG_FOUND TRUE)
+set(JPEG_LIBRARIES ${CMAKE_BINARY_DIR}/third_party/libjpeg-turbo/libjpeg.a)
+set(JPEG_INCLUDE_DIRS
+  ${CMAKE_SOURCE_DIR}/third_party/libjpeg-turbo
+  ${CMAKE_BINARY_DIR}/third_party/libjpeg-turbo
+)
 add_subdirectory(third_party/libultrahdr EXCLUDE_FROM_ALL)
+add_subdirectory(third_party/dawn EXCLUDE_FROM_ALL)
 add_subdirectory(parser EXCLUDE_FROM_ALL)
 add_subdirectory(ast EXCLUDE_FROM_ALL)
 add_subdirectory(bindings EXCLUDE_FROM_ALL)
