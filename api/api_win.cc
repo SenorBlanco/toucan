@@ -205,6 +205,7 @@ Event* System_GetNextEvent() {
       event->type = EventType::MouseUp;
       break;
     case WM_MOUSEMOVE: event->type = EventType::MouseMove; break;
+    case WM_SIZE: event->type = EventType::Resize; break;
     case WM_QUIT: gNumWindows = 0; break;
     default: break;
   }
