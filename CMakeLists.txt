@@ -219,7 +219,6 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 include(ToucanExecutable)
 
-
 set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "Minimum policy version" FORCE)
 add_subdirectory(third_party/dawn EXCLUDE_FROM_ALL)
 add_subdirectory(third_party/libultrahdr EXCLUDE_FROM_ALL)
