@@ -172,6 +172,9 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 include(ToucanExecutable)
 
 set(WITH_JPEG8 ON CACHE BOOL "Enable libjpeg v8 emulation for libjpeg-turbo")
+if(EMSCRIPTEN)
+set(WITH_SIMD OFF CACHE BOOL "Include SIMD extensions")
+endif()
 include(FetchContent)
 FetchContent_Declare(
     JPEG
