@@ -215,7 +215,6 @@ teapotQuat.normalize();
 var teapotRotation = teapotQuat.toMatrix();
 var depthBuffer = new renderable Texture2D<Depth24Plus>(device, window.GetSize());
 var uniforms : Uniforms;
-var prevWindowSize = uint<2>{0, 0};
 var startTime = System.GetCurrentTime();
 var animCurves : [4]Cubic<float>;
 animCurves[0].FromBezier({1.0, 1.0, 1.5, 1.5});
@@ -252,14 +251,8 @@ while (System.IsRunning()) {
   var orientation = Quaternion(float<3>(0.0, 1.0, 0.0), handler.rotation.x);
   orientation = orientation.mul(Quaternion(float<3>(1.0, 0.0, 0.0), handler.rotation.y));
   orientation.normalize();
-  var newSize = window.GetSize();
-  if (Math.any(newSize != prevWindowSize)) {
-    swapChain.Resize(newSize);
-    depthBuffer = new renderable Texture2D<Depth24Plus>(device, newSize);
-    var aspectRatio = newSize.x as float / newSize.y as float;
-    uniforms.projection = Transform.projection(0.5, 200.0, -aspectRatio, aspectRatio, -1.0, 1.0);
-    prevWindowSize = newSize;
-  }
+  var aspectRatio = window.GetSize().x as float / window.GetSize().y as float;
+  uniforms.projection = Transform.projection(0.5, 200.0, -aspectRatio, aspectRatio, -1.0, 1.0);
   uniforms.view = Transform.translation({0.0, 0.0, -handler.distance});
   uniforms.view *= orientation.toMatrix();
   uniforms.model = Transform.scale({100.0, 100.0, 100.0});
@@ -291,6 +284,12 @@ while (System.IsRunning()) {
   swapChain.Present();
 
   while (System.HasPendingEvents()) {
-    handler.Handle(System.GetNextEvent());
+    var event = System.GetNextEvent();
+    if (event.type == EventType.Resize) {
+      swapChain.Resize(window.GetSize());
+      depthBuffer = new renderable Texture2D<Depth24Plus>(device, window.GetSize());
+    } else {
+      handler.Handle(event);
+    }
   }
 }

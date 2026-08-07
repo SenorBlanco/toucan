@@ -56,7 +56,7 @@ class SkyboxPipeline : DrawPipeline {
     vertex main(vb : &VertexBuiltins) : float<3> {
         var v = position.Get();
         var uniforms = bindings.Get().uniforms.MapRead();
-        var pos = float<4>(v.x, v.y, v.z, 1.0);
+        var pos = float<4>(@v, 1.0);
         vb.position = uniforms.projection * uniforms.view * uniforms.model * pos;
         return v;
     }
@@ -75,12 +75,12 @@ class ReflectionPipeline : DrawPipeline {
         var n = Math.normalize(v.normal);
         var uniforms = bindings.Get().uniforms.MapRead();
         var viewModel = uniforms.view * uniforms.model;
-        var pos = viewModel * float<4>(v.position.x, v.position.y, v.position.z, 1.0);
-        var normal = viewModel * float<4>(n.x, n.y, n.z, 0.0);
+        var pos = viewModel * float<4>(@v.position, 1.0);
+        var normal = viewModel * float<4>(@n, 0.0);
         vb.position = uniforms.projection * pos;
         var varyings : Vertex;
-        varyings.position = float<3>(pos.x, pos.y, pos.z);
-        varyings.normal = float<3>(normal.x, normal.y, normal.z);
+        varyings.position = pos.xyz;
+        varyings.normal = normal.xyz;
         return varyings;
     }
     fragment main(fb : &FragmentBuiltins, varyings : Vertex) {
@@ -128,19 +128,12 @@ var dragonQuat = Quaternion(float<3>(1.0, 0.0, 0.0), -Math.pi / 2.0);
 dragonQuat.normalize();
 var depthBuffer = new renderable Texture2D<Depth24Plus>(device, window.GetSize());
 var uniforms : Uniforms;
-var prevWindowSize = uint<2>{0, 0};
 while (System.IsRunning()) {
   var orientation = Quaternion(float<3>(0.0, 1.0, 0.0), handler.rotation.x);
   orientation = orientation.mul(Quaternion(float<3>(1.0, 0.0, 0.0), handler.rotation.y));
   orientation.normalize();
-  var newSize = window.GetSize();
-  if (Math.any(newSize != prevWindowSize)) {
-    swapChain.Resize(newSize);
-    depthBuffer = new renderable Texture2D<Depth24Plus>(device, newSize);
-    var aspectRatio = newSize.x as float / newSize.y as float;
-    uniforms.projection = Transform.projection(0.5, 200.0, -aspectRatio, aspectRatio, -1.0, 1.0);
-    prevWindowSize = newSize;
-  }
+  var aspectRatio = window.GetSize().x as float / window.GetSize().y as float;
+  uniforms.projection = Transform.projection(0.5, 200.0, -aspectRatio, aspectRatio, -1.0, 1.0);
   uniforms.view = Transform.translation({0.0, 0.0, -handler.distance});
   uniforms.view *= orientation.toMatrix();
   uniforms.model = Transform.scale({100.0, 100.0, 100.0});
@@ -169,6 +162,12 @@ while (System.IsRunning()) {
   swapChain.Present();
 
   do {
-    handler.Handle(System.GetNextEvent());
+    var event = System.GetNextEvent();
+    if (event.type == EventType.Resize) {
+      swapChain.Resize(window.GetSize());
+      depthBuffer = new renderable Texture2D<Depth24Plus>(device, window.GetSize());
+    } else {
+      handler.Handle(event);
+    }
   } while (System.HasPendingEvents());
 }
