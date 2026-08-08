@@ -55,6 +55,7 @@ struct Window {
 
 static int gNumWindows = 0;
 static uint32_t gScreenSize[2];
+static bool gWasResized;
 
 static LRESULT CALLBACK mainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
   LONG rc = 0L;
@@ -70,6 +71,7 @@ static LRESULT CALLBACK mainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
       if (Window* w = reinterpret_cast<Window*>(GetWindowLongPtr(hWnd, GWLP_USERDATA))) {
         GetWindowSize(hWnd, w->size);
       }
+      gWasResized = true;
     default:
       rc = DefWindowProc(hWnd, message, wParam, lParam);
       break;
@@ -207,6 +209,10 @@ Event* System_GetNextEvent() {
     case WM_MOUSEMOVE: event->type = EventType::MouseMove; break;
     case WM_QUIT: gNumWindows = 0; break;
     default: break;
+  }
+  if (gWasResized) {
+    event->type = EventType::Resize;
+    gWasResized = false;
   }
   return event;
 }
