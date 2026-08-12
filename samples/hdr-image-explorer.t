@@ -1,11 +1,26 @@
 #include "api.t"
+#include "transform.t"
 
 class Vertex {
   var position : float<2>;
   var texCoord : float<2>;
 };
 
+class Matrix {
+  Matrix(imageSize : uint<2>, windowSize : uint<2>) {
+    var imageAspect = imageSize.x as float / imageSize.y as float;
+    var windowAspect = windowSize.x as float / windowSize.y as float;
+    if (imageAspect > windowAspect) {
+      m = Transform.scale({1.0, windowAspect / imageAspect, 1.0});
+    } else {
+      m = Transform.scale({imageAspect / windowAspect, 1.0, 1.0});
+    }
+  }
+  var m : float<4,4>;
+};
+
 class Uniforms {
+  var matrix   : Matrix;
   var mousePos : float<2>;
   var clamp    : uint;
 }
@@ -18,8 +33,9 @@ class Bindings {
 
 class Pipeline {
     vertex main(vb : &VertexBuiltins) : float<2> {
+        var matrix = bindings.Get().uniforms.MapRead().matrix.m;
         var v = vertices.Get();
-        vb.position = {@v.position, 0.0, 1.0};
+        vb.position = matrix * float<4>{@v.position, 0.0, 1.0};
         return v.texCoord;
     }
     fragment main(fb : &FragmentBuiltins, texCoord : float<2>) {
@@ -51,7 +67,7 @@ var copyEncoder = new CommandEncoder(device);
 texture.CopyFromBuffer(copyEncoder, buffer, imageSize);
 device.GetQueue().Submit(copyEncoder.Finish());
 
-var window = new Window(size = imageSize, hdr = true);
+var window = new Window(size = System.GetScreenSize(), hdr = true);
 var swapChain = new SwapChain<RGBA16float>(device, window);
 var verts = [4]Vertex{
   { position = {-1.0,  1.0}, texCoord = {0.0, 0.0} },
@@ -63,10 +79,11 @@ var indices = [6]uint{ 0, 1, 2, 1, 2, 3 };
 var vb = new vertex Buffer<[]Vertex>(device, &verts);
 var ib = new index Buffer<[]uint>(device, &indices);
 var pipeline = new RenderPipeline<Pipeline>(device);
+var uniforms = Uniforms{ matrix = Matrix(imageSize, window.GetSize()) };
 var bindings = Bindings{
   sampler = new Sampler(device),
   textureView = texture.CreateSampleableView(),
-  uniforms = new uniform Buffer<Uniforms>(device)
+  uniforms = new uniform Buffer<Uniforms>(device, &uniforms)
 };
 var bindGroup = new BindGroup<Bindings>(device, &bindings);
 var p = Pipeline{
@@ -74,8 +91,6 @@ var p = Pipeline{
   indices = ib,
   bindings = bindGroup
 };
-var clamp = 0u;
-var mousePos : float<2>;
 var touchMoved = false;
 do {
   var encoder = new CommandEncoder(device);
@@ -89,20 +104,23 @@ do {
   do {
     var event = System.GetNextEvent();
     if (event.type == EventType.MouseDown) {
-      clamp = 1u - clamp;
+      uniforms.clamp = 1u - uniforms.clamp;
     } else if (event.type == EventType.TouchStart) {
       touchMoved = false;
     } else if (event.type == EventType.TouchEnd) {
       if (!touchMoved) {
-        clamp = 1u - clamp;
+        uniforms.clamp = 1u - uniforms.clamp;
       }
       touchMoved = false;
     } else if (event.type == EventType.MouseMove) {
-      mousePos = event.position as float<2>;
+      uniforms.mousePos = event.position as float<2>;
     } else if (event.type == EventType.TouchMove) {
-      mousePos = event.touches[0] as float<2>;
+      uniforms.mousePos = event.touches[0] as float<2>;
       touchMoved = true;
+    } else if (event.type == EventType.Resize) {
+      swapChain.Resize(window.GetSize());
+      uniforms.matrix = Matrix(imageSize, window.GetSize());
     }
-    bindings.uniforms.Set({mousePos = mousePos, clamp = clamp});
+    bindings.uniforms.Set(&uniforms);
   } while (System.HasPendingEvents());
 } while (System.IsRunning());
