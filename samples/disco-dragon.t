@@ -238,9 +238,31 @@ var groundPlaneIndexBuffer = new index Buffer<[]ushort>(device, &groundPlaneInde
 
 var vertexBuffer = new vertex Buffer<[]Vertex>(device, mesh.vertices);
 var indexBuffer = new index Buffer<[]ushort>(device, mesh.indices);
-var gBufferTexture2DFloat16 = new renderable sampleable Texture2D<RGBA16float>(device, windowSize);
-var gBufferTextureAlbedo = new renderable sampleable Texture2D<BGRA8unorm>(device, windowSize);
-var depthTexture = new renderable sampleable Texture2D<Depth24Plus>(device, windowSize);
+
+class Textures {
+  Textures(device : *Device, size : uint<2>) {
+    var gBufferTexture2DFloat16 = new renderable sampleable Texture2D<RGBA16float>(device, size);
+    var gBufferTextureAlbedo = new renderable sampleable Texture2D<BGRA8unorm>(device, size);
+    var depthTexture = new renderable sampleable Texture2D<Depth24Plus>(device, size);
+
+    writeGBufferPassDescriptor = WriteGBuffers{
+      normals = gBufferTexture2DFloat16.CreateColorOutput(clearValue = {0.0, 0.0, 0.0, 1.0}, loadOp = LoadOp.Clear),
+      albedo = gBufferTextureAlbedo.CreateColorOutput(clearValue = {0.0, 0.0, 0.0, 1.0}, loadOp = LoadOp.Clear),
+      depth = depthTexture.CreateDepthStencilOutput(depthLoadOp = LoadOp.Clear, depthClearValue = 1.0)
+    };
+
+    gBufferTexturesBindGroup = new BindGroup<GBufferTextureBindings>(device, {
+      gBufferNormal = gBufferTexture2DFloat16.CreateSampleableView(),
+      gBufferAlbedo = gBufferTextureAlbedo.CreateSampleableView(),
+      gBufferDepth = depthTexture.CreateSampleableView()
+    });
+
+  }
+  var writeGBufferPassDescriptor : WriteGBuffers;
+  var gBufferTexturesBindGroup : *BindGroup<GBufferTextureBindings>;
+}
+
+var textures = new Textures(device, window.GetSize());
 
 var writeGBuffersPipeline = new RenderPipeline<WriteGBuffers>(
   device = device,
@@ -249,21 +271,6 @@ var writeGBuffersPipeline = new RenderPipeline<WriteGBuffers>(
 
 var gBuffersDebugViewPipeline = new RenderPipeline<GBuffersDebugView>(device);
 var deferredRenderPipeline = new RenderPipeline<DeferredRender>(device);
-
-var writeGBufferPassDescriptor = WriteGBuffers{
-  normals = gBufferTexture2DFloat16.CreateColorOutput(
-    clearValue = {0.0, 0.0, 0.0, 1.0},
-    loadOp = LoadOp.Clear
-  ),
-  albedo = gBufferTextureAlbedo.CreateColorOutput(
-    clearValue = {0.0, 0.0, 0.0, 1.0},
-    loadOp = LoadOp.Clear
-  ),
-  depth = depthTexture.CreateDepthStencilOutput(
-    depthLoadOp = LoadOp.Clear,
-    depthClearValue = 1.0
-  )
-};
 
 enum Mode {
   Rendering,
@@ -283,12 +290,6 @@ var cameraUniformBuffer = new uniform Buffer<Camera>(device);
 var sceneUniformBindGroup = new BindGroup<WriteGBuffersBindings>(device, {
   uniforms = modelUniformBuffer,
   camera = cameraUniformBuffer
-});
-
-var gBufferTexturesBindGroup = new BindGroup<GBufferTextureBindings>(device, {
-  gBufferNormal = gBufferTexture2DFloat16.CreateSampleableView(),
-  gBufferAlbedo = gBufferTextureAlbedo.CreateSampleableView(),
-  gBufferDepth = depthTexture.CreateSampleableView()
 });
 
 // Lights data are uploaded in a storage buffer
@@ -365,7 +366,7 @@ while (System.IsRunning()) {
   var commandEncoder = new CommandEncoder(device);
   {
   // Write position, normal, albedo etc. data to gBuffers.
-    var gBufferPass = new RenderPass<WriteGBuffers>(commandEncoder, &writeGBufferPassDescriptor);
+    var gBufferPass = new RenderPass<WriteGBuffers>(commandEncoder, &textures.writeGBufferPassDescriptor);
     gBufferPass.SetPipeline(writeGBuffersPipeline);
     gBufferPass.Set({bindings = sceneUniformBindGroup,
                      vertexes = new VertexInput<Vertex>(vertexBuffer),
@@ -395,10 +396,10 @@ while (System.IsRunning()) {
     var debugViewPass = new RenderPass<GBuffersDebugView>(commandEncoder, {
       fragColor = fb
     });
-    var windowSizeBuffer = new uniform Buffer<uint<2>>(device, &windowSize);
+    var windowSizeBuffer = new uniform Buffer<uint<2>>(device, &window.GetSize());
     var windowSizeBindGroup = new BindGroup<WindowSizeBindings>(device, {windowSizeBuffer});
     debugViewPass.SetPipeline(gBuffersDebugViewPipeline);
-    debugViewPass.Set({textureBindings = gBufferTexturesBindGroup,
+    debugViewPass.Set({textureBindings = textures.gBufferTexturesBindGroup,
                        windowSizeBindings = windowSizeBindGroup});
     debugViewPass.Draw(6, 1, 0, 0);
     debugViewPass.End();
@@ -411,7 +412,7 @@ while (System.IsRunning()) {
       fragColor = fb
     });
     deferredRenderingPass.SetPipeline(deferredRenderPipeline);
-    deferredRenderingPass.Set({textureBindings = gBufferTexturesBindGroup,
+    deferredRenderingPass.Set({textureBindings = textures.gBufferTexturesBindGroup,
                                bufferBindings = lightsBufferBindGroup});
     deferredRenderingPass.Draw(6, 1, 0, 0);
     deferredRenderingPass.End();
@@ -419,6 +420,13 @@ while (System.IsRunning()) {
   device.GetQueue().Submit(commandEncoder.Finish());
   swapChain.Present();
   while (System.HasPendingEvents()) {
-    System.GetNextEvent();
+    if (System.GetNextEvent().type == EventType.Resize) {
+      textures = new Textures(device, window.GetSize());
+      aspect = window.GetSize().x as float / window.GetSize().y as float;
+      projectionMatrix = Transform.perspective((2.0 * Math.pi) / 5.0, aspect, 1.0, 2000.0);
+      camera.viewProjectionMatrix = projectionMatrix * viewMatrix;
+      camera.invViewProjectionMatrix = Transform.invert(camera.viewProjectionMatrix);
+      cameraUniformBuffer.Set(&camera);
+    }
   }
 }
