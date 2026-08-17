@@ -12,4 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(android_native_app_glue STATIC android_native_app_glue.c)
+add_library(android_native_app_glue OBJECT android_native_app_glue.c)

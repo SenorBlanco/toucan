@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(codegen STATIC codegen_llvm.cc codegen_spirv.cc)
+add_library(codegen OBJECT codegen_llvm.cc codegen_spirv.cc)
 
 target_include_directories(codegen PUBLIC
   ${CMAKE_SOURCE_DIR}

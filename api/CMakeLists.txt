@@ -31,7 +31,7 @@ add_custom_command(
 
 add_custom_target(generate_api_header DEPENDS ${API_HEADER})
 
-add_library(api STATIC api_dawn.cc api_image_codecs.cc)
+add_library(api OBJECT api_dawn.cc api_image_codecs.cc)
 
 if(WIN32)
   target_sources(api PRIVATE api_win.cc)

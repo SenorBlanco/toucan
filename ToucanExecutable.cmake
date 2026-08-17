@@ -89,7 +89,11 @@ function(toucan_executable TARGET_NAME)
 
   target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
 
-  target_link_libraries(${TARGET_NAME} PRIVATE samples_main api ast)
+  target_link_libraries(${TARGET_NAME} PRIVATE api ast)
+
+  if(NOT IOS)
+    target_link_libraries(${TARGET_NAME} PRIVATE samples_main)
+  endif()
 
   if(EMSCRIPTEN)
     target_link_libraries(${TARGET_NAME} PRIVATE emdawnwebgpu_cpp)

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(gen_bindings_sources STATIC gen_bindings.cc)
+add_library(gen_bindings_sources OBJECT gen_bindings.cc)
 
 target_include_directories(gen_bindings_sources PUBLIC ${CMAKE_SOURCE_DIR})
 
