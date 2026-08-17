@@ -162,8 +162,16 @@ CodeGenLLVM::CodeGenLLVM(llvm::LLVMContext*                 context,
   llvm::Type* voidType = llvm::Type::getVoidTy(*context_);
   ptrType_ = llvm::PointerType::get(*context_, 0);
   deleterType_ = llvm::FunctionType::get(voidType, { ptrType_ }, false);
+  const char* mallocFuncName = NeedsAlignedMalloc() ? "_aligned_malloc" : "malloc";
   const char* freeFuncName = NeedsAlignedMalloc() ? "_aligned_free" : "free";
   freeFunc_ = module_->getOrInsertFunction(freeFuncName, deleterType_);
+  std::vector<llvm::Type*> mallocArgs;
+  mallocArgs.push_back(intType_);
+  if (NeedsAlignedMalloc()) {
+    mallocArgs.push_back(intType_);
+  }
+  mallocFuncType_ = llvm::FunctionType::get(ptrType_, mallocArgs, false);
+  mallocFunc_ = module_->getOrInsertFunction(mallocFuncName, mallocFuncType_);
   controlBlockType_ = ControlBlockType();
   typeList_ = new llvm::GlobalVariable(
       *module_, ptrType_, true, llvm::GlobalVariable::ExternalLinkage, nullptr, "_type_list");
@@ -633,23 +641,16 @@ bool CodeGenLLVM::NeedsAlignedMalloc() const {
 }
 
 llvm::Value* CodeGenLLVM::CreateMalloc(llvm::Type* type, llvm::Value* arraySize) {
-  // TODO(senorblanco):  initialize this once, not every time
-  std::vector<llvm::Type*> args;
-  args.push_back(intType_);
-  if (NeedsAlignedMalloc()) args.push_back(intType_);
-  llvm::FunctionType* ft = llvm::FunctionType::get(ptrType_, args, false);
   llvm::Value*        indices[] = {arraySize ? arraySize : llvm::ConstantInt::get(intType_, 1)};
   llvm::Value*        nullPtr = llvm::ConstantPointerNull::get(ptrType_);
   llvm::Value*        size = builder_->CreateGEP(type, nullPtr, indices);
   llvm::Value*        sizeInt = builder_->CreatePtrToInt(size, intType_);
   llvm::Value*        ptr;
   if (NeedsAlignedMalloc()) {
-    llvm::FunctionCallee alignedMalloc = module_->getOrInsertFunction("_aligned_malloc", ft);
     llvm::Value*         sixteen = llvm::ConstantInt::get(intType_, 16);
-    ptr = builder_->CreateCall(alignedMalloc, {sizeInt, sixteen});
+    ptr = builder_->CreateCall(mallocFunc_, {sizeInt, sixteen});
   } else {
-    llvm::FunctionCallee malloc = module_->getOrInsertFunction("malloc", ft);
-    ptr = builder_->CreateCall(malloc, sizeInt);
+    ptr = builder_->CreateCall(mallocFunc_, sizeInt);
   }
   return builder_->CreateBitCast(ptr, ptrType_);
 }
