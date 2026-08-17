@@ -188,6 +188,7 @@ class CodeGenLLVM : public Visitor {
   llvm::Type*                                           shortType_;
   llvm::PointerType*                                    ptrType_;
   llvm::FunctionType*                                   deleterType_;
+  llvm::FunctionCallee                                  mallocFunc_;
   llvm::FunctionCallee                                  freeFunc_;
   llvm::Type*                                           controlBlockType_;
   bool                                                  debugOutput_;
