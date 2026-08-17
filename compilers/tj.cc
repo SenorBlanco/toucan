@@ -29,6 +29,7 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Verifier.h>
 #include <llvm/Support/ManagedStatic.h>
+#include <llvm/TargetParser/Host.h>
 #include <llvm/Transforms/Scalar.h>
 #include <llvm/Transforms/Scalar/GVN.h>
 #include <llvm/Transforms/Utils.h>
@@ -155,7 +156,8 @@ int main(int argc, char** argv) {
   LLVMInitializeNativeTarget();
   LLVMInitializeNativeAsmPrinter();
   llvm::LLVMContext             context;
-  std::unique_ptr<llvm::Module> module(new llvm::Module("test", context));
+  std::unique_ptr<llvm::Module> module(new llvm::Module("tj", context));
+  module->setTargetTriple(llvm::Triple(llvm::sys::getDefaultTargetTriple()));
   llvm::FunctionCallee c = module->getOrInsertFunction("tjmain", llvm::Type::getVoidTy(context));
   llvm::Function*      main = llvm::cast<llvm::Function>(c.getCallee());
   main->setCallingConv(llvm::CallingConv::C);
