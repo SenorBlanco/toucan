@@ -109,11 +109,11 @@ void Image_Destroy(Image* This) {
   jpeg_destroy_decompress(&This->cinfo);
   This->encodedImage.controlBlock->strongRefs--;
   if (This->encodedImage.controlBlock->strongRefs == 0) {
-    free(This->encodedImage.ptr);
+    This->encodedImage.controlBlock->deleter(This->encodedImage.ptr);
   }
   This->encodedImage.controlBlock->weakRefs--;
   if (This->encodedImage.controlBlock->weakRefs == 0) {
-    free(This->encodedImage.controlBlock);
+    This->encodedImage.controlBlock->deleter(This->encodedImage.controlBlock);
   }
   delete This;
 }
