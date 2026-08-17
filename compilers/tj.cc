@@ -189,6 +189,9 @@ int main(int argc, char** argv) {
   codeGenLLVM.Run(rootStmts);
   auto typeList = codeGenLLVM.GetReferencedTypes().data();
   engine->addGlobalMapping(codeGenLLVM.GetTypeList(), &typeList);
+  // FIXME: fix these for aligned_malloc and aligned_free on 32-bit Windows
+  engine->addGlobalMapping(llvm::dyn_cast<llvm::Function>(codeGenLLVM.GetMallocFunc().getCallee()), static_cast<void*>(&malloc));
+  engine->addGlobalMapping(llvm::dyn_cast<llvm::Function>(codeGenLLVM.GetFreeFunc().getCallee()), static_cast<void*>(&free));
   if (verifyFunction(*main)) { printf("LLVM main function is broken; aborting\n"); }
   Toucan::exitOnAbort = true;
   fpm.run(*main);

@@ -153,6 +153,8 @@ class CodeGenLLVM : public Visitor {
   void               SetDebugOutput(bool debugOutput) { debugOutput_ = debugOutput; }
   llvm::GlobalValue* GetTypeList() const { return typeList_; }
   const std::vector<Type*>& GetReferencedTypes() { return referencedTypes_; }
+  llvm::FunctionCallee     GetMallocFunc() const { return mallocFunc_; }
+  llvm::FunctionCallee     GetFreeFunc() const { return freeFunc_; }
 
  private:
   void         CallSystemAbort();
@@ -187,7 +189,6 @@ class CodeGenLLVM : public Visitor {
   llvm::Type*                                           byteType_;
   llvm::Type*                                           shortType_;
   llvm::PointerType*                                    ptrType_;
-  llvm::FunctionType*                                   mallocFuncType_;
   llvm::FunctionType*                                   deleterType_;
   llvm::FunctionCallee                                  mallocFunc_;
   llvm::FunctionCallee                                  freeFunc_;

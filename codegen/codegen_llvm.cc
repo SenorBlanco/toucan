@@ -170,8 +170,8 @@ CodeGenLLVM::CodeGenLLVM(llvm::LLVMContext*                 context,
   if (NeedsAlignedMalloc()) {
     mallocArgs.push_back(intType_);
   }
-  mallocFuncType_ = llvm::FunctionType::get(ptrType_, mallocArgs, false);
-  mallocFunc_ = module_->getOrInsertFunction(mallocFuncName, mallocFuncType_);
+  auto mallocFuncType = llvm::FunctionType::get(ptrType_, mallocArgs, false);
+  mallocFunc_ = module_->getOrInsertFunction(mallocFuncName, mallocFuncType);
   controlBlockType_ = ControlBlockType();
   typeList_ = new llvm::GlobalVariable(
       *module_, ptrType_, true, llvm::GlobalVariable::ExternalLinkage, nullptr, "_type_list");
