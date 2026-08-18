@@ -34,6 +34,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(CMAKE_POLICY_VERSION_MINIMUM "3.5")
 # CMake 3.31+ reserves "codegen" as a built-in target name. Set CMP0171 to OLD
 # to permit Toucan's target library named "codegen".
 if(POLICY CMP0171)
@@ -46,6 +47,73 @@ option(BUILD_TESTS "Build Toucan tests" ON)
 add_compile_definitions("STACK_SIZE=4194304")
 if(MSVC)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:4194304")
+endif()
+
+find_package(JPEG QUIET)
+if(JPEG_FOUND)
+  message(STATUS "Found system JPEG: ${JPEG_LIBRARIES}")
+else()
+  message(STATUS "JPEG not found on system. Building libjpeg-turbo via ExternalProject.")
+
+  include(ExternalProject)
+
+  set(JPEG_TURBO_PREFIX "${CMAKE_BINARY_DIR}/third_party/libjpeg-turbo")
+  set(JPEG_TURBO_INSTALL "${JPEG_TURBO_PREFIX}/install")
+
+  if(WIN32)
+    set(JPEG_LIB_NAME jpeg-static.lib)
+  else()
+    set(JPEG_LIB_NAME libjpeg.a)
+  endif()
+  set(JPEG_LIBRARY "${JPEG_TURBO_INSTALL}/lib/${JPEG_LIB_NAME}")
+
+  set(TOUCAN_CMAKE_ARGS
+      -D CMAKE_INSTALL_PREFIX=${JPEG_TURBO_INSTALL}
+      -D ENABLE_SHARED=OFF
+      -D ENABLE_STATIC=ON
+      -D WITH_TURBOJPEG=OFF
+      -D WITH_JPEG8=ON
+      -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+      -D CMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}
+      -D CMAKE_POLICY_VERSION_MINIMUM=${CMAKE_POLICY_VERSION_MINIMUM}
+      -G ${CMAKE_GENERATOR}
+  )
+  if (DEFINED CMAKE_TOOLCHAIN_FILE)
+    list(APPEND TOUCAN_CMAKE_ARGS -D CMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE})
+  endif()
+  if(ANDROID)
+    list(APPEND TOUCAN_CMAKE_ARGS
+      -D ANDROID_PLATFORM=${ANDROID_PLATFORM}
+      -D ANDROID_ABI=${ANDROID_ABI}
+    )
+  elseif(IOS)
+    list(APPEND TOUCAN_CMAKE_ARGS
+      -D CMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}
+      -D CMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+      -D CMAKE_SYSTEM_PROCESSOR=${CMAKE_SYSTEM_PROCESSOR}
+    )
+  endif()
+
+  ExternalProject_Add(jpeg_turbo
+    SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third_party/libjpeg-turbo
+    BUILD_BYPRODUCTS ${JPEG_LIBRARY}
+    CMAKE_ARGS ${TOUCAN_CMAKE_ARGS}
+    USES_TERMINAL_CONFIGURE TRUE
+    USES_TERMINAL_BUILD TRUE
+  )
+
+  list(APPEND CMAKE_PREFIX_PATH "${JPEG_TURBO_INSTALL}")
+  set(JPEG_INCLUDE_DIR "${JPEG_TURBO_INSTALL}/include")
+  set(JPEG_FOUND TRUE)
+
+  file(MAKE_DIRECTORY ${JPEG_INCLUDE_DIR})
+
+  add_library(JPEG::JPEG STATIC IMPORTED GLOBAL)
+
+  set_target_properties(JPEG::JPEG PROPERTIES
+    IMPORTED_LOCATION             "${JPEG_LIBRARY}"
+    INTERFACE_INCLUDE_DIRECTORIES "${JPEG_INCLUDE_DIR}"
+  )
 endif()
 
 set(DAWN_FETCH_DEPENDENCIES ON)
@@ -166,17 +234,8 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 include(ToucanExecutable)
 
-# CMAKE_INSTALL_DOCDIR is set to satisfy libjpeg-turbo's configure-time
-# install() syntax check without requiring full GNUInstallDirs. Note that
-# libjpeg-turbo does not actually build docs during compilation.
-set(CMAKE_INSTALL_DOCDIR "doc")
-set(ENABLE_SHARED OFF CACHE BOOL "Build shared libraries" FORCE)
-set(ENABLE_STATIC ON CACHE BOOL "Build static libraries" FORCE)
-set(WITH_SIMD OFF CACHE BOOL "Include SIMD extensions" FORCE)
-set(WITH_TURBOJPEG OFF CACHE BOOL "Include TurboJPEG API" FORCE)
-set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "Minimum policy version" FORCE)
+set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(third_party/dawn EXCLUDE_FROM_ALL)
-add_subdirectory(third_party/libjpeg-turbo EXCLUDE_FROM_ALL)
 add_subdirectory(parser EXCLUDE_FROM_ALL)
 add_subdirectory(ast EXCLUDE_FROM_ALL)
 add_subdirectory(bindings EXCLUDE_FROM_ALL)
