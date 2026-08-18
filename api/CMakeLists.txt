@@ -55,8 +55,7 @@ add_dependencies(api generate_api_header)
 target_include_directories(api PUBLIC
   ${CMAKE_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_SOURCE_DIR}/third_party/libjpeg-turbo
-  ${CMAKE_BINARY_DIR}/third_party/libjpeg-turbo
+  ${JPEG_INCLUDE_DIR}
 )
 
 if(EMSCRIPTEN)
@@ -71,4 +70,7 @@ else()
   )
 endif()
 
-target_link_libraries(api PUBLIC jpeg-static)
+target_link_libraries(api PUBLIC JPEG::JPEG)
+if(TARGET ext_jpeg_turbo)
+  add_dependencies(api ext_jpeg_turbo)
+endif()
