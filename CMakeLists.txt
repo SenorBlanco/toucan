@@ -186,6 +186,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(JPEG)
 
 find_package(JPEG REQUIRED)
+set(JPEG_INCLUDE_DIRS ${jpeg_SOURCE_DIR} ${jpeg_BINARY_DIR})
 
 # CMAKE_INSTALL_DOCDIR is set to satisfy libjpeg-turbo's configure-time
 # install() syntax check without requiring full GNUInstallDirs. Note that
