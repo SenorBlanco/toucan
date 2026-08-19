@@ -171,9 +171,11 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 include(ToucanExecutable)
 
-set(WITH_JPEG8 ON CACHE BOOL "Enable libjpeg v8 emulation for libjpeg-turbo")
+set(WITH_JPEG8 ON CACHE BOOL "Enable libjpeg v8 emulation for libjpeg-turbo" FORCE)
+set(WITH_TURBOJPEG OFF CACHE BOOL "Include TurboJPEG API" FORCE)
+set(ENABLE_SHARED OFF CACHE BOOL "Build shared libraries" FORCE)
 if(EMSCRIPTEN)
-set(WITH_SIMD OFF CACHE BOOL "Include SIMD extensions")
+set(WITH_SIMD OFF CACHE BOOL "Include SIMD extensions" FORCE)
 endif()
 include(FetchContent)
 FetchContent_Declare(
@@ -188,16 +190,8 @@ FetchContent_MakeAvailable(JPEG)
 find_package(JPEG REQUIRED)
 set(JPEG_INCLUDE_DIRS ${jpeg_SOURCE_DIR} ${jpeg_BINARY_DIR})
 
-# CMAKE_INSTALL_DOCDIR is set to satisfy libjpeg-turbo's configure-time
-# install() syntax check without requiring full GNUInstallDirs. Note that
-# libjpeg-turbo does not actually build docs during compilation.
-set(CMAKE_INSTALL_DOCDIR "doc")
-set(ENABLE_SHARED OFF CACHE BOOL "Build shared libraries" FORCE)
-set(ENABLE_STATIC ON CACHE BOOL "Build static libraries" FORCE)
-set(WITH_TURBOJPEG OFF CACHE BOOL "Include TurboJPEG API" FORCE)
-set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "Minimum policy version" FORCE)
-add_subdirectory(third_party/dawn EXCLUDE_FROM_ALL)
 add_subdirectory(third_party/libultrahdr EXCLUDE_FROM_ALL)
+add_subdirectory(third_party/dawn EXCLUDE_FROM_ALL)
 add_subdirectory(parser EXCLUDE_FROM_ALL)
 add_subdirectory(ast EXCLUDE_FROM_ALL)
 add_subdirectory(bindings EXCLUDE_FROM_ALL)
