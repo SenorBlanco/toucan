@@ -220,7 +220,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 include(ToucanExecutable)
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
-#set(ENABLE_STATIC ON CACHE BOOL "Build static libraries" FORCE)
 set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "Minimum policy version" FORCE)
 add_subdirectory(third_party/libultrahdr EXCLUDE_FROM_ALL)
 if(TARGET ext_jpeg_turbo)
