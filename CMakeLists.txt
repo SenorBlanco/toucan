@@ -238,7 +238,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 include(ToucanExecutable)
 
 set(BUILD_SHARED_LIBS OFF)
-add_subdirectory(third_party/dawn EXCLUDE_FROM_ALL)
 add_subdirectory(third_party/libultrahdr EXCLUDE_FROM_ALL)
 if(TARGET ext_jpeg_turbo)
   add_dependencies(core ext_jpeg_turbo)
