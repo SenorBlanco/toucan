@@ -53,7 +53,7 @@ find_package(JPEG QUIET)
 if(JPEG_FOUND)
   message(STATUS "Found system JPEG: ${JPEG_LIBRARIES}")
 else()
-  message(STATUS "JPEG not found on system. Building libjpeg-turbo via ExternalProject")
+  message(STATUS "JPEG not found on system. Building libjpeg-turbo via ExternalProject.")
 
   include(ExternalProject)
 
@@ -89,6 +89,8 @@ else()
   elseif(IOS)
     list(APPEND TOUCAN_CMAKE_ARGS
       -D CMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}
+      -D CMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+      -D CMAKE_SYSTEM_PROCESSOR=${CMAKE_SYSTEM_PROCESSOR}
     )
   endif()
 #  list(APPEND TOUCAN_CMAKE_ARGS -D CMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
