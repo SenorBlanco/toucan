@@ -23,7 +23,7 @@ if(CMAKE_CROSSCOMPILING)
   ExternalProject_Add(api_header_generator
       SOURCE_DIR ${CMAKE_SOURCE_DIR}
       CMAKE_ARGS -DCMAKE_CROSSCOMPILING=OFF -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-                 -UCMAKE_TOOLCHAIN_FILE -UJPEG_FOUND
+                 -UCMAKE_TOOLCHAIN_FILE
       BINARY_DIR ${CMAKE_BINARY_DIR}/host
       INSTALL_COMMAND ""                    # No install step needed
       BUILD_COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/host --target api_header_generator
