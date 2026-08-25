@@ -94,7 +94,7 @@ else()
     )
   endif()
 
-  ExternalProject_Add(ext_jpeg_turbo
+  ExternalProject_Add(jpeg_turbo
     SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third_party/libjpeg-turbo
     BUILD_BYPRODUCTS ${JPEG_LIBRARY}
     CMAKE_ARGS ${TOUCAN_CMAKE_ARGS}

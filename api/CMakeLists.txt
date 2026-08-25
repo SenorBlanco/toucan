@@ -71,6 +71,6 @@ else()
 endif()
 
 target_link_libraries(api PUBLIC JPEG::JPEG)
-if(TARGET ext_jpeg_turbo)
-  add_dependencies(api ext_jpeg_turbo)
+if(TARGET jpeg_turbo)
+  add_dependencies(api jpeg_turbo)
 endif()
