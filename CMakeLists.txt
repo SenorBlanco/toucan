@@ -15,7 +15,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 if(CMAKE_GENERATOR STREQUAL "Ninja")
-  set(CMAKE_MAKE_PROGRAM ${CMAKE_SOURCE_DIR}/third_party/ninja/ninja CACHE FILEPATH "")
+  set(CMAKE_MAKE_PROGRAM ${CMAKE_SOURCE_DIR}/third_party/ninja/ninja CACHE FILEPATH "" FORCE)
 endif()
 
 project(Toucan CXX C)
@@ -171,30 +171,46 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 include(ToucanExecutable)
 
+set(JPEG_TURBO_SOURCE_DIR "${CMAKE_SOURCE_DIR}/third_party/libjpeg-turbo")
+set(JPEG_TURBO_BINARY_DIR "${CMAKE_BINARY_DIR}/third_party/libjpeg-turbo")
 # CMAKE_INSTALL_DOCDIR is set to satisfy libjpeg-turbo's configure-time
 # install() syntax check without requiring full GNUInstallDirs. Note that
 # libjpeg-turbo does not actually build docs during compilation.
 set(CMAKE_INSTALL_DOCDIR "doc")
-set(ENABLE_SHARED OFF CACHE BOOL "Build shared libraries" FORCE)
-set(ENABLE_STATIC ON CACHE BOOL "Build static libraries" FORCE)
-set(WITH_TURBOJPEG OFF CACHE BOOL "Include TurboJPEG API" FORCE)
-set(WITH_JPEG8 ON CACHE BOOL "Emulate libjpeg v8 API/ABI" FORCE)
+set(ENABLE_SHARED OFF)
+set(ENABLE_STATIC ON)
+set(WITH_TURBOJPEG OFF)
+set(WITH_JPEG8 ON)
 if(EMSCRIPTEN)
-set(WITH_SIMD OFF CACHE BOOL "Include SIMD extensions" FORCE)
+set(WITH_SIMD OFF)
 endif()
 set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "Minimum policy version")
 add_subdirectory(third_party/libjpeg-turbo EXCLUDE_FROM_ALL)
-set(JPEG_FOUND TRUE)
 if(MSVC)
-  set(JPEG_LIBRARIES ${CMAKE_BINARY_DIR}/third_party/libjpeg-turbo/jpeg-static.lib)
+  set(JPEG_LIBRARY ${JPEG_TURBO_BINARY_DIR}/jpeg-static.lib)
 else()
-  set(JPEG_LIBRARIES ${CMAKE_BINARY_DIR}/third_party/libjpeg-turbo/libjpeg.a)
+  set(JPEG_LIBRARY ${JPEG_TURBO_BINARY_DIR}/libjpeg.a)
 endif()
-set(JPEG_INCLUDE_DIRS
-  ${CMAKE_SOURCE_DIR}/third_party/libjpeg-turbo
-  ${CMAKE_BINARY_DIR}/third_party/libjpeg-turbo
+set(JPEG_INCLUDE_DIR ${CMAKE_BINARY_DIR}/third_party/libjpeg-turbo)
+add_library(JPEG::JPEG STATIC IMPORTED GLOBAL)
+set_target_properties(JPEG::JPEG PROPERTIES
+  IMPORTED_LOCATION   "${JPEG_LIBRARY}"
+  INTERFACE_INCLUDE_DIRECTORIES "${JPEG_INCLUDE_DIR}"
 )
+if(TARGET turbojpeg-static)
+  add_custom_target(copy_turbojpeg_headers
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    ${JPEG_TURBO_SOURCE_DIR}/jerror.h ${JPEG_TURBO_SOURCE_DIR}/jmorecfg.h
+    ${JPEG_TURBO_SOURCE_DIR}/jpeglib.h
+    ${JPEG_TURBO_BINARY_DIR}
+    VERBATIM
+  )
+  add_dependencies(turbojpeg-static copy_turbojpeg_headers)
+endif()
 add_subdirectory(third_party/libultrahdr EXCLUDE_FROM_ALL)
+if(TARGET turbojpeg-static)
+  add_dependencies(core turbojpeg-static)
+endif()
 add_subdirectory(third_party/dawn EXCLUDE_FROM_ALL)
 add_subdirectory(parser EXCLUDE_FROM_ALL)
 add_subdirectory(ast EXCLUDE_FROM_ALL)
