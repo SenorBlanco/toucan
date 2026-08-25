@@ -93,7 +93,6 @@ else()
       -D CMAKE_SYSTEM_PROCESSOR=${CMAKE_SYSTEM_PROCESSOR}
     )
   endif()
-#  list(APPEND TOUCAN_CMAKE_ARGS -D CMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
 
   ExternalProject_Add(ext_jpeg_turbo
     SOURCE_DIR  ${CMAKE_SOURCE_DIR}/third_party/libjpeg-turbo
@@ -235,7 +234,7 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 include(ToucanExecutable)
 
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
+set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(third_party/dawn EXCLUDE_FROM_ALL)
 add_subdirectory(parser EXCLUDE_FROM_ALL)
 add_subdirectory(ast EXCLUDE_FROM_ALL)
