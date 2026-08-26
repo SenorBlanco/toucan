@@ -17,7 +17,7 @@ add_library(codegen OBJECT codegen_llvm.cc codegen_spirv.cc)
 target_include_directories(codegen PUBLIC
   ${CMAKE_SOURCE_DIR}
   ${CMAKE_BINARY_DIR}/bindings
-  ${CMAKE_SOURCE_DIR}/third_party/SPIRV-Headers/include
+  ${CMAKE_SOURCE_DIR}/third_party/dawn/third_party/spirv-headers/src/include
 )
 
 target_include_directories(codegen PUBLIC ${LLVM_INCLUDE_DIRS})

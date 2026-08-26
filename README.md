@@ -177,6 +177,8 @@ or on Windows:
 ```
 pushd third_party/emscripten
 ./bootstrap
+./emcc --generate-lookup-cache
+./embuilder build libjpeg
 popd
 ```
 
