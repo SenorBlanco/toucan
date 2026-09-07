@@ -1,5 +1,6 @@
 #include "api.t"
 #include "transform.t"
+#include "../test/include/string.t"
 
 class Vertex {
   var position : float<2>;
@@ -69,6 +70,10 @@ device.GetQueue().Submit(copyEncoder.Finish());
 
 var window = new Window(size = System.GetScreenSize(), hdr = true);
 var swapChain = new SwapChain<RGBA16float>(device, window);
+System.Print("window size: ");
+System.Print(String.From(window.GetSize().x).Get());
+System.Print("x");
+System.PrintLine(String.From(window.GetSize().y).Get());
 var verts = [4]Vertex{
   { position = {-1.0,  1.0}, texCoord = {0.0, 0.0} },
   { position = { 1.0,  1.0}, texCoord = {1.0, 0.0} },
@@ -118,6 +123,10 @@ do {
       uniforms.mousePos = event.touches[0] as float<2>;
       touchMoved = true;
     } else if (event.type == EventType.Resize) {
+      System.Print("resizing swap chain, new window size: ");
+      System.Print(String.From(window.GetSize().x).Get());
+      System.Print("x");
+      System.PrintLine(String.From(window.GetSize().y).Get());
       swapChain.Resize(window.GetSize());
       uniforms.matrix = Matrix(imageSize, window.GetSize());
     }
