@@ -107,7 +107,7 @@ const uint32_t* Window_GetSize(Window* This) {
   return This->size;
 }
 
-Window* Window_Window(const uint32_t* size, const int32_t* position, bool hdr) {
+Window* Window_Window(const uint32_t* size, const int32_t* position) {
   NSApplication* app = [NSApplication sharedApplication];
   NSRect         backingRect = NSMakeRect(position[0], position[1], size[0], size[1]);
   NSRect         windowRect = [[NSScreen mainScreen] convertRectFromBacking:backingRect];
@@ -124,23 +124,10 @@ Window* Window_Window(const uint32_t* size, const int32_t* position, bool hdr) {
 
   [window makeKeyAndOrderFront:NSApp];
 
-  CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-  MTLPixelFormat pixelFormat = MTLPixelFormatRGBA8Unorm;
-  auto wantsExtendedRange = NO;
-  if (hdr) {
-    CFStringRef colorSpaceString = kCGColorSpaceExtendedLinearSRGB;
-    colorSpace = CGColorSpaceCreateWithName(colorSpaceString);
-    pixelFormat = MTLPixelFormatRGBA16Float;
-    wantsExtendedRange = YES;
-  }
-
   CAMetalLayer* layer = [CAMetalLayer layer];
   [layer setDevice:mtlDevice];
-  [layer setPixelFormat:pixelFormat];
-  [layer setWantsExtendedDynamicRangeContent:wantsExtendedRange];
   [layer setFramebufferOnly:YES];
   [layer setDrawableSize:CGSize(size[0], size[1])];
-  [layer setColorspace:colorSpace];
 
   NSView* view = [[NSView alloc] initWithFrame:windowRect];
   [view setWantsLayer:YES];
@@ -170,6 +157,20 @@ SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Win
   config.width = window->size[0];
   config.height = window->size[1];
   config.presentMode = wgpu::PresentMode::Fifo;
+
+  CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+  MTLPixelFormat pixelFormat = MTLPixelFormatRGBA8Unorm;
+  auto wantsExtendedRange = NO;
+  if (config.format == wgpu::TextureFormat::RGBA16Float) {
+    CFStringRef colorSpaceString = kCGColorSpaceExtendedLinearSRGB;
+    colorSpace = CGColorSpaceCreateWithName(colorSpaceString);
+    pixelFormat = MTLPixelFormatRGBA16Float;
+    wantsExtendedRange = YES;
+  }
+
+  [window->layer setPixelFormat:pixelFormat];
+  [window->layer setWantsExtendedDynamicRangeContent:wantsExtendedRange];
+  [window->layer setColorspace:colorSpace];
 
   wgpu::SurfaceSourceMetalLayer metalLayerDesc;
   metalLayerDesc.layer = window->layer;

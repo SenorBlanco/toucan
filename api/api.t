@@ -264,7 +264,7 @@ class ComputePass<T> {
 }
 
 class Window {
-  Window(size : uint<2>, position = int<2>(0, 0), hdr : bool = false);
+  Window(size : uint<2>, position = int<2>(0, 0));
   GetSize() : uint<2>;
  ~Window();
 }

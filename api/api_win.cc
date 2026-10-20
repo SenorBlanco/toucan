@@ -99,7 +99,7 @@ static void registerMainWindowClass() {
   }
 }
 
-Window* Window_Window(const uint32_t* size, const int32_t* position, bool hdr) {
+Window* Window_Window(const uint32_t* size, const int32_t* position) {
   registerMainWindowClass();
   RECT  r = {0, 0, static_cast<LONG>(size[0]), static_cast<LONG>(size[1])};
   DWORD style = WS_OVERLAPPEDWINDOW;

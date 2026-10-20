@@ -75,9 +75,6 @@ class IOSApp {
     return event;
   }
 
-  void SetHDR(bool hdr) { hdr_ = hdr; }
-  bool IsHDR() const { return hdr_; }
-
 private:
   ToucanMetalView        *primaryView_ = nullptr;
 
@@ -88,8 +85,6 @@ private:
 
   std::mutex              primaryViewMutex_;
   std::condition_variable primaryViewExists_;
-
-  bool                    hdr_;
 };
 
 namespace Toucan {
@@ -120,8 +115,7 @@ const uint32_t* Window_GetSize(Window* This) {
   return screenSize;
 }
 
-Window* Window_Window(const uint32_t* size, const int32_t* position, bool hdr) {
-  gApp->SetHDR(hdr);
+Window* Window_Window(const uint32_t* size, const int32_t* position) {
   return new Window{gApp->WaitForPrimaryView()};
 }
 
@@ -141,8 +135,17 @@ SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Win
   config.height = size[1];
   config.presentMode = wgpu::PresentMode::Fifo;
 
+  auto metalLayer = [window->view metalLayer];
+  if (config.format == wgpu::TextureFormat::RGBA16Float) {
+    [metalLayer setPixelFormat:MTLPixelFormatRGBA16Float];
+    [metalLayer setWantsExtendedDynamicRangeContent:YES];
+  } else {
+    [metalLayer setPixelFormat:MTLPixelFormatBGRA8Unorm];
+  }
+
   wgpu::SurfaceSourceMetalLayer metalLayerDesc;
-  metalLayerDesc.layer = [window->view metalLayer];
+  metalLayerDesc.layer = metalLayer;
+
   wgpu::SurfaceDescriptor desc;
   desc.nextInChain = &metalLayerDesc;
   static wgpu::Instance instance = wgpu::CreateInstance({});
@@ -290,12 +293,6 @@ int main(int argc, char** argv) {
 
   CAMetalLayer* layer = (CAMetalLayer*) primaryView.layer;
   [layer setDevice:MTLCreateSystemDefaultDevice()];
-  if (gApp->IsHDR()) {
-    [layer setPixelFormat:MTLPixelFormatRGBA16Float];
-    [layer setWantsExtendedDynamicRangeContent:YES];
-  } else {
-    [layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
-  }
   [layer setFramebufferOnly:YES];
 
   [self.view addSubview:primaryView];
