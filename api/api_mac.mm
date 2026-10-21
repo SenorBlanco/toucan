@@ -158,19 +158,13 @@ SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Win
   config.height = window->size[1];
   config.presentMode = wgpu::PresentMode::Fifo;
 
-  CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-  MTLPixelFormat pixelFormat = MTLPixelFormatRGBA8Unorm;
-  auto wantsExtendedRange = NO;
   if (config.format == wgpu::TextureFormat::RGBA16Float) {
-    CFStringRef colorSpaceString = kCGColorSpaceExtendedLinearSRGB;
-    colorSpace = CGColorSpaceCreateWithName(colorSpaceString);
-    pixelFormat = MTLPixelFormatRGBA16Float;
-    wantsExtendedRange = YES;
+    [window->layer setPixelFormat:MTLPixelFormatRGBA16Float];
+    [window->layer setWantsExtendedDynamicRangeContent:YES];
+  } else {
+    [window->layer setPixelFormat:MTLPixelFormatBGRA8Unorm];
+    [window->layer setWantsExtendedDynamicRangeContent:NO];
   }
-
-  [window->layer setPixelFormat:pixelFormat];
-  [window->layer setWantsExtendedDynamicRangeContent:wantsExtendedRange];
-  [window->layer setColorspace:colorSpace];
 
   wgpu::SurfaceSourceMetalLayer metalLayerDesc;
   metalLayerDesc.layer = window->layer;

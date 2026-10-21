@@ -141,6 +141,7 @@ SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Win
     [metalLayer setWantsExtendedDynamicRangeContent:YES];
   } else {
     [metalLayer setPixelFormat:MTLPixelFormatBGRA8Unorm];
+    [metalLayer setWantsExtendedDynamicRangeContent:NO];
   }
 
   wgpu::SurfaceSourceMetalLayer metalLayerDesc;
