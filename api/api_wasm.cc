@@ -47,6 +47,25 @@ void copyTouches(emscripten::val touches, Event* result) {
   }
 }
 
+void configureSurface(wgpu::Surface surface, wgpu::TextureFormat format, wgpu::Device device, const uint32_t* size) {
+  wgpu::SurfaceConfiguration config {
+    .device = device,
+    .format = format,
+    .width = size[0],
+    .height = size[1],
+    .presentMode = wgpu::PresentMode::Fifo
+  };
+
+  if (format == wgpu::TextureFormat::RGBA16Float) {
+    wgpu::SurfaceColorManagement surfaceColorMgt;
+    surfaceColorMgt.colorSpace = wgpu::PredefinedColorSpace::SRGB;
+    surfaceColorMgt.toneMappingMode = wgpu::ToneMappingMode::Extended;
+    config.nextInChain = &surfaceColorMgt;
+  }
+
+  surface.Configure(&config);
+}
+
 }  // namespace
 
 struct Window {
@@ -197,22 +216,11 @@ SwapChain* SwapChain_SwapChain(int qualifiers, Type* format, Device* device, Win
 
   wgpu::Surface surface = instance.CreateSurface(&surfaceDesc);
 
-  wgpu::SurfaceColorManagement surfaceColorMgt;
-  surfaceColorMgt.colorSpace = wgpu::PredefinedColorSpace::SRGB;
-  surfaceColorMgt.toneMappingMode = wgpu::ToneMappingMode::Extended;
-
-  wgpu::SurfaceConfiguration config;
-  config.device = device->device;
-  config.format = ToDawnTextureFormat(format);
+  auto dawnFormat = ToDawnTextureFormat(format);
   const uint32_t* size = Window_GetSize(window);
-  config.width = size[0];
-  config.height = size[1];
-  config.presentMode = wgpu::PresentMode::Fifo;
-  config.nextInChain = &surfaceColorMgt;
+  configureSurface(surface, dawnFormat, device->device, Window_GetSize(window));
 
-  surface.Configure(&config);
-
-  return new SwapChain(surface, device->device, {config.width, config.height, 1}, config.format, nullptr);
+  return new SwapChain(surface, device->device, {size[0], size[1], 1}, dawnFormat, nullptr);
 }
 
 EM_ASYNC_JS(void, JSWaitForRAF, (), {
@@ -220,19 +228,8 @@ EM_ASYNC_JS(void, JSWaitForRAF, (), {
 });
 
 void SwapChain_Resize(SwapChain* swapChain, const uint32_t* size) {
-  wgpu::SurfaceColorManagement surfaceColorMgt;
-  surfaceColorMgt.colorSpace = wgpu::PredefinedColorSpace::SRGB;
-  surfaceColorMgt.toneMappingMode = wgpu::ToneMappingMode::Extended;
+  configureSurface(swapChain->surface, swapChain->format, swapChain->device, size);
 
-  wgpu::SurfaceConfiguration config;
-  config.device = swapChain->device;
-  config.format = swapChain->format;
-  config.width = size[0];
-  config.height = size[1];
-  config.presentMode = wgpu::PresentMode::Fifo;
-  config.nextInChain = &surfaceColorMgt;
-
-  swapChain->surface.Configure(&config);
   swapChain->extent = {size[0], size[1], 1};
   EM_ASM({
     canvas.style.width = ($0 / window.devicePixelRatio) + 'px';
