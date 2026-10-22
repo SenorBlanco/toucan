@@ -56,8 +56,8 @@ void configureSurface(wgpu::Surface surface, wgpu::TextureFormat format, wgpu::D
     .presentMode = wgpu::PresentMode::Fifo
   };
 
+  wgpu::SurfaceColorManagement surfaceColorMgt;
   if (format == wgpu::TextureFormat::RGBA16Float) {
-    wgpu::SurfaceColorManagement surfaceColorMgt;
     surfaceColorMgt.colorSpace = wgpu::PredefinedColorSpace::SRGB;
     surfaceColorMgt.toneMappingMode = wgpu::ToneMappingMode::Extended;
     config.nextInChain = &surfaceColorMgt;
