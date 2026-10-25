@@ -2,14 +2,12 @@
 
 ## Overview
 
-*This is not an officially supported Google product.*
-
-Toucan is an experimental, domain-specific language for accelerated graphical
-applications. It was designed to answer the following question: "Could a
-unified programming environment reduce the friction of developing CPU/GPU
-apps?". Built on WebGPU and featuring unified CPU/GPU SIMD datatypes, syntax
+Toucan is a domain-specific language for accelerated graphical applications.
+It was designed to answer the following question: "Could a unified
+programming environment reduce the friction of developing CPU/GPU apps?".
+Built on WebGPU and featuring unified CPU/GPU SIMD datatypes, syntax,
 and API, it aims for native-level performance with a single, concise source.
-It currently runs on Windows, MacOS, Linux, Android, iOS, and Web.
+It runs on Windows, MacOS, Linux, Android, iOS, and Web.
 
 For further information, see [this presentation](https://docs.google.com/presentation/d/1tUlG9w7AsP8pexBWRwk1uYDrwNMvTJqcxdH482ip4LM/edit?usp=sharing&resourcekey=0-gEpoxkfBbXC3qbbKRQhrwg) and [this document](https://docs.google.com/document/d/1oWNt2IoA1u-j7i2D24pnlFP6JIlQdrKZlNY6qoW2K80/edit?usp=sharing&resourcekey=0-mb8K3ATyRv-ZGl34Y4C-zQ).
 
